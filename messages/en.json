@@ -112,7 +112,51 @@
   "projets": {
     "title": "Projects",
     "breadcrumb": "// all projects",
-    "cta": "+ Project"
+    "cta": "+ Project",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "starting": "Starting",
+      "done": "Done"
+    },
+    "stats": {
+      "active": "Active",
+      "starting": "Starting",
+      "done": "Done",
+      "consultants": "Consultants"
+    },
+    "table": {
+      "name": "Project",
+      "client": "Client",
+      "team": "Team",
+      "progress": "Progress",
+      "deadline": "Deadline",
+      "status": "Status"
+    },
+    "deadline": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "daysLeft": "d left"
+    },
+    "drawer": {
+      "label": "// project profile",
+      "close": "✕ Close",
+      "client": "Client",
+      "progress": "Progress",
+      "deadline": "Deadline",
+      "status": "Status",
+      "team": "Team",
+      "teamCount": "consultant(s)",
+      "edit": "✏ Edit",
+      "archive": "📦 Archive"
+    },
+    "statuses": {
+      "active": "Active",
+      "starting": "Starting",
+      "done": "Done"
+    },
+    "noResults": "// no projects",
+    "export": "↓ Export"
   },
   "disponibilites": {
     "title": "Availability",
