@@ -1,6 +1,7 @@
 'use client'
 
 import { useState }              from 'react'
+import { useTranslations }       from 'next-intl'
 import { Topbar }                from '@/components/layout/Topbar'
 import { Panel, StatRow }        from '@/components/ui'
 import { LeaveRequestCard }      from '@/components/conges/LeaveRequestCard'
@@ -8,52 +9,44 @@ import { LeaveSolde }            from '@/components/conges/LeaveSolde'
 import { LEAVE_REQUESTS, CONSULTANTS } from '@/lib/mock'
 import type { LeaveRequest, LeaveStatus } from '@/types'
 
-const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
-  { label: 'Toutes',      value: 'all' },
-  { label: 'En attente',  value: 'pending' },
-  { label: 'Approuvées',  value: 'approved' },
-  { label: 'Refusées',    value: 'refused' },
-]
-
 export default function CongesPage() {
+  const t = useTranslations('conges')
   const [requests, setRequests] = useState<LeaveRequest[]>(LEAVE_REQUESTS)
   const [filter, setFilter]     = useState<LeaveStatus | 'all'>('all')
 
-  // Approve / refuse actions — met à jour le state local (Supabase plus tard)
+  const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
+    { label: t('filters.all'),      value: 'all' },
+    { label: t('filters.pending'),  value: 'pending' },
+    { label: t('filters.approved'), value: 'approved' },
+    { label: t('filters.refused'),  value: 'refused' },
+  ]
+
   const handleApprove = (id: string) =>
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'approved' } : r))
-
   const handleRefuse = (id: string) =>
     setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'refused' } : r))
 
-  const visible = requests.filter(r => filter === 'all' || r.status === filter)
-
+  const visible  = requests.filter(r => filter === 'all' || r.status === filter)
   const pending  = requests.filter(r => r.status === 'pending').length
   const approved = requests.filter(r => r.status === 'approved').length
   const refused  = requests.filter(r => r.status === 'refused').length
   const totalDays = requests.reduce((acc, r) => acc + r.days, 0)
 
   const stats = [
-    { value: pending,   label: 'En attente',  color: 'var(--gold)' },
-    { value: approved,  label: 'Approuvées',  color: 'var(--green)' },
-    { value: refused,   label: 'Refusées',    color: 'var(--pink)' },
-    { value: totalDays, label: 'Jours posés', color: 'var(--text2)' },
+    { value: pending,   label: t('stats.pending'),   color: 'var(--gold)' },
+    { value: approved,  label: t('stats.approved'),  color: 'var(--green)' },
+    { value: refused,   label: t('stats.refused'),   color: 'var(--pink)' },
+    { value: totalDays, label: t('stats.totalDays'), color: 'var(--text2)' },
   ]
 
   return (
     <>
-      <Topbar
-        title="Congés"
-        breadcrumb="// demandes & soldes"
-        ctaLabel="+ Demande"
-        onCta={() => {}}
-      />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} ctaLabel={t('cta')} onCta={() => {}} />
 
       <div className="app-content">
 
         <StatRow stats={stats} />
 
-        {/* Filtres */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {FILTERS.map(f => (
             <button
@@ -72,11 +65,9 @@ export default function CongesPage() {
         </div>
 
         <div className="two-col">
-
-          {/* Demandes */}
           <Panel
-            title={`Demandes ${filter === 'all' ? '' : `— ${visible.length}`}`}
-            action={pending > 0 ? { label: `⚠ ${pending} à valider`, onClick: () => setFilter('pending') } : undefined}
+            title={t('requests')}
+            action={pending > 0 ? { label: `⚠ ${pending} ${t('toValidate')}`, onClick: () => setFilter('pending') } : undefined}
           >
             {visible.length > 0
               ? visible.map(r => (
@@ -88,16 +79,14 @@ export default function CongesPage() {
                   />
                 ))
               : <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                  // aucune demande
+                  {t('noRequests')}
                 </div>
             }
           </Panel>
 
-          {/* Soldes */}
-          <Panel title="Soldes congés">
+          <Panel title={t('soldes')}>
             <LeaveSolde consultants={CONSULTANTS} />
           </Panel>
-
         </div>
 
       </div>

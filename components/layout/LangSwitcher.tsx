@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale }   from 'next-intl'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname } from '@/lib/navigation'
 
 const LOCALES = [
   { code: 'fr', flag: '🇫🇷', label: 'FR' },
@@ -14,25 +14,9 @@ export function LangSwitcher() {
   const pathname = usePathname()
 
   const switchTo = (code: string) => {
-    if (code === locale) return
-
-    // Remplace le préfixe de locale dans l'URL
-    // /dashboard        → /en/dashboard
-    // /en/consultants   → /consultants
-    let newPath = pathname
-
-    if (locale !== 'fr') {
-      // Retirer le préfixe actuel (ex: /en)
-      newPath = pathname.replace(`/${locale}`, '') || '/'
-    }
-
-    if (code !== 'fr') {
-      // Ajouter le nouveau préfixe
-      newPath = `/${code}${newPath}`
-    }
-
-    router.push(newPath)
-  }
+  if (code === locale) return
+  router.replace(pathname, { locale: code })
+}
 
   return (
     <div style={{ display: 'flex', gap: 4 }}>
