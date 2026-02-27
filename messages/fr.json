@@ -188,7 +188,41 @@
   "timeline": {
     "title": "Timeline",
     "breadcrumb": "// planning mensuel",
-    "cta": "↓ Exporter"
+    "cta": "↓ Exporter",
+    "prevMonth": "← Mois préc.",
+    "nextMonth": "Mois suiv. →",
+    "today": "Auj.",
+    "legend": {
+      "project": "En mission",
+      "leave": "Congé",
+      "partial": "Partiel",
+      "weekend": "Weekend",
+      "free": "Libre"
+    },
+    "consultant": "Consultant",
+    "months": [
+      "Janvier",
+      "Février",
+      "Mars",
+      "Avril",
+      "Mai",
+      "Juin",
+      "Juillet",
+      "Août",
+      "Septembre",
+      "Octobre",
+      "Novembre",
+      "Décembre"
+    ],
+    "days": [
+      "L",
+      "M",
+      "M",
+      "J",
+      "V",
+      "S",
+      "D"
+    ]
   },
   "common": {
     "day": "jour",

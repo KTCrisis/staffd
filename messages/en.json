@@ -188,7 +188,41 @@
   "timeline": {
     "title": "Timeline",
     "breadcrumb": "// monthly schedule",
-    "cta": "↓ Export"
+    "cta": "↓ Export",
+    "prevMonth": "← Prev month",
+    "nextMonth": "Next month →",
+    "today": "Today",
+    "legend": {
+      "project": "On assignment",
+      "leave": "On leave",
+      "partial": "Partial",
+      "weekend": "Weekend",
+      "free": "Free"
+    },
+    "consultant": "Consultant",
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "days": [
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
+    ]
   },
   "common": {
     "day": "day",
