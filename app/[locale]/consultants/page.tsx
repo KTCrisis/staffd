@@ -4,14 +4,24 @@ import { useState }          from 'react'
 import { useTranslations }   from 'next-intl'
 import { Topbar }            from '@/components/layout/Topbar'
 import { Panel, StatRow }    from '@/components/ui'
+import { Avatar }            from '@/components/ui/Avatar'
+import { Badge }             from '@/components/ui/Badge'
+import { ProgressBar }       from '@/components/ui/ProgressBar'
 import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
-import { CONSULTANTS }       from '@/lib/mock'
+import { useConsultants }    from '@/lib/data'
 import type { ConsultantStatus, Consultant } from '@/types'
+
+function Skeleton({ h = 80 }: { h?: number }) {
+  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
+}
 
 export default function ConsultantsPage() {
   const t = useTranslations('consultants')
-  const [filter, setFilter]     = useState<ConsultantStatus | 'all'>('all')
-  const [search, setSearch]     = useState('')
+  const tCommon = useTranslations('common')
+  const { data: consultants, loading } = useConsultants()
+
+  const [filter,   setFilter]   = useState<ConsultantStatus | 'all'>('all')
+  const [search,   setSearch]   = useState('')
   const [selected, setSelected] = useState<Consultant | null>(null)
 
   const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
@@ -22,7 +32,9 @@ export default function ConsultantsPage() {
     { label: t('filters.partial'),   value: 'partial' },
   ]
 
-  const visible = CONSULTANTS.filter(c => {
+  const all = consultants ?? []
+
+  const visible = all.filter(c => {
     const matchFilter = filter === 'all' || c.status === filter
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
                      || c.role.toLowerCase().includes(search.toLowerCase())
@@ -30,15 +42,13 @@ export default function ConsultantsPage() {
   })
 
   const stats = [
-    { value: CONSULTANTS.filter(c => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
-    { value: CONSULTANTS.filter(c => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
-    { value: CONSULTANTS.filter(c => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
-    { value: CONSULTANTS.filter(c => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
+    { value: all.filter(c => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
+    { value: all.filter(c => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
+    { value: all.filter(c => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
+    { value: all.filter(c => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
   ]
 
-  const count = visible.length
-  const tCommon = useTranslations('common')
-  const countLabel = `${count} ${count > 1 ? tCommon('consultants') : tCommon('consultant')}`
+  const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
 
   return (
     <>
@@ -67,19 +77,18 @@ export default function ConsultantsPage() {
           />
         </div>
 
-        <Panel
-          title={countLabel}
-          action={{ label: t('export'), onClick: () => {} }}
-          noPadding
-        >
-          {visible.length > 0
-            ? <ConsultantTable consultants={visible} onSelect={setSelected} />
-            : <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                {t('noResults')}
-              </div>
+        <Panel title={countLabel} action={{ label: t('export'), onClick: () => {} }} noPadding>
+          {loading
+            ? <div style={{ padding: 18 }}><Skeleton h={200} /></div>
+            : visible.length > 0
+              ? <ConsultantTable consultants={visible} onSelect={setSelected} />
+              : <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
+                  {t('noResults')}
+                </div>
           }
         </Panel>
 
+        {/* Drawer */}
         {selected && (
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, width: 360,
@@ -97,9 +106,7 @@ export default function ConsultantsPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
-              <div className={`avatar av-${selected.avatarColor}`} style={{ width: 48, height: 48, fontSize: 16 }}>
-                {selected.initials}
-              </div>
+              <Avatar initials={selected.initials} color={selected.avatarColor} size="md" />
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{selected.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text2)' }}>{selected.role}</div>
@@ -107,7 +114,7 @@ export default function ConsultantsPage() {
             </div>
 
             {[
-              { label: t('drawer.status'),    value: <span className={`badge badge-${selected.status}`}>{t(`statuses.${selected.status}`)}</span> },
+              { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
               { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
               { label: t('drawer.available'), value: selected.availableFrom ? new Date(selected.availableFrom).toLocaleDateString() : t('now') },
               { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
@@ -124,17 +131,12 @@ export default function ConsultantsPage() {
                 {t('drawer.rateLabel')}
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>{selected.occupancyRate}%</div>
-              <div className="progress-bar" style={{ height: 6 }}>
-                <div className="progress-fill" style={{
-                  width: `${selected.occupancyRate}%`,
-                  background: selected.occupancyRate >= 80 ? 'var(--green)' : selected.occupancyRate >= 50 ? 'var(--gold)' : 'var(--cyan)'
-                }} />
-              </div>
+              <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 28 }}>
               <button className="btn btn-primary" style={{ flex: 1 }}>{t('drawer.edit')}</button>
-              <button className="btn btn-ghost" style={{ flex: 1 }}>{t('drawer.history')}</button>
+              <button className="btn btn-ghost"   style={{ flex: 1 }}>{t('drawer.history')}</button>
             </div>
           </div>
         )}

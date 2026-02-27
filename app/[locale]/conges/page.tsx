@@ -1,18 +1,23 @@
 'use client'
 
-import { useState }              from 'react'
-import { useTranslations }       from 'next-intl'
-import { Topbar }                from '@/components/layout/Topbar'
-import { Panel, StatRow }        from '@/components/ui'
-import { LeaveRequestCard }      from '@/components/conges/LeaveRequestCard'
-import { LeaveSolde }            from '@/components/conges/LeaveSolde'
-import { LEAVE_REQUESTS, CONSULTANTS } from '@/lib/mock'
-import type { LeaveRequest, LeaveStatus } from '@/types'
+import { useState }                 from 'react'
+import { useTranslations }          from 'next-intl'
+import { Topbar }                   from '@/components/layout/Topbar'
+import { Panel, StatRow }           from '@/components/ui'
+import { LeaveRequestCard }         from '@/components/conges/LeaveRequestCard'
+import { LeaveSolde }               from '@/components/conges/LeaveSolde'
+import { useLeaveRequests, useConsultants, approveLeave, refuseLeave } from '@/lib/data'
+import type { LeaveStatus }         from '@/types'
+
+function Skeleton({ h = 80 }: { h?: number }) {
+  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
+}
 
 export default function CongesPage() {
   const t = useTranslations('conges')
-  const [requests, setRequests] = useState<LeaveRequest[]>(LEAVE_REQUESTS)
-  const [filter, setFilter]     = useState<LeaveStatus | 'all'>('all')
+  const { data: requests,    loading: lreq,  mutate } = useLeaveRequests() as { data: ReturnType<typeof useLeaveRequests>['data']; loading: boolean; mutate?: () => void; error: string | null }
+  const { data: consultants, loading: lcons }         = useConsultants()
+  const [filter, setFilter] = useState<LeaveStatus | 'all'>('all')
 
   const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
     { label: t('filters.all'),      value: 'all' },
@@ -21,16 +26,12 @@ export default function CongesPage() {
     { label: t('filters.refused'),  value: 'refused' },
   ]
 
-  const handleApprove = (id: string) =>
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'approved' } : r))
-  const handleRefuse = (id: string) =>
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: 'refused' } : r))
-
-  const visible  = requests.filter(r => filter === 'all' || r.status === filter)
-  const pending  = requests.filter(r => r.status === 'pending').length
-  const approved = requests.filter(r => r.status === 'approved').length
-  const refused  = requests.filter(r => r.status === 'refused').length
-  const totalDays = requests.reduce((acc, r) => acc + r.days, 0)
+  const all     = requests ?? []
+  const visible = all.filter(r => filter === 'all' || r.status === filter)
+  const pending  = all.filter(r => r.status === 'pending').length
+  const approved = all.filter(r => r.status === 'approved').length
+  const refused  = all.filter(r => r.status === 'refused').length
+  const totalDays = all.reduce((s, r) => s + r.days, 0)
 
   const stats = [
     { value: pending,   label: t('stats.pending'),   color: 'var(--gold)' },
@@ -38,6 +39,16 @@ export default function CongesPage() {
     { value: refused,   label: t('stats.refused'),   color: 'var(--pink)' },
     { value: totalDays, label: t('stats.totalDays'), color: 'var(--text2)' },
   ]
+
+  const handleApprove = async (id: string) => {
+    await approveLeave(id)
+    mutate?.()
+  }
+
+  const handleRefuse = async (id: string) => {
+    await refuseLeave(id)
+    mutate?.()
+  }
 
   return (
     <>
@@ -69,23 +80,25 @@ export default function CongesPage() {
             title={t('requests')}
             action={pending > 0 ? { label: `⚠ ${pending} ${t('toValidate')}`, onClick: () => setFilter('pending') } : undefined}
           >
-            {visible.length > 0
-              ? visible.map(r => (
-                  <LeaveRequestCard
-                    key={r.id}
-                    request={r}
-                    onApprove={handleApprove}
-                    onRefuse={handleRefuse}
-                  />
-                ))
-              : <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                  {t('noRequests')}
-                </div>
+            {lreq
+              ? <Skeleton h={200} />
+              : visible.length > 0
+                ? visible.map(r => (
+                    <LeaveRequestCard
+                      key={r.id}
+                      request={r}
+                      onApprove={handleApprove}
+                      onRefuse={handleRefuse}
+                    />
+                  ))
+                : <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
+                    {t('noRequests')}
+                  </div>
             }
           </Panel>
 
           <Panel title={t('soldes')}>
-            <LeaveSolde consultants={CONSULTANTS} />
+            {lcons ? <Skeleton h={200} /> : <LeaveSolde consultants={consultants ?? []} />}
           </Panel>
         </div>
 
