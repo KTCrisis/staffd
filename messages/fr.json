@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "dashboard":      "Dashboard",
+    "consultants":    "Consultants",
+    "disponibilites": "Disponibilités",
+    "conges":         "Congés",
+    "projets":        "Projets",
+    "timeline":       "Timeline",
+    "parametres":     "Paramètres",
+    "overview":       "Vue d'ensemble",
+    "team":           "Équipe",
+    "projects":       "Projets",
+    "admin":          "Admin"
+  },
+  "topbar": {
+    "search":  "Rechercher...",
+    "sync":    "↻ Sync",
+    "new":     "+ Nouveau"
+  },
+  "dashboard": {
+    "title":       "Dashboard",
+    "breadcrumb":  "// overview",
+    "kpi": {
+      "activeConsultants": "Consultants actifs",
+      "activeProjects":    "Projets en cours",
+      "pendingLeaves":     "Congés en attente",
+      "occupancyRate":     "Taux d'occupation"
+    },
+    "trends": {
+      "up":      "↑ +1 ce mois",
+      "stable":  "→ stable",
+      "warning": "⚠ à valider",
+      "occupancy": "↑ +5% vs mois"
+    },
+    "consultants":    "Consultants",
+    "seeAll":         "voir tout →",
+    "activity":       "Activité récente",
+    "calendar":       "Calendrier",
+    "activeProjects": "Projets actifs"
+  },
+  "consultants": {
+    "title":      "Consultants",
+    "breadcrumb": "// équipe",
+    "cta":        "+ Consultant",
+    "filters": {
+      "all":       "Tous",
+      "assigned":  "En mission",
+      "available": "Disponibles",
+      "leave":     "En congé",
+      "partial":   "Partiel"
+    },
+    "table": {
+      "name":        "Consultant",
+      "role":        "Rôle",
+      "project":     "Projet actuel",
+      "status":      "Statut",
+      "available":   "Disponible le",
+      "leaveDays":   "CP restants",
+      "occupancy":   "Taux occup."
+    },
+    "export":      "↓ Exporter",
+    "noResults":   "// aucun résultat",
+    "now":         "Maintenant",
+    "drawer": {
+      "label":     "// fiche consultant",
+      "close":     "✕ Fermer",
+      "status":    "Statut",
+      "project":   "Projet",
+      "available": "Disponible",
+      "leaveDays": "CP restants",
+      "occupancy": "Occupation",
+      "rateLabel": "Taux d'occupation",
+      "edit":      "✏ Modifier",
+      "history":   "📋 Historique"
+    },
+    "statuses": {
+      "assigned":  "En mission",
+      "available": "Disponible",
+      "leave":     "Congé",
+      "partial":   "Partiel 50%"
+    }
+  },
+  "conges": {
+    "title":      "Congés",
+    "breadcrumb": "// demandes & soldes",
+    "cta":        "+ Demande",
+    "filters": {
+      "all":      "Toutes",
+      "pending":  "En attente",
+      "approved": "Approuvées",
+      "refused":  "Refusées"
+    },
+    "stats": {
+      "pending":   "En attente",
+      "approved":  "Approuvées",
+      "refused":   "Refusées",
+      "totalDays": "Jours posés"
+    },
+    "toValidate":  "à valider",
+    "requests":    "Demandes",
+    "soldes":      "Soldes congés",
+    "noRequests":  "// aucune demande",
+    "approve":     "✓ Valider",
+    "refuse":      "✗",
+    "cpLeft":      "CP restants",
+    "types": {
+      "CP":         "Congé payé",
+      "RTT":        "RTT",
+      "Sans solde": "Sans solde"
+    }
+  },
+  "projets": {
+    "title":      "Projets",
+    "breadcrumb": "// tous les projets",
+    "cta":        "+ Projet"
+  },
+  "disponibilites": {
+    "title":      "Disponibilités",
+    "breadcrumb": "// planning semaine",
+    "cta":        "+ Bloquer"
+  },
+  "timeline": {
+    "title":      "Timeline",
+    "breadcrumb": "// planning mensuel",
+    "cta":        "↓ Exporter"
+  },
+  "common": {
+    "day":     "jour",
+    "days":    "jours",
+    "consultant":  "consultant",
+    "consultants": "consultants"
+  }
+}

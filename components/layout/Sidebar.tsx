@@ -1,36 +1,42 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-
-const NAV = [
-  {
-    group: 'Vue d\'ensemble',
-    items: [{ label: 'Dashboard', icon: '⬡', href: '/dashboard' }],
-  },
-  {
-    group: 'Équipe',
-    items: [
-      { label: 'Consultants',    icon: '◈', href: '/consultants' },
-      { label: 'Disponibilités', icon: '◫', href: '/disponibilites' },
-      { label: 'Congés',         icon: '◷', href: '/conges', badge: 3 },
-    ],
-  },
-  {
-    group: 'Projets',
-    items: [
-      { label: 'Projets',  icon: '◧', href: '/projets' },
-      { label: 'Timeline', icon: '▤', href: '/timeline' },
-    ],
-  },
-  {
-    group: 'Admin',
-    items: [{ label: 'Paramètres', icon: '◎', href: '/parametres' }],
-  },
-]
+import Link                from 'next/link'
+import { usePathname }     from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 
 export function Sidebar() {
   const pathname = usePathname()
+  const locale   = useLocale()
+  const t        = useTranslations('nav')
+
+  // Préfixe selon la locale (fr = pas de préfixe, en = /en)
+  const p = (path: string) => locale === 'fr' ? path : `/${locale}${path}`
+
+  const NAV = [
+    {
+      group: t('overview'),
+      items: [{ label: t('dashboard'), icon: '⬡', href: p('/dashboard') }],
+    },
+    {
+      group: t('team'),
+      items: [
+        { label: t('consultants'),    icon: '◈', href: p('/consultants') },
+        { label: t('disponibilites'), icon: '◫', href: p('/disponibilites') },
+        { label: t('conges'),         icon: '◷', href: p('/conges'), badge: 3 },
+      ],
+    },
+    {
+      group: t('projects'),
+      items: [
+        { label: t('projets'),  icon: '◧', href: p('/projets') },
+        { label: t('timeline'), icon: '▤', href: p('/timeline') },
+      ],
+    },
+    {
+      group: t('admin'),
+      items: [{ label: t('parametres'), icon: '◎', href: p('/parametres') }],
+    },
+  ]
 
   return (
     <aside className="sidebar">
@@ -47,7 +53,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item ${pathname.startsWith(item.href) ? 'active' : ''}`}
+                className={`nav-item ${pathname.includes(item.href.replace(`/${locale}`, '')) ? 'active' : ''}`}
               >
                 <span className="nav-icon">{item.icon}</span>
                 {item.label}
