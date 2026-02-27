@@ -1,6 +1,6 @@
 'use client'
 
-import { useLocale }   from 'next-intl'
+import { useLocale }              from 'next-intl'
 import { useRouter, usePathname } from '@/lib/navigation'
 
 const LOCALES = [
@@ -14,9 +14,9 @@ export function LangSwitcher() {
   const pathname = usePathname()
 
   const switchTo = (code: string) => {
-  if (code === locale) return
-  router.replace(pathname, { locale: code })
-}
+    if (code === locale) return
+    router.replace(pathname, { locale: code })
+  }
 
   return (
     <div style={{ display: 'flex', gap: 4 }}>
@@ -30,9 +30,9 @@ export function LangSwitcher() {
             gap: 4,
             display: 'flex',
             alignItems: 'center',
-            opacity: locale === l.code ? 1 : 0.5,
-            borderColor: locale === l.code ? 'var(--green)' : 'var(--border)',
-            color:        locale === l.code ? 'var(--green)' : 'var(--text2)',
+            opacity:     locale === l.code ? 1 : 0.5,
+            borderColor: locale === l.code ? 'var(--green)'  : 'var(--border)',
+            color:       locale === l.code ? 'var(--green)'  : 'var(--text2)',
           }}
           title={l.code === 'fr' ? 'Français' : 'English'}
         >

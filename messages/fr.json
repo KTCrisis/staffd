@@ -1,133 +1,155 @@
 {
   "nav": {
-    "dashboard":      "Dashboard",
-    "consultants":    "Consultants",
+    "dashboard": "Dashboard",
+    "consultants": "Consultants",
     "disponibilites": "Disponibilités",
-    "conges":         "Congés",
-    "projets":        "Projets",
-    "timeline":       "Timeline",
-    "parametres":     "Paramètres",
-    "overview":       "Vue d'ensemble",
-    "team":           "Équipe",
-    "projects":       "Projets",
-    "admin":          "Admin"
+    "conges": "Congés",
+    "projets": "Projets",
+    "timeline": "Timeline",
+    "parametres": "Paramètres",
+    "overview": "Vue d'ensemble",
+    "team": "Équipe",
+    "projects": "Projets",
+    "admin": "Admin"
   },
   "topbar": {
-    "search":  "Rechercher...",
-    "sync":    "↻ Sync",
-    "new":     "+ Nouveau"
+    "search": "Rechercher...",
+    "sync": "↻ Sync",
+    "new": "+ Nouveau"
   },
   "dashboard": {
-    "title":       "Dashboard",
-    "breadcrumb":  "// overview",
+    "title": "Dashboard",
+    "breadcrumb": "// overview",
     "kpi": {
       "activeConsultants": "Consultants actifs",
-      "activeProjects":    "Projets en cours",
-      "pendingLeaves":     "Congés en attente",
-      "occupancyRate":     "Taux d'occupation"
+      "activeProjects": "Projets en cours",
+      "pendingLeaves": "Congés en attente",
+      "occupancyRate": "Taux d'occupation"
     },
     "trends": {
-      "up":      "↑ +1 ce mois",
-      "stable":  "→ stable",
+      "up": "↑ +1 ce mois",
+      "stable": "→ stable",
       "warning": "⚠ à valider",
       "occupancy": "↑ +5% vs mois"
     },
-    "consultants":    "Consultants",
-    "seeAll":         "voir tout →",
-    "activity":       "Activité récente",
-    "calendar":       "Calendrier",
+    "consultants": "Consultants",
+    "seeAll": "voir tout →",
+    "activity": "Activité récente",
+    "calendar": "Calendrier",
     "activeProjects": "Projets actifs"
   },
   "consultants": {
-    "title":      "Consultants",
+    "title": "Consultants",
     "breadcrumb": "// équipe",
-    "cta":        "+ Consultant",
+    "cta": "+ Consultant",
     "filters": {
-      "all":       "Tous",
-      "assigned":  "En mission",
+      "all": "Tous",
+      "assigned": "En mission",
       "available": "Disponibles",
-      "leave":     "En congé",
-      "partial":   "Partiel"
+      "leave": "En congé",
+      "partial": "Partiel"
     },
     "table": {
-      "name":        "Consultant",
-      "role":        "Rôle",
-      "project":     "Projet actuel",
-      "status":      "Statut",
-      "available":   "Disponible le",
-      "leaveDays":   "CP restants",
-      "occupancy":   "Taux occup."
+      "name": "Consultant",
+      "role": "Rôle",
+      "project": "Projet actuel",
+      "status": "Statut",
+      "available": "Disponible le",
+      "leaveDays": "CP restants",
+      "occupancy": "Taux occup."
     },
-    "export":      "↓ Exporter",
-    "noResults":   "// aucun résultat",
-    "now":         "Maintenant",
+    "export": "↓ Exporter",
+    "noResults": "// aucun résultat",
+    "now": "Maintenant",
     "drawer": {
-      "label":     "// fiche consultant",
-      "close":     "✕ Fermer",
-      "status":    "Statut",
-      "project":   "Projet",
+      "label": "// fiche consultant",
+      "close": "✕ Fermer",
+      "status": "Statut",
+      "project": "Projet",
       "available": "Disponible",
       "leaveDays": "CP restants",
       "occupancy": "Occupation",
       "rateLabel": "Taux d'occupation",
-      "edit":      "✏ Modifier",
-      "history":   "📋 Historique"
+      "edit": "✏ Modifier",
+      "history": "📋 Historique"
     },
     "statuses": {
-      "assigned":  "En mission",
+      "assigned": "En mission",
       "available": "Disponible",
-      "leave":     "Congé",
-      "partial":   "Partiel 50%"
+      "leave": "Congé",
+      "partial": "Partiel 50%"
     }
   },
   "conges": {
-    "title":      "Congés",
+    "title": "Congés",
     "breadcrumb": "// demandes & soldes",
-    "cta":        "+ Demande",
+    "cta": "+ Demande",
     "filters": {
-      "all":      "Toutes",
-      "pending":  "En attente",
+      "all": "Toutes",
+      "pending": "En attente",
       "approved": "Approuvées",
-      "refused":  "Refusées"
+      "refused": "Refusées"
     },
     "stats": {
-      "pending":   "En attente",
-      "approved":  "Approuvées",
-      "refused":   "Refusées",
+      "pending": "En attente",
+      "approved": "Approuvées",
+      "refused": "Refusées",
       "totalDays": "Jours posés"
     },
-    "toValidate":  "à valider",
-    "requests":    "Demandes",
-    "soldes":      "Soldes congés",
-    "noRequests":  "// aucune demande",
-    "approve":     "✓ Valider",
-    "refuse":      "✗",
-    "cpLeft":      "CP restants",
+    "toValidate": "à valider",
+    "requests": "Demandes",
+    "soldes": "Soldes congés",
+    "noRequests": "// aucune demande",
+    "approve": "✓ Valider",
+    "refuse": "✗",
+    "cpLeft": "CP restants",
     "types": {
-      "CP":         "Congé payé",
-      "RTT":        "RTT",
+      "CP": "Congé payé",
+      "RTT": "RTT",
       "Sans solde": "Sans solde"
     }
   },
   "projets": {
-    "title":      "Projets",
+    "title": "Projets",
     "breadcrumb": "// tous les projets",
-    "cta":        "+ Projet"
+    "cta": "+ Projet"
   },
   "disponibilites": {
-    "title":      "Disponibilités",
+    "title": "Disponibilités",
     "breadcrumb": "// planning semaine",
-    "cta":        "+ Bloquer"
+    "cta": "+ Bloquer",
+    "weekOf": "Semaine du",
+    "prevWeek": "← Semaine préc.",
+    "nextWeek": "Semaine suiv. →",
+    "today": "Auj.",
+    "legend": {
+      "free": "Libre",
+      "busy": "En mission",
+      "partial": "Partiel",
+      "leave": "Congé",
+      "weekend": "Weekend"
+    },
+    "days": {
+      "Mon": "Lun",
+      "Tue": "Mar",
+      "Wed": "Mer",
+      "Thu": "Jeu",
+      "Fri": "Ven",
+      "Sat": "Sam",
+      "Sun": "Dim"
+    },
+    "noData": "// aucune donnée",
+    "consultant": "Consultant"
   },
   "timeline": {
-    "title":      "Timeline",
+    "title": "Timeline",
     "breadcrumb": "// planning mensuel",
-    "cta":        "↓ Exporter"
+    "cta": "↓ Exporter"
   },
   "common": {
-    "day":     "jour",
-    "days":    "jours",
-    "consultant":  "consultant",
+    "day": "jour",
+    "days": "jours",
+    "consultant": "consultant",
     "consultants": "consultants"
   }
 }

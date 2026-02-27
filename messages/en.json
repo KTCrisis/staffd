@@ -1,133 +1,155 @@
 {
   "nav": {
-    "dashboard":      "Dashboard",
-    "consultants":    "Consultants",
+    "dashboard": "Dashboard",
+    "consultants": "Consultants",
     "disponibilites": "Availability",
-    "conges":         "Time Off",
-    "projets":        "Projects",
-    "timeline":       "Timeline",
-    "parametres":     "Settings",
-    "overview":       "Overview",
-    "team":           "Team",
-    "projects":       "Projects",
-    "admin":          "Admin"
+    "conges": "Time Off",
+    "projets": "Projects",
+    "timeline": "Timeline",
+    "parametres": "Settings",
+    "overview": "Overview",
+    "team": "Team",
+    "projects": "Projects",
+    "admin": "Admin"
   },
   "topbar": {
-    "search":  "Search...",
-    "sync":    "↻ Sync",
-    "new":     "+ New"
+    "search": "Search...",
+    "sync": "↻ Sync",
+    "new": "+ New"
   },
   "dashboard": {
-    "title":       "Dashboard",
-    "breadcrumb":  "// overview",
+    "title": "Dashboard",
+    "breadcrumb": "// overview",
     "kpi": {
       "activeConsultants": "Active consultants",
-      "activeProjects":    "Active projects",
-      "pendingLeaves":     "Pending time off",
-      "occupancyRate":     "Occupancy rate"
+      "activeProjects": "Active projects",
+      "pendingLeaves": "Pending time off",
+      "occupancyRate": "Occupancy rate"
     },
     "trends": {
-      "up":      "↑ +1 this month",
-      "stable":  "→ stable",
+      "up": "↑ +1 this month",
+      "stable": "→ stable",
       "warning": "⚠ needs review",
       "occupancy": "↑ +5% vs last month"
     },
-    "consultants":    "Consultants",
-    "seeAll":         "see all →",
-    "activity":       "Recent activity",
-    "calendar":       "Calendar",
+    "consultants": "Consultants",
+    "seeAll": "see all →",
+    "activity": "Recent activity",
+    "calendar": "Calendar",
     "activeProjects": "Active projects"
   },
   "consultants": {
-    "title":      "Consultants",
+    "title": "Consultants",
     "breadcrumb": "// team",
-    "cta":        "+ Consultant",
+    "cta": "+ Consultant",
     "filters": {
-      "all":       "All",
-      "assigned":  "On assignment",
+      "all": "All",
+      "assigned": "On assignment",
       "available": "Available",
-      "leave":     "On leave",
-      "partial":   "Partial"
+      "leave": "On leave",
+      "partial": "Partial"
     },
     "table": {
-      "name":      "Consultant",
-      "role":      "Role",
-      "project":   "Current project",
-      "status":    "Status",
+      "name": "Consultant",
+      "role": "Role",
+      "project": "Current project",
+      "status": "Status",
       "available": "Available from",
       "leaveDays": "Days left",
       "occupancy": "Occupancy"
     },
-    "export":    "↓ Export",
+    "export": "↓ Export",
     "noResults": "// no results",
-    "now":       "Now",
+    "now": "Now",
     "drawer": {
-      "label":     "// consultant profile",
-      "close":     "✕ Close",
-      "status":    "Status",
-      "project":   "Project",
+      "label": "// consultant profile",
+      "close": "✕ Close",
+      "status": "Status",
+      "project": "Project",
       "available": "Available",
       "leaveDays": "Days left",
       "occupancy": "Occupancy",
       "rateLabel": "Occupancy rate",
-      "edit":      "✏ Edit",
-      "history":   "📋 History"
+      "edit": "✏ Edit",
+      "history": "📋 History"
     },
     "statuses": {
-      "assigned":  "On assignment",
+      "assigned": "On assignment",
       "available": "Available",
-      "leave":     "On leave",
-      "partial":   "Partial 50%"
+      "leave": "On leave",
+      "partial": "Partial 50%"
     }
   },
   "conges": {
-    "title":      "Time Off",
+    "title": "Time Off",
     "breadcrumb": "// requests & balances",
-    "cta":        "+ Request",
+    "cta": "+ Request",
     "filters": {
-      "all":      "All",
-      "pending":  "Pending",
+      "all": "All",
+      "pending": "Pending",
       "approved": "Approved",
-      "refused":  "Refused"
+      "refused": "Refused"
     },
     "stats": {
-      "pending":   "Pending",
-      "approved":  "Approved",
-      "refused":   "Refused",
+      "pending": "Pending",
+      "approved": "Approved",
+      "refused": "Refused",
       "totalDays": "Days taken"
     },
-    "toValidate":  "to review",
-    "requests":    "Requests",
-    "soldes":      "Leave balances",
-    "noRequests":  "// no requests",
-    "approve":     "✓ Approve",
-    "refuse":      "✗",
-    "cpLeft":      "days left",
+    "toValidate": "to review",
+    "requests": "Requests",
+    "soldes": "Leave balances",
+    "noRequests": "// no requests",
+    "approve": "✓ Approve",
+    "refuse": "✗",
+    "cpLeft": "days left",
     "types": {
-      "CP":         "Paid leave",
-      "RTT":        "RTT",
+      "CP": "Paid leave",
+      "RTT": "RTT",
       "Sans solde": "Unpaid leave"
     }
   },
   "projets": {
-    "title":      "Projects",
+    "title": "Projects",
     "breadcrumb": "// all projects",
-    "cta":        "+ Project"
+    "cta": "+ Project"
   },
   "disponibilites": {
-    "title":      "Availability",
+    "title": "Availability",
     "breadcrumb": "// weekly schedule",
-    "cta":        "+ Block"
+    "cta": "+ Block",
+    "weekOf": "Week of",
+    "prevWeek": "← Prev week",
+    "nextWeek": "Next week →",
+    "today": "Today",
+    "legend": {
+      "free": "Free",
+      "busy": "On assignment",
+      "partial": "Partial",
+      "leave": "On leave",
+      "weekend": "Weekend"
+    },
+    "days": {
+      "Mon": "Mon",
+      "Tue": "Tue",
+      "Wed": "Wed",
+      "Thu": "Thu",
+      "Fri": "Fri",
+      "Sat": "Sat",
+      "Sun": "Sun"
+    },
+    "noData": "// no data",
+    "consultant": "Consultant"
   },
   "timeline": {
-    "title":      "Timeline",
+    "title": "Timeline",
     "breadcrumb": "// monthly schedule",
-    "cta":        "↓ Export"
+    "cta": "↓ Export"
   },
   "common": {
-    "day":         "day",
-    "days":        "days",
-    "consultant":  "consultant",
+    "day": "day",
+    "days": "days",
+    "consultant": "consultant",
     "consultants": "consultants"
   }
 }
