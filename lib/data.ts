@@ -113,11 +113,12 @@ export interface ProjectFinancials {
   id:                 string
   name:               string
   client:             string
-  tjm_vendu:          number
-  tjm_reel:           number
-  marge_par_jour:     number
-  marge_brute_totale: number
-  marge_pct:          number
+  tjm_vendu:          number | null
+  jours_vendus:       number | null
+  tjm_reel:           number | null
+  marge_par_jour:     number | null
+  marge_brute_totale: number | null
+  marge_pct:          number | null
   team_size:          number
 }
 

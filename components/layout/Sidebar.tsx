@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useAuthContext }  from '@/components/layout/AuthProvider'
 import { signOut }         from '@/lib/auth'
 import { useRouter }       from '@/lib/navigation'
+import { useEffect, useState } from 'react'
+import { supabase }        from '@/lib/supabase'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -26,6 +28,32 @@ export function Sidebar() {
     ? 'Consultant'
     : 'Viewer'
 
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    // Charger le nombre de congés en attente
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('leave_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      setPendingCount(count ?? 0)
+    }
+    fetchPending()
+
+    // Realtime : mise à jour automatique quand un congé change
+    const channel = supabase
+      .channel('leave_requests_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'leave_requests',
+      }, () => fetchPending())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
   const handleLogout = async () => {
     await signOut()
     router.push('/login' as never)
@@ -44,7 +72,7 @@ export function Sidebar() {
       items: [
         { label: t('consultants'),    icon: '◈', href: p('/consultants') },
         { label: t('disponibilites'), icon: '◫', href: p('/disponibilites') },
-        { label: t('conges'),         icon: '◷', href: p('/conges'), badge: 3 },
+        { label: t('conges'),         icon: '◷', href: p('/conges'), badge: pendingCount > 0 ? pendingCount : undefined },
       ],
     },
     {
@@ -56,7 +84,10 @@ export function Sidebar() {
     },
     {
       group: t('admin'),
-      items: [{ label: t('parametres'), icon: '◎', href: p('/parametres') }],
+      items: [
+        ...(user?.role === 'admin' ? [{ label: 'Finance', icon: '◈', href: p('/financier') }] : []),
+        { label: t('parametres'), icon: '◎', href: p('/parametres') },
+      ],
     },
   ]
 
