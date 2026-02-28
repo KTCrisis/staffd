@@ -1,4 +1,5 @@
 'use client'
+export const runtime = 'edge'
 
 import { useState, FormEvent } from 'react'
 import { useRouter }            from '@/lib/navigation'

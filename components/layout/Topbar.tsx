@@ -31,7 +31,7 @@ export function Topbar({ title, breadcrumb, ctaLabel, onCta }: TopbarProps) {
           {theme === 'dark' ? '☀ Light' : '☾ Dark'}
         </button>
 
-        <button className="btn btn-ghost">{t('sync')}</button>
+        <button className="btn btn-ghost" disabled style={{ opacity: 0.35, cursor: 'not-allowed' }} title="// coming soon">{t('sync')}</button>
 
         {onCta && (
           <button className="btn btn-primary" onClick={onCta}>{ctaLabel ?? t('new')}</button>
