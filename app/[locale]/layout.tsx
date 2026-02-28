@@ -1,10 +1,12 @@
 export const runtime = 'edge'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages }            from 'next-intl/server'
 import { ThemeProvider }          from '@/components/layout/ThemeProvider'
-import { AuthProvider }           from '@/components/layout/AuthProvider'
-import { Sidebar }                from '@/components/layout/Sidebar'
 import '@/styles/globals.css'
+
+import fr from '@/messages/fr.json'
+import en from '@/messages/en.json'
+
+const messages = { fr, en } as Record<string, Record<string, unknown>>
 
 export default async function LocaleLayout({
   children,
@@ -14,10 +16,9 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
-  const messages   = await getMessages()
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages[locale] ?? fr}>
       <ThemeProvider>
         {children}
       </ThemeProvider>
