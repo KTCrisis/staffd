@@ -1,5 +1,5 @@
-import { NextIntlClientProvider } from 'next-intl'
 export const runtime = 'edge'
+import { NextIntlClientProvider } from 'next-intl'
 import { getMessages }            from 'next-intl/server'
 import { ThemeProvider }          from '@/components/layout/ThemeProvider'
 import { AuthProvider }           from '@/components/layout/AuthProvider'
