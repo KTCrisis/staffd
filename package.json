@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "pages:build": "npx @opennextjs/cloudflare@latest build",
+    "pages:build": "next build && npx @opennextjs/cloudflare@latest build",
     "preview": "npm run pages:build && wrangler pages dev"
   },
   "dependencies": {
