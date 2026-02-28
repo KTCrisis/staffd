@@ -24,11 +24,15 @@ export async function signOut() {
 }
 
 // ── Utilisateur courant ───────────────────────────────────────
+// Utilise getUser() (vérification serveur) et lit le rôle depuis
+// app_metadata (non modifiable par l'utilisateur, réservé au service role)
 export async function getUser(): Promise<AuthUser | null> {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) return null
 
-  const role = (user.user_metadata?.user_role ?? 'viewer') as UserRole
+  // app_metadata est signé et non modifiable par l'utilisateur
+  // (à assigner via le service role ou le dashboard Supabase)
+  const role = (user.app_metadata?.user_role ?? 'viewer') as UserRole
 
   return {
     id:    user.id,
@@ -45,14 +49,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Récupérer la session initiale
     getUser().then(u => {
       setUser(u)
       setLoading(false)
     })
 
-    // Écouter les changements (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const u = await getUser()
         setUser(u)
@@ -69,7 +71,7 @@ export function useAuth() {
 }
 
 // ── Helpers de rôle ───────────────────────────────────────────
-export const isAdmin   = (role?: UserRole) => role === 'admin'
-export const isManager = (role?: UserRole) => role === 'admin' || role === 'manager'
-export const canEdit   = (role?: UserRole) => role === 'admin' || role === 'manager'
+export const isAdmin          = (role?: UserRole) => role === 'admin'
+export const isManager        = (role?: UserRole) => role === 'admin' || role === 'manager'
+export const canEdit          = (role?: UserRole) => role === 'admin' || role === 'manager'
 export const canViewFinancials = (role?: UserRole) => role === 'admin'
