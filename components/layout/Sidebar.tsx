@@ -60,7 +60,7 @@ export function Sidebar() {
   }
 
   // Préfixe selon la locale (fr = pas de préfixe, en = /en)
-  const p = (path: string) => locale === 'fr' ? path : `/${locale}${path}`
+  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const NAV = [
     {
@@ -71,22 +71,22 @@ export function Sidebar() {
       group: t('team'),
       items: [
         { label: t('consultants'),    icon: '◈', href: p('/consultants') },
-        { label: t('disponibilites'), icon: '◫', href: p('/disponibilites') },
-        { label: t('conges'),         icon: '◷', href: p('/conges'), badge: pendingCount > 0 ? pendingCount : undefined },
+        { label: t('disponibilites'), icon: '◫', href: p('/availability') },
+        { label: t('conges'),         icon: '◷', href: p('/leaves'), badge: pendingCount > 0 ? pendingCount : undefined },
       ],
     },
     {
       group: t('projects'),
       items: [
-        { label: t('projets'),  icon: '◧', href: p('/projets') },
+        { label: t('projets'), icon: '◧', href: p('/projects') },
         { label: t('timeline'), icon: '▤', href: p('/timeline') },
       ],
     },
     {
       group: t('admin'),
       items: [
-        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financier') }] : []),
-        { label: t('parametres'), icon: '◎', href: p('/parametres') },
+        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financials') },] : []),
+        { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     },
   ]

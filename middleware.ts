@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import createIntlMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
 
-const PUBLIC_PATHS = ['/login', '/en/login']
+const PUBLIC_PATHS = ['/login', '/fr/login'] 
 
 const intlMiddleware = createIntlMiddleware(routing)
 

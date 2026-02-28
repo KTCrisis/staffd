@@ -4,7 +4,7 @@ import { useState }             from 'react'
 import { useTranslations }      from 'next-intl'
 import { Topbar }               from '@/components/layout/Topbar'
 import { Panel, StatRow }       from '@/components/ui'
-import { AvailabilityGrid }     from '@/components/disponibilites/AvailabilityGrid'
+import { AvailabilityGrid }     from '@/components/availability/AvailabilityGrid'
 import { CONSULTANTS }          from '@/lib/mock'
 
 // Lundi de la semaine courante
