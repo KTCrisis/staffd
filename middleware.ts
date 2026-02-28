@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
-    const locale = pathname.startsWith('/en') ? '/en' : ''
+    const locale = pathname.startsWith('/fr') ? '/fr' : ''
     const loginUrl = new URL(`${locale}/login`, request.url)
     loginUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(loginUrl)
