@@ -85,7 +85,7 @@ export function Sidebar() {
     {
       group: t('admin'),
       items: [
-        ...(user?.role === 'admin' ? [{ label: '// Finances', icon: '$', href: p('/financier') }] : []),
+        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financier') }] : []),
         { label: t('parametres'), icon: '◎', href: p('/parametres') },
       ],
     },

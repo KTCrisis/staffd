@@ -84,7 +84,7 @@ export default function FinancierPage() {
   return (
     <>
       <Topbar
-        title="Financier"
+        title="Finances"
         breadcrumb="// vue marges & TJM — admin only"
       />
 
