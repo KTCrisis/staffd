@@ -229,5 +229,41 @@
     "days": "days",
     "consultant": "consultant",
     "consultants": "consultants"
+  },
+  "financials": {
+    "title": "Finances",
+    "breadcrumb": "// margins & rates — admin only",
+    "adminBadge": "🔒 Confidential data — Admin only",
+    "kpi": {
+      "totalCA": "Total potential revenue",
+      "totalCASub": "All active projects",
+      "totalMarge": "Total gross margin",
+      "avgMarge": "Average margin",
+      "bestMarge": "Best margin"
+    },
+    "health": {
+      "good": "✓ Healthy",
+      "watch": "⚠ Keep an eye on it",
+      "low": "⚠ Low margin"
+    },
+    "table": {
+      "title": "Project breakdown",
+      "project": "Project",
+      "client": "Client",
+      "tjmSold": "Sold rate",
+      "tjmReal": "Actual rate",
+      "margeDay": "Margin/day",
+      "margeGross": "Gross margin",
+      "margePct": "Margin %",
+      "team": "Team",
+      "noData": "// no projects with financial data",
+      "consultant": "consultant",
+      "consultants": "consultants"
+    },
+    "legend": {
+      "good": "Margin ≥ 20% — Good",
+      "watch": "Margin 10–20% — Watch",
+      "low": "Margin < 10% — Low"
+    }
   }
 }

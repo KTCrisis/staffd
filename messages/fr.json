@@ -229,5 +229,42 @@
     "days": "jours",
     "consultant": "consultant",
     "consultants": "consultants"
+  },
+  "financials": {
+    "title": "Finances",
+    "breadcrumb": "// vue marges & TJM — admin only",
+    "adminBadge": "🔒 Données confidentielles — Admin uniquement",
+    "kpi": {
+      "totalCA": "CA total potentiel",
+      "totalCASub": "Tous projets actifs",
+      "totalMarge": "Marge brute totale",
+      "avgMarge": "Marge moyenne",
+      "bestMarge": "Meilleure marge"
+    },
+    "health": {
+      "good": "✓ Bonne santé",
+      "watch": "⚠ À surveiller",
+      "low": "⚠ Marge faible"
+    },
+    "table": {
+      "title": "Détail par projet",
+      "project": "Projet",
+      "client": "Client",
+      "tjmSold": "TJM vendu",
+      "tjmReal": "TJM réel",
+      "margeDay": "Marge/jour",
+      "margeGross": "Marge brute",
+      "margePct": "Marge %",
+      "team": "Équipe",
+      "noData": "// aucun projet avec données financières",
+      "consultant": "consultant",
+      "consultants": "consultants"
+    },
+    "legend": {
+      "good": "Marge ≥ 20% — Bonne",
+      "watch": "Marge 10–20% — À surveiller",
+      "low": "Marge < 10% — Faible"
+    }
   }
+
 }
