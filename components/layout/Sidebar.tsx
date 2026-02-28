@@ -3,11 +3,33 @@
 import Link                from 'next/link'
 import { usePathname }     from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useAuthContext }  from '@/components/layout/AuthProvider'
+import { signOut }         from '@/lib/auth'
+import { useRouter }       from '@/lib/navigation'
 
 export function Sidebar() {
   const pathname = usePathname()
   const locale   = useLocale()
   const t        = useTranslations('nav')
+  const { user } = useAuthContext()
+  const router   = useRouter()
+
+  const initials = user?.email
+    ? user.email.slice(0, 2).toUpperCase()
+    : '??'
+
+  const roleLabel = user?.role === 'admin'
+    ? 'Admin'
+    : user?.role === 'manager'
+    ? 'Manager'
+    : user?.role === 'consultant'
+    ? 'Consultant'
+    : 'Viewer'
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push('/login' as never)
+  }
 
   // Préfixe selon la locale (fr = pas de préfixe, en = /en)
   const p = (path: string) => locale === 'fr' ? path : `/${locale}${path}`
@@ -66,11 +88,26 @@ export function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="user-card">
-          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11 }}>KT</div>
-          <div>
-            <div className="user-name">KTCrisis</div>
-            <div className="user-role">Admin · Manager</div>
+          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11 }}>{initials}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
+              {user?.email ?? '—'}
+            </div>
+            <div className="user-role">{roleLabel}</div>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Déconnexion"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text2)', fontSize: 14, padding: '2px 4px',
+              flexShrink: 0, transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--pink)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text2)')}
+          >
+            ⏻
+          </button>
         </div>
       </div>
     </aside>
