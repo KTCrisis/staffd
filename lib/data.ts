@@ -24,9 +24,13 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     currentProject: (row.project_names as string[] | null)?.[0] ?? undefined,
     leaveDaysLeft:  (row.leave_days_left as number) ?? 0,
     occupancyRate:  (row.occupancy_rate as number) ?? 0,
+    // nouveaux champs
+    email:          row.email as string | undefined,
+    tjm:            row.tjm as number | undefined,
+    stack:          row.stack as string[] | undefined,
+    leaveDaysTotal: row.leave_days_total as number | undefined,
   }
 }
-
 function toProject(row: Record<string, unknown>): Project {
   return {
     id:             row.id as string,
@@ -55,7 +59,7 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
 
 // ── Hook générique ────────────────────────────────────────────
 
-function useSupabase<T>(fetcher: () => Promise<T>) {
+function useSupabase<T>(fetcher: () => Promise<T>, deps: any[] = []) {
   const [data,    setData]    = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
@@ -66,14 +70,14 @@ function useSupabase<T>(fetcher: () => Promise<T>) {
       .then(d  => { setData(d); setError(null) })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, deps)
 
   return { data, loading, error }
 }
 
 // ── Consultants ───────────────────────────────────────────────
 
-export function useConsultants() {
+export function useConsultants(dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
       .from('consultant_occupancy')   // vue calculée
@@ -82,14 +86,14 @@ export function useConsultants() {
 
     if (error) throw new Error(error.message)
     return (data ?? []).map(toConsultant)
-  })
+  }, [dep])
 }
+
 
 // ── Projets ───────────────────────────────────────────────────
 
 export function useProjects() {
   return useSupabase(async () => {
-    // Jointure pour récupérer les IDs des consultants assignés
     const { data, error } = await supabase
       .from('projects')
       .select(`
@@ -174,8 +178,8 @@ export function useKpi(): { data: KpiData | null; loading: boolean; error: strin
     const projects    = projectsRes.data    ?? []
     const leaves      = leavesRes.data      ?? []
 
-    const active         = consultants.filter((c: any) => c.status !== 'leave')
-    const avgOccupancy   = active.length
+    const active       = consultants.filter((c: any) => c.status !== 'leave')
+    const avgOccupancy = active.length
       ? Math.round(active.reduce((s: any, c: any) => s + (c.occupancy_rate ?? 0), 0) / active.length)
       : 0
 
@@ -211,12 +215,12 @@ export function useActivity(limit = 10) {
   })
 }
 
-// ── Mutations ─────────────────────────────────────────────────
+// ── Mutations Leaves ─────────────────────────────────────────────────
 
 export async function approveLeave(id: string) {
   const { error } = await supabase
     .from('leave_requests')
-    .update({ status: status as any || 'approved', reviewed_at: new Date().toISOString() })
+    .update({ status: 'approved', reviewed_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw new Error(error.message)
 }
@@ -224,7 +228,55 @@ export async function approveLeave(id: string) {
 export async function refuseLeave(id: string) {
   const { error } = await supabase
     .from('leave_requests')
-    .update({ status: status as any || 'refused', reviewed_at: new Date().toISOString() })
+    .update({ status: 'refused', reviewed_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutations Consultant ─────────────────────────────────────────────────
+export async function createConsultant(data: {
+  name: string
+  initials: string
+  email?: string
+  role: string
+  avatar_color: string
+  stack: string[]
+  status: string
+  tjm?: number
+  leave_days_total?: number
+}) {
+  const { error } = await supabase
+    .from('consultants')
+    .insert({
+      ...data,
+      leave_days_taken: 0,
+      occupancy_rate:   0,
+    })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateConsultant(id: string, data: {
+  name?: string
+  initials?: string
+  email?: string
+  role?: string
+  avatar_color?: string
+  stack?: string[]
+  status?: string
+  tjm?: number
+  leave_days_total?: number
+}) {
+  const { error } = await supabase
+    .from('consultants')
+    .update(data)
+    .eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteConsultant(id: string) {
+  const { error } = await supabase
+    .from('consultants')
+    .delete()
     .eq('id', id)
   if (error) throw new Error(error.message)
 }

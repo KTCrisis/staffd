@@ -17,9 +17,14 @@ export interface Consultant {
   avatarColor: AvatarColor
   currentProject?: string
   currentProjectId?: string
-  availableFrom?: string       // ISO date string
+  availableFrom?: string
   leaveDaysLeft: number
-  occupancyRate: number        // 0-100
+  occupancyRate: number
+  // ── champs supplémentaires ──
+  email?: string
+  tjm?: number
+  stack?: string[]
+  leaveDaysTotal?: number
 }
 
 export interface Project {

@@ -8,7 +8,8 @@ import { Avatar }            from '@/components/ui/Avatar'
 import { Badge }             from '@/components/ui/Badge'
 import { ProgressBar }       from '@/components/ui/ProgressBar'
 import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
-import { useConsultants }    from '@/lib/data'
+import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
+import { useConsultants, deleteConsultant } from '@/lib/data'
 import type { ConsultantStatus, Consultant } from '@/types'
 
 function Skeleton({ h = 80 }: { h?: number }) {
@@ -16,13 +17,19 @@ function Skeleton({ h = 80 }: { h?: number }) {
 }
 
 export default function ConsultantsPage() {
-  const t = useTranslations('consultants')
+  const t       = useTranslations('consultants')
   const tCommon = useTranslations('common')
-  const { data: consultants, loading } = useConsultants()
 
-  const [filter,   setFilter]   = useState<ConsultantStatus | 'all'>('all')
-  const [search,   setSearch]   = useState('')
-  const [selected, setSelected] = useState<Consultant | null>(null)
+  const [filter,      setFilter]      = useState<ConsultantStatus | 'all'>('all')
+  const [search,      setSearch]      = useState('')
+  const [selected,    setSelected]    = useState<Consultant | null>(null)
+  const [showForm,    setShowForm]    = useState(false)
+  const [editTarget,  setEditTarget]  = useState<Consultant | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting,    setDeleting]    = useState(false)
+  const [refresh,     setRefresh]     = useState(0)
+
+  const { data: consultants, loading } = useConsultants(refresh)
 
   const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
     { label: t('filters.all'),       value: 'all' },
@@ -50,9 +57,31 @@ export default function ConsultantsPage() {
 
   const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
 
+  const handleSaved = () => setRefresh(r => r + 1)
+
+  const handleDelete = async () => {
+    if (!selected) return
+    setDeleting(true)
+    try {
+      await deleteConsultant(selected.id)
+      setSelected(null)
+      setConfirmDelete(false)
+      setRefresh(r => r + 1)
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} ctaLabel={t('cta')} onCta={() => {}} />
+      <Topbar
+        title={t('title')}
+        breadcrumb={t('breadcrumb')}
+        ctaLabel={t('cta')}
+        onCta={() => setShowForm(true)}
+      />
 
       <div className="app-content">
 
@@ -88,7 +117,7 @@ export default function ConsultantsPage() {
           }
         </Panel>
 
-        {/* Drawer */}
+        {/* Drawer — fiche consultant */}
         {selected && (
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, width: 360,
@@ -100,7 +129,7 @@ export default function ConsultantsPage() {
               <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
                 {t('drawer.label')}
               </span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)}>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); setConfirmDelete(false) }}>
                 {t('drawer.close')}
               </button>
             </div>
@@ -120,7 +149,10 @@ export default function ConsultantsPage() {
               { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
               { label: t('drawer.occupancy'), value: `${selected.occupancyRate}%` },
             ].map((row: any) => (
-              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+              <div key={row.label} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
+              }}>
                 <span style={{ color: 'var(--text2)' }}>{row.label}</span>
                 <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
               </div>
@@ -135,10 +167,66 @@ export default function ConsultantsPage() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 28 }}>
-              <button className="btn btn-primary" style={{ flex: 1 }}>{t('drawer.edit')}</button>
-              <button className="btn btn-ghost"   style={{ flex: 1 }}>{t('drawer.history')}</button>
+              <button
+                className="btn btn-primary" style={{ flex: 1 }}
+                onClick={() => { setEditTarget(selected); setSelected(null) }}
+              >
+                {t('drawer.edit')}
+              </button>
+              <button
+                className="btn btn-ghost" style={{ flex: 1, color: 'var(--pink)' }}
+                onClick={() => setConfirmDelete(true)}
+              >
+                ✕ Delete
+              </button>
             </div>
+
+            {/* Confirmation delete */}
+            {confirmDelete && (
+              <div style={{
+                marginTop: 20, padding: '14px 16px',
+                background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.25)',
+                borderRadius: 4,
+              }}>
+                <div style={{ fontSize: 11, color: 'var(--text)', marginBottom: 12 }}>
+                  Remove <strong>{selected.name}</strong> permanently?
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    className="btn btn-sm"
+                    style={{ flex: 1, background: 'var(--pink)', color: '#fff', border: 'none' }}
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? '...' : '✕ Confirm'}
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm" style={{ flex: 1 }}
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Formulaire création */}
+        {showForm && (
+          <ConsultantForm
+            onClose={() => setShowForm(false)}
+            onSaved={handleSaved}
+          />
+        )}
+
+        {/* Formulaire édition */}
+        {editTarget && (
+          <ConsultantForm
+            consultant={editTarget}
+            onClose={() => setEditTarget(null)}
+            onSaved={handleSaved}
+          />
         )}
 
       </div>
