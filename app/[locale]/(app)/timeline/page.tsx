@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useState }           from 'react'
 import { useTranslations }    from 'next-intl'
@@ -51,7 +50,7 @@ function buildMonthData(year: number, month: number) {
       }
 
       // Projet ?
-      const project = PROJECTS.find(p => p.consultantIds.includes(consultant.id) && p.status !== 'done')
+      const project = PROJECTS.find((p: any) => p.consultantIds.includes(consultant.id) && p.status !== 'done')
 
       if (consultant.status === 'partial') {
         cells.push({ type: 'partial', label: project?.name, isToday })
@@ -144,7 +143,7 @@ export default function TimelinePage() {
 
               {/* Labels jours */}
               <div className="tl-days">
-                {headerDays.map(d => (
+                {headerDays.map((d: any) => (
                   <div
                     key={d.num}
                     className={`tl-day-label${d.isToday ? ' today-col' : ''}`}
@@ -200,7 +199,7 @@ export default function TimelinePage() {
             { style: CELL_STYLE.partial, label: t('legend.partial') },
             { style: CELL_STYLE.weekend, label: t('legend.weekend') },
             { style: CELL_STYLE.free,    label: t('legend.free') },
-          ].map(item => (
+          ].map((item: any) => (
             <div key={item.label} className="legend-item">
               <div style={{
                 width: 14, height: 14, borderRadius: 2,

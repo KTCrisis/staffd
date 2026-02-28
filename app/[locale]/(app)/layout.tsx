@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import AppShell  from '@/components/layout/AppShell'
 import { ReactNode } from 'react'
 

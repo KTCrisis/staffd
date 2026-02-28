@@ -1,49 +1,60 @@
 'use client'
-
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
-import { useRouter }   from '@/lib/navigation'
-import { supabase }    from '@/lib/supabase'
+import { useRouter } from '@/lib/navigation'
 import type { AuthUser, UserRole } from '@/lib/auth'
 
 interface AuthContextValue {
-  user:    AuthUser | null
+  user: AuthUser | null
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextValue>({ user: null, loading: true })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router                = useRouter()
-  const [user,    setUser]    = useState<AuthUser | null>(null)
+  const router = useRouter()
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Récupérer la session existante directement depuis Supabase
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const role = (session.user.user_metadata?.user_role ?? 'viewer') as UserRole
-        setUser({ id: session.user.id, email: session.user.email ?? '', role })
-      } else {
-        setUser(null)
-      }
+    let sub: any = null
+
+    const timeout = setTimeout(() => {
+      setUser(null)
       setLoading(false)
+    }, 5000)
+
+    import('@/lib/supabase').then(({ createSupabaseClient }) => {
+      const supabase = createSupabaseClient()
+
+      supabase.auth.getSession().then(({ data: { session } }: any) => {
+        clearTimeout(timeout)
+        if (session?.user) {
+          const role = (session.user.user_metadata?.user_role ?? 'viewer') as UserRole
+          setUser({ id: session.user.id, email: session.user.email ?? '', role })
+        } else {
+          setUser(null)
+        }
+        setLoading(false)
+      })
+
+      const { data } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+        if (session?.user) {
+          const role = (session.user.user_metadata?.user_role ?? 'viewer') as UserRole
+          setUser({ id: session.user.id, email: session.user.email ?? '', role })
+        } else {
+          setUser(null)
+        }
+        setLoading(false)
+      })
+      sub = data.subscription
     })
 
-    // Écouter les changements (login / logout / refresh token)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const role = (session.user.user_metadata?.user_role ?? 'viewer') as UserRole
-        setUser({ id: session.user.id, email: session.user.email ?? '', role })
-      } else {
-        setUser(null)
-      }
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(timeout)
+      sub?.unsubscribe()
+    }
   }, [])
 
-  // Redirect si pas de session
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login' as never)

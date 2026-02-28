@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useState }             from 'react'
 import { useTranslations }      from 'next-intl'
@@ -45,10 +44,10 @@ export default function DisponibilitesPage() {
 
   // Stats semaine
   const stats = [
-    { value: CONSULTANTS.filter(c => c.status === 'assigned').length,  label: 'En mission',  color: 'var(--cyan)' },
-    { value: CONSULTANTS.filter(c => c.status === 'available').length, label: 'Disponibles', color: 'var(--green)' },
-    { value: CONSULTANTS.filter(c => c.status === 'leave').length,     label: 'En congé',    color: 'var(--gold)' },
-    { value: CONSULTANTS.filter(c => c.status === 'partial').length,   label: 'Partiel',     color: 'var(--purple)' },
+    { value: CONSULTANTS.filter((c: any) => c.status === 'assigned').length,  label: 'En mission',  color: 'var(--cyan)' },
+    { value: CONSULTANTS.filter((c: any) => c.status === 'available').length, label: 'Disponibles', color: 'var(--green)' },
+    { value: CONSULTANTS.filter((c: any) => c.status === 'leave').length,     label: 'En congé',    color: 'var(--gold)' },
+    { value: CONSULTANTS.filter((c: any) => c.status === 'partial').length,   label: 'Partiel',     color: 'var(--purple)' },
   ]
 
   return (
@@ -105,7 +104,7 @@ export default function DisponibilitesPage() {
             { cls: 'ac-partial', label: t('legend.partial'), color: 'var(--ac-partial-c)' },
             { cls: 'ac-leave',   label: t('legend.leave'),   color: 'var(--ac-leave-c)' },
             { cls: 'ac-weekend', label: t('legend.weekend'), color: 'var(--text2)' },
-          ].map(item => (
+          ].map((item: any) => (
             <div key={item.cls} className="legend-item">
               <div
                 className={`legend-dot ${item.cls}`}

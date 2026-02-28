@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useTranslations }  from 'next-intl'
 import { Topbar }           from '@/components/layout/Topbar'
@@ -22,7 +21,7 @@ export default function DashboardPage() {
   const { data: kpi,         loading: lkpi }         = useKpi()
   const { data: activity,    loading: lactivity }    = useActivity(5)
 
-  const activeProjects = projects?.filter(p => p.status === 'active').slice(0, 3) ?? []
+  const activeProjects = projects?.filter((p: any) => p.status === 'active').slice(0, 3) ?? []
 
   return (
     <>
@@ -33,7 +32,7 @@ export default function DashboardPage() {
         {/* KPIs */}
         <div className="kpi-grid">
           {lkpi || !kpi ? (
-            <>{[0,1,2,3].map(i => <Skeleton key={i} h={110} />)}</>
+            <>{[0,1,2,3].map((i: any) => <Skeleton key={i} h={110} />)}</>
           ) : (
             <>
               <KpiCard
@@ -73,7 +72,7 @@ export default function DashboardPage() {
           <Panel title={t('consultants')} action={{ label: t('seeAll'), onClick: () => {} }}>
             {lconsultants
               ? <Skeleton h={200} />
-              : consultants?.map(c => <ConsultantItem key={c.id} consultant={c} />)
+              : consultants?.map((c: any) => <ConsultantItem key={c.id} consultant={c} />)
             }
           </Panel>
 
@@ -94,7 +93,7 @@ export default function DashboardPage() {
           <div style={{ padding: '0 18px' }}>
             {lprojects
               ? <Skeleton h={120} />
-              : activeProjects.map(p => (
+              : activeProjects.map((p: any) => (
                   <ProjectRow key={p.id} project={p} consultants={consultants ?? []} />
                 ))
             }

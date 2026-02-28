@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useState }          from 'react'
 import { useTranslations }   from 'next-intl'
@@ -35,7 +34,7 @@ export default function ConsultantsPage() {
 
   const all = consultants ?? []
 
-  const visible = all.filter(c => {
+  const visible = all.filter((c: any) => {
     const matchFilter = filter === 'all' || c.status === filter
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
                      || c.role.toLowerCase().includes(search.toLowerCase())
@@ -43,10 +42,10 @@ export default function ConsultantsPage() {
   })
 
   const stats = [
-    { value: all.filter(c => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
-    { value: all.filter(c => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
-    { value: all.filter(c => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
-    { value: all.filter(c => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
+    { value: all.filter((c: any) => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
+    { value: all.filter((c: any) => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
+    { value: all.filter((c: any) => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
+    { value: all.filter((c: any) => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
   ]
 
   const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
@@ -60,7 +59,7 @@ export default function ConsultantsPage() {
         <StatRow stats={stats} />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          {FILTERS.map(f => (
+          {FILTERS.map((f: any) => (
             <button
               key={f.value}
               className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
@@ -120,7 +119,7 @@ export default function ConsultantsPage() {
               { label: t('drawer.available'), value: selected.availableFrom ? new Date(selected.availableFrom).toLocaleDateString() : t('now') },
               { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
               { label: t('drawer.occupancy'), value: `${selected.occupancyRate}%` },
-            ].map(row => (
+            ].map((row: any) => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
                 <span style={{ color: 'var(--text2)' }}>{row.label}</span>
                 <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>

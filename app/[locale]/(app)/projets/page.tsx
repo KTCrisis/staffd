@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useState }          from 'react'
 import { useTranslations }   from 'next-intl'
@@ -44,15 +43,15 @@ export default function ProjetsPage() {
     { label: t('filters.done'),     value: 'done' },
   ]
 
-  const visible = PROJECTS.filter(p => filter === 'all' || p.status === filter)
+  const visible = PROJECTS.filter((p: any) => filter === 'all' || p.status === filter)
 
   // Consultants assignés en tout (sans doublons)
   const assignedIds = new Set(PROJECTS.flatMap(p => p.consultantIds))
 
   const stats = [
-    { value: PROJECTS.filter(p => p.status === 'active').length,   label: t('stats.active'),      color: 'var(--green)' },
-    { value: PROJECTS.filter(p => p.status === 'starting').length, label: t('stats.starting'),    color: 'var(--cyan)' },
-    { value: PROJECTS.filter(p => p.status === 'done').length,     label: t('stats.done'),        color: 'var(--text2)' },
+    { value: PROJECTS.filter((p: any) => p.status === 'active').length,   label: t('stats.active'),      color: 'var(--green)' },
+    { value: PROJECTS.filter((p: any) => p.status === 'starting').length, label: t('stats.starting'),    color: 'var(--cyan)' },
+    { value: PROJECTS.filter((p: any) => p.status === 'done').length,     label: t('stats.done'),        color: 'var(--text2)' },
     { value: assignedIds.size,                                      label: t('stats.consultants'), color: 'var(--gold)' },
   ]
 
@@ -66,7 +65,7 @@ export default function ProjetsPage() {
 
         {/* Filtres */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {FILTERS.map(f => (
+          {FILTERS.map((f: any) => (
             <button
               key={f.value}
               className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
@@ -99,8 +98,8 @@ export default function ProjetsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visible.map(p => {
-                      const team = CONSULTANTS.filter(c => p.consultantIds.includes(c.id))
+                    {visible.map((p: any) => {
+                      const team = CONSULTANTS.filter((c: any) => p.consultantIds.includes(c.id))
                       return (
                         <tr key={p.id} onClick={() => setSelected(p)}>
                           <td>
@@ -109,7 +108,7 @@ export default function ProjetsPage() {
                           <td style={{ color: 'var(--text2)' }}>{p.client}</td>
                           <td>
                             <div style={{ display: 'flex', gap: -4 }}>
-                              {team.slice(0, 4).map(c => (
+                              {team.slice(0, 4).map((c: any) => (
                                 <div key={c.id} style={{ marginRight: -8 }}>
                                   <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                                 </div>
@@ -145,7 +144,7 @@ export default function ProjetsPage() {
 
         {/* Drawer */}
         {selected && (() => {
-          const team = CONSULTANTS.filter(c => selected.consultantIds.includes(c.id))
+          const team = CONSULTANTS.filter((c: any) => selected.consultantIds.includes(c.id))
           return (
             <div style={{
               position: 'fixed', top: 0, right: 0, bottom: 0, width: 380,
@@ -175,7 +174,7 @@ export default function ProjetsPage() {
                 { label: t('drawer.client'),   value: selected.client },
                 { label: t('drawer.status'),   value: <Badge variant={selected.status} /> },
                 { label: t('drawer.deadline'), value: <DeadlineChip date={selected.endDate} t={t} /> },
-              ].map(row => (
+              ].map((row: any) => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
                   <span style={{ color: 'var(--text2)' }}>{row.label}</span>
                   <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
@@ -199,7 +198,7 @@ export default function ProjetsPage() {
                   {t('drawer.team')} · {team.length} {t('drawer.teamCount')}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {team.map(c => (
+                  {team.map((c: any) => (
                     <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                       <div>

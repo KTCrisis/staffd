@@ -52,7 +52,7 @@ export function useAuth() {
     })
 
     // Écouter les changements (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const u = await getUser()
         setUser(u)

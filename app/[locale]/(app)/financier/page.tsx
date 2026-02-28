@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useTranslations }         from 'next-intl'
 import { Topbar }                  from '@/components/layout/Topbar'
@@ -75,10 +74,10 @@ export default function FinancierPage() {
   if (!user || user.role !== 'admin') return null
 
   // KPIs globaux
-  const totalCA       = projects?.reduce((s, p) => s + ((p.tjm_vendu ?? 0) * (p.jours_vendus ?? 0)), 0) ?? 0
-  const totalMarge    = projects?.reduce((s, p) => s + (p.marge_brute_totale ?? 0), 0) ?? 0
+  const totalCA       = projects?.reduce((s: any, p: any) => s + ((p.tjm_vendu ?? 0) * (p.jours_vendus ?? 0)), 0) ?? 0
+  const totalMarge    = projects?.reduce((s: any, p: any) => s + (p.marge_brute_totale ?? 0), 0) ?? 0
   const avgMargePct   = projects?.length
-    ? Math.round(projects.reduce((s, p) => s + (p.marge_pct ?? 0), 0) / projects.length)
+    ? Math.round(projects.reduce((s: any, p: any) => s + (p.marge_pct ?? 0), 0) / projects.length)
     : 0
   const bestProjet    = projects?.sort((a, b) => (b.marge_brute_totale ?? 0) - (a.marge_brute_totale ?? 0))[0]
 
@@ -105,7 +104,7 @@ export default function FinancierPage() {
         {/* KPIs */}
         <div className="kpi-grid" style={{ marginBottom: 24 }}>
           {loading ? (
-            <>{[0,1,2,3].map(i => <Skeleton key={i} h={100} />)}</>
+            <>{[0,1,2,3].map((i: any) => <Skeleton key={i} h={100} />)}</>
           ) : (
             <>
               <KpiFinancier
@@ -160,7 +159,7 @@ export default function FinancierPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {projects.map(p => {
+                  {projects.map((p: any) => {
                     const margeCouleur = (p.marge_pct ?? 0) >= 20
                       ? 'var(--green)'
                       : (p.marge_pct ?? 0) >= 10

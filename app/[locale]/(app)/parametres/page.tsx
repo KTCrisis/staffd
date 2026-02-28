@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 import { useTranslations } from 'next-intl'
 import { Topbar } from '@/components/layout/Topbar'
 

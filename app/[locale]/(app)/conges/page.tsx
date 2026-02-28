@@ -1,5 +1,4 @@
 'use client'
-export const runtime = 'edge'
 
 import { useState }                 from 'react'
 import { useTranslations }          from 'next-intl'
@@ -28,11 +27,11 @@ export default function CongesPage() {
   ]
 
   const all     = requests ?? []
-  const visible = all.filter(r => filter === 'all' || r.status === filter)
-  const pending  = all.filter(r => r.status === 'pending').length
-  const approved = all.filter(r => r.status === 'approved').length
-  const refused  = all.filter(r => r.status === 'refused').length
-  const totalDays = all.reduce((s, r) => s + r.days, 0)
+  const visible = all.filter((r: any) => filter === 'all' || r.status === filter)
+  const pending  = all.filter((r: any) => r.status === 'pending').length
+  const approved = all.filter((r: any) => r.status === 'approved').length
+  const refused  = all.filter((r: any) => r.status === 'refused').length
+  const totalDays = all.reduce((s: any, r: any) => s + r.days, 0)
 
   const stats = [
     { value: pending,   label: t('stats.pending'),   color: 'var(--gold)' },
@@ -60,7 +59,7 @@ export default function CongesPage() {
         <StatRow stats={stats} />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {FILTERS.map(f => (
+          {FILTERS.map((f: any) => (
             <button
               key={f.value}
               className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
@@ -84,7 +83,7 @@ export default function CongesPage() {
             {lreq
               ? <Skeleton h={200} />
               : visible.length > 0
-                ? visible.map(r => (
+                ? visible.map((r: any) => (
                     <LeaveRequestCard
                       key={r.id}
                       request={r}

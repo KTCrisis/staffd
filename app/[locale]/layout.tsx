@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { NextIntlClientProvider } from 'next-intl'
 import { ThemeProvider }          from '@/components/layout/ThemeProvider'
 import '@/styles/globals.css'
