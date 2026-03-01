@@ -8,6 +8,7 @@ export interface AuthUser {
   id:    string
   email: string
   role:  UserRole
+  companyId: string | null  
 }
 
 // ── Login ─────────────────────────────────────────────────────
@@ -35,9 +36,10 @@ export async function getUser(): Promise<AuthUser | null> {
   const role = (user.app_metadata?.user_role ?? 'viewer') as UserRole
 
   return {
-    id:    user.id,
-    email: user.email ?? '',
+    id:        user.id,
+    email:     user.email ?? '',
     role,
+    companyId: user.app_metadata?.company_id ?? null, 
   }
 }
 

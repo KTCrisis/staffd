@@ -10,6 +10,7 @@ export type AvatarColor = 'green' | 'pink' | 'cyan' | 'gold' | 'purple'
 
 export interface Consultant {
   id: string
+  user_id?: string | null
   name: string
   initials: string
   role: string

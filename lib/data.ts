@@ -15,6 +15,7 @@ import type { Consultant, Project, Client, LeaveRequest, KpiData, ActivityItem }
 function toConsultant(row: Record<string, unknown>): Consultant {
   return {
     id:             row.id as string,
+    user_id:        row.user_id as string | null,
     name:           row.name as string,
     initials:       row.initials as string,
     role:           row.role as string,

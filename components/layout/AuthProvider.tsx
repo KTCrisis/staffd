@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Rôle depuis app_metadata (non modifiable par l'utilisateur)
         const role = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
-        setUser({ id: supaUser.id, email: supaUser.email ?? '', role })
+        setUser({ id: supaUser.id, email: supaUser.email ?? '', role, companyId: supaUser.app_metadata?.company_id ?? null })
       } catch (error) {
         console.error('Auth error:', error)
         setUser(null)
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const role = (session.user.app_metadata?.user_role ?? 'viewer') as UserRole
-        setUser({ id: session.user.id, email: session.user.email ?? '', role })
+        setUser({ id: session.user.id, email: session.user.email ?? '', role, companyId: session.user.app_metadata?.company_id ?? null })
       } else {
         setUser(null)
       }

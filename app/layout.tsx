@@ -7,6 +7,7 @@ export const metadata: Metadata = {
     'agentic staffing platform',
     'resource management AI',
     'PSA software',
+    'Professional Services SaaS',
     'Digital Services SaaS',
     'Design Agency SaaS',
     'Marketing Agency SaaS',    

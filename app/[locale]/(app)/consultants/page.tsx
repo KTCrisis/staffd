@@ -2,6 +2,7 @@
 
 import { useState }          from 'react'
 import { useTranslations }   from 'next-intl'
+import { useAuthContext }    from '@/components/layout/AuthProvider'
 import { Topbar }            from '@/components/layout/Topbar'
 import { Panel, StatRow }    from '@/components/ui'
 import { Avatar }            from '@/components/ui/Avatar'
@@ -19,15 +20,20 @@ function Skeleton({ h = 80 }: { h?: number }) {
 export default function ConsultantsPage() {
   const t       = useTranslations('consultants')
   const tCommon = useTranslations('common')
+  const { user } = useAuthContext()
 
-  const [filter,      setFilter]      = useState<ConsultantStatus | 'all'>('all')
-  const [search,      setSearch]      = useState('')
-  const [selected,    setSelected]    = useState<Consultant | null>(null)
-  const [showForm,    setShowForm]    = useState(false)
-  const [editTarget,  setEditTarget]  = useState<Consultant | null>(null)
+  const [filter,        setFilter]        = useState<ConsultantStatus | 'all'>('all')
+  const [search,        setSearch]        = useState('')
+  const [selected,      setSelected]      = useState<Consultant | null>(null)
+  const [showForm,      setShowForm]      = useState(false)
+  const [editTarget,    setEditTarget]    = useState<Consultant | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting,    setDeleting]    = useState(false)
-  const [refresh,     setRefresh]     = useState(0)
+  const [deleting,      setDeleting]      = useState(false)
+  const [refresh,       setRefresh]       = useState(0)
+
+  // ── Invite state ──────────────────────────────────────────
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteStatus,  setInviteStatus]  = useState<'idle' | 'sent' | 'already' | 'error'>('idle')
 
   const { data: consultants, loading } = useConsultants(refresh)
 
@@ -74,6 +80,40 @@ export default function ConsultantsPage() {
     }
   }
 
+  // ── Invite handler ─────────────────────────────────────────
+  const handleInvite = async () => {
+    if (!selected?.email) return
+    setInviteLoading(true)
+    setInviteStatus('idle')
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consultantId: selected.id,
+          email:        selected.email,
+          companyId: user?.companyId,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      setInviteStatus(json.alreadyExisted ? 'already' : 'sent')
+      setRefresh(r => r + 1) // recharge pour afficher user_id à jour
+    } catch {
+      setInviteStatus('error')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  const closeDrawer = () => {
+    setSelected(null)
+    setConfirmDelete(false)
+    setInviteStatus('idle')
+  }
+
+  const isAdmin = user?.role === 'admin'
+
   return (
     <>
       <Topbar
@@ -110,14 +150,14 @@ export default function ConsultantsPage() {
           {loading
             ? <div style={{ padding: 18 }}><Skeleton h={200} /></div>
             : visible.length > 0
-              ? <ConsultantTable consultants={visible} onSelect={setSelected} />
+              ? <ConsultantTable consultants={visible} onSelect={c => { setSelected(c); setInviteStatus('idle') }} />
               : <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
                   {t('noResults')}
                 </div>
           }
         </Panel>
 
-        {/* Drawer — fiche consultant */}
+        {/* ── Drawer — fiche consultant ── */}
         {selected && (
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, width: 360,
@@ -125,15 +165,17 @@ export default function ConsultantsPage() {
             zIndex: 200, padding: 28, overflowY: 'auto',
             boxShadow: '-4px 0 20px var(--shadow)',
           }}>
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
               <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
                 {t('drawer.label')}
               </span>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); setConfirmDelete(false) }}>
+              <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>
                 {t('drawer.close')}
               </button>
             </div>
 
+            {/* Avatar + nom */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
               <Avatar initials={selected.initials} color={selected.avatarColor} size="md" />
               <div>
@@ -142,6 +184,7 @@ export default function ConsultantsPage() {
               </div>
             </div>
 
+            {/* Données */}
             {[
               { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
               { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
@@ -158,6 +201,7 @@ export default function ConsultantsPage() {
               </div>
             ))}
 
+            {/* Taux d'occupation */}
             <div style={{ marginTop: 20 }}>
               <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
                 {t('drawer.rateLabel')}
@@ -166,7 +210,64 @@ export default function ConsultantsPage() {
               <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 28 }}>
+            {/* ── Section accès compte (admin uniquement) ── */}
+            {isAdmin && (
+              <div style={{
+                marginTop: 24,
+                paddingTop: 20,
+                borderTop: '1px solid var(--border)',
+              }}>
+                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 12 }}>
+                  // account access
+                </div>
+
+                {(selected as any).user_id ? (
+                  /* Compte déjà lié */
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16, color: 'var(--green)' }}>●</span>
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text)', fontWeight: 600 }}>Account linked</div>
+                      <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Pas encore de compte */
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontSize: 16, color: 'var(--text2)' }}>○</span>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text2)' }}>No account yet</div>
+                        <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                          {selected.email ?? <span style={{ color: 'var(--pink)' }}>No email on file</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      className="btn btn-ghost"
+                      style={{
+                        width: '100%',
+                        borderColor: 'var(--cyan)',
+                        color: 'var(--cyan)',
+                        opacity: (!selected.email || inviteLoading) ? 0.5 : 1,
+                      }}
+                      onClick={handleInvite}
+                      disabled={!selected.email || inviteLoading}
+                      title={!selected.email ? 'Add an email to this consultant first' : ''}
+                    >
+                      {inviteLoading ? '⏳ Sending...' : '✉ Send Invite'}
+                    </button>
+
+                    {inviteStatus === 'sent'    && <p style={{ fontSize: 11, color: 'var(--green)',  marginTop: 8 }}>✓ Invite sent to {selected.email}</p>}
+                    {inviteStatus === 'already' && <p style={{ fontSize: 11, color: 'var(--gold)',   marginTop: 8 }}>⚠ Account existed — role updated</p>}
+                    {inviteStatus === 'error'   && <p style={{ fontSize: 11, color: 'var(--pink)',   marginTop: 8 }}>✗ Error — check the email address</p>}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Boutons Edit / Delete */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
               <button
                 className="btn btn-primary" style={{ flex: 1 }}
                 onClick={() => { setEditTarget(selected); setSelected(null) }}
