@@ -341,7 +341,7 @@ export default function DocsPage() {
               <span className="cursor">_</span>
             </h1>
             <p className="hero-sub">
-              staffd centralises consultant management for{' '}
+              <Staffd /> centralises consultant management for{' '}
               <b>staffing agencies and consulting firms</b>.
               One platform for availability, project assignments,
               time-off, and financial margins.
@@ -355,9 +355,9 @@ export default function DocsPage() {
 
           {/* Intro Block */}
           <div className="intro-block reveal">
-            <div className="block-label">// what is staffd</div>
+            <div className="block-label">// what is <Staffd /></div>
             <p>
-              staffd replaces spreadsheets and fragmented tools with a fast, role-aware interface.
+              <Staffd />replaces spreadsheets and fragmented tools with a fast, role-aware interface.
               It gives operations and project managers a single source of truth for{' '}
               <span style={{ color:'var(--green)' }}>consultant availability</span>,{' '}
               <span style={{ color:'var(--cyan)' }}>project staffing</span>, and{' '}
@@ -489,7 +489,7 @@ export default function DocsPage() {
               </div>
               
               <p className="role-desc">
-                We are prototyping an <b>intelligence layer</b> that exposes staffd data directly to LLMs (Claude, GPT) via the MCP protocol. 
+                We are prototyping an <b>intelligence layer</b> that exposes <Staffd /> data directly to LLMs (Claude, GPT) via the MCP protocol. 
                 This enables natural language interactions while enforcing your existing security rules.
               </p>
 
@@ -524,7 +524,7 @@ export default function DocsPage() {
             <SectionHeader num="05" title="Glossary" />
             <div className="glossary-wrap reveal">
               {[
-                ['Tenant',           'A company using staffd (e.g. NexDigital).'],
+                ['Tenant',           'A company using <Staffd /> (e.g. MyCompany).'],
                 ['Consultant',       'A team member, billable or not.'],
                 ['Client',           'An external company the firm sells services to.'],
                 ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
@@ -587,7 +587,7 @@ export default function DocsPage() {
 
           <div className="doc-footer reveal">
             <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
-              staffd · built on cloudflare · beta 2026
+              <Staffd />· built on cloudflare · beta 2026
             </span>
             <Link href="/login" className="doc-footer-cta">→ sign in</Link>
           </div>
