@@ -417,7 +417,6 @@ export interface AssignmentWithConsultant {
   allocation:  number
   startDate?:  string
   endDate?:    string
-  // Champs consultants joinés
   name:        string
   initials:    string
   role:        string
