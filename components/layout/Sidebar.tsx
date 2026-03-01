@@ -15,6 +15,7 @@ export function Sidebar() {
   const t        = useTranslations('nav')
   const { user } = useAuthContext()
   const router   = useRouter()
+  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager'
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
@@ -71,7 +72,7 @@ export function Sidebar() {
       items: [
         { label: t('consultants'),    icon: '◈', href: p('/consultants') },
         { label: t('disponibilites'), icon: '◫', href: p('/availability') },
-        { label: t('conges'),         icon: '◷', href: p('/leaves'), badge: pendingCount > 0 ? pendingCount : undefined },
+        { label: t('conges'),         icon: '◷', href: p('/leaves'), badge: (isAdminOrManager) && pendingCount > 0 ? pendingCount : undefined},
       ],
     },
     {
