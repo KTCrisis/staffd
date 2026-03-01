@@ -147,7 +147,7 @@ function WfStep({ n, label, desc, last }: { n: number; label: string; desc: stri
 
 const Staff7 = () => (
   <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
-    staff<span style={{ color: 'var(--green)' }}>d</span>
+    staff<span style={{ color: 'var(--green)' }}>7</span>
   </span>
 );
 
@@ -303,7 +303,7 @@ export default function DocsPage() {
       <nav className="doc-nav">
         <div style={{ display:'flex', alignItems:'center' }}>
           <Link href="/login" className="nav-logo">
-            <span className="s">staff</span><span className="d">d</span>
+            <span className="s">staff</span><span className="d">7</span>
           </Link>
           <span className="nav-tag">// docs</span>
         </div>

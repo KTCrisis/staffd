@@ -1,12 +1,12 @@
-# Staffd — Product Documentation
+# staff7 — Product Documentation
 
 > Consultant resource management platform for staffing agencies and consulting firms
 
 ---
 
-## What is Staffd?
+## What is staff7?
 
-Staffd is a SaaS application built for **staffing agencies and consulting firms** to manage their consultant teams. It centralises in one place:
+staff7 is a SaaS application built for **staffing agencies and consulting firms** to manage their consultant teams. It centralises in one place:
 
 - **Consultant management** (profiles, skills, availability)
 - **Project tracking** and assignments
@@ -14,7 +14,7 @@ Staffd is a SaaS application built for **staffing agencies and consulting firms*
 - **Financial visibility** (daily rates, margins, revenue)
 - **Timeline** and weekly availability views
 
-Staffd is multi-tenant: each company has its own isolated workspace with its own data.
+staff7 is multi-tenant: each company has its own isolated workspace with its own data.
 
 ---
 
@@ -34,7 +34,7 @@ Staffd is multi-tenant: each company has its own isolated workspace with its own
 
 ### 👤 Admin
 
-The admin has a complete view of the company. They configure and operate Staffd.
+The admin has a complete view of the company. They configure and operate staff7.
 
 #### On login
 
@@ -268,7 +268,7 @@ where email = 'admin@company.com';
 
 | Term | Definition |
 |------|------------|
-| **Tenant** | A company using Staffd (e.g. NexDigital) |
+| **Tenant** | A company using staff7 (e.g. NexDigital) |
 | **Consultant** | A team member, billable or not |
 | **Client** | An external company the firm sells services to |
 | **Internal project** | A non-billable project (R&D, training, pre-sales) |

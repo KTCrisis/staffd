@@ -19,12 +19,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Apply theme to <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('staffd-theme', theme)
+    localStorage.setItem('-theme', theme)
   }, [theme])
 
   // Restore persisted theme on mount
   useEffect(() => {
-    const saved = localStorage.getItem('staffd-theme') as Theme | null
+    const saved = localStorage.getItem('-theme') as Theme | null
     if (saved === 'light' || saved === 'dark') setTheme(saved)
   }, [])
 

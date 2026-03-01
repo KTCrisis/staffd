@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fontFamily: 'monospace',
       }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: '#fff' }}>
-          staff<span style={{ color: '#00ff00' }}>d</span>
+          staff<span style={{ color: '#00ff00' }}>7</span>
         </div>
         <div style={{ fontSize: 10, color: '#666', letterSpacing: 3 }}>
           // initialisation_session...

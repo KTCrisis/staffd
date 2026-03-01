@@ -78,7 +78,7 @@ export default function LoginPage() {
             letterSpacing: -1, marginBottom: 6,
           }}>
             <span style={{ color: '#fff' }}>staff</span>
-            <span style={{ color: 'var(--green)' }}>d</span>
+            <span style={{ color: 'var(--green)' }}>7</span>
           </div>
           <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 3, textTransform: 'uppercase' }}>
             // consultant manager
@@ -106,7 +106,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="admin@staffd.io"
+              placeholder="admin@staff7.io"
               autoComplete="email"
               style={{
                 width: '100%', padding: '10px 14px',
