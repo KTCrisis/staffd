@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import createIntlMiddleware from 'next-intl/middleware'
 import { routing } from './i18n/routing'
 
-// Segments racines publics (sans locale)
+// Segments publics (sans préfixe de locale)
 const PUBLIC_SEGMENTS = ['login', 'docs']
 
 const intlMiddleware = createIntlMiddleware(routing)
@@ -12,11 +12,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // 1. Détection route publique (indépendante de la locale)
-  // Avec localePrefix: 'as-needed' + defaultLocale: 'fr' :
-  //   - /docs      → français (pas de préfixe)
-  //   - /en/docs   → anglais
-  //   - /fr/docs   → n'existe JAMAIS (fr est la locale par défaut, pas de préfixe)
-  const pathWithoutLocale = pathname.replace(/^\/(en)/, '') || '/'
+  // localePrefix: 'as-needed' + defaultLocale: 'en' :
+  //   - /docs       → anglais (pas de préfixe, locale par défaut)
+  //   - /fr/docs    → français
+  //   - /en/docs    → n'existe JAMAIS (en est la locale par défaut)
+  const pathWithoutLocale = pathname.replace(/^\/(fr)/, '') || '/'
 
   const isPublic = PUBLIC_SEGMENTS.some(segment =>
     pathWithoutLocale === `/${segment}` || pathWithoutLocale.startsWith(`/${segment}/`)
@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
     return intlMiddleware(request)
   }
 
-  // 2. Initialisation Supabase pour les routes protégées
+  // 2. Supabase SSR — pattern officiel
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -50,18 +50,24 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
-    // localePrefix: 'as-needed' → seul /en existe comme préfixe explicite
-    const localePrefix = pathname.startsWith('/en') ? '/en' : ''
+    // defaultLocale: 'en' → seul /fr existe comme préfixe explicite
+    const localePrefix = pathname.startsWith('/fr') ? '/fr' : ''
     const loginUrl = new URL(`${localePrefix}/login`, request.url)
     loginUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // 4. Session valide → intl middleware + transfert cookies Supabase
+  // 4. Session valide → intl + transfert COMPLET des cookies Supabase
+  // ⚠️ Sans les options (secure, httpOnly, sameSite, path), iOS Safari
+  // rejette les cookies → session perdue → redirect loop sur mobile
   const intlResponse = intlMiddleware(request)
 
   supabaseResponse.cookies.getAll().forEach(cookie => {
-    intlResponse.cookies.set(cookie.name, cookie.value)
+    intlResponse.cookies.set({
+      name: cookie.name,
+      value: cookie.value,
+      ...supabaseResponse.cookies.get(cookie.name),
+    })
   })
 
   return intlResponse
