@@ -2,14 +2,14 @@
 
 /**
  * app/[locale]/docs/page.tsx
- * Page publique — pas dans (app), accessible sans auth à /docs
- * Thème flux7.art exact : JetBrains Mono, particles, scanlines, 01 //
+ * Page publique — accessible sans auth à /docs
+ * Thème flux7.art : JetBrains Mono, particles, scanlines, multi-roles
  */
 
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 
-// ── Particle canvas ───────────────────────────────────────────
+// ── Particle canvas (Background) ───────────────────────────────────────────
 
 function ParticleCanvas() {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -50,7 +50,7 @@ function ParticleCanvas() {
   return <canvas ref={ref} style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }} />
 }
 
-// ── Scroll reveal ────────────────────────────────────────────
+// ── Hooks ──────────────────────────────────────────────────────────────────
 
 function useReveal() {
   useEffect(() => {
@@ -62,12 +62,10 @@ function useReveal() {
   }, [])
 }
 
-// ── TOC scroll spy ───────────────────────────────────────────
-
 function useTocSpy() {
   useEffect(() => {
     const links = document.querySelectorAll('.toc-link')
-    const ids = ['overview','roles','admin','manager','consultant','workflows','access','glossary']
+    const ids = ['overview','roles','workflows','access','ai','glossary']
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -81,12 +79,12 @@ function useTocSpy() {
   }, [])
 }
 
-// ── Sub-components ────────────────────────────────────────────
+// ── Components ─────────────────────────────────────────────────────────────
 
-function SectionHeader({ num, title, id }: { num: string; title: string; id?: string }) {
+function SectionHeader({ num, title, id, color }: { num: string; title: string; id?: string, color?: string }) {
   return (
     <div id={id} className="section-header reveal" style={{ scrollMarginTop: 80 }}>
-      <span className="section-num">{num} //</span>
+      <span className="section-num" style={color ? { color } : {}}>{num} //</span>
       <h2 className="section-title">{title}</h2>
       <div className="section-line" />
     </div>
@@ -94,7 +92,7 @@ function SectionHeader({ num, title, id }: { num: string; title: string; id?: st
 }
 
 function RoleCard({ role, who, accent, desc, can, cant }: {
-  role: string; who: string; accent: 'green' | 'cyan' | 'gold'
+  role: string; who: string; accent: 'green' | 'cyan' | 'gold' | 'pink'
   desc: string; can: string[]; cant?: string[]
 }) {
   return (
@@ -145,7 +143,7 @@ function WfStep({ n, label, desc, last }: { n: number; label: string; desc: stri
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function DocsPage() {
   useReveal()
@@ -228,11 +226,15 @@ export default function DocsPage() {
         .role-card.green:hover{border-color:rgba(0,255,136,0.3);}.role-card.green:hover::before{background:var(--green);}
         .role-card.cyan:hover{border-color:rgba(0,229,255,0.3);}.role-card.cyan:hover::before{background:var(--cyan);}
         .role-card.gold:hover{border-color:rgba(255,209,102,0.3);}.role-card.gold:hover::before{background:var(--gold);}
+        .role-card.pink:hover{border-color:rgba(255,45,107,0.3);}.role-card.pink:hover::before{background:var(--pink);}
+        
         .role-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
         .role-badge{font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:2px 10px;border-radius:2px;}
         .role-badge.green{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
         .role-badge.cyan{background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid rgba(0,229,255,0.3);}
         .role-badge.gold{background:rgba(255,209,102,0.1);color:var(--gold);border:1px solid rgba(255,209,102,0.3);}
+        .role-badge.pink{background:rgba(255,45,107,0.1);color:var(--pink);border:1px solid rgba(255,45,107,0.3);}
+        
         .role-who{font-size:10px;color:var(--text2);}
         .role-desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:20px;}
         .can-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
@@ -299,17 +301,14 @@ export default function DocsPage() {
           <span className="nav-tag">// docs</span>
         </div>
         <ul className="nav-links">
-          {['overview','roles','workflows','access','glossary'].map(s => (
+          {['overview','roles','workflows','access','ai','glossary'].map(s => (
             <li key={s}><a href={`#${s}`}>{s}</a></li>
           ))}
           <li><Link href="/login" className="nav-cta">sign in →</Link></li>
         </ul>
       </nav>
 
-      {/* ── Layout ── */}
       <div className="layout">
-
-        {/* Sidebar TOC */}
         <aside>
           <div className="toc-label">// contents</div>
           <a href="#overview"   className="toc-link active">Overview</a>
@@ -319,12 +318,11 @@ export default function DocsPage() {
           <a href="#consultant" className="toc-link sub">→ Consultant</a>
           <a href="#workflows"  className="toc-link">Workflows</a>
           <a href="#access"     className="toc-link">Data access</a>
+          <a href="#ai"         className="toc-link">Agentic AI <span style={{ fontSize: 8, color: 'var(--pink)', marginLeft: 4 }}>[WIP]</span></a>
           <a href="#glossary"   className="toc-link">Glossary</a>
         </aside>
 
-        {/* Main */}
         <main>
-
           {/* Hero */}
           <section id="overview">
             <div className="hero-tag">
@@ -348,7 +346,7 @@ export default function DocsPage() {
             </div>
           </section>
 
-          {/* What is Staffd */}
+          {/* Intro Block */}
           <div className="intro-block reveal">
             <div className="block-label">// what is staffd</div>
             <p>
@@ -361,11 +359,10 @@ export default function DocsPage() {
             </p>
           </div>
 
-          {/* ── Roles ── */}
+          {/* ── Section 01: Roles ── */}
           <section style={{ marginBottom: 80 }}>
             <SectionHeader num="01" title="Roles" id="roles" />
 
-            {/* Admin */}
             <div id="admin" style={{ scrollMarginTop: 80 }}>
               <RoleSep label="→ admin" color="var(--cyan)" who="CEO · Director" />
               <RoleCard role="admin" who="Full access including financials" accent="cyan"
@@ -377,12 +374,10 @@ export default function DocsPage() {
                   'Assign consultants to projects with allocation %',
                   'Approve or refuse time-off requests',
                   'Access /financials — margins, sold rates, gross margin per project',
-                  'Full team timeline and weekly availability grid',
                 ]}
               />
             </div>
 
-            {/* Manager */}
             <div id="manager" style={{ scrollMarginTop: 80 }}>
               <RoleSep label="→ manager" color="var(--green)" who="Project manager · HR" />
               <RoleCard role="manager" who="Operational access — no financials" accent="green"
@@ -402,7 +397,6 @@ export default function DocsPage() {
               />
             </div>
 
-            {/* Consultant */}
             <div id="consultant" style={{ scrollMarginTop: 80 }}>
               <RoleSep label="→ consultant" color="var(--gold)" who="Team member" />
               <RoleCard role="consultant" who="Own data only" accent="gold"
@@ -412,40 +406,38 @@ export default function DocsPage() {
                   'See their current and upcoming project assignments',
                   'Submit time-off requests',
                   'View the team timeline',
-                  'Check leave balance',
                 ]}
                 cant={[
                   "See other consultants' profiles or data",
                   'Create or edit projects or clients',
                   'Access /financials or any financial data',
-                  'Approve time-off requests',
                 ]}
               />
             </div>
           </section>
 
-          {/* ── Workflows ── */}
+          {/* ── Section 02: Workflows ── */}
           <section id="workflows" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="02" title="Workflows" />
             <div className="workflow-grid reveal">
               <div className="workflow-card">
                 <div className="workflow-title">// time-off request</div>
-                <WfStep n={1} label="Consultant submits a request"   desc="Selects type (Paid leave, RTT, Unpaid), dates, and number of days." />
-                <WfStep n={2} label="Appears in /leaves as Pending"  desc="Red badge in the sidebar shows count of pending requests." />
-                <WfStep n={3} label="Manager or Admin reviews"       desc='Sees any impact — e.g. "DataLake project affected — 1 dev missing week 11".' />
-                <WfStep n={4} label="Approve ✓ or Refuse ✗"          desc="One click. Status updates immediately. Email notification coming soon." last />
+                <WfStep n={1} label="Consultant submits a request"    desc="Selects type, dates, and number of days." />
+                <WfStep n={2} label="Appears in /leaves as Pending"   desc="Red badge in the sidebar shows count of pending requests." />
+                <WfStep n={3} label="Manager or Admin reviews"       desc="Reviews impact on projects." />
+                <WfStep n={4} label="Approve ✓ or Refuse ✗"           desc="Status updates immediately." last />
               </div>
               <div className="workflow-card">
                 <div className="workflow-title">// staffing a project</div>
-                <WfStep n={1} label="Create the client"       desc="If new — add name, sector, and contact details in /clients." />
-                <WfStep n={2} label="Create the project"      desc="Select the client from the list. Fill in dates, status, financial data." />
-                <WfStep n={3} label="Assign consultants"      desc="Project drawer → Team section → + Assign. Set dates and allocation %." />
-                <WfStep n={4} label="Track in real time"      desc="Occupancy updates automatically. Monitor margins in /financials (admin only)." last />
+                <WfStep n={1} label="Create the client"       desc="Add name, sector, and contact details." />
+                <WfStep n={2} label="Create the project"      desc="Fill in dates, status, and financial data." />
+                <WfStep n={3} label="Assign consultants"      desc="Set dates and allocation % in the project drawer." />
+                <WfStep n={4} label="Track in real time"      desc="Monitor occupancy and margins." last />
               </div>
             </div>
           </section>
 
-          {/* ── Data access ── */}
+          {/* ── Section 03: Data Access ── */}
           <section id="access" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="03" title="Data access" />
             <div className="data-table-wrap reveal">
@@ -465,17 +457,13 @@ export default function DocsPage() {
                     ['Daily rates (TJM)',   '✓',      '✗',               '✗'],
                     ['Project list',        '✓ All',  '✓ All',           '✓ Own projects'],
                     ['Project financials',  '✓',      '✗',               '✗'],
-                    ['/financials page',    '✓',      '✗',               '✗'],
-                    ['Team time-off',       '✓',      '✓',               '✓ Own only'],
                     ['Availability grid',   '✓',      '✓',               '✓'],
-                    ['Timeline',            '✓',      '✓',               '✓'],
-                    ['Clients',             '✓',      '✓',               '✗'],
                   ].map(([label, admin, manager, consultant], i) => (
                     <tr key={i}>
                       <td>{label}</td>
-                      {[admin, manager, consultant].map((v, j) => (
-                        <td key={j} className={v==='✗' ? 'no' : v.startsWith('✓') ? 'yes' : 'partial'}>{v}</td>
-                      ))}
+                      <td className={admin === '✗' ? 'no' : 'yes'}>{admin}</td>
+                      <td className={manager === '✗' ? 'no' : 'yes'}>{manager}</td>
+                      <td className={consultant === '✗' ? 'no' : consultant.includes('Own') ? 'partial' : 'yes'}>{consultant}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -483,9 +471,50 @@ export default function DocsPage() {
             </div>
           </section>
 
-          {/* ── Glossary ── */}
+          {/* ── Section 04: Agentic AI (WIP) ── */}
+          <section id="ai" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
+            <SectionHeader num="04" title="Agentic AI" color="var(--pink)" />
+            
+            <div className="role-card pink reveal" style={{ background: 'rgba(255, 45, 107, 0.02)', borderColor: 'rgba(255, 45, 107, 0.2)' }}>
+              <div className="role-header">
+                <span className="role-badge pink">WIP · EXPERIMENTAL</span>
+                <span className="role-who">Model Context Protocol (MCP)</span>
+              </div>
+              
+              <p className="role-desc">
+                We are prototyping an <b>intelligence layer</b> that exposes Staffd data directly to LLMs (Claude, GPT) via the MCP protocol. 
+                This enables natural language interactions while enforcing your existing security rules.
+              </p>
+
+              <div className="workflow-grid" style={{ gridTemplateColumns: '1fr', gap: '16px' }}>
+                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Semantic Staffing Queries</div>
+                  <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 12 }}>
+                    Ask: <i>"Find a React consultant available in April with a daily rate under 600€"</i>.
+                  </div>
+                </div>
+                
+                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Role-Aware Intelligence</div>
+                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>
+                    The AI inherits your <b>Supabase RLS policies</b>. Confidential data remains hidden if the user's role doesn't allow it.
+                  </div>
+                </div>
+              </div>
+
+              
+
+              <div className="hero-tags" style={{ marginTop: 24 }}>
+                {['FastAPI MCP Server', 'Natural Language SQL', 'Security Context', 'Agentic Workflows'].map((t, i) => (
+                  <span key={i} className="htag" style={{ borderColor: 'var(--pink)', color: 'var(--pink)', fontSize: 9 }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── Section 05: Glossary ── */}
           <section id="glossary" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
-            <SectionHeader num="04" title="Glossary" />
+            <SectionHeader num="05" title="Glossary" />
             <div className="glossary-wrap reveal">
               {[
                 ['Tenant',           'A company using Staffd (e.g. NexDigital).'],
@@ -494,10 +523,7 @@ export default function DocsPage() {
                 ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
                 ['Assignment',       'A consultant allocated to a project with an allocation %.'],
                 ['Daily rate',       "The sold price per day for a consultant (TJM in French)."],
-                ['Allocation',       "Share of a consultant's time on a project (10–100%)."],
                 ['Occupancy rate',   'Total occupation = sum of all active allocations.'],
-                ['CP',               'Paid leave — Congés Payés.'],
-                ['RTT',              'Work-time reduction days — Réduction du Temps de Travail.'],
               ].map(([term, def], i) => (
                 <div key={i} className="gloss-row">
                   <span className="gloss-term">{term}</span>
@@ -507,14 +533,12 @@ export default function DocsPage() {
             </div>
           </section>
 
-          {/* Footer */}
           <div className="doc-footer reveal">
             <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
               staffd · built on cloudflare · beta 2026
             </span>
             <Link href="/login" className="doc-footer-cta">→ sign in</Link>
           </div>
-
         </main>
       </div>
     </>
