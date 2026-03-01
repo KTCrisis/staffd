@@ -461,7 +461,7 @@ export default function DocsPage() {
           {/* Hero */}
           <section id="overview">
             <div className="hero-tag">
-              <span>Beta 2026</span> — consultant resource management
+              <span>Beta 2026</span> — ai powered resource management
             </div>
             <h1 className="hero-title">
               <span className="t1">staffing ops,</span><br />
@@ -469,10 +469,10 @@ export default function DocsPage() {
               <span className="cursor">_</span>
             </h1>
             <p className="hero-sub">
-              <Staff7 /> centralises consultant management for{' '}
-              <b>staffing agencies and consulting firms</b>.
-              One platform for availability, project assignments,
-              time-off, and financial margins.
+              <Staff7 /> centralises consultant and ressource management for{' '}
+              <b>Professional Services Firms.</b>.
+              From IT consultancies to creative agencies, 
+              we provide a unified platform for staffing, financial margins, and AI-driven operations.
             </p>
             <div className="hero-tags">
               {['Real-time occupancy','Project assignments','Leave workflows','Financial margins','Monthly timeline','Multi-tenant'].map((f,i) => (
