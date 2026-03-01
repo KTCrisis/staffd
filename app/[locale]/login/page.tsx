@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react'
 import { useRouter }            from '@/lib/navigation'
 import { signIn }               from '@/lib/auth'
+import Link                     from 'next/link'
 
 export default function LoginPage() {
   const router   = useRouter()
@@ -181,8 +182,31 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
-          Accès sur invitation uniquement
+        <div style={{
+          marginTop: 32, textAlign: 'center',
+          display: 'flex', flexDirection: 'column', gap: 10,
+          alignItems: 'center',
+        }}>
+          <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
+            Accès sur invitation uniquement
+          </div>
+          <Link href="/docs" style={{
+            fontSize: 10, color: 'var(--text2)', letterSpacing: 1,
+            textDecoration: 'none', opacity: 0.6,
+            transition: 'opacity 0.2s, color 0.2s',
+            borderBottom: '1px solid transparent',
+          }}
+            onMouseEnter={e => {
+              (e.target as HTMLElement).style.opacity = '1';
+              (e.target as HTMLElement).style.color = 'var(--green)';
+            }}
+            onMouseLeave={e => {
+              (e.target as HTMLElement).style.opacity = '0.6';
+              (e.target as HTMLElement).style.color = 'var(--text2)';
+            }}
+          >
+            // documentation →
+          </Link>
         </div>
 
       </div>
