@@ -3,21 +3,20 @@
 /**
  * components/projects/ProjectForm.tsx
  * Drawer création + édition d'un projet
- * Même pattern que ConsultantForm
+ * Client sélectionné depuis la liste clients (plus de texte libre)
  */
 
-import { useState, useEffect }     from 'react'
-import { useTranslations }         from 'next-intl'
-import { createProject, updateProject } from '@/lib/data'
-import type { Project }            from '@/types'
+import { useState, useEffect }          from 'react'
+import { useTranslations }              from 'next-intl'
+import { createProject, updateProject, useClients } from '@/lib/data'
+import type { Project }                 from '@/types'
 
-// UUID fixe NexDigital — à remplacer par useAuth().companyId quand multi-tenant actif
 const COMPANY_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
 const STATUS_OPTIONS = ['draft', 'active', 'on_hold', 'completed'] as const
 
 interface ProjectFormProps {
-  project?: Project | null     // null = création, Project = édition
+  project?: Project | null
   onClose:  () => void
   onSaved:  () => void
 }
@@ -26,10 +25,13 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const t    = useTranslations('projects')
   const mode = project ? 'edit' : 'create'
 
+  // Charger la liste des clients
+  const { data: clients } = useClients()
+
   // ── State formulaire ──────────────────────────────────────
   const [name,        setName]        = useState(project?.name        ?? '')
   const [isInternal,  setIsInternal]  = useState(project?.isInternal  ?? false)
-  const [clientName,  setClientName]  = useState(project?.clientName  ?? '')
+  const [clientId,    setClientId]    = useState(project?.clientId    ?? '')
   const [reference,   setReference]   = useState(project?.reference   ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [startDate,   setStartDate]   = useState(project?.startDate   ?? '')
@@ -43,11 +45,11 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
 
-  // Reset si projet change (réouverture du drawer)
+  // Reset si projet change
   useEffect(() => {
     setName(project?.name ?? '')
     setIsInternal(project?.isInternal ?? false)
-    setClientName(project?.clientName ?? '')
+    setClientId(project?.clientId ?? '')
     setReference(project?.reference ?? '')
     setDescription(project?.description ?? '')
     setStartDate(project?.startDate ?? '')
@@ -59,16 +61,17 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
     setError(null)
   }, [project])
 
-  // Quand on passe en interne, remplir clientName automatiquement
+  // Quand on passe en interne, vider la sélection client
   useEffect(() => {
-    if (isInternal) setClientName('NexDigital')
-    else if (clientName === 'NexDigital') setClientName('')
+    if (isInternal) setClientId('')
   }, [isInternal])
+
+  const selectedClient = (clients ?? []).find(c => c.id === clientId)
 
   // ── Submit ────────────────────────────────────────────────
   async function handleSubmit() {
     if (!name.trim()) { setError(t('form.errorName')); return }
-    if (!isInternal && !clientName.trim()) { setError(t('form.errorClient')); return }
+    if (!isInternal && !clientId) { setError(t('form.errorClient')); return }
 
     setSaving(true)
     setError(null)
@@ -76,7 +79,8 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
     try {
       const payload = {
         name:         name.trim(),
-        client_name:  isInternal ? 'NexDigital' : clientName.trim(),
+        client_name:  isInternal ? 'NexDigital' : (selectedClient?.name ?? ''),
+        client_id:    isInternal ? undefined : clientId || undefined,
         is_internal:  isInternal,
         reference:    reference.trim() || undefined,
         description:  description.trim() || undefined,
@@ -86,7 +90,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         jours_vendus: joursVendus ? parseInt(joursVendus)   : undefined,
         budget_total: budgetTotal ? parseFloat(budgetTotal) : undefined,
         status,
-        company_id: COMPANY_ID,
+        company_id:   COMPANY_ID,
       }
 
       if (mode === 'edit' && project) {
@@ -120,20 +124,9 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
       </div>
 
-      {/* Erreur */}
-      {error && (
-        <div style={{
-          background: 'var(--pink-muted, rgba(255,80,80,0.08))',
-          border: '1px solid var(--pink)',
-          borderRadius: 6, padding: '10px 14px',
-          fontSize: 12, color: 'var(--pink)',
-          marginBottom: 20,
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="form-error">{error}</div>}
 
-      {/* ── Section : Identification ── */}
+      {/* ── Identification ── */}
       <SectionLabel>{t('form.sectionInfo')}</SectionLabel>
 
       <Field label={t('form.name')} required>
@@ -152,25 +145,33 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
             type="checkbox"
             checked={isInternal}
             onChange={e => setIsInternal(e.target.checked)}
-            style={{ accentColor: 'var(--cyan)', width: 15, height: 15 }}
           />
           <span style={{ color: 'var(--text)' }}>{t('form.isInternal')}</span>
         </label>
-        {isInternal && (
-          <span style={{ fontSize: 10, color: 'var(--cyan)', background: 'var(--cyan-muted, rgba(0,200,255,0.1))', padding: '2px 8px', borderRadius: 20 }}>
-            NexDigital
-          </span>
-        )}
+        {isInternal && <span className="tag-internal">NexDigital</span>}
       </div>
 
+      {/* Select client */}
       {!isInternal && (
         <Field label={t('form.clientName')} required>
-          <input
+          <select
             className="input"
-            value={clientName}
-            onChange={e => setClientName(e.target.value)}
-            placeholder="Ex: ENGIE, Total, BNP..."
-          />
+            value={clientId}
+            onChange={e => setClientId(e.target.value)}
+          >
+            <option value="">— {t('form.selectClient')} —</option>
+            {(clients ?? []).map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name}{c.sector ? ` · ${c.sector}` : ''}
+              </option>
+            ))}
+          </select>
+          <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text2)' }}>
+            {t('form.clientNotFound')}{' '}
+            <a href="/clients" target="_blank" style={{ color: 'var(--cyan)', textDecoration: 'underline' }}>
+              {t('form.createClient')}
+            </a>
+          </div>
         </Field>
       )}
 
@@ -194,25 +195,15 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         />
       </Field>
 
-      {/* ── Section : Planning ── */}
+      {/* ── Planning ── */}
       <SectionLabel style={{ marginTop: 24 }}>{t('form.sectionPlanning')}</SectionLabel>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Field label={t('form.startDate')}>
-          <input
-            className="input"
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-          />
+          <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
         </Field>
         <Field label={t('form.endDate')}>
-          <input
-            className="input"
-            type="date"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-          />
+          <input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
         </Field>
       </div>
 
@@ -228,61 +219,29 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         </select>
       </Field>
 
-      {/* ── Section : Financier ── */}
+      {/* ── Financier ── */}
       <SectionLabel style={{ marginTop: 24 }}>{t('form.sectionFinancial')}</SectionLabel>
-      <p style={{ fontSize: 10, color: 'var(--text2)', marginBottom: 14 }}>
-        {t('form.financialNote')}
-      </p>
+      <p style={{ fontSize: 10, color: 'var(--text2)', marginBottom: 14 }}>{t('form.financialNote')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Field label={t('form.tjmVendu')}>
-          <input
-            className="input"
-            type="number"
-            value={tjmVendu}
-            onChange={e => setTjmVendu(e.target.value)}
-            placeholder="800"
-            min={0}
-          />
+          <input className="input" type="number" value={tjmVendu} onChange={e => setTjmVendu(e.target.value)} placeholder="800" min={0} />
         </Field>
         <Field label={t('form.joursVendus')}>
-          <input
-            className="input"
-            type="number"
-            value={joursVendus}
-            onChange={e => setJoursVendus(e.target.value)}
-            placeholder="120"
-            min={0}
-          />
+          <input className="input" type="number" value={joursVendus} onChange={e => setJoursVendus(e.target.value)} placeholder="120" min={0} />
         </Field>
       </div>
 
       <Field label={t('form.budgetTotal')}>
-        <input
-          className="input"
-          type="number"
-          value={budgetTotal}
-          onChange={e => setBudgetTotal(e.target.value)}
-          placeholder="96 000"
-          min={0}
-        />
+        <input className="input" type="number" value={budgetTotal} onChange={e => setBudgetTotal(e.target.value)} placeholder="96 000" min={0} />
       </Field>
 
       {/* ── Actions ── */}
       <div style={{ display: 'flex', gap: 8, marginTop: 32 }}>
-        <button
-          className="btn btn-primary"
-          style={{ flex: 1 }}
-          onClick={handleSubmit}
-          disabled={saving}
-        >
+        <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={saving}>
           {saving ? t('form.saving') : mode === 'edit' ? t('form.save') : t('form.create')}
         </button>
-        <button
-          className="btn btn-ghost"
-          onClick={onClose}
-          disabled={saving}
-        >
+        <button className="btn btn-ghost" onClick={onClose} disabled={saving}>
           {t('form.cancel')}
         </button>
       </div>
@@ -294,20 +253,13 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
 function SectionLabel({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{
-      fontSize: 10, color: 'var(--text2)', letterSpacing: 2,
-      textTransform: 'uppercase', marginBottom: 14, ...style,
-    }}>
+    <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14, ...style }}>
       {children}
     </div>
   )
 }
 
-function Field({ label, required, children }: {
-  label: string
-  required?: boolean
-  children: React.ReactNode
-}) {
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <label style={{ display: 'block', fontSize: 11, color: 'var(--text2)', marginBottom: 5 }}>

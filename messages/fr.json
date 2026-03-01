@@ -4,6 +4,7 @@
     "consultants": "Consultants",
     "disponibilites": "Disponibilités",
     "conges": "Congés",
+    "clients": "Clients",
     "projets": "Projets",
     "timeline": "Timeline",
     "parametres": "Paramètres",
@@ -109,6 +110,78 @@
       "Sans solde": "Sans solde"
     }
   },
+
+  "clients": {
+    "title": "Clients",
+    "breadcrumb": "Clients",
+    "cta": "+ Client",
+    "loading": "Chargement des clients...",
+    "error": "Erreur",
+    "noResults": "Aucun client ne correspond à ce filtre.",
+    "notFound": "Client introuvable.",
+    "search": "Rechercher un client...",
+    "confirmDelete": "Supprimer définitivement le client \"{name}\" ? Les projets liés ne seront pas supprimés.",
+
+    "filters": { "all": "Tous" },
+
+    "stats": {
+      "total":   "Total clients",
+      "sectors": "Secteurs",
+      "active":  "Avec projets actifs"
+    },
+
+    "table": {
+      "name":     "Client",
+      "sector":   "Secteur",
+      "contact":  "Contact",
+      "projects": "Projets",
+      "actions":  "Actions"
+    },
+
+    "actions": {
+      "edit":   "Modifier",
+      "delete": "Supprimer"
+    },
+
+    "detail": {
+      "info":           "Informations client",
+      "sector":         "Secteur",
+      "website":        "Site web",
+      "contactName":    "Contact",
+      "contactEmail":   "Email",
+      "contactPhone":   "Téléphone",
+      "projects":       "Projets",
+      "allProjects":    "Voir tous les projets",
+      "noProjects":     "Aucun projet lié à ce client.",
+      "totalProjects":  "Projets total",
+      "activeProjects": "Projets actifs",
+      "totalRevenue":   "CA total",
+      "back":           "Retour aux clients"
+    },
+
+    "form": {
+      "titleCreate": "Nouveau client",
+      "titleEdit":   "Modifier le client",
+      "errorName":   "Le nom du client est requis.",
+      "saving":      "Enregistrement...",
+      "save":        "Enregistrer",
+      "create":      "Créer le client",
+      "cancel":      "Annuler",
+
+      "sectionInfo":    "Identification",
+      "sectionContact": "Contact principal",
+      "sectionNotes":   "Notes",
+
+      "name":             "Nom du client",
+      "sector":           "Secteur",
+      "website":          "Site web",
+      "contactName":      "Nom complet",
+      "contactEmail":     "Email",
+      "contactPhone":     "Téléphone",
+      "notes":            "Notes",
+      "notesPlaceholder": "Contexte, historique, informations spécifiques sur ce client..."
+    }
+  },   
   "projects": {
     "title": "Projets",
     "breadcrumb": "Projets",
@@ -190,6 +263,10 @@
       "sectionPlanning":  "Planning",
       "sectionFinancial": "Finances",
       "financialNote":    "Visible par les admins uniquement.",
+
+      "selectClient":   "Sélectionner un client",
+      "clientNotFound": "Client absent de la liste ?",
+      "createClient":   "Le créer ici",
 
       "name":                    "Nom du projet",
       "isInternal":              "Projet interne (NexDigital)",

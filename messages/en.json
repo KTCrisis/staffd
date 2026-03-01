@@ -4,6 +4,7 @@
     "consultants": "Consultants",
     "disponibilites": "Availability",
     "conges": "Time Off",
+    "clients": "Clients",
     "projets": "Projects",
     "timeline": "Timeline",
     "parametres": "Settings",
@@ -109,7 +110,83 @@
       "Sans solde": "Unpaid leave"
     }
   },
-  
+
+  "clients": {
+    "title": "Clients",
+    "breadcrumb": "Clients",
+    "cta": "+ Client",
+    "loading": "Loading clients...",
+    "error": "Error",
+    "noResults": "No clients match this filter.",
+    "notFound": "Client not found.",
+    "search": "Search clients...",
+    "confirmDelete": "Delete client \"{name}\" permanently? Projects linked to this client will not be deleted.",
+
+    "filters": { "all": "All" },
+
+    "stats": {
+      "total":   "Total clients",
+      "sectors": "Sectors",
+      "active":  "With active projects"
+    },
+
+    "table": {
+      "name":     "Client",
+      "sector":   "Sector",
+      "contact":  "Contact",
+      "projects": "Projects",
+      "actions":  "Actions"
+    },
+
+    "actions": {
+      "edit":   "Edit",
+      "delete": "Delete"
+    },
+
+    "detail": {
+      "info":           "Client info",
+      "sector":         "Sector",
+      "website":        "Website",
+      "contactName":    "Contact",
+      "contactEmail":   "Email",
+      "contactPhone":   "Phone",
+      "projects":       "Projects",
+      "allProjects":    "See all projects",
+      "noProjects":     "No projects linked to this client.",
+      "totalProjects":  "Total projects",
+      "activeProjects": "Active projects",
+      "totalRevenue":   "Total revenue",
+      "back":           "Back to clients"
+    },
+
+    "form": {
+      "titleCreate": "New client",
+      "titleEdit":   "Edit client",
+      "errorName":   "Client name is required.",
+      "saving":      "Saving...",
+      "save":        "Save changes",
+      "create":      "Create client",
+      "cancel":      "Cancel",
+
+      "sectionInfo":    "Identification",
+      "sectionContact": "Main contact",
+      "sectionNotes":   "Notes",
+
+      "selectClient":   "Select a client",
+      "clientNotFound": "Client not in the list?",
+      "createClient":   "Create it here",
+
+      "name":             "Client name",
+      "sector":           "Sector",
+      "website":          "Website",
+      "contactName":      "Full name",
+      "contactEmail":     "Email",
+      "contactPhone":     "Phone",
+      "notes":            "Notes",
+      "notesPlaceholder": "Context, history, specific notes about this client..."
+    }
+  }, 
+
   "projects": {
     "title": "Projects",
     "breadcrumb": "Projects",

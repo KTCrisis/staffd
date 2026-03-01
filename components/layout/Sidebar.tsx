@@ -31,7 +31,6 @@ export function Sidebar() {
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
-    // Charger le nombre de congés en attente
     const fetchPending = async () => {
       const { count } = await supabase
         .from('leave_requests')
@@ -41,7 +40,6 @@ export function Sidebar() {
     }
     fetchPending()
 
-    // Realtime : mise à jour automatique quand un congé change
     const channel = supabase
       .channel('leave_requests_changes')
       .on('postgres_changes', {
@@ -59,13 +57,14 @@ export function Sidebar() {
     router.push('/login' as never)
   }
 
-  // Préfixe selon la locale (fr = pas de préfixe, en = /en)
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const NAV = [
     {
       group: t('overview'),
-      items: [{ label: t('dashboard'), icon: '⬡', href: p('/dashboard') }],
+      items: [
+        { label: t('dashboard'), icon: '⬡', href: p('/dashboard') },
+      ],
     },
     {
       group: t('team'),
@@ -78,14 +77,15 @@ export function Sidebar() {
     {
       group: t('projects'),
       items: [
-        { label: t('projets'), icon: '◧', href: p('/projects') },
+        { label: t('projets'),  icon: '◧', href: p('/projects') },
+        { label: t('clients'),  icon: '◉', href: p('/clients') },
         { label: t('timeline'), icon: '▤', href: p('/timeline') },
       ],
     },
     {
       group: t('admin'),
       items: [
-        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financials') },] : []),
+        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financials') }] : []),
         { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     },

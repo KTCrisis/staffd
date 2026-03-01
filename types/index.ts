@@ -20,7 +20,6 @@ export interface Consultant {
   availableFrom?: string
   leaveDaysLeft: number
   occupancyRate: number
-  // ── champs supplémentaires ──
   email?: string
   tjm?: number
   stack?: string[]
@@ -33,10 +32,11 @@ export interface Project {
   client: string
   consultantIds: string[]
   progress: number
-  endDate?: string             // optionnel — peut ne pas être défini
+  endDate?: string
   status: ProjectStatus
   startDate?:   string
   clientName?:  string
+  clientId?:    string
   reference?:   string
   description?: string
   budgetTotal?: number
@@ -44,6 +44,20 @@ export interface Project {
   joursVendus?: number
   isInternal?:  boolean
   companyId?:   string
+}
+
+export interface Client {
+  id:              string
+  companyId:       string
+  name:            string
+  sector?:         string
+  website?:        string
+  contactName?:    string
+  contactEmail?:   string
+  contactPhone?:   string
+  notes?:          string
+  activeProjects?: number
+  totalProjects?:  number
 }
 
 export interface LeaveRequest {
