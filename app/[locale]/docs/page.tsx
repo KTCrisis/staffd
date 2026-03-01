@@ -145,6 +145,13 @@ function WfStep({ n, label, desc, last }: { n: number; label: string; desc: stri
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 
+const Staffd = () => (
+  <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
+    staff<span style={{ color: 'var(--green)' }}>d</span>
+  </span>
+);
+
+
 export default function DocsPage() {
   useReveal()
   useTocSpy()
@@ -334,7 +341,7 @@ export default function DocsPage() {
               <span className="cursor">_</span>
             </h1>
             <p className="hero-sub">
-              Staffd centralises consultant management for{' '}
+              staffd centralises consultant management for{' '}
               <b>staffing agencies and consulting firms</b>.
               One platform for availability, project assignments,
               time-off, and financial margins.
@@ -350,7 +357,7 @@ export default function DocsPage() {
           <div className="intro-block reveal">
             <div className="block-label">// what is staffd</div>
             <p>
-              Staffd replaces spreadsheets and fragmented tools with a fast, role-aware interface.
+              staffd replaces spreadsheets and fragmented tools with a fast, role-aware interface.
               It gives operations and project managers a single source of truth for{' '}
               <span style={{ color:'var(--green)' }}>consultant availability</span>,{' '}
               <span style={{ color:'var(--cyan)' }}>project staffing</span>, and{' '}
@@ -482,7 +489,7 @@ export default function DocsPage() {
               </div>
               
               <p className="role-desc">
-                We are prototyping an <b>intelligence layer</b> that exposes Staffd data directly to LLMs (Claude, GPT) via the MCP protocol. 
+                We are prototyping an <b>intelligence layer</b> that exposes staffd data directly to LLMs (Claude, GPT) via the MCP protocol. 
                 This enables natural language interactions while enforcing your existing security rules.
               </p>
 
@@ -517,7 +524,7 @@ export default function DocsPage() {
             <SectionHeader num="05" title="Glossary" />
             <div className="glossary-wrap reveal">
               {[
-                ['Tenant',           'A company using Staffd (e.g. NexDigital).'],
+                ['Tenant',           'A company using staffd (e.g. NexDigital).'],
                 ['Consultant',       'A team member, billable or not.'],
                 ['Client',           'An external company the firm sells services to.'],
                 ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
@@ -552,7 +559,7 @@ export default function DocsPage() {
               }} />
               
               <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
-                Interested in <span style={{ color: 'var(--green)' }}>Staffd</span>?
+                Interested in <Staffd/>?
               </h3>
               
               <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
@@ -577,7 +584,7 @@ export default function DocsPage() {
             </div>
           </section>
 
-          
+
           <div className="doc-footer reveal">
             <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
               staffd · built on cloudflare · beta 2026

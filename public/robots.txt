@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://staffd.pages.dev/sitemap.xml
