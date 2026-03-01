@@ -524,7 +524,7 @@ export default function DocsPage() {
             <SectionHeader num="05" title="Glossary" />
             <div className="glossary-wrap reveal">
               {[
-                ['Tenant',           'A company using <Staffd /> (e.g. MyCompany).'],
+                ['Tenant',           'A company using staffd (e.g. MyCompany).'],
                 ['Consultant',       'A team member, billable or not.'],
                 ['Client',           'An external company the firm sells services to.'],
                 ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
