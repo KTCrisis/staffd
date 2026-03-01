@@ -224,6 +224,7 @@
     "table": {
       "name":     "Project",
       "client":   "Client",
+      "team": "Team",
       "deadline": "Deadline",
       "status":   "Status",
       "actions":  "Actions"
@@ -282,6 +283,25 @@
       "joursVendus":             "Days sold",
       "budgetTotal":             "Total budget (€)"
     }
+  },
+  "assignments": {
+    "team":          "Team",
+    "assign":        "Assign",
+    "remove":        "Remove",
+    "loading":       "Loading team...",
+    "noAssignments": "No consultants assigned to this project.",
+    "confirmRemove": "Remove this consultant from the project?",
+    "saving":        "Saving...",
+    "cancel":        "Cancel",
+    "title":         "Assign consultant",
+    "consultant":    "Consultant",
+    "selectConsultant": "Select a consultant",
+    "startDate":     "Start date",
+    "endDate":       "End date",
+    "allocation":    "Allocation",
+    "errorConsultant": "Please select a consultant.",
+    "errorStartDate":  "Start date is required.",
+    "errorEndDate":    "End date is required."
   },
 
   "disponibilites": {

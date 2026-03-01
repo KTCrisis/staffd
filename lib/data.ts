@@ -49,6 +49,7 @@ function toProject(row: Record<string, unknown>): Project {
     joursVendus:   row.jours_vendus as number | undefined,
     isInternal:    (row.is_internal as boolean) ?? false,
     companyId:     row.company_id as string | undefined,
+    team:          (row.team as any[]) ?? [],
   }
 }
 
@@ -119,15 +120,33 @@ export function useProjects(dep?: number, includeArchived = false) {
   return useSupabase(async () => {
     let query = supabase
       .from('projects')
-      .select('*, assignments (consultant_id)')
+      .select(`
+        *,
+        assignments (
+          consultant_id,
+          consultants ( id, name, initials, avatar_color )
+        )
+      `)
       .order('end_date')
     if (!includeArchived) query = query.neq('status', 'archived')
     const { data, error } = await query
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toProject({
-      ...row,
-      consultant_ids: (row.assignments as { consultant_id: string }[]).map((a: any) => a.consultant_id),
-    }))
+    return (data ?? []).map((row: any) => {
+      const team = (row.assignments as any[])
+        .map((a: any) => a.consultants)
+        .filter(Boolean)
+        .map((c: any) => ({
+          id:          c.id          as string,
+          name:        c.name        as string,
+          initials:    c.initials    as string,
+          avatarColor: c.avatar_color as string,
+        }))
+      return toProject({
+        ...row,
+        consultant_ids: team.map((c: any) => c.id),
+        team,
+      })
+    })
   }, [dep, includeArchived])
 }
 
@@ -358,5 +377,70 @@ export async function updateClient(id: string, data: Partial<ClientInput>) {
 
 export async function deleteClient(id: string) {
   const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+
+// ── Type Assignment enrichi ───────────────────────────────────
+
+export interface AssignmentWithConsultant {
+  id:          string
+  consultantId: string
+  projectId:   string
+  allocation:  number
+  startDate?:  string
+  endDate?:    string
+  // Champs consultants joinés
+  name:        string
+  initials:    string
+  role:        string
+  avatarColor: string
+}
+
+// ── Hook : assignments d'un projet ───────────────────────────
+
+export function useProjectAssignments(projectId: string, dep?: number) {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select('*, consultants (name, initials, role, avatar_color)')
+      .eq('project_id', projectId)
+      .order('created_at')
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row: any) => ({
+      id:           row.id as string,
+      consultantId: row.consultant_id as string,
+      projectId:    row.project_id as string,
+      allocation:   row.allocation as number,
+      startDate:    row.start_date as string | undefined,
+      endDate:      row.end_date as string | undefined,
+      name:         row.consultants?.name ?? '',
+      initials:     row.consultants?.initials ?? '',
+      role:         row.consultants?.role ?? '',
+      avatarColor:  row.consultants?.avatar_color ?? 'green',
+    } satisfies AssignmentWithConsultant))
+  }, [projectId, dep])
+}
+
+// ── Mutation : créer un assignment ────────────────────────────
+
+export type AssignmentInput = {
+  company_id:    string
+  consultant_id: string
+  project_id:    string
+  allocation:    number
+  start_date:    string
+  end_date:      string
+}
+
+export async function createAssignment(data: AssignmentInput) {
+  const { error } = await supabase.from('assignments').insert(data)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutation : supprimer un assignment ────────────────────────
+
+export async function deleteAssignment(id: string) {
+  const { error } = await supabase.from('assignments').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }

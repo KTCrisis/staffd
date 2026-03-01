@@ -219,6 +219,7 @@
     "table": {
       "name":     "Projet",
       "client":   "Client",
+      "team": "Équipe",
       "deadline": "Échéance",
       "status":   "Statut",
       "actions":  "Actions"
@@ -281,6 +282,26 @@
       "joursVendus":             "Jours vendus",
       "budgetTotal":             "Budget total (€)"
     }
+  },
+
+  "assignments": {
+    "team":          "Équipe",
+    "assign":        "Affecter",
+    "remove":        "Retirer",
+    "loading":       "Chargement de l'équipe...",
+    "noAssignments": "Aucun consultant affecté à ce projet.",
+    "confirmRemove": "Retirer ce consultant du projet ?",
+    "saving":        "Enregistrement...",
+    "cancel":        "Annuler",
+    "title":         "Affecter un consultant",
+    "consultant":    "Consultant",
+    "selectConsultant": "Sélectionner un consultant",
+    "startDate":     "Date de début",
+    "endDate":       "Date de fin",
+    "allocation":    "Allocation",
+    "errorConsultant": "Veuillez sélectionner un consultant.",
+    "errorStartDate":  "La date de début est requise.",
+    "errorEndDate":    "La date de fin est requise."
   },
   "disponibilites": {
     "title": "Disponibilités",

@@ -31,6 +31,7 @@ export interface Project {
   name: string
   client: string
   consultantIds: string[]
+  team?: { id: string; name: string; initials: string; avatarColor: string }[]
   progress: number
   endDate?: string
   status: ProjectStatus
@@ -94,4 +95,11 @@ export interface AvailabilityCell {
   status: 'free' | 'busy' | 'partial' | 'leave' | 'weekend'
   projectName?: string
   percentage?: number
+}
+
+export interface ProjectConsultant {
+  id:          string
+  name:        string
+  initials:    string
+  avatarColor: string
 }
