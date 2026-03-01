@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * lib/data.ts
  * Remplace lib/mock.ts — toutes les données viennent de Supabase
@@ -6,13 +5,121 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { DependencyList, useEffect, useState } from 'react'
 import { supabase }            from './supabase'
 import type { Consultant, Project, Client, LeaveRequest, KpiData, ActivityItem } from '@/types'
 
+interface ConsultantOccupancyRow {
+  id: string
+  user_id: string | null
+  name: string
+  initials: string
+  role: string
+  avatar_color: Consultant['avatarColor'] | null
+  status: Consultant['status']
+  project_names: string[] | null
+  leave_days_left: number | null
+  occupancy_rate: number | null
+  email?: string
+  tjm?: number
+  stack?: string[]
+  leave_days_total?: number
+  rtt_total?: number
+  rtt_taken?: number
+  rtt_left?: number
+}
+
+interface ProjectTeamMemberRow {
+  id: string
+  name: string
+  initials: string
+  avatar_color: string
+}
+
+interface ProjectAssignmentRow {
+  consultant_id: string
+  consultants: ProjectTeamMemberRow | null
+}
+
+interface ProjectRow {
+  id: string
+  name: string
+  client_name: string | null
+  consultant_ids?: string[]
+  progress: number | null
+  start_date?: string
+  end_date?: string
+  status: Project['status']
+  client_id?: string
+  reference?: string
+  description?: string
+  budget_total?: number
+  tjm_vendu?: number
+  jours_vendus?: number
+  is_internal?: boolean
+  company_id?: string
+  team?: Project['team']
+  assignments?: ProjectAssignmentRow[]
+}
+
+interface ClientProjectRow {
+  id: string
+  status: Project['status']
+}
+
+interface ClientRow {
+  id: string
+  company_id: string
+  name: string
+  sector?: string
+  website?: string
+  contact_name?: string
+  contact_email?: string
+  contact_phone?: string
+  notes?: string
+  active_projects?: number
+  total_projects?: number
+  projects?: ClientProjectRow[]
+}
+
+interface LeaveRequestRow {
+  id: string
+  consultant_id: string
+  consultant_name: string
+  type: LeaveRequest['type']
+  start_date: string
+  end_date: string
+  days: number
+  status: LeaveRequest['status']
+  impact_warning?: string
+  motif?: string
+}
+
+interface LeaveRequestWithConsultantRow extends Omit<LeaveRequestRow, 'consultant_name'> {
+  consultant_name?: string
+  consultants?: { name: string } | null
+}
+
+interface ActivityRow {
+  id: string
+  type: ActivityItem['type']
+  message: string
+  created_at: string
+  read: boolean
+}
+
+interface KpiConsultantRow {
+  status: Consultant['status']
+  occupancy_rate: number | null
+}
+
+interface KpiStatusRow {
+  status: string
+}
+
 // ── Mappers ──────────────────────────────────────────────────
 
-function toConsultant(row: Record<string, unknown>): Consultant {
+function toConsultant(row: ConsultantOccupancyRow): Consultant {
   return {
     id:             row.id as string,
     user_id:        row.user_id as string | null,
@@ -34,7 +141,7 @@ function toConsultant(row: Record<string, unknown>): Consultant {
   }
 }
 
-function toProject(row: Record<string, unknown>): Project {
+function toProject(row: ProjectRow): Project {
   return {
     id:            row.id as string,
     name:          row.name as string,
@@ -53,11 +160,11 @@ function toProject(row: Record<string, unknown>): Project {
     joursVendus:   row.jours_vendus as number | undefined,
     isInternal:    (row.is_internal as boolean) ?? false,
     companyId:     row.company_id as string | undefined,
-    team:          (row.team as any[]) ?? [],
+    team:          row.team ?? [],
   }
 }
 
-function toClient(row: Record<string, unknown>): Client {
+function toClient(row: ClientRow): Client {
   return {
     id:             row.id as string,
     companyId:      row.company_id as string,
@@ -73,7 +180,7 @@ function toClient(row: Record<string, unknown>): Client {
   }
 }
 
-function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
+function toLeaveRequest(row: LeaveRequestRow): LeaveRequest {
   return {
     id:             row.id as string,
     consultantId:   row.consultant_id as string,
@@ -90,18 +197,18 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
 
 // ── Hook générique ────────────────────────────────────────────
 
-function useSupabase<T>(fetcher: () => Promise<T>, deps: any[] = []) {
+function useSupabase<T>(fetcher: () => Promise<T>, deps: DependencyList = []) {
   const [data,    setData]    = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
-    setLoading(true)
     fetcher()
       .then(d  => { setData(d); setError(null) })
-      .catch(e => setError(e.message))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Unknown error'))
       .finally(() => setLoading(false))
-  }, deps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher, ...deps])
 
   return { data, loading, error }
 }
@@ -136,19 +243,19 @@ export function useProjects(dep?: number, includeArchived = false) {
     if (!includeArchived) query = query.neq('status', 'archived')
     const { data, error } = await query
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => {
-      const team = (row.assignments as any[])
-        .map((a: any) => a.consultants)
+    return ((data ?? []) as ProjectRow[]).map((row) => {
+      const team = (row.assignments ?? [])
+        .map((assignment) => assignment.consultants)
         .filter(Boolean)
-        .map((c: any) => ({
-          id:          c.id          as string,
-          name:        c.name        as string,
-          initials:    c.initials    as string,
-          avatarColor: c.avatar_color as string,
+        .map((member) => ({
+          id:          member.id,
+          name:        member.name,
+          initials:    member.initials,
+          avatarColor: member.avatar_color,
         }))
       return toProject({
         ...row,
-        consultant_ids: team.map((c: any) => c.id),
+        consultant_ids: team.map((member) => member.id),
         team,
       })
     })
@@ -164,10 +271,10 @@ export function useClients(dep?: number) {
       .select('*, projects!client_id (id, status)')
       .order('name')
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toClient({
+    return ((data ?? []) as ClientRow[]).map((row) => toClient({
       ...row,
-      active_projects: (row.projects as any[]).filter((p: any) => p.status === 'active').length,
-      total_projects:  (row.projects as any[]).length,
+      active_projects: (row.projects ?? []).filter((project) => project.status === 'active').length,
+      total_projects:  (row.projects ?? []).length,
     }))
   }, [dep])
 }
@@ -192,9 +299,9 @@ export function useClientProjects(clientId: string, dep?: number) {
       .eq('client_id', clientId)
       .order('end_date', { ascending: false })
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toProject({
+    return ((data ?? []) as ProjectRow[]).map((row) => toProject({
       ...row,
-      consultant_ids: (row.assignments as { consultant_id: string }[]).map((a: any) => a.consultant_id),
+      consultant_ids: (row.assignments ?? []).map((assignment) => assignment.consultant_id),
     }))
   }, [clientId, dep])
 }
@@ -221,16 +328,16 @@ export function useProjectFinancials() {
 }
 
 // ── Congés ────────────────────────────────────────────────────
-  export function useLeaveRequests(dep?: any) {
+  export function useLeaveRequests(dep?: number) {
     return useSupabase(async () => {
       const { data, error } = await supabase
         .from('leave_requests')
         .select('*, consultants (name)')
         .order('created_at', { ascending: false })
       if (error) throw new Error(error.message)
-      return (data ?? []).map((row: any) => toLeaveRequest({
+      return ((data ?? []) as LeaveRequestWithConsultantRow[]).map((row) => toLeaveRequest({
         ...row,
-        consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
+        consultant_name: row.consultants?.name ?? '',
       }))
     }, [dep])
   }
@@ -247,19 +354,19 @@ export function useKpi(): { data: KpiData | null; loading: boolean; error: strin
     if (projectsRes.error)    throw new Error(projectsRes.error.message)
     if (leavesRes.error)      throw new Error(leavesRes.error.message)
 
-    const consultants  = consultantsRes.data ?? []
-    const projects     = projectsRes.data    ?? []
-    const leaves       = leavesRes.data      ?? []
-    const active       = consultants.filter((c: any) => c.status !== 'leave')
+    const consultants  = (consultantsRes.data ?? []) as KpiConsultantRow[]
+    const projects     = (projectsRes.data ?? []) as KpiStatusRow[]
+    const leaves       = (leavesRes.data ?? []) as KpiStatusRow[]
+    const active       = consultants.filter((consultant) => consultant.status !== 'leave')
     const avgOccupancy = active.length
-      ? Math.round(active.reduce((s: any, c: any) => s + (c.occupancy_rate ?? 0), 0) / active.length)
+      ? Math.round(active.reduce((sum, consultant) => sum + (consultant.occupancy_rate ?? 0), 0) / active.length)
       : 0
 
     return {
       activeConsultants: active.length,
       totalConsultants:  consultants.length,
-      activeProjects:    projects.filter((p: any) => p.status === 'active').length,
-      pendingLeaves:     leaves.filter((l: any) => l.status === 'pending').length,
+      activeProjects:    projects.filter((project) => project.status === 'active').length,
+      pendingLeaves:     leaves.filter((leave) => leave.status === 'pending').length,
       occupancyRate:     avgOccupancy,
     } satisfies KpiData
   })
@@ -275,12 +382,12 @@ export function useActivity(limit = 10) {
       .order('created_at', { ascending: false })
       .limit(limit)
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      id:      row.id as string,
-      type:    row.type as ActivityItem['type'],
-      message: row.message as string,
-      time:    row.created_at as string,
-      read:    row.read as boolean,
+    return ((data ?? []) as ActivityRow[]).map((row) => ({
+      id:      row.id,
+      type:    row.type,
+      message: row.message,
+      time:    row.created_at,
+      read:    row.read,
     } satisfies ActivityItem))
   })
 }
@@ -434,13 +541,21 @@ export function useProjectAssignments(projectId: string, dep?: number) {
       .eq('project_id', projectId)
       .order('created_at')
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      id:           row.id as string,
-      consultantId: row.consultant_id as string,
-      projectId:    row.project_id as string,
-      allocation:   row.allocation as number,
-      startDate:    row.start_date as string | undefined,
-      endDate:      row.end_date as string | undefined,
+    return ((data ?? []) as Array<{
+      id: string
+      consultant_id: string
+      project_id: string
+      allocation: number
+      start_date?: string
+      end_date?: string
+      consultants?: { name?: string; initials?: string; role?: string; avatar_color?: string } | null
+    }>).map((row) => ({
+      id:           row.id,
+      consultantId: row.consultant_id,
+      projectId:    row.project_id,
+      allocation:   row.allocation,
+      startDate:    row.start_date,
+      endDate:      row.end_date,
       name:         row.consultants?.name ?? '',
       initials:     row.consultants?.initials ?? '',
       role:         row.consultants?.role ?? '',
