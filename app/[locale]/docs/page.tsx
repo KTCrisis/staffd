@@ -3,7 +3,7 @@
 /**
  * app/[locale]/docs/page.tsx
  * Page publique — accessible sans auth à /docs
- * Thème flux7.art : JetBrains Mono, particles, scanlines, multi-roles
+ * Thème flux7.art : JetBrains Mono, particles, scanlines, responsive
  */
 
 import { useEffect, useRef } from 'react'
@@ -18,7 +18,7 @@ function ParticleCanvas() {
     const ctx = canvas.getContext('2d')!
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize(); window.addEventListener('resize', resize)
-    const pts = Array.from({ length: 60 }, () => ({
+    const pts = Array.from({ length: 40 }, () => ({ // Réduit à 40 pour perf mobile
       x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
       r: Math.random() * 1.5 + 0.5, c: Math.random() > 0.5 ? '#00ff88' : '#00e5ff',
@@ -80,6 +80,12 @@ function useTocSpy() {
 }
 
 // ── Components ─────────────────────────────────────────────────────────────
+
+const Staff7 = () => (
+  <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
+    staff<span style={{ color: 'var(--green)' }}>7</span>
+  </span>
+);
 
 function SectionHeader({ num, title, id, color }: { num: string; title: string; id?: string, color?: string }) {
   return (
@@ -145,13 +151,6 @@ function WfStep({ n, label, desc, last }: { n: number; label: string; desc: stri
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 
-const Staff7 = () => (
-  <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
-    staff<span style={{ color: 'var(--green)' }}>7</span>
-  </span>
-);
-
-
 export default function DocsPage() {
   useReveal()
   useTocSpy()
@@ -206,94 +205,37 @@ export default function DocsPage() {
         .hero-title .t1{color:#fff;}.hero-title .t2{color:transparent;-webkit-text-stroke:1px var(--green);}.hero-title .t3{color:var(--green);}
         .hero-sub{font-size:13px;color:var(--text2);margin-top:28px;line-height:1.8;max-width:520px;opacity:0;animation:fadeUp 0.6s ease 0.6s forwards;}
         .hero-sub b{color:var(--cyan);font-weight:400;}
-        .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px;opacity:0;animation:fadeUp 0.6s ease 0.8s forwards;}
-        .htag{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border:1px solid var(--border);border-radius:2px;color:var(--text2);transition:all 0.2s;display:inline-block;}
-        .htag:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.05);}
 
-        /* ── INTRO BLOCK ── */
-        .intro-block{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--green);padding:24px 28px;margin-bottom:80px;}
-        .block-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);margin-bottom:14px;}
-        .intro-block p{font-size:13px;line-height:1.8;color:var(--text);}
+        /* ── RESPONSIVE OVERRIDES ── */
+        @media (max-width: 900px) {
+          .layout { grid-template-columns: 1fr; }
+          aside { display: none; }
+          main { padding: 40px 20px 80px 20px; }
+          .nav-links { display: none; }
+          .doc-nav { padding: 18px 20px; }
+        }
 
-        /* ── SECTION HEADER ── */
-        .section-header{display:flex;align-items:baseline;gap:20px;margin-bottom:40px;}
-        .section-num{font-size:11px;color:var(--green);letter-spacing:3px;}
-        .section-title{font-size:30px;font-weight:700;color:#fff;letter-spacing:-1px;}
-        .section-line{flex:1;height:1px;background:var(--border);}
+        @media (max-width: 600px) {
+          .hero-title { font-size: 42px; letter-spacing: -1px; }
+          .workflow-grid { grid-template-columns: 1fr; }
+          .section-title { font-size: 26px; }
+          .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -10px; padding: 0 10px; }
+          .data-table { min-width: 500px; }
+          .gloss-row { flex-direction: column; gap: 4px; padding: 12px 0; }
+          .gloss-term { min-width: auto; font-weight: 700; }
+          .doc-footer { flex-direction: column; gap: 20px; text-align: center; }
+        }
 
-        /* ── ROLE SEP ── */
-        .role-sep{display:flex;align-items:center;gap:12px;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;}
-        .role-sep .line{flex:1;height:1px;background:var(--border);}
-        .role-sep .who{color:var(--text2);}
-
-        /* ── ROLE CARD ── */
-        .role-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:28px;position:relative;overflow:hidden;transition:all 0.3s;margin-bottom:28px;}
-        .role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:transparent;transition:background 0.3s;}
-        .role-card:hover{border-color:var(--dim);transform:translateY(-1px);background:var(--bg3);}
-        .role-card.green:hover{border-color:rgba(0,255,136,0.3);}.role-card.green:hover::before{background:var(--green);}
-        .role-card.cyan:hover{border-color:rgba(0,229,255,0.3);}.role-card.cyan:hover::before{background:var(--cyan);}
-        .role-card.gold:hover{border-color:rgba(255,209,102,0.3);}.role-card.gold:hover::before{background:var(--gold);}
-        .role-card.pink:hover{border-color:rgba(255,45,107,0.3);}.role-card.pink:hover::before{background:var(--pink);}
-        
-        .role-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-        .role-badge{font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:2px 10px;border-radius:2px;}
-        .role-badge.green{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
-        .role-badge.cyan{background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid rgba(0,229,255,0.3);}
-        .role-badge.gold{background:rgba(255,209,102,0.1);color:var(--gold);border:1px solid rgba(255,209,102,0.3);}
-        .role-badge.pink{background:rgba(255,45,107,0.1);color:var(--pink);border:1px solid rgba(255,45,107,0.3);}
-        
-        .role-who{font-size:10px;color:var(--text2);}
-        .role-desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:20px;}
-        .can-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
-        .can-item{display:flex;gap:10px;font-size:11px;color:var(--text);}
-        .tick{color:var(--green);flex-shrink:0;}
-        .cant-list{display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--border);padding-top:14px;}
-        .cant-item{display:flex;gap:10px;font-size:11px;color:var(--text2);}
-        .cross{color:rgba(255,45,107,0.5);flex-shrink:0;}
-
-        /* ── WORKFLOW ── */
+        /* ── WORKFLOW & TABLES ── */
         .workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-        .workflow-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:28px;}
-        .workflow-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);margin-bottom:24px;border-left:2px solid var(--green);padding-left:10px;}
-        .wf-step{display:flex;gap:16px;}
-        .wf-step-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
-        .wf-num{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,255,136,0.4);background:rgba(0,255,136,0.05);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);}
-        .wf-line{width:1px;flex:1;background:var(--border);margin:4px 0;}
-        .wf-content{padding-bottom:20px;}
-        .wf-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
-        .wf-desc{font-size:11px;color:var(--text2);line-height:1.6;}
-
-        /* ── DATA TABLE ── */
         .data-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
-        .data-table{width:100%;border-collapse:collapse;font-size:11px;}
-        .data-table th{padding:10px 16px;text-align:left;color:var(--text2);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);}
-        .data-table th.green{color:var(--green);}.data-table th.cyan{color:var(--cyan);}.data-table th.gold{color:var(--gold);}
-        .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:var(--text);}
-        .data-table tr:last-child td{border-bottom:none;}
-        .data-table tr:nth-child(even) td{background:rgba(255,255,255,0.01);}
-        .yes{color:var(--green)!important;}.no{color:rgba(255,45,107,0.5)!important;}.partial{color:var(--gold)!important;}
-
-        /* ── GLOSSARY ── */
-        .glossary-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 20px;}
-        .gloss-row{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:11px;}
-        .gloss-row:last-child{border-bottom:none;}
-        .gloss-term{color:var(--cyan);min-width:140px;flex-shrink:0;}
-        .gloss-def{color:var(--text2);line-height:1.6;}
-
-        /* ── FOOTER ── */
-        .doc-footer{border-top:1px solid var(--border);padding-top:32px;margin-top:80px;display:flex;justify-content:space-between;align-items:center;}
-        .doc-footer-cta{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#060a06;background:var(--green);padding:8px 20px;border-radius:2px;text-decoration:none;transition:opacity 0.2s;}
-        .doc-footer-cta:hover{opacity:0.85;}
-
+        
         /* ── ANIMATIONS ── */
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
         .reveal.visible{opacity:1;transform:translateY(0);}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
         .cursor{animation:blink 1s step-end infinite;}
-
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
       `}</style>
 
       <ParticleCanvas />
@@ -302,7 +244,7 @@ export default function DocsPage() {
       {/* ── Nav ── */}
       <nav className="doc-nav">
         <div style={{ display:'flex', alignItems:'center' }}>
-          <Link href="/login" className="nav-logo">
+          <Link href="/" className="nav-logo">
             <span className="s">staff</span><span className="d">7</span>
           </Link>
           <span className="nav-tag">// docs</span>
@@ -346,30 +288,12 @@ export default function DocsPage() {
               One platform for availability, project assignments,
               time-off, and financial margins.
             </p>
-            <div className="hero-tags">
-              {['Real-time occupancy','Project assignments','Leave workflows','Financial margins','Monthly timeline','Multi-tenant'].map((f,i) => (
-                <span key={i} className="htag">{f}</span>
-              ))}
-            </div>
           </section>
 
-          {/* Intro Block */}
-          <div className="intro-block reveal">
-            <div className="block-label">// what is <Staff7 /></div>
-            <p>
-              <Staff7 /> replaces spreadsheets and fragmented tools with a fast, role-aware interface.
-              It gives operations and project managers a single source of truth for{' '}
-              <span style={{ color:'var(--green)' }}>consultant availability</span>,{' '}
-              <span style={{ color:'var(--cyan)' }}>project staffing</span>, and{' '}
-              <span style={{ color:'var(--gold)' }}>financial performance</span>.
-              Each company runs in its own isolated workspace — fully multi-tenant.
-            </p>
-          </div>
-
-          {/* ── Section 01: Roles ── */}
+          {/* Section 01: Roles */}
           <section style={{ marginBottom: 80 }}>
             <SectionHeader num="01" title="Roles" id="roles" />
-
+            
             <div id="admin" style={{ scrollMarginTop: 80 }}>
               <RoleSep label="→ admin" color="var(--cyan)" who="CEO · Director" />
               <RoleCard role="admin" who="Full access including financials" accent="cyan"
@@ -378,8 +302,6 @@ export default function DocsPage() {
                   'Create, edit, delete consultants — including daily rates (TJM)',
                   'Create and manage clients with sector and contact info',
                   'Create projects (external or internal) with full financial data',
-                  'Assign consultants to projects with allocation %',
-                  'Approve or refuse time-off requests',
                   'Access /financials — margins, sold rates, gross margin per project',
                 ]}
               />
@@ -392,14 +314,11 @@ export default function DocsPage() {
                 can={[
                   'View consultant profiles and manage assignments',
                   'Create and edit projects (without financial fields)',
-                  'Create and manage clients',
                   'Approve or refuse time-off requests',
-                  'View the availability grid and timeline',
                 ]}
                 cant={[
                   'Access /financials (margins, sold rates)',
                   'See consultant daily rates (TJM)',
-                  'See project financial data (sold days, budget)',
                 ]}
               />
             </div>
@@ -409,42 +328,36 @@ export default function DocsPage() {
               <RoleCard role="consultant" who="Own data only" accent="gold"
                 desc="Limited to their own data. Focused on personal availability, current missions, and time-off."
                 can={[
-                  'View their own profile (daily rate hidden)',
-                  'See their current and upcoming project assignments',
+                  'View their own profile and project assignments',
                   'Submit time-off requests',
                   'View the team timeline',
-                ]}
-                cant={[
-                  "See other consultants' profiles or data",
-                  'Create or edit projects or clients',
-                  'Access /financials or any financial data',
                 ]}
               />
             </div>
           </section>
 
-          {/* ── Section 02: Workflows ── */}
+          {/* Section 02: Workflows */}
           <section id="workflows" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="02" title="Workflows" />
             <div className="workflow-grid reveal">
               <div className="workflow-card">
                 <div className="workflow-title">// time-off request</div>
-                <WfStep n={1} label="Consultant submits a request"    desc="Selects type, dates, and number of days." />
-                <WfStep n={2} label="Appears in /leaves as Pending"   desc="Red badge in the sidebar shows count of pending requests." />
-                <WfStep n={3} label="Manager or Admin reviews"       desc="Reviews impact on projects." />
-                <WfStep n={4} label="Approve ✓ or Refuse ✗"           desc="Status updates immediately." last />
+                <WfStep n={1} label="Consultant submits" desc="Selects dates and type (Paid leave, RTT...)." />
+                <WfStep n={2} label="Pending in /leaves" desc="Notification badge appears for managers." />
+                <WfStep n={3} label="Manager reviews" desc="Checks project impact (e.g. gap in week 12)." />
+                <WfStep n={4} label="Action" desc="Approve ✓ or Refuse ✗. Status updates immediately." last />
               </div>
               <div className="workflow-card">
-                <div className="workflow-title">// staffing a project</div>
-                <WfStep n={1} label="Create the client"       desc="Add name, sector, and contact details." />
-                <WfStep n={2} label="Create the project"      desc="Fill in dates, status, and financial data." />
-                <WfStep n={3} label="Assign consultants"      desc="Set dates and allocation % in the project drawer." />
-                <WfStep n={4} label="Track in real time"      desc="Monitor occupancy and margins." last />
+                <div className="workflow-title">// project staffing</div>
+                <WfStep n={1} label="Setup client" desc="Create client profile with contact details." />
+                <WfStep n={2} label="Create project" desc="Set dates, sold rates and budget." />
+                <WfStep n={3} label="Assign team" desc="Select consultants and set allocation %." />
+                <WfStep n={4} label="Live tracking" desc="Occupancy and margins update in real-time." last />
               </div>
             </div>
           </section>
 
-          {/* ── Section 03: Data Access ── */}
+          {/* Section 03: Data Access */}
           <section id="access" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="03" title="Data access" />
             <div className="data-table-wrap reveal">
@@ -452,19 +365,18 @@ export default function DocsPage() {
                 <thead>
                   <tr>
                     <th>Data</th>
-                    <th className="cyan">Admin</th>
-                    <th className="green">Manager</th>
-                    <th className="gold">Consultant</th>
+                    <th style={{color:'var(--cyan)'}}>Admin</th>
+                    <th style={{color:'var(--green)'}}>Manager</th>
+                    <th style={{color:'var(--gold)'}}>Consultant</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    ['Consultant list',     '✓ All',  '✓ All',           '✗'],
-                    ['Consultant profile',  '✓ Full', '✓ No daily rate', '✓ Own only'],
-                    ['Daily rates (TJM)',   '✓',      '✗',               '✗'],
-                    ['Project list',        '✓ All',  '✓ All',           '✓ Own projects'],
-                    ['Project financials',  '✓',      '✗',               '✗'],
-                    ['Availability grid',   '✓',      '✓',               '✓'],
+                    ['Consultant list',     '✓ All',  '✓ All',   '✗'],
+                    ['Daily rates (TJM)',   '✓',      '✗',       '✗'],
+                    ['Project financials',  '✓',      '✗',       '✗'],
+                    ['Team time-off',       '✓',      '✓',       '✓ Own only'],
+                    ['Availability grid',   '✓',      '✓',       '✓'],
                   ].map(([label, admin, manager, consultant], i) => (
                     <tr key={i}>
                       <td>{label}</td>
@@ -478,116 +390,71 @@ export default function DocsPage() {
             </div>
           </section>
 
-          {/* ── Section 04: Agentic AI (WIP) ── */}
+          {/* Section 04: Agentic AI */}
           <section id="ai" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="04" title="Agentic AI" color="var(--pink)" />
-            
             <div className="role-card pink reveal" style={{ background: 'rgba(255, 45, 107, 0.02)', borderColor: 'rgba(255, 45, 107, 0.2)' }}>
               <div className="role-header">
                 <span className="role-badge pink">WIP · EXPERIMENTAL</span>
                 <span className="role-who">Model Context Protocol (MCP)</span>
               </div>
-              
               <p className="role-desc">
-                We are prototyping an <b>intelligence layer</b> that exposes <Staff7 /> data directly to LLMs (Claude, GPT) via the MCP protocol. 
-                This enables natural language interactions while enforcing your existing security rules.
+                Prototyping an <b>intelligence layer</b> that exposes <Staff7 /> data to LLMs via MCP. 
+                Natural language queries (Claude/GPT) meet database security.
               </p>
-
-              <div className="workflow-grid" style={{ gridTemplateColumns: '1fr', gap: '16px' }}>
-                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
-                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Semantic Staffing Queries</div>
-                  <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 12 }}>
-                    Ask: <i>"Find a React consultant available in April with a daily rate under 600€"</i>.
-                  </div>
+              <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px', marginTop: '16px' }}>
+                <div style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>Semantic Query:</div>
+                <div style={{ fontSize: 11, color: 'var(--text2)' }}>
+                  <i>"Find a React dev available in April with a daily rate under 600€"</i>.
                 </div>
-                
-                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
-                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Role-Aware Intelligence</div>
-                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>
-                    The AI inherits your <b>Supabase RLS policies</b>. Confidential data remains hidden if the user's role doesn't allow it.
-                  </div>
-                </div>
-              </div>
-
-              
-
-              <div className="hero-tags" style={{ marginTop: 24 }}>
-                {['FastAPI MCP Server', 'Natural Language SQL', 'Security Context', 'Agentic Workflows'].map((t, i) => (
-                  <span key={i} className="htag" style={{ borderColor: 'var(--pink)', color: 'var(--pink)', fontSize: 9 }}>{t}</span>
-                ))}
               </div>
             </div>
           </section>
 
-          {/* ── Section 05: Glossary ── */}
+          {/* Section 05: Glossary */}
           <section id="glossary" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="05" title="Glossary" />
             <div className="glossary-wrap reveal">
               {[
-                ['Tenant',           'A company using Staff7 (e.g. MyCompany).'],
-                ['Consultant',       'A team member, billable or not.'],
-                ['Client',           'An external company the firm sells services to.'],
-                ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
-                ['Assignment',       'A consultant allocated to a project with an allocation %.'],
-                ['Daily rate',       "The sold price per day for a consultant (TJM in French)."],
-                ['Occupancy rate',   'Total occupation = sum of all active allocations.'],
+                ['Tenant',           'A company using Staff7 (e.g. MyAgency).'],
+                ['Assignment',       'A consultant allocated to a project with a %.'],
+                ['Daily rate',       'TJM — Sold price per day per consultant.'],
+                ['Occupancy rate',   'Total allocation = sum of all active assignments.'],
               ].map(([term, def], i) => (
                 <div key={i} className="gloss-row">
-                  <span className="gloss-term">{term}</span>
+                  <span className="gloss-term" style={{color:'var(--cyan)'}}>{term}</span>
                   <span className="gloss-def">{def}</span>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* ── Section Contact / Lead Generation ── */}
-          <section id="contact" className="reveal" style={{ marginTop: 100, marginBottom: 40 }}>
+          {/* Contact Section */}
+          <section id="contact" className="reveal" style={{ marginTop: 80, marginBottom: 40 }}>
             <div style={{ 
               background: 'linear-gradient(145deg, var(--bg2), var(--bg))',
               border: '1px solid var(--dim)',
               borderRadius: '4px',
-              padding: '60px 40px',
+              padding: '60px 20px',
               textAlign: 'center',
               position: 'relative',
               overflow: 'hidden'
             }}>
-              {/* Petite ligne décorative animée en haut */}
-              <div style={{ 
-                position: 'absolute', 
-                top: 0, left: 0, width: '100%', height: '2px', 
-                background: 'linear-gradient(90deg, transparent, var(--green), transparent)' 
-              }} />
-              
-              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
-                Interested in <Staff7/>?
-              </h3>
-              
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
-                Whether you want to deploy a private instance, join the Beta, 
-                or discuss custom AI integrations for your agency.
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '2px', background: 'linear-gradient(90deg, transparent, var(--green), transparent)' }} />
+              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16 }}>Interested in <Staff7/>?</h3>
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px' }}>
+                Deploy a private instance or join the beta.
               </p>
-
-              <a href="mailto:flux7art@gmail.com" 
-                className="doc-footer-cta" 
-                style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '12px', 
-                  padding: '12px 24px',
-                  fontSize: 13 
-                }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
-                </svg>
+              <a href="mailto:flux7art@gmail.com" className="doc-footer-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '12px 24px', fontSize: 13 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                 flux7art@gmail.com
               </a>
             </div>
           </section>
 
-
           <div className="doc-footer reveal">
             <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
-              <Staff7 />· built on cloudflare · beta 2026
+              <Staff7 /> · built on cloudflare · beta 2026
             </span>
             <Link href="/login" className="doc-footer-cta">→ sign in</Link>
           </div>
