@@ -21,9 +21,11 @@ export const STATUS_LABELS: Record<ConsultantStatus, string> = {
 }
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  active:   'En cours',
-  starting: 'Démarrage',
-  done:     'Terminé',
+  draft:     'Brouillon',
+  active:    'En cours',
+  on_hold:   'En pause',
+  completed: 'Terminé',
+  archived:  'Archivé',
 }
 
 export const LEAVE_STATUS_LABELS: Record<LeaveStatus, string> = {

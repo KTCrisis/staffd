@@ -14,9 +14,11 @@ const BADGE_CLASS: Record<BadgeVariant, string> = {
   approved:  'badge badge-approved',
   refused:   'badge badge-leave',
   // Project
+  draft:     'badge badge-starting',
   active:    'badge badge-assigned',
-  starting:  'badge badge-starting',
-  done:      'badge badge-available',
+  on_hold:   'badge badge-pending',
+  completed: 'badge badge-available',
+  archived:  'badge badge-leave',
 }
 
 const ALL_LABELS: Record<BadgeVariant, string> = {
@@ -27,13 +29,13 @@ const ALL_LABELS: Record<BadgeVariant, string> = {
 
 interface BadgeProps {
   variant: BadgeVariant
-  label?: string   // override default label
+  label?: string
 }
 
 export function Badge({ variant, label }: BadgeProps) {
   return (
-    <span className={BADGE_CLASS[variant]}>
-      {label ?? ALL_LABELS[variant]}
+    <span className={BADGE_CLASS[variant] ?? 'badge'}>
+      {label ?? ALL_LABELS[variant] ?? variant}
     </span>
   )
 }

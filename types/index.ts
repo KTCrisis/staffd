@@ -4,7 +4,7 @@ export type ConsultantStatus = 'available' | 'assigned' | 'leave' | 'partial'
 
 export type LeaveStatus = 'pending' | 'approved' | 'refused'
 
-export type ProjectStatus = 'active' | 'starting' | 'done'
+export type ProjectStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
 
 export type AvatarColor = 'green' | 'pink' | 'cyan' | 'gold' | 'purple'
 
@@ -32,9 +32,18 @@ export interface Project {
   name: string
   client: string
   consultantIds: string[]
-  progress: number             // 0-100
-  endDate: string              // ISO date string
+  progress: number
+  endDate?: string             // optionnel — peut ne pas être défini
   status: ProjectStatus
+  startDate?:   string
+  clientName?:  string
+  reference?:   string
+  description?: string
+  budgetTotal?: number
+  tjmVendu?:    number
+  joursVendus?: number
+  isInternal?:  boolean
+  companyId?:   string
 }
 
 export interface LeaveRequest {
@@ -67,7 +76,7 @@ export interface ActivityItem {
 
 export interface AvailabilityCell {
   consultantId: string
-  date: string                 // ISO date string
+  date: string
   status: 'free' | 'busy' | 'partial' | 'leave' | 'weekend'
   projectName?: string
   percentage?: number

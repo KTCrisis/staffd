@@ -109,54 +109,101 @@
       "Sans solde": "Sans solde"
     }
   },
-  "projets": {
+  "projects": {
     "title": "Projets",
-    "breadcrumb": "// tous les projets",
+    "breadcrumb": "Projets",
     "cta": "+ Projet",
+    "loading": "Chargement des projets...",
+    "error": "Erreur",
+    "noResults": "Aucun projet ne correspond à ce filtre.",
+    "internal": "Interne",
+    "confirmArchive": "Archiver le projet \"{name}\" ?",
+    "confirmDelete": "Supprimer définitivement le projet \"{name}\" ? Cette action est irréversible.",
+
     "filters": {
-      "all": "Tous",
-      "active": "En cours",
-      "starting": "Démarrage",
-      "done": "Terminés"
+      "all":       "Tous",
+      "active":    "Actifs",
+      "draft":     "Brouillon",
+      "on_hold":   "En pause",
+      "completed": "Terminés"
     },
+
     "stats": {
-      "active": "En cours",
-      "starting": "Démarrage",
-      "done": "Terminés",
-      "consultants": "Consultants"
+      "active":    "Actifs",
+      "draft":     "Brouillon",
+      "onHold":    "En pause",
+      "completed": "Terminés"
     },
+
+    "status": {
+      "draft":     "Brouillon",
+      "active":    "Actif",
+      "on_hold":   "En pause",
+      "completed": "Terminé",
+      "archived":  "Archivé"
+    },
+
     "table": {
-      "name": "Projet",
-      "client": "Client",
-      "team": "Équipe",
-      "progress": "Avancement",
-      "deadline": "Deadline",
-      "status": "Statut"
+      "name":     "Projet",
+      "client":   "Client",
+      "deadline": "Échéance",
+      "status":   "Statut",
+      "actions":  "Actions"
     },
+
+    "actions": {
+      "edit":    "Modifier",
+      "archive": "Archiver",
+      "delete":  "Supprimer"
+    },
+
     "deadline": {
-      "overdue": "En retard",
-      "today": "Aujourd'hui",
+      "overdue":  "En retard",
+      "today":    "Aujourd'hui",
       "daysLeft": "j restants"
     },
+
     "drawer": {
-      "label": "// fiche projet",
-      "close": "✕ Fermer",
-      "client": "Client",
-      "progress": "Avancement",
-      "deadline": "Deadline",
-      "status": "Statut",
-      "team": "Équipe",
-      "teamCount": "consultant(s)",
-      "edit": "✏ Modifier",
-      "archive": "📦 Archiver"
+      "label":     "Détail projet",
+      "edit":      "Modifier",
+      "archive":   "Archiver",
+      "delete":    "Supprimer",
+      "status":    "Statut",
+      "startDate": "Début",
+      "deadline":  "Échéance",
+      "tjm":       "TJM vendu",
+      "jours":     "Jours vendus",
+      "budget":    "Budget total"
     },
-    "statuses": {
-      "active": "En cours",
-      "starting": "Démarrage",
-      "done": "Terminé"
-    },
-    "noResults": "// aucun projet",
-    "export": "↓ Exporter"
+
+    "form": {
+      "titleCreate": "Nouveau projet",
+      "titleEdit":   "Modifier le projet",
+      "errorName":   "Le nom du projet est requis.",
+      "errorClient": "Le nom du client est requis pour un projet externe.",
+      "saving":      "Enregistrement...",
+      "save":        "Enregistrer",
+      "create":      "Créer le projet",
+      "cancel":      "Annuler",
+
+      "sectionInfo":      "Identification",
+      "sectionPlanning":  "Planning",
+      "sectionFinancial": "Finances",
+      "financialNote":    "Visible par les admins uniquement.",
+
+      "name":                    "Nom du projet",
+      "isInternal":              "Projet interne (NexDigital)",
+      "clientName":              "Nom du client",
+      "reference":               "Référence / N° contrat",
+      "description":             "Description",
+      "descriptionPlaceholder":  "Courte description du projet...",
+      "startDate":               "Date de début",
+      "endDate":                 "Date de fin",
+      "status":                  "Statut",
+      "tjmVendu":                "TJM vendu (€/j)",
+      "joursVendus":             "Jours vendus",
+      "budgetTotal":             "Budget total (€)"
+    }
   },
   "disponibilites": {
     "title": "Disponibilités",

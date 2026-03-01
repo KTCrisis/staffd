@@ -109,55 +109,104 @@
       "Sans solde": "Unpaid leave"
     }
   },
-  "projets": {
+  
+  "projects": {
     "title": "Projects",
-    "breadcrumb": "// all projects",
+    "breadcrumb": "Projects",
     "cta": "+ Project",
+    "loading": "Loading projects...",
+    "error": "Error",
+    "noResults": "No projects match this filter.",
+    "internal": "Internal",
+    "confirmArchive": "Archive project \"{name}\"?",
+    "confirmDelete": "Delete project \"{name}\" permanently? This action cannot be undone.",
+
     "filters": {
-      "all": "All",
-      "active": "Active",
-      "starting": "Starting",
-      "done": "Done"
+      "all":       "All",
+      "active":    "Active",
+      "draft":     "Draft",
+      "on_hold":   "On hold",
+      "completed": "Completed"
     },
+
     "stats": {
-      "active": "Active",
-      "starting": "Starting",
-      "done": "Done",
-      "consultants": "Consultants"
+      "active":    "Active",
+      "draft":     "Draft",
+      "onHold":    "On hold",
+      "completed": "Completed"
     },
+
+    "status": {
+      "draft":     "Draft",
+      "active":    "Active",
+      "on_hold":   "On hold",
+      "completed": "Completed",
+      "archived":  "Archived"
+    },
+
     "table": {
-      "name": "Project",
-      "client": "Client",
-      "team": "Team",
-      "progress": "Progress",
+      "name":     "Project",
+      "client":   "Client",
       "deadline": "Deadline",
-      "status": "Status"
+      "status":   "Status",
+      "actions":  "Actions"
     },
+
+    "actions": {
+      "edit":    "Edit",
+      "archive": "Archive",
+      "delete":  "Delete"
+    },
+
     "deadline": {
-      "overdue": "Overdue",
-      "today": "Today",
-      "daysLeft": "d left"
+      "overdue":  "Overdue",
+      "today":    "Today",
+      "daysLeft": "days left"
     },
+
     "drawer": {
-      "label": "// project profile",
-      "close": "✕ Close",
-      "client": "Client",
-      "progress": "Progress",
-      "deadline": "Deadline",
-      "status": "Status",
-      "team": "Team",
-      "teamCount": "consultant(s)",
-      "edit": "✏ Edit",
-      "archive": "📦 Archive"
+      "label":     "Project details",
+      "edit":      "Edit",
+      "archive":   "Archive",
+      "delete":    "Delete",
+      "status":    "Status",
+      "startDate": "Start date",
+      "deadline":  "Deadline",
+      "tjm":       "Rate sold",
+      "jours":     "Days sold",
+      "budget":    "Total budget"
     },
-    "statuses": {
-      "active": "Active",
-      "starting": "Starting",
-      "done": "Done"
-    },
-    "noResults": "// no projects",
-    "export": "↓ Export"
+
+    "form": {
+      "titleCreate": "New project",
+      "titleEdit":   "Edit project",
+      "errorName":   "Project name is required.",
+      "errorClient": "Client name is required for external projects.",
+      "saving":      "Saving...",
+      "save":        "Save changes",
+      "create":      "Create project",
+      "cancel":      "Cancel",
+
+      "sectionInfo":      "Identification",
+      "sectionPlanning":  "Planning",
+      "sectionFinancial": "Financial",
+      "financialNote":    "Visible to admins only.",
+
+      "name":                    "Project name",
+      "isInternal":              "Internal project (NexDigital)",
+      "clientName":              "Client name",
+      "reference":               "Reference / contract no.",
+      "description":             "Description",
+      "descriptionPlaceholder":  "Brief project description...",
+      "startDate":               "Start date",
+      "endDate":                 "End date",
+      "status":                  "Status",
+      "tjmVendu":                "Rate sold (€/day)",
+      "joursVendus":             "Days sold",
+      "budgetTotal":             "Total budget (€)"
+    }
   },
+
   "disponibilites": {
     "title": "Availability",
     "breadcrumb": "// weekly schedule",
