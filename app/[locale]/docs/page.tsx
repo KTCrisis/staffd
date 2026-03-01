@@ -357,7 +357,7 @@ export default function DocsPage() {
           <div className="intro-block reveal">
             <div className="block-label">// what is <Staffd /></div>
             <p>
-              <Staffd />replaces spreadsheets and fragmented tools with a fast, role-aware interface.
+              <Staffd /> replaces spreadsheets and fragmented tools with a fast, role-aware interface.
               It gives operations and project managers a single source of truth for{' '}
               <span style={{ color:'var(--green)' }}>consultant availability</span>,{' '}
               <span style={{ color:'var(--cyan)' }}>project staffing</span>, and{' '}
