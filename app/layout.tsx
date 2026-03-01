@@ -2,12 +2,27 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'staff7',
-  description: 'Gestion de consultants by flux7.art',
+  description: 'Talk to your staffing data. AI-native platform for agencies and consulting firms — resource management, margins, and MCP-powered automation.',
+  keywords: [
+    'agentic staffing platform',
+    'resource management AI',
+    'PSA software',
+    'Digital Services SaaS',
+    'Design Agency SaaS',
+    'Marketing Agency SaaS',    
+    'MCP staffing',
+    'consultant management',
+  ],
+  openGraph: {
+    title: 'staff7 — Agentic Resource Intelligence',
+    description: 'Talk to your staffing data.',
+    siteName: 'staffd',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <body>{children}</body>
     </html>
   )
