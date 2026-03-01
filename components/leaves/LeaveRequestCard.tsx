@@ -11,10 +11,10 @@ interface LeaveRequestCardProps {
 }
 
 export function LeaveRequestCard({ request, onApprove, onRefuse }: LeaveRequestCardProps) {
-  const t     = useTranslations('conges')
-  const start = new Date(request.startDate).toLocaleDateString()
-  const end   = new Date(request.endDate).toLocaleDateString()
+  const t       = useTranslations('conges')
   const tCommon = useTranslations('common')
+  const start   = new Date(request.startDate).toLocaleDateString()
+  const end     = new Date(request.endDate).toLocaleDateString()
 
   return (
     <div className="conge-card">
@@ -27,18 +27,22 @@ export function LeaveRequestCard({ request, onApprove, onRefuse }: LeaveRequestC
           </div>
         </div>
 
-        {request.status === 'pending' && (
+        {/* Boutons approve/refuse — admin/manager uniquement */}
+        {request.status === 'pending' && onApprove && onRefuse && (
           <div className="conge-actions">
-            <button className="btn btn-primary btn-sm" onClick={() => onApprove?.(request.id)}>
+            <button className="btn btn-primary btn-sm" onClick={() => onApprove(request.id)}>
               {t('approve')}
             </button>
-            <button className="btn btn-danger btn-sm" onClick={() => onRefuse?.(request.id)}>
+            <button className="btn btn-danger btn-sm" onClick={() => onRefuse(request.id)}>
               {t('refuse')}
             </button>
           </div>
         )}
 
-        {request.status !== 'pending' && <Badge variant={request.status} />}
+        {/* Badge statut — consultant ou demande non-pending */}
+        {(request.status !== 'pending' || !onApprove) && (
+          <Badge variant={request.status} />
+        )}
       </div>
 
       {request.impactWarning && (

@@ -2,13 +2,24 @@ import type { Consultant } from '@/types'
 import { Avatar }           from '@/components/ui'
 
 interface LeaveSoldeProps {
-  consultants: Consultant[]
+  consultants:    Consultant[]
+  currentUserId?: string
+  isConsultant?:  boolean
 }
 
-export function LeaveSolde({ consultants }: LeaveSoldeProps) {
+export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSoldeProps) {
+  const visible = isConsultant && currentUserId
+    ? consultants.filter(c => c.user_id === currentUserId)
+    : consultants
+
   return (
     <div>
-      {consultants.map(c => {
+      {visible.length === 0 && (
+        <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
+          // no profile linked
+        </div>
+      )}
+      {visible.map(c => {
         const color =
           c.leaveDaysLeft >= 15 ? 'var(--green)' :
           c.leaveDaysLeft >= 7  ? 'var(--gold)'  :

@@ -2,10 +2,12 @@
 
 import { useState }                 from 'react'
 import { useTranslations }          from 'next-intl'
+import { useAuthContext }           from '@/components/layout/AuthProvider'
 import { Topbar }                   from '@/components/layout/Topbar'
 import { Panel, StatRow }           from '@/components/ui'
 import { LeaveRequestCard }         from '@/components/leaves/LeaveRequestCard'
 import { LeaveSolde }               from '@/components/leaves/LeaveSolde'
+import { LeaveRequestForm }         from '@/components/leaves/LeaveRequestForm'
 import { useLeaveRequests, useConsultants, approveLeave, refuseLeave } from '@/lib/data'
 import type { LeaveStatus }         from '@/types'
 
@@ -13,11 +15,19 @@ function Skeleton({ h = 80 }: { h?: number }) {
   return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
 }
 
-export default function CongesPage() {
-  const t = useTranslations('conges')
+export default function LeavesPage() {
+  const t        = useTranslations('conges')
+  const { user } = useAuthContext()
+
   const { data: requests,    loading: lreq,  mutate } = useLeaveRequests() as { data: ReturnType<typeof useLeaveRequests>['data']; loading: boolean; mutate?: () => void; error: string | null }
   const { data: consultants, loading: lcons }         = useConsultants()
-  const [filter, setFilter] = useState<LeaveStatus | 'all'>('all')
+
+  const [filter,   setFilter]   = useState<LeaveStatus | 'all'>('all')
+  const [showForm, setShowForm] = useState(false)
+  const [refresh,  setRefresh]  = useState(0)
+
+  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager'
+  const isConsultant     = user?.role === 'consultant'
 
   const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
     { label: t('filters.all'),      value: 'all' },
@@ -26,11 +36,11 @@ export default function CongesPage() {
     { label: t('filters.refused'),  value: 'refused' },
   ]
 
-  const all     = requests ?? []
-  const visible = all.filter((r: any) => filter === 'all' || r.status === filter)
-  const pending  = all.filter((r: any) => r.status === 'pending').length
-  const approved = all.filter((r: any) => r.status === 'approved').length
-  const refused  = all.filter((r: any) => r.status === 'refused').length
+  const all      = requests ?? []
+  const visible  = all.filter((r: any) => filter === 'all' || r.status === filter)
+  const pending   = all.filter((r: any) => r.status === 'pending').length
+  const approved  = all.filter((r: any) => r.status === 'approved').length
+  const refused   = all.filter((r: any) => r.status === 'refused').length
   const totalDays = all.reduce((s: any, r: any) => s + r.days, 0)
 
   const stats = [
@@ -50,9 +60,20 @@ export default function CongesPage() {
     mutate?.()
   }
 
+  const handleSaved = () => {
+    mutate?.()
+    setRefresh(r => r + 1)
+  }
+
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} ctaLabel={t('cta')} onCta={() => {}} />
+      <Topbar
+        title={t('title')}
+        breadcrumb={t('breadcrumb')}
+        // Bouton "+ Request" visible uniquement pour les consultants
+        ctaLabel={isConsultant ? t('cta') : undefined}
+        onCta={isConsultant ? () => setShowForm(true) : undefined}
+      />
 
       <div className="app-content">
 
@@ -78,7 +99,10 @@ export default function CongesPage() {
         <div className="two-col">
           <Panel
             title={t('requests')}
-            action={pending > 0 ? { label: `⚠ ${pending} ${t('toValidate')}`, onClick: () => setFilter('pending') } : undefined}
+            action={isAdminOrManager && pending > 0
+              ? { label: `⚠ ${pending} ${t('toValidate')}`, onClick: () => setFilter('pending') }
+              : undefined
+            }
           >
             {lreq
               ? <Skeleton h={200} />
@@ -87,8 +111,9 @@ export default function CongesPage() {
                     <LeaveRequestCard
                       key={r.id}
                       request={r}
-                      onApprove={handleApprove}
-                      onRefuse={handleRefuse}
+                      // Boutons approve/refuse visibles uniquement pour admin/manager
+                      onApprove={isAdminOrManager ? handleApprove : undefined}
+                      onRefuse={isAdminOrManager ? handleRefuse : undefined}
                     />
                   ))
                 : <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
@@ -97,12 +122,24 @@ export default function CongesPage() {
             }
           </Panel>
 
+          {/* Soldes : admin/manager voient tous les consultants, consultant voit le sien */}
           <Panel title={t('soldes')}>
-            {lcons ? <Skeleton h={200} /> : <LeaveSolde consultants={consultants ?? []} />}
+            {lcons
+              ? <Skeleton h={200} />
+              : <LeaveSolde consultants={consultants ?? []} currentUserId={user?.id} isConsultant={isConsultant} />
+            }
           </Panel>
         </div>
 
       </div>
+
+      {/* Formulaire soumission congé — consultant uniquement */}
+      {showForm && (
+        <LeaveRequestForm
+          onClose={() => setShowForm(false)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   )
 }

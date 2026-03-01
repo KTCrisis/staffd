@@ -448,3 +448,19 @@ export async function deleteAssignment(id: string) {
   const { error } = await supabase.from('assignments').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+// ── Mutation : demande de congés ────────────────────────
+
+export async function createLeaveRequest(data: {
+  consultant_id: string
+  company_id: string
+  type: 'CP' | 'RTT' | 'Sans solde'
+  start_date: string
+  end_date: string
+  days: number
+}) {
+  const { error } = await supabase
+    .from('leave_requests')
+    .insert({ ...data, status: 'pending' })
+  if (error) throw new Error(error.message)
+}
