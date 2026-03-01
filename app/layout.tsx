@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'staffd — consultant manager',
+  title: 'staff7 — consultant manager',
   description: 'Gestion de consultants by flux7.art',
 }
 

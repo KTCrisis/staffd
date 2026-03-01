@@ -94,7 +94,7 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="brand">staff<span>d</span></div>
+        <div className="brand">staff<span>7</span></div>
         <div className="sub">// consultant manager</div>
       </div>
 
