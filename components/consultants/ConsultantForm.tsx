@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect }       from 'react'
+import { useAuthContext }             from '@/components/layout/AuthProvider'
 import { createConsultant, updateConsultant } from '@/lib/data'
-import type { Consultant } from '@/types'
+import type { Consultant }            from '@/types'
 
 const COLORS   = ['green', 'cyan', 'pink', 'gold', 'purple']
 const STATUSES = ['available', 'assigned', 'partial', 'leave']
@@ -14,7 +15,8 @@ interface Props {
 }
 
 export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
-  const isEdit = !!consultant
+  const { user } = useAuthContext()  // ← pour récupérer companyId
+  const isEdit   = !!consultant
 
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -73,8 +75,14 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
         tjm:              form.tjm ? parseFloat(form.tjm) : undefined,
         leave_days_total: parseInt(form.leave_days_total) || 25,
       }
-      if (isEdit) { await updateConsultant(consultant!.id, payload) }
-      else        { await createConsultant(payload) }
+
+      if (isEdit) {
+        await updateConsultant(consultant!.id, payload)
+      } else {
+        // ← injecter company_id à la création uniquement
+        await createConsultant({ ...payload, company_id: user?.companyId ?? undefined })
+      }
+
       onSaved()
       onClose()
     } catch (e: any) {

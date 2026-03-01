@@ -307,8 +307,11 @@ export async function createConsultant(data: {
   name: string; initials: string; email?: string; role: string
   avatar_color: string; stack: string[]; status: string
   tjm?: number; leave_days_total?: number
+  company_id?: string  // ← ajouter
 }) {
-  const { error } = await supabase.from('consultants').insert({ ...data, leave_days_taken: 0, occupancy_rate: 0 })
+  const { error } = await supabase
+    .from('consultants')
+    .insert({ ...data, leave_days_taken: 0, occupancy_rate: 0 })
   if (error) throw new Error(error.message)
 }
 
