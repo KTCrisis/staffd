@@ -3,7 +3,7 @@
 /**
  * app/[locale]/docs/page.tsx
  * Page publique — accessible sans auth à /docs
- * Branding : fl7ai | Thème : flux7.art
+ * Thème flux7.art : JetBrains Mono, particles, scanlines, multi-roles
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -18,7 +18,7 @@ function ParticleCanvas() {
     const ctx = canvas.getContext('2d')!
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize(); window.addEventListener('resize', resize)
-    const pts = Array.from({ length: 40 }, () => ({ 
+    const pts = Array.from({ length: 60 }, () => ({
       x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
       r: Math.random() * 1.5 + 0.5, c: Math.random() > 0.5 ? '#00ff88' : '#00e5ff',
@@ -80,12 +80,6 @@ function useTocSpy() {
 }
 
 // ── Components ─────────────────────────────────────────────────────────────
-
-const Brand = () => (
-  <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
-    fl7<span style={{ color: 'var(--green)' }}>ai</span>
-  </span>
-);
 
 function SectionHeader({ num, title, id, color }: { num: string; title: string; id?: string, color?: string }) {
   return (
@@ -149,12 +143,40 @@ function WfStep({ n, label, desc, last }: { n: number; label: string; desc: stri
   )
 }
 
+// ── Mobile Nav Menu ────────────────────────────────────────────────────────
+
+function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const sections = ['overview','roles','workflows','access','ai','glossary']
+  if (!open) return null
+  return (
+    <div className="mobile-menu-overlay" onClick={onClose}>
+      <div className="mobile-menu" onClick={e => e.stopPropagation()}>
+        <div className="mobile-menu-header">
+          <span style={{ fontSize: 9, letterSpacing: 3, color: 'var(--text2)', textTransform: 'uppercase' }}>// contents</span>
+          <button onClick={onClose} className="mobile-menu-close">✕</button>
+        </div>
+        {sections.map(s => (
+          <a key={s} href={`#${s}`} className="mobile-menu-link" onClick={onClose}>{s}</a>
+        ))}
+        <Link href="/login" className="mobile-menu-cta" onClick={onClose}>→ sign in</Link>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────
 
+const Staff7 = () => (
+  <span style={{ color: '#fff', fontWeight: 'inherit', textTransform: 'none' }}>
+    staff<span style={{ color: 'var(--green)' }}>7</span>
+  </span>
+);
+
+
 export default function DocsPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   useReveal()
   useTocSpy()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <>
@@ -175,69 +197,210 @@ export default function DocsPage() {
         /* ── NAV ── */
         .doc-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;background:linear-gradient(to bottom,rgba(6,10,6,0.97),transparent);backdrop-filter:blur(2px);}
         .nav-logo{font-size:18px;font-weight:700;letter-spacing:-0.5px;text-decoration:none;}
+        .nav-logo .s{color:#fff;}.nav-logo .d{color:var(--green);}
         .nav-tag{font-size:9px;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-left:16px;}
         .nav-links{display:flex;gap:28px;list-style:none;align-items:center;}
         .nav-links a{color:var(--text2);text-decoration:none;font-size:11px;letter-spacing:2px;text-transform:uppercase;transition:color 0.2s;position:relative;}
         .nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--green);transition:width 0.2s;}
         .nav-links a:hover{color:var(--green);}.nav-links a:hover::after{width:100%;}
-        .nav-cta{background:var(--green)!important;color:#060a06!important;padding:6px 16px!important;border-radius:2px;font-weight:700!important;text-decoration:none;}
+        .nav-cta{background:var(--green)!important;color:#060a06!important;padding:6px 16px!important;border-radius:2px;font-weight:700!important;}
+        .nav-cta::after{display:none!important;}.nav-cta:hover{opacity:0.9;}
+
+        /* ── HAMBURGER ── */
+        .hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px;background:none;border:none;}
+        .hamburger span{display:block;width:20px;height:1.5px;background:var(--text2);}
+
+        /* ── MOBILE MENU ── */
+        .mobile-menu-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);}
+        .mobile-menu{position:absolute;top:0;right:0;width:260px;height:100%;background:var(--bg2);border-left:1px solid var(--border);padding:24px;display:flex;flex-direction:column;gap:4px;}
+        .mobile-menu-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+        .mobile-menu-close{background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;font-family:var(--font);}
+        .mobile-menu-link{display:block;padding:10px 12px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);text-decoration:none;border:1px solid transparent;border-radius:2px;transition:all 0.15s;}
+        .mobile-menu-link:hover{color:var(--green);border-color:rgba(0,255,136,0.2);}
+        .mobile-menu-cta{display:block;margin-top:16px;padding:10px 16px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#060a06;background:var(--green);border-radius:2px;text-decoration:none;text-align:center;}
 
         /* ── LAYOUT ── */
         .layout{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:200px 1fr;position:relative;z-index:1;padding-top:72px;}
+
+        /* ── SIDEBAR ── */
         aside{position:sticky;top:72px;height:calc(100vh - 72px);padding:48px 0;overflow-y:auto;border-right:1px solid var(--border);}
+        .toc-label{font-size:9px;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;padding-left:24px;}
+        .toc-link{display:block;padding:6px 0 6px 24px;font-size:11px;text-decoration:none;color:var(--text2);letter-spacing:1px;border-left:2px solid transparent;transition:all 0.15s;}
+        .toc-link:hover{color:var(--green);border-left-color:rgba(0,255,136,0.4);}
+        .toc-link.active{color:var(--green);border-left-color:var(--green);}
+        .toc-link.sub{padding-left:36px;font-size:10px;}
+
+        /* ── MAIN ── */
         main{padding:48px 40px 120px 48px;}
 
-        /* ── MOBILE SPECIFIC ── */
-        .mobile-fab {
-          display: none; position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px;
-          border-radius: 50%; background: var(--green); color: #060a06; border: none;
-          z-index: 1000; box-shadow: 0 4px 20px rgba(0,255,136,0.3); font-weight: 700;
-          cursor: pointer; align-items: center; justify-content: center; font-family: var(--font);
-        }
-        .mobile-overlay {
-          position: fixed; inset: 0; background: rgba(6,10,6,0.98); z-index: 999;
-          display: flex; flex-direction: column; padding: 100px 40px;
-          transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-        .mobile-overlay.open { transform: translateY(0); }
-        .mobile-toc-link { font-size: 20px; color: #fff; text-decoration: none; margin-bottom: 24px; letter-spacing: 2px; text-transform: uppercase; }
+        /* ── HERO ── */
+        #overview{min-height:70vh;display:flex;flex-direction:column;justify-content:center;padding-top:40px;margin-bottom:80px;}
+        .hero-tag{font-size:11px;letter-spacing:4px;color:var(--text2);text-transform:uppercase;margin-bottom:24px;opacity:0;animation:fadeUp 0.6s ease 0.2s forwards;}
+        .hero-tag span{color:var(--green);border:1px solid var(--green);padding:2px 10px;border-radius:2px;}
+        .hero-title{font-size:clamp(40px,7vw,78px);font-weight:700;line-height:0.95;letter-spacing:-3px;margin-bottom:8px;opacity:0;animation:fadeUp 0.6s ease 0.4s forwards;}
+        .hero-title .t1{color:#fff;}.hero-title .t2{color:transparent;-webkit-text-stroke:1px var(--green);}.hero-title .t3{color:var(--green);}
+        .hero-sub{font-size:13px;color:var(--text2);margin-top:28px;line-height:1.8;max-width:520px;opacity:0;animation:fadeUp 0.6s ease 0.6s forwards;}
+        .hero-sub b{color:var(--cyan);font-weight:400;}
+        .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px;opacity:0;animation:fadeUp 0.6s ease 0.8s forwards;}
+        .htag{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border:1px solid var(--border);border-radius:2px;color:var(--text2);transition:all 0.2s;display:inline-block;}
+        .htag:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.05);}
 
-        @media (max-width: 900px) {
-          .layout { grid-template-columns: 1fr; }
-          aside, .nav-links { display: none; }
-          main { padding: 40px 20px 100px 20px; }
-          .mobile-fab { display: flex; }
-          .hero-title { font-size: 42px; letter-spacing: -1px; }
-          .workflow-grid { grid-template-columns: 1fr; }
-          .data-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-          .data-table { min-width: 500px; }
-        }
+        /* ── INTRO BLOCK ── */
+        .intro-block{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--green);padding:24px 28px;margin-bottom:80px;}
+        .block-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);margin-bottom:14px;}
+        .intro-block p{font-size:13px;line-height:1.8;color:var(--text);}
 
-        /* ── REVEAL ── */
+        /* ── SECTION HEADER ── */
+        .section-header{display:flex;align-items:baseline;gap:20px;margin-bottom:40px;}
+        .section-num{font-size:11px;color:var(--green);letter-spacing:3px;}
+        .section-title{font-size:30px;font-weight:700;color:#fff;letter-spacing:-1px;}
+        .section-line{flex:1;height:1px;background:var(--border);}
+
+        /* ── ROLE SEP ── */
+        .role-sep{display:flex;align-items:center;gap:12px;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;}
+        .role-sep .line{flex:1;height:1px;background:var(--border);}
+        .role-sep .who{color:var(--text2);}
+
+        /* ── ROLE CARD ── */
+        .role-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:28px;position:relative;overflow:hidden;transition:all 0.3s;margin-bottom:28px;}
+        .role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:transparent;transition:background 0.3s;}
+        .role-card:hover{border-color:var(--dim);transform:translateY(-1px);background:var(--bg3);}
+        .role-card.green:hover{border-color:rgba(0,255,136,0.3);}.role-card.green:hover::before{background:var(--green);}
+        .role-card.cyan:hover{border-color:rgba(0,229,255,0.3);}.role-card.cyan:hover::before{background:var(--cyan);}
+        .role-card.gold:hover{border-color:rgba(255,209,102,0.3);}.role-card.gold:hover::before{background:var(--gold);}
+        .role-card.pink:hover{border-color:rgba(255,45,107,0.3);}.role-card.pink:hover::before{background:var(--pink);}
+        
+        .role-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+        .role-badge{font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:2px 10px;border-radius:2px;}
+        .role-badge.green{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
+        .role-badge.cyan{background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid rgba(0,229,255,0.3);}
+        .role-badge.gold{background:rgba(255,209,102,0.1);color:var(--gold);border:1px solid rgba(255,209,102,0.3);}
+        .role-badge.pink{background:rgba(255,45,107,0.1);color:var(--pink);border:1px solid rgba(255,45,107,0.3);}
+        
+        .role-who{font-size:10px;color:var(--text2);}
+        .role-desc{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:20px;}
+        .can-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+        .can-item{display:flex;gap:10px;font-size:11px;color:var(--text);}
+        .tick{color:var(--green);flex-shrink:0;}
+        .cant-list{display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--border);padding-top:14px;}
+        .cant-item{display:flex;gap:10px;font-size:11px;color:var(--text2);}
+        .cross{color:rgba(255,45,107,0.5);flex-shrink:0;}
+
+        /* ── WORKFLOW ── */
+        .workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+        .workflow-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:28px;}
+        .workflow-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);margin-bottom:24px;border-left:2px solid var(--green);padding-left:10px;}
+        .wf-step{display:flex;gap:16px;}
+        .wf-step-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+        .wf-num{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,255,136,0.4);background:rgba(0,255,136,0.05);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);}
+        .wf-line{width:1px;flex:1;background:var(--border);margin:4px 0;}
+        .wf-content{padding-bottom:20px;}
+        .wf-label{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+        .wf-desc{font-size:11px;color:var(--text2);line-height:1.6;}
+
+        /* ── DATA TABLE ── */
+        .data-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+        .data-table{width:100%;border-collapse:collapse;font-size:11px;min-width:420px;}
+        .data-table th{padding:10px 16px;text-align:left;color:var(--text2);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);}
+        .data-table th.green{color:var(--green);}.data-table th.cyan{color:var(--cyan);}.data-table th.gold{color:var(--gold);}
+        .data-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:var(--text);}
+        .data-table tr:last-child td{border-bottom:none;}
+        .data-table tr:nth-child(even) td{background:rgba(255,255,255,0.01);}
+        .yes{color:var(--green)!important;}.no{color:rgba(255,45,107,0.5)!important;}.partial{color:var(--gold)!important;}
+
+        /* ── GLOSSARY ── */
+        .glossary-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 20px;}
+        .gloss-row{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);font-size:11px;}
+        .gloss-row:last-child{border-bottom:none;}
+        .gloss-term{color:var(--cyan);min-width:140px;flex-shrink:0;}
+        .gloss-def{color:var(--text2);line-height:1.6;}
+
+        /* ── FOOTER ── */
+        .doc-footer{border-top:1px solid var(--border);padding-top:32px;margin-top:80px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+        .doc-footer-cta{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#060a06;background:var(--green);padding:8px 20px;border-radius:2px;text-decoration:none;transition:opacity 0.2s;}
+        .doc-footer-cta:hover{opacity:0.85;}
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .reveal{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
         .reveal.visible{opacity:1;transform:translateY(0);}
-        
-        /* ── ELEMENTS ── */
-        .toc-label{font-size:9px;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;padding-left:24px;}
-        .toc-link{display:block;padding:6px 0 6px 24px;font-size:11px;text-decoration:none;color:var(--text2);letter-spacing:1px;border-left:2px solid transparent;}
-        .toc-link.active{color:var(--green);border-left-color:var(--green);}
-        .role-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:28px;margin-bottom:28px;}
-        .workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-        .data-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
-        .data-table{width:100%;border-collapse:collapse;font-size:11px;}
-        .data-table th, .data-table td{padding:12px 16px; text-align:left; border-bottom:1px solid var(--border);}
-        .yes{color:var(--green);} .no{color:rgba(255,45,107,0.5);}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
         .cursor{animation:blink 1s step-end infinite;}
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
+
+        /* ══════════════════════════════════════
+           ── RESPONSIVE MOBILE ─────────────────
+           ══════════════════════════════════════ */
+
+        /* Tablet : ≤ 900px */
+        @media (max-width: 900px) {
+          .doc-nav { padding: 16px 24px; }
+          .nav-links { display: none; }
+          .hamburger { display: flex; }
+          .layout { grid-template-columns: 1fr; }
+          aside { display: none; }
+          main { padding: 40px 24px 80px; }
+          .workflow-grid { grid-template-columns: 1fr; }
+          .hero-title { letter-spacing: -2px; }
+        }
+
+        /* Mobile : ≤ 600px */
+        @media (max-width: 600px) {
+          .doc-nav { padding: 14px 16px; }
+
+          /* Hero */
+          #overview { min-height: 60vh; padding-top: 20px; margin-bottom: 48px; }
+          .hero-tag { font-size: 9px; letter-spacing: 2px; }
+          .hero-title { font-size: clamp(32px, 11vw, 54px); letter-spacing: -1.5px; line-height: 1; }
+          .hero-sub { font-size: 12px; margin-top: 20px; }
+          .hero-tags { gap: 6px; margin-top: 24px; }
+          .htag { font-size: 9px; padding: 4px 10px; }
+
+          /* Intro */
+          .intro-block { padding: 18px 20px; margin-bottom: 48px; }
+          .intro-block p { font-size: 12px; }
+
+          /* Section header */
+          .section-header { gap: 12px; margin-bottom: 28px; }
+          .section-title { font-size: 22px; letter-spacing: -0.5px; }
+          .section-num { font-size: 10px; }
+
+          /* Main layout */
+          main { padding: 32px 16px 80px; }
+
+          /* Role cards */
+          .role-card { padding: 20px; }
+          .role-desc { font-size: 11px; }
+          .can-item, .cant-item { font-size: 10px; }
+
+          /* Glossary */
+          .gloss-row { flex-direction: column; gap: 4px; padding: 12px 0; }
+          .gloss-term { min-width: unset; }
+
+          /* Contact section */
+          .contact-box { padding: 36px 20px !important; }
+          .contact-box h3 { font-size: 20px !important; }
+          .contact-box p { font-size: 12px !important; }
+
+          /* Footer */
+          .doc-footer { padding-top: 24px; margin-top: 48px; justify-content: center; text-align: center; }
+
+          /* Sections spacing */
+          section { margin-bottom: 48px !important; }
+        }
       `}</style>
 
       <ParticleCanvas />
       <div className="grid-bg" />
 
-      {/* Navigation */}
+      {/* ── Nav ── */}
       <nav className="doc-nav">
         <div style={{ display:'flex', alignItems:'center' }}>
-          <Link href="/" className="nav-logo"><Brand /></Link>
+          <Link href="/login" className="nav-logo">
+            <span className="s">staff</span><span className="d">7</span>
+          </Link>
           <span className="nav-tag">// docs</span>
         </div>
         <ul className="nav-links">
@@ -246,129 +409,288 @@ export default function DocsPage() {
           ))}
           <li><Link href="/login" className="nav-cta">sign in →</Link></li>
         </ul>
+        {/* Hamburger mobile */}
+        <button className="hamburger" onClick={() => setMenuOpen(true)} aria-label="Menu">
+          <span /><span /><span />
+        </button>
       </nav>
+
+      {/* ── Mobile drawer ── */}
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <div className="layout">
         <aside>
           <div className="toc-label">// contents</div>
           <a href="#overview"   className="toc-link active">Overview</a>
           <a href="#roles"      className="toc-link">Roles</a>
+          <a href="#admin"      className="toc-link sub">→ Admin</a>
+          <a href="#manager"    className="toc-link sub">→ Manager</a>
+          <a href="#consultant" className="toc-link sub">→ Consultant</a>
           <a href="#workflows"  className="toc-link">Workflows</a>
           <a href="#access"     className="toc-link">Data access</a>
-          <a href="#ai"         className="toc-link">Agentic AI <span style={{color:'var(--pink)', fontSize:8}}>[WIP]</span></a>
+          <a href="#ai"         className="toc-link">Agentic AI <span style={{ fontSize: 8, color: 'var(--pink)', marginLeft: 4 }}>[WIP]</span></a>
           <a href="#glossary"   className="toc-link">Glossary</a>
         </aside>
 
         <main>
           {/* Hero */}
           <section id="overview">
-            <div className="hero-tag"><span>Beta 2026</span> — intelligence engine</div>
+            <div className="hero-tag">
+              <span>Beta 2026</span> — consultant resource management
+            </div>
             <h1 className="hero-title">
-              <span style={{color:'#fff'}}>staffing ops,</span><br />
-              <span style={{color: 'transparent', WebkitTextStroke: '1px var(--green)'}}>finally</span> <span style={{color:'var(--green)'}}>clear</span>
+              <span className="t1">staffing ops,</span><br />
+              <span className="t2">finally</span> <span className="t3">clear</span>
               <span className="cursor">_</span>
             </h1>
-            <p style={{fontSize:13, color:'var(--text2)', marginTop:28, lineHeight:1.8, maxWidth:520}}>
-              <Brand /> centralises resource management for <b>ESN and creative agencies</b>. 
-              One engine for availability, financial margins, and AI-driven staffing.
+            <p className="hero-sub">
+              <Staff7 /> centralises consultant management for{' '}
+              <b>staffing agencies and consulting firms</b>.
+              One platform for availability, project assignments,
+              time-off, and financial margins.
             </p>
+            <div className="hero-tags">
+              {['Real-time occupancy','Project assignments','Leave workflows','Financial margins','Monthly timeline','Multi-tenant'].map((f,i) => (
+                <span key={i} className="htag">{f}</span>
+              ))}
+            </div>
           </section>
 
-          {/* Section 01: Roles */}
-          <section id="roles" style={{ marginBottom: 80 }}>
-            <SectionHeader num="01" title="Roles" />
-            <RoleSep label="→ admin" color="var(--cyan)" who="CEO · Director" />
-            <RoleCard role="admin" who="Full control" accent="cyan" desc="Configures the engine and monitors all financial data." 
-              can={['Manage daily rates (TJM)', 'View global margins', 'Approve all leaves']} />
-            
-            <RoleSep label="→ manager" color="var(--green)" who="Project Manager" />
-            <RoleCard role="manager" who="Operations" accent="green" desc="Handles projects and team assignments day-to-day." 
-              can={['Create projects', 'Assign consultants', 'Review workloads']} cant={['View financial TJM']} />
+          {/* Intro Block */}
+          <div className="intro-block reveal">
+            <div className="block-label">// what is <Staff7 /></div>
+            <p>
+              <Staff7 /> replaces spreadsheets and fragmented tools with a fast, role-aware interface.
+              It gives operations and project managers a single source of truth for{' '}
+              <span style={{ color:'var(--green)' }}>consultant availability</span>,{' '}
+              <span style={{ color:'var(--cyan)' }}>project staffing</span>, and{' '}
+              <span style={{ color:'var(--gold)' }}>financial performance</span>.
+              Each company runs in its own isolated workspace — fully multi-tenant.
+            </p>
+          </div>
+
+          {/* ── Section 01: Roles ── */}
+          <section style={{ marginBottom: 80 }}>
+            <SectionHeader num="01" title="Roles" id="roles" />
+
+            <div id="admin" style={{ scrollMarginTop: 80 }}>
+              <RoleSep label="→ admin" color="var(--cyan)" who="CEO · Director" />
+              <RoleCard role="admin" who="Full access including financials" accent="cyan"
+                desc="Configures and operates the entire platform. Sees all data — including confidential daily rates and financial margins."
+                can={[
+                  'Create, edit, delete consultants — including daily rates (TJM)',
+                  'Create and manage clients with sector and contact info',
+                  'Create projects (external or internal) with full financial data',
+                  'Assign consultants to projects with allocation %',
+                  'Approve or refuse time-off requests',
+                  'Access /financials — margins, sold rates, gross margin per project',
+                ]}
+              />
+            </div>
+
+            <div id="manager" style={{ scrollMarginTop: 80 }}>
+              <RoleSep label="→ manager" color="var(--green)" who="Project manager · HR" />
+              <RoleCard role="manager" who="Operational access — no financials" accent="green"
+                desc="Handles day-to-day staffing and project operations. Cannot see confidential financial data."
+                can={[
+                  'View consultant profiles and manage assignments',
+                  'Create and edit projects (without financial fields)',
+                  'Create and manage clients',
+                  'Approve or refuse time-off requests',
+                  'View the availability grid and timeline',
+                ]}
+                cant={[
+                  'Access /financials (margins, sold rates)',
+                  'See consultant daily rates (TJM)',
+                  'See project financial data (sold days, budget)',
+                ]}
+              />
+            </div>
+
+            <div id="consultant" style={{ scrollMarginTop: 80 }}>
+              <RoleSep label="→ consultant" color="var(--gold)" who="Team member" />
+              <RoleCard role="consultant" who="Own data only" accent="gold"
+                desc="Limited to their own data. Focused on personal availability, current missions, and time-off."
+                can={[
+                  'View their own profile (daily rate hidden)',
+                  'See their current and upcoming project assignments',
+                  'Submit time-off requests',
+                  'View the team timeline',
+                ]}
+                cant={[
+                  "See other consultants' profiles or data",
+                  'Create or edit projects or clients',
+                  'Access /financials or any financial data',
+                ]}
+              />
+            </div>
           </section>
 
-          {/* Section 02: Workflows */}
-          <section id="workflows" style={{ marginBottom: 80 }}>
+          {/* ── Section 02: Workflows ── */}
+          <section id="workflows" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="02" title="Workflows" />
             <div className="workflow-grid reveal">
-              <div className="role-card" style={{margin:0}}>
-                <div style={{fontSize:9, color:'var(--green)', letterSpacing:2, marginBottom:20}}>// STAFFING</div>
-                <WfStep n={1} label="Setup Client" desc="Create profile in /clients." />
-                <WfStep n={2} label="New Project" desc="Define dates and sold rates." />
-                <WfStep n={3} label="Assign Team" desc="Select consultants and allocation %." last />
+              <div className="workflow-card">
+                <div className="workflow-title">// time-off request</div>
+                <WfStep n={1} label="Consultant submits a request"    desc="Selects type, dates, and number of days." />
+                <WfStep n={2} label="Appears in /leaves as Pending"   desc="Red badge in the sidebar shows count of pending requests." />
+                <WfStep n={3} label="Manager or Admin reviews"       desc="Reviews impact on projects." />
+                <WfStep n={4} label="Approve ✓ or Refuse ✗"           desc="Status updates immediately." last />
               </div>
-              <div className="role-card" style={{margin:0}}>
-                <div style={{fontSize:9, color:'var(--green)', letterSpacing:2, marginBottom:20}}>// LEAVES</div>
-                <WfStep n={1} label="Request" desc="Consultant submits dates." />
-                <WfStep n={2} label="Impact" desc="Manager reviews project collision." />
-                <WfStep n={3} label="Decision" desc="Approve or refuse in one click." last />
+              <div className="workflow-card">
+                <div className="workflow-title">// staffing a project</div>
+                <WfStep n={1} label="Create the client"       desc="Add name, sector, and contact details." />
+                <WfStep n={2} label="Create the project"      desc="Fill in dates, status, and financial data." />
+                <WfStep n={3} label="Assign consultants"      desc="Set dates and allocation % in the project drawer." />
+                <WfStep n={4} label="Track in real time"      desc="Monitor occupancy and margins." last />
               </div>
             </div>
           </section>
 
-          {/* Section 03: Data Access */}
-          <section id="access" style={{ marginBottom: 80 }}>
+          {/* ── Section 03: Data Access ── */}
+          <section id="access" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="03" title="Data access" />
             <div className="data-table-wrap reveal">
               <table className="data-table">
                 <thead>
-                  <tr><th>Feature</th><th>Admin</th><th>Manager</th><th>Consultant</th></tr>
+                  <tr>
+                    <th>Data</th>
+                    <th className="cyan">Admin</th>
+                    <th className="green">Manager</th>
+                    <th className="gold">Consultant</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {[['Daily rates (TJM)', '✓', '✗', '✗'], ['Margins', '✓', '✗', '✗'], ['Availability', '✓', '✓', '✓']].map((row, i) => (
-                    <tr key={i}><td>{row[0]}</td><td className={row[1]==='✓'?'yes':'no'}>{row[1]}</td><td className={row[2]==='✓'?'yes':'no'}>{row[2]}</td><td className={row[3]==='✓'?'yes':'no'}>{row[3]}</td></tr>
+                  {[
+                    ['Consultant list',     '✓ All',  '✓ All',           '✗'],
+                    ['Consultant profile',  '✓ Full', '✓ No daily rate', '✓ Own only'],
+                    ['Daily rates (TJM)',   '✓',      '✗',               '✗'],
+                    ['Project list',        '✓ All',  '✓ All',           '✓ Own projects'],
+                    ['Project financials',  '✓',      '✗',               '✗'],
+                    ['Availability grid',   '✓',      '✓',               '✓'],
+                  ].map(([label, admin, manager, consultant], i) => (
+                    <tr key={i}>
+                      <td>{label}</td>
+                      <td className={admin === '✗' ? 'no' : 'yes'}>{admin}</td>
+                      <td className={manager === '✗' ? 'no' : 'yes'}>{manager}</td>
+                      <td className={consultant === '✗' ? 'no' : consultant.includes('Own') ? 'partial' : 'yes'}>{consultant}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* Section 04: AI [WIP] */}
-          <section id="ai" style={{ marginBottom: 80 }}>
+          {/* ── Section 04: Agentic AI (WIP) ── */}
+          <section id="ai" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="04" title="Agentic AI" color="var(--pink)" />
-            <div className="role-card reveal" style={{borderColor:'var(--pink)', background:'rgba(255,45,107,0.02)'}}>
-              <div style={{fontSize:9, color:'var(--pink)', letterSpacing:2, marginBottom:16}}>WIP · EXPERIMENTAL</div>
-              <p style={{fontSize:12, color:'var(--text2)', lineHeight:1.7}}>
-                Exposing <Brand /> data to LLMs via <b>Model Context Protocol (MCP)</b>. 
-                Natural language staffing queries meeting database-level RLS security.
+            
+            <div className="role-card pink reveal" style={{ background: 'rgba(255, 45, 107, 0.02)', borderColor: 'rgba(255, 45, 107, 0.2)' }}>
+              <div className="role-header">
+                <span className="role-badge pink">WIP · EXPERIMENTAL</span>
+                <span className="role-who">Model Context Protocol (MCP)</span>
+              </div>
+              
+              <p className="role-desc">
+                We are prototyping an <b>intelligence layer</b> that exposes <Staff7 /> data directly to LLMs (Claude, GPT) via the MCP protocol. 
+                This enables natural language interactions while enforcing your existing security rules.
               </p>
-              <div style={{marginTop:20, padding:12, border:'1px dashed var(--pink)', fontSize:11, color:'#fff', fontStyle:'italic'}}>
-                "Find a React dev available in April with a TJM &lt; 650€"
+
+              <div className="workflow-grid" style={{ gridTemplateColumns: '1fr', gap: '16px' }}>
+                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Semantic Staffing Queries</div>
+                  <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 12 }}>
+                    Ask: <i>"Find a React consultant available in April with a daily rate under 600€"</i>.
+                  </div>
+                </div>
+                
+                <div style={{ borderLeft: '2px solid var(--pink)', paddingLeft: '16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: '700', color: '#fff', marginBottom: 4 }}>Role-Aware Intelligence</div>
+                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>
+                    The AI inherits your <b>Supabase RLS policies</b>. Confidential data remains hidden if the user's role doesn't allow it.
+                  </div>
+                </div>
+              </div>
+
+              <div className="hero-tags" style={{ marginTop: 24 }}>
+                {['FastAPI MCP Server', 'Natural Language SQL', 'Security Context', 'Agentic Workflows'].map((t, i) => (
+                  <span key={i} className="htag" style={{ borderColor: 'var(--pink)', color: 'var(--pink)', fontSize: 9 }}>{t}</span>
+                ))}
               </div>
             </div>
           </section>
 
-          {/* Section 05: Glossary */}
-          <section id="glossary">
+          {/* ── Section 05: Glossary ── */}
+          <section id="glossary" style={{ scrollMarginTop: 80, marginBottom: 80 }}>
             <SectionHeader num="05" title="Glossary" />
-            <div className="data-table-wrap reveal" style={{padding:20}}>
-              <div style={{marginBottom:12}}><span style={{color:'var(--cyan)'}}>Tenant</span> : One company workspace (multi-tenant).</div>
-              <div><span style={{color:'var(--cyan)'}}>TJM</span> : Daily sold rate (Taux Journalier Moyen).</div>
+            <div className="glossary-wrap reveal">
+              {[
+                ['Tenant',           'A company using Staff7 (e.g. MyCompany).'],
+                ['Consultant',       'A team member, billable or not.'],
+                ['Client',           'An external company the firm sells services to.'],
+                ['Internal project', 'A non-billable project — R&D, training, pre-sales.'],
+                ['Assignment',       'A consultant allocated to a project with an allocation %.'],
+                ['Daily rate',       "The sold price per day for a consultant (TJM in French)."],
+                ['Occupancy rate',   'Total occupation = sum of all active allocations.'],
+              ].map(([term, def], i) => (
+                <div key={i} className="gloss-row">
+                  <span className="gloss-term">{term}</span>
+                  <span className="gloss-def">{def}</span>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* Contact */}
-          <section id="contact" className="reveal" style={{ marginTop: 100 }}>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '60px 40px', textAlign: 'center' }}>
-              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16 }}>Interested in <Brand />?</h3>
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32 }}>Custom AI integrations or private instance deployment.</p>
-              <a href="mailto:flux7art@gmail.com" className="nav-cta" style={{padding:'12px 24px'}}>flux7art@gmail.com</a>
+          {/* ── Section Contact / Lead Generation ── */}
+          <section id="contact" className="reveal" style={{ marginTop: 100, marginBottom: 40 }}>
+            <div className="contact-box" style={{ 
+              background: 'linear-gradient(145deg, var(--bg2), var(--bg))',
+              border: '1px solid var(--dim)',
+              borderRadius: '4px',
+              padding: '60px 40px',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ 
+                position: 'absolute', 
+                top: 0, left: 0, width: '100%', height: '2px', 
+                background: 'linear-gradient(90deg, transparent, var(--green), transparent)' 
+              }} />
+              
+              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
+                Interested in <Staff7/>?
+              </h3>
+              
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
+                Whether you want to deploy a private instance, join the Beta, 
+                or discuss custom AI integrations for your agency.
+              </p>
+
+              <a href="mailto:flux7art@gmail.com" 
+                className="doc-footer-cta" 
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '12px', 
+                  padding: '12px 24px',
+                  fontSize: 13 
+                }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                </svg>
+                flux7art@gmail.com
+              </a>
             </div>
           </section>
 
-          <footer style={{ marginTop: 80, fontSize: 10, color: 'var(--text2)', textAlign: 'center' }}>
-            <Brand /> · 2026
-          </footer>
+          <div className="doc-footer reveal">
+            <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
+              <Staff7 />· built on cloudflare · beta 2026
+            </span>
+            <Link href="/login" className="doc-footer-cta">→ sign in</Link>
+          </div>
         </main>
-      </div>
-
-      {/* Mobile Menu */}
-      <button className="mobile-fab" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-        {isMenuOpen ? '✕' : 'MENU'}
-      </button>
-      <div className={`mobile-overlay ${isMenuOpen ? 'open' : ''}`}>
-        {['overview', 'roles', 'workflows', 'access', 'ai', 'glossary'].map(id => (
-          <a key={id} href={`#${id}`} className="mobile-toc-link" onClick={() => setIsMenuOpen(false)}>{id}</a>
-        ))}
       </div>
     </>
   )
