@@ -2,12 +2,26 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies }      from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+// 1. Force la route en mode dynamique pour éviter le scan au build
+export const dynamic = 'force-dynamic';
+
+// 2. Déplace l'initialisation dans une fonction (Lazy Loading)
+// Cela empêche l'exécution au moment de l'import pendant le build.
+const getSupabaseAdmin = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  
+  if (!key) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing at runtime');
+  }
+  
+  return createClient(url, key);
+}
 
 export async function POST(req: Request) {
+  // Initialisation à l'intérieur de la requête
+  const supabaseAdmin = getSupabaseAdmin();
+
   // 1. Vérifier que le caller est bien admin
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -15,12 +29,15 @@ export async function POST(req: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
+  
   const { data: { user } } = await supabase.auth.getUser()
   const role = user?.app_metadata?.user_role
+  
   if (!user || !['admin', 'manager'].includes(role)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  
   const { consultantId, email, companyId } = await req.json()
   if (!consultantId || !email) {
     return Response.json({ error: 'Missing fields' }, { status: 400 })
