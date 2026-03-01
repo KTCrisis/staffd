@@ -104,7 +104,7 @@ export const PROJECTS: Project[] = [
     consultantIds: ['dm'],
     progress: 5,
     endDate: '2026-08-31',
-    status: 'starting',
+    status: 'draft',
   },
 ]
 

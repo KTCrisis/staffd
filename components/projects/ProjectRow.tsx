@@ -7,7 +7,7 @@ import { formatDate }  from '@/lib/utils'
 
 interface ProjectRowProps {
   project: Project
-  consultants: Consultant[]   // full list to resolve avatars
+  consultants: Consultant[]
   onClick?: () => void
 }
 
@@ -30,7 +30,7 @@ export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
       <div>
         <div className="pr-name">{project.name}</div>
         <div className="pr-client">
-          {project.client} · {project.consultantIds.length} consultant{project.consultantIds.length > 1 ? 's' : ''}
+          {project.clientName ?? project.client} · {project.consultantIds.length} consultant{project.consultantIds.length > 1 ? 's' : ''}
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
 
       {/* Due date */}
       <div style={{ fontSize: 10, color: 'var(--text2)', textAlign: 'right' }}>
-        {formatDate(project.endDate)}
+        {project.endDate ? formatDate(project.endDate) : '—'}
       </div>
     </div>
   )
