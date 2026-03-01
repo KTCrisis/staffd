@@ -299,7 +299,7 @@ export default function DocsPage() {
         .wf-desc{font-size:11px;color:var(--text2);line-height:1.6;}
 
         /* ── DATA TABLE ── */
-        .data-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+        .data-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
         .data-table{width:100%;border-collapse:collapse;font-size:11px;min-width:420px;}
         .data-table th{padding:10px 16px;text-align:left;color:var(--text2);font-weight:600;letter-spacing:1px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.3);}
         .data-table th.green{color:var(--green);}.data-table th.cyan{color:var(--cyan);}.data-table th.gold{color:var(--gold);}
@@ -316,6 +316,9 @@ export default function DocsPage() {
         .gloss-def{color:var(--text2);line-height:1.6;}
 
         /* ── FOOTER ── */
+        .contact-box{padding:60px 40px;}
+        .contact-title{font-size:28px;}
+        .contact-desc{font-size:13px;}
         .doc-footer{border-top:1px solid var(--border);padding-top:32px;margin-top:80px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
         .doc-footer-cta{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#060a06;background:var(--green);padding:8px 20px;border-radius:2px;text-decoration:none;transition:opacity 0.2s;}
         .doc-footer-cta:hover{opacity:0.85;}
@@ -351,44 +354,66 @@ export default function DocsPage() {
           .doc-nav { padding: 14px 16px; }
 
           /* Hero */
-          #overview { min-height: 60vh; padding-top: 20px; margin-bottom: 48px; }
+          #overview { min-height: 55vh; padding-top: 20px; margin-bottom: 40px; }
           .hero-tag { font-size: 9px; letter-spacing: 2px; }
-          .hero-title { font-size: clamp(32px, 11vw, 54px); letter-spacing: -1.5px; line-height: 1; }
-          .hero-sub { font-size: 12px; margin-top: 20px; }
-          .hero-tags { gap: 6px; margin-top: 24px; }
-          .htag { font-size: 9px; padding: 4px 10px; }
+          .hero-title { font-size: clamp(28px, 9vw, 46px); letter-spacing: -1px; line-height: 1.05; }
+          .hero-sub { font-size: 12px; margin-top: 16px; max-width: 100%; }
+          .hero-tags { gap: 6px; margin-top: 20px; }
+          .htag { font-size: 9px; padding: 4px 8px; }
 
           /* Intro */
-          .intro-block { padding: 18px 20px; margin-bottom: 48px; }
+          .intro-block { padding: 16px; margin-bottom: 40px; }
           .intro-block p { font-size: 12px; }
 
-          /* Section header */
-          .section-header { gap: 12px; margin-bottom: 28px; }
-          .section-title { font-size: 22px; letter-spacing: -0.5px; }
+          /* Section header — section-line masquée pour éviter overflow flex */
+          .section-header { gap: 10px; margin-bottom: 24px; }
+          .section-title { font-size: 20px; letter-spacing: -0.5px; }
           .section-num { font-size: 10px; }
+          .section-line { display: none; }
 
           /* Main layout */
-          main { padding: 32px 16px 80px; }
+          main { padding: 28px 14px 80px; }
 
           /* Role cards */
-          .role-card { padding: 20px; }
+          .role-card { padding: 16px; }
           .role-desc { font-size: 11px; }
           .can-item, .cant-item { font-size: 10px; }
+          .role-sep { font-size: 8px; }
+
+          /* Table — min-width réduit pour tenir dans 412px - 28px de padding = 384px */
+          .data-table { min-width: 320px; font-size: 10px; }
+          .data-table th, .data-table td { padding: 8px 10px; }
+
+          /* Workflow */
+          .workflow-card { padding: 18px 14px; }
+          .wf-label { font-size: 11px; }
+          .wf-desc { font-size: 10px; }
 
           /* Glossary */
           .gloss-row { flex-direction: column; gap: 4px; padding: 12px 0; }
-          .gloss-term { min-width: unset; }
+          .gloss-term { min-width: unset; font-size: 10px; }
+          .gloss-def { font-size: 10px; }
 
-          /* Contact section */
-          .contact-box { padding: 36px 20px !important; }
-          .contact-box h3 { font-size: 20px !important; }
-          .contact-box p { font-size: 12px !important; }
+          /* Contact section — géré via classe CSS, pas inline */
+          .contact-box { padding: 32px 16px !important; }
+          .contact-title { font-size: 20px !important; }
+          .contact-desc { font-size: 12px !important; }
 
           /* Footer */
-          .doc-footer { padding-top: 24px; margin-top: 48px; justify-content: center; text-align: center; }
+          .doc-footer { padding-top: 20px; margin-top: 40px; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
 
           /* Sections spacing */
-          section { margin-bottom: 48px !important; }
+          section { margin-bottom: 40px !important; }
+        }
+
+        /* Très petit : ≤ 390px */
+        @media (max-width: 390px) {
+          main { padding: 24px 12px 60px; }
+          .hero-title { font-size: clamp(24px, 8vw, 36px); }
+          .doc-nav { padding: 12px; }
+          .data-table { min-width: 280px; font-size: 9px; }
+          .data-table th, .data-table td { padding: 6px 8px; }
+          .role-card { padding: 14px; }
         }
       `}</style>
 
@@ -647,7 +672,6 @@ export default function DocsPage() {
               background: 'linear-gradient(145deg, var(--bg2), var(--bg))',
               border: '1px solid var(--dim)',
               borderRadius: '4px',
-              padding: '60px 40px',
               textAlign: 'center',
               position: 'relative',
               overflow: 'hidden'
@@ -658,11 +682,11 @@ export default function DocsPage() {
                 background: 'linear-gradient(90deg, transparent, var(--green), transparent)' 
               }} />
               
-              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
+              <h3 className="contact-title" style={{ color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
                 Interested in <Staff7/>?
               </h3>
               
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
+              <p className="contact-desc" style={{ color: 'var(--text2)', maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
                 Whether you want to deploy a private instance, join the Beta, 
                 or discuss custom AI integrations for your agency.
               </p>
