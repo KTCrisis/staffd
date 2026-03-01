@@ -533,6 +533,51 @@ export default function DocsPage() {
             </div>
           </section>
 
+          {/* ── Section Contact / Lead Generation ── */}
+          <section id="contact" className="reveal" style={{ marginTop: 100, marginBottom: 40 }}>
+            <div style={{ 
+              background: 'linear-gradient(145deg, var(--bg2), var(--bg))',
+              border: '1px solid var(--dim)',
+              borderRadius: '4px',
+              padding: '60px 40px',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Petite ligne décorative animée en haut */}
+              <div style={{ 
+                position: 'absolute', 
+                top: 0, left: 0, width: '100%', height: '2px', 
+                background: 'linear-gradient(90deg, transparent, var(--green), transparent)' 
+              }} />
+              
+              <h3 style={{ fontSize: 28, color: '#fff', marginBottom: 16, letterSpacing: '-1px' }}>
+                Interested in <span style={{ color: 'var(--green)' }}>Staffd</span>?
+              </h3>
+              
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 32, maxWidth: '500px', margin: '0 auto 32px', lineHeight: 1.6 }}>
+                Whether you want to deploy a private instance, join the Beta, 
+                or discuss custom AI integrations for your agency.
+              </p>
+
+              <a href="mailto:flux7art@gmail.com" 
+                className="doc-footer-cta" 
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '12px', 
+                  padding: '12px 24px',
+                  fontSize: 13 
+                }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                </svg>
+                flux7art@gmail.com
+              </a>
+            </div>
+          </section>
+
+          
           <div className="doc-footer reveal">
             <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
               staffd · built on cloudflare · beta 2026
