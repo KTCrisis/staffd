@@ -11,7 +11,7 @@ export function MissionBanner() {
         // WHAT WE DO
       </p>
       <p style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, lineHeight: 1.6 }}>
-        staff7 is an <strong>AI-native staffing OS</strong> for agencies and ESNs.
+        staff7 is an <strong>AI-native staffing OS</strong> for Professional Services Firms.
         Manage consultants, track margins, and talk to your data — via natural language or MCP.
       </p>
       <p style={{ fontSize: 10, color: 'var(--text2)', marginTop: 8 }}>
