@@ -106,7 +106,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="admin@staff7.io"
+              placeholder="user@company.com"
               autoComplete="email"
               style={{
                 width: '100%', padding: '10px 14px',

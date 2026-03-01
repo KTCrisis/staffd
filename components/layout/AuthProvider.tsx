@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkUser = async () => {
       try {
+        await supabase.auth.refreshSession() 
         // getUser() vérifie la session côté serveur (non falsifiable)
         const { data: { user: supaUser }, error } = await supabase.auth.getUser()
 
