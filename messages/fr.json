@@ -107,7 +107,8 @@
     "types": {
       "CP": "Congé payé",
       "RTT": "RTT",
-      "Sans solde": "Sans solde"
+      "Sans solde": "Sans solde",
+      "Absence autorisée": "Absence autorisée"
     }
   },
 

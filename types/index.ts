@@ -4,6 +4,8 @@ export type ConsultantStatus = 'available' | 'assigned' | 'leave' | 'partial'
 
 export type LeaveStatus = 'pending' | 'approved' | 'refused'
 
+export type LeaveType = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
+
 export type ProjectStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
 
 export type AvatarColor = 'green' | 'pink' | 'cyan' | 'gold' | 'purple'
@@ -21,11 +23,15 @@ export interface Consultant {
   currentProjectId?: string
   availableFrom?: string
   leaveDaysLeft: number
+  leaveDaysTotal?: number
   occupancyRate: number
   email?: string
   tjm?: number
   stack?: string[]
-  leaveDaysTotal?: number
+  // RTT
+  rttTotal?: number
+  rttTaken?: number
+  rttLeft?: number
 }
 
 export interface Project {
@@ -67,13 +73,34 @@ export interface LeaveRequest {
   id: string
   consultantId: string
   consultantName: string
-  type: 'CP' | 'RTT' | 'Sans solde'
+  type: LeaveType
+  motif?: string
   startDate: string
   endDate: string
   days: number
   status: LeaveStatus
   impactWarning?: string
 }
+
+export interface AbsenceMotif {
+  value: string
+  label: string
+  days:  number
+}
+
+export const ABSENCE_MOTIFS: AbsenceMotif[] = [
+  { value: 'mariage_salarie',   label: 'Mariage / Pacs salarié',       days: 4  },
+  { value: 'mariage_enfant',    label: "Mariage d'un enfant",           days: 1  },
+  { value: 'naissance',         label: 'Naissance',                     days: 3  },
+  { value: 'deces_conjoint',    label: 'Décès conjoint',                days: 3  },
+  { value: 'deces_enfant',      label: 'Décès enfant',                  days: 5  },
+  { value: 'deces_pere_mere',   label: 'Décès père/mère',               days: 3  },
+  { value: 'deces_ascendant',   label: 'Décès autre ascendant',         days: 1  },
+  { value: 'deces_frere_soeur', label: 'Décès frère/sœur',             days: 3  },
+  { value: 'deces_beau_parent', label: 'Décès beau-père / belle-mère', days: 3  },
+  { value: 'paternite',         label: 'Paternité',                     days: 11 },
+  { value: 'paternite_gemeaux', label: 'Paternité gémellaire',          days: 25 },
+]
 
 export interface KpiData {
   activeConsultants: number

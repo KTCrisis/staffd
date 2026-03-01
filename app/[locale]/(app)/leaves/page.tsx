@@ -19,12 +19,12 @@ export default function LeavesPage() {
   const t        = useTranslations('conges')
   const { user } = useAuthContext()
 
-  const { data: requests,    loading: lreq,  mutate } = useLeaveRequests() as { data: ReturnType<typeof useLeaveRequests>['data']; loading: boolean; mutate?: () => void; error: string | null }
-  const { data: consultants, loading: lcons }         = useConsultants()
-
   const [filter,   setFilter]   = useState<LeaveStatus | 'all'>('all')
   const [showForm, setShowForm] = useState(false)
   const [refresh,  setRefresh]  = useState(0)
+
+  const { data: requests,    loading: lreq,  mutate } = useLeaveRequests(refresh) as { data: ReturnType<typeof useLeaveRequests>['data']; loading: boolean; mutate?: () => void; error: string | null }
+  const { data: consultants, loading: lcons }         = useConsultants(refresh)
 
   const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager'
   const isConsultant     = user?.role === 'consultant'
@@ -52,12 +52,12 @@ export default function LeavesPage() {
 
   const handleApprove = async (id: string) => {
     await approveLeave(id)
-    mutate?.()
+    setRefresh(r => r + 1)
   }
 
   const handleRefuse = async (id: string) => {
     await refuseLeave(id)
-    mutate?.()
+    setRefresh(r => r + 1)
   }
 
   const handleSaved = () => {

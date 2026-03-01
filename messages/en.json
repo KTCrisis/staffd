@@ -107,7 +107,8 @@
     "types": {
       "CP": "Paid leave",
       "RTT": "RTT",
-      "Sans solde": "Unpaid leave"
+      "Sans solde": "Unpaid leave",
+      "Absence autorisée": "Auth. absence"
     }
   },
 

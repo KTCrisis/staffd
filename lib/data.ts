@@ -28,6 +28,9 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     tjm:            row.tjm as number | undefined,
     stack:          row.stack as string[] | undefined,
     leaveDaysTotal: row.leave_days_total as number | undefined,
+    rttTotal:      row.rtt_total as number | undefined,
+    rttTaken:      row.rtt_taken as number | undefined,
+    rttLeft: row.rtt_left as number | undefined,
   }
 }
 
@@ -81,6 +84,7 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
     days:           row.days as number,
     status:         row.status as LeaveRequest['status'],
     impactWarning:  row.impact_warning as string | undefined,
+    motif:          row.motif as string | undefined,
   }
 }
 
@@ -217,21 +221,19 @@ export function useProjectFinancials() {
 }
 
 // ── Congés ────────────────────────────────────────────────────
-
-export function useLeaveRequests() {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('leave_requests')
-      .select('*, consultants (name)')
-      .order('created_at', { ascending: false })
-    if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toLeaveRequest({
-      ...row,
-      consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
-    }))
-  })
-}
-
+  export function useLeaveRequests(dep?: any) {
+    return useSupabase(async () => {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*, consultants (name)')
+        .order('created_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []).map((row: any) => toLeaveRequest({
+        ...row,
+        consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
+      }))
+    }, [dep])
+  }
 // ── KPIs ─────────────────────────────────────────────────────
 
 export function useKpi(): { data: KpiData | null; loading: boolean; error: string | null } {
@@ -286,11 +288,32 @@ export function useActivity(limit = 10) {
 // ── Mutations Leaves ──────────────────────────────────────────
 
 export async function approveLeave(id: string) {
+  // Récupérer le type et les jours avant d'approuver
+  const { data: req, error: fetchErr } = await supabase
+    .from('leave_requests')
+    .select('consultant_id, days, type')
+    .eq('id', id)
+    .single()
+  if (fetchErr) throw new Error(fetchErr.message)
+
   const { error } = await supabase
     .from('leave_requests')
     .update({ status: 'approved', reviewed_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw new Error(error.message)
+
+  // Incrémenter le compteur selon le type
+  if (req?.type === 'CP') {
+    await supabase.rpc('increment_leave_taken', {
+      p_consultant_id: req.consultant_id,
+      p_days: req.days,
+    })
+  } else if (req?.type === 'RTT') {
+    await supabase.rpc('increment_rtt_taken', {
+      p_consultant_id: req.consultant_id,
+      p_days: req.days,
+    })
+  }
 }
 
 export async function refuseLeave(id: string) {
@@ -452,9 +475,10 @@ export async function deleteAssignment(id: string) {
 // ── Mutation : demande de congés ────────────────────────
 
 export async function createLeaveRequest(data: {
+  motif?: string
   consultant_id: string
   company_id: string
-  type: 'CP' | 'RTT' | 'Sans solde'
+  type: 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
   start_date: string
   end_date: string
   days: number
