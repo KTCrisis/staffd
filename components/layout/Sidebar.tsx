@@ -30,6 +30,7 @@ export function Sidebar() {
     : 'Viewer'
 
   const [pendingCount, setPendingCount] = useState(0)
+  const [command, setCommand] = useState('')
 
   useEffect(() => {
     const fetchPending = async () => {
@@ -90,6 +91,18 @@ export function Sidebar() {
         { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     },
+
+    {
+    group: ('agents'),
+    items: [
+      { 
+        label: 'Agentic AI', 
+        icon: '⚡', 
+        href: p('/ai'), 
+        badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span> 
+      },
+    ],
+  },
   ]
 
   return (
@@ -117,6 +130,42 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+      
+{/* --- NOUVEAU : AGENTIC COMMAND BAR --- */}
+      <div className="ai-command-zone" style={{ padding: '0 16px', marginBottom: 12 }}>
+        <div style={{ 
+          background: 'rgba(255, 45, 107, 0.05)', 
+          border: '1px solid rgba(255, 45, 107, 0.2)',
+          borderRadius: '4px',
+          padding: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ color: 'var(--pink)', fontSize: 10, fontWeight: 'bold' }}>&gt;_</span>
+          <input 
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            placeholder="Ask agent..." 
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              outline: 'none', 
+              color: '#fff', 
+              fontSize: 11,
+              width: '100%',
+              fontFamily: 'var(--font)'
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                // Ici tu rediriges vers /ai avec la query ou tu ouvres un panel
+                router.push(`${p('/ai')}?q=${encodeURIComponent(command)}` as any)
+                setCommand('')
+              }
+            }}
+          />
+        </div>
+      </div>
 
       <div className="sidebar-footer">
         <div className="user-card">
