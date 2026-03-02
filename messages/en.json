@@ -188,6 +188,40 @@
     }
   }, 
 
+  "timesheets": {
+    "title": "Timesheets",
+    "breadcrumb": "// log your days",
+    "weekOf": "Week of",
+    "prevWeek": "Prev week",
+    "nextWeek": "Next week",
+    "today": "Today",
+    "stats": {
+      "totalDays":  "Days logged",
+      "draft":      "Draft",
+      "submitted":  "Submitted",
+      "approved":   "Approved"
+    },
+    "table": {
+      "consultant": "Consultant",
+      "total":      "Total",
+      "actions":    "Actions"
+    },
+    "actions": {
+      "submit":       "Submit",
+      "submitTitle":  "Submit all draft entries for this week",
+      "approve":      "Approve",
+      "approveTitle": "Approve all submitted entries for this consultant"
+    },
+    "legend": {
+      "empty":     "No entry",
+      "half":      "Half day",
+      "full":      "Full day",
+      "draft":     "Draft",
+      "submitted": "Submitted",
+      "approved":  "Approved"
+    }
+  },
+
   "projects": {
     "title": "Projects",
     "breadcrumb": "Projects",

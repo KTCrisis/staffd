@@ -182,7 +182,41 @@
       "notes":            "Notes",
       "notesPlaceholder": "Contexte, historique, informations spécifiques sur ce client..."
     }
-  },   
+  }, 
+   "timesheets": {
+    "title": "Feuilles de temps",
+    "breadcrumb": "// saisie journalière",
+    "weekOf": "Semaine du",
+    "prevWeek": "Sem. préc.",
+    "nextWeek": "Sem. suiv.",
+    "today": "Aujourd'hui",
+    "stats": {
+      "totalDays":  "Jours saisis",
+      "draft":      "Brouillon",
+      "submitted":  "Soumis",
+      "approved":   "Approuvés"
+    },
+    "table": {
+      "consultant": "Consultant",
+      "total":      "Total",
+      "actions":    "Actions"
+    },
+    "actions": {
+      "submit":       "Soumettre",
+      "submitTitle":  "Soumettre toutes les saisies de la semaine",
+      "approve":      "Approuver",
+      "approveTitle": "Approuver toutes les saisies soumises pour ce consultant"
+    },
+    "legend": {
+      "empty":     "Non saisi",
+      "half":      "Demi-journée",
+      "full":      "Journée complète",
+      "draft":     "Brouillon",
+      "submitted": "Soumis",
+      "approved":  "Approuvé"
+    }
+  }, 
+  
   "projects": {
     "title": "Projets",
     "breadcrumb": "Projets",

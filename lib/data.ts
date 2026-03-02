@@ -487,3 +487,100 @@ export async function createLeaveRequest(data: {
     .insert({ ...data, status: 'pending' })
   if (error) throw new Error(error.message)
 }
+
+// ── Types ─────────────────────────────────────────────────────
+
+export interface Timesheet {
+  id:           string
+  consultantId: string
+  projectId:    string | null
+  date:         string        // ISO date: '2025-03-10'
+  value:        number        // 0 | 0.5 | 1
+  status:       'draft' | 'submitted' | 'approved'
+}
+
+function toTimesheet(row: Record<string, unknown>): Timesheet {
+  return {
+    id:           row.id          as string,
+    consultantId: row.consultant_id as string,
+    projectId:    (row.project_id  as string | null) ?? null,
+    date:         row.date         as string,
+    value:        (row.value       as number) ?? 1,
+    status:       (row.status      as Timesheet['status']) ?? 'draft',
+  }
+}
+
+// ── Hook useTimesheets ────────────────────────────────────────
+// Charge les timesheets de la semaine (lundi → vendredi)
+
+export function useTimesheets(monday: Date) {
+  const from = monday.toISOString().slice(0, 10)
+  const to   = new Date(monday.getTime() + 4 * 86400000).toISOString().slice(0, 10)
+
+  // Use dep string so the hook refetches when the week changes
+  const dep = from
+
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('timesheets')
+      .select('*')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date')
+
+    if (error) throw new Error(error.message)
+    return (data ?? []).map(toTimesheet)
+  }, [dep])
+}
+
+// ── Mutations ─────────────────────────────────────────────────
+
+export async function upsertTimesheet(params: {
+  consultantId: string
+  projectId:    string
+  date:         string
+  value:        number
+}) {
+  const { consultantId, projectId, date, value } = params
+
+  // Get company_id from current user's session (needed for RLS insert)
+  const { data: { user } } = await supabase.auth.getUser()
+  const companyId = user?.app_metadata?.company_id ?? null
+
+  // upsert on unique(consultant_id, date, project_id)
+  const { error } = await supabase
+    .from('timesheets')
+    .upsert({
+      company_id:    companyId,
+      consultant_id: consultantId,
+      project_id:    projectId,
+      date,
+      value,
+      status:        'draft',
+      updated_at:    new Date().toISOString(),
+    }, {
+      onConflict: 'consultant_id,date,project_id',
+    })
+
+  if (error) throw new Error(error.message)
+}
+
+export async function submitTimesheets(ids: string[]) {
+  const { error } = await supabase
+    .from('timesheets')
+    .update({ status: 'submitted', updated_at: new Date().toISOString() })
+    .in('id', ids)
+    .eq('status', 'draft')
+
+  if (error) throw new Error(error.message)
+}
+
+export async function approveTimesheets(ids: string[]) {
+  const { error } = await supabase
+    .from('timesheets')
+    .update({ status: 'approved', updated_at: new Date().toISOString() })
+    .in('id', ids)
+    .eq('status', 'submitted')
+
+  if (error) throw new Error(error.message)
+}
