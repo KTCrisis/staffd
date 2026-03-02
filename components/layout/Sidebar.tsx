@@ -77,6 +77,17 @@ export function Sidebar() {
       ],
     },
     {
+      group: t('activity'), // "Activity" dans ton fichier i18n
+      items: [
+        { 
+          label: t('timesheets'), // "Timesheets" ou "CRA"
+          icon: '⏱', 
+          href: p('/timesheets'),
+          // Optionnel : badge si le CRA de la semaine n'est pas rempli
+        },
+      ],
+    },
+    {
       group: t('projects'),
       items: [
         { label: t('projets'),  icon: '◧', href: p('/projects') },
@@ -130,7 +141,7 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
-      
+
 {/* --- NOUVEAU : AGENTIC COMMAND BAR --- */}
       <div className="ai-command-zone" style={{ padding: '0 16px', marginBottom: 12 }}>
         <div style={{ 
