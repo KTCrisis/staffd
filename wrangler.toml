@@ -11,3 +11,5 @@ id = "0e70d6b1a4cf4bc6ad2bd2dbf231ec7d"
 [vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://huimbzpqsdfvyqglvpbv.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_tElcVIzI9Ff9K28qH-MU6A_bkfI58U4"
+OLLAMA_MODEL = "kimi-k2.5:cloud"
+OLLAMA_HOST = "https://ollama.com"
