@@ -10,9 +10,11 @@
     "parametres": "Settings",
     "overview": "Overview",
     "team": "Team",
-    "timesheets": "Timesheet",
+    "activity": "Activity",
+    "timesheets": "Timesheets",
     "projects": "Projects",
-    "admin": "Admin"
+    "admin": "Admin",
+    "agents": "Agents"
   },
   "topbar": {
     "search": "Search...",

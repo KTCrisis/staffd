@@ -10,9 +10,11 @@
     "parametres": "Paramètres",
     "overview": "Vue d'ensemble",
     "team": "Équipe",
+    "activity": "Activité",
     "timesheets": "CRAs",
     "projects": "Projets",
-    "admin": "Admin"
+    "admin": "Admin",
+    "agents": "Agents"
   },
   "topbar": {
     "search": "Rechercher...",
