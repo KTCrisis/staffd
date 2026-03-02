@@ -3,12 +3,6 @@
 // Cloudflare Pages edge-compatible.
 
 export const runtime = 'edge'
-
-// ── .env.local ────────────────────────────────────────────────
-// OLLAMA_API_KEY=c9b6eb7339794436a9ec2d56acc38494.tzxvOU833o_...
-// OLLAMA_MODEL=kimi-k2.5:cloud     ← nom exact du modèle Ollama
-// OLLAMA_HOST=https://ollama.com   ← (optionnel, c'est la valeur par défaut)
-
 const SYSTEM_PROMPT = `You are STAFF7_AGENT, an embedded AI assistant inside Staffd — a SaaS platform for consulting firms to manage consultants, projects, timesheets, leaves, and financials.
 
 You have access to real-time context extracted from the company's Supabase database (injected below as JSON).
