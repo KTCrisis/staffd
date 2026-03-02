@@ -1,16 +1,13 @@
 // app/api/ai/route.ts
-// Ollama Cloud API — https://ollama.com/api/chat
-// Format natif Ollama (NDJSON), pas OpenAI.
+// Ollama Cloud — https://ollama.com/api/chat
 // Cloudflare Pages edge-compatible.
 
 export const runtime = 'edge'
 
 // ── .env.local ────────────────────────────────────────────────
-// OLLAMA_API_KEY=7966b3849d2f41c7867d2fd5f9f268d0...
-// OLLAMA_MODEL=kimi          ← ou minimax, gemma3, etc.
-// (OLLAMA_HOST par défaut = https://ollama.com)
-
-// ── System prompt ─────────────────────────────────────────────
+// OLLAMA_API_KEY=c9b6eb7339794436a9ec2d56acc38494.tzxvOU833o_...
+// OLLAMA_MODEL=kimi-k2.5:cloud     ← nom exact du modèle Ollama
+// OLLAMA_HOST=https://ollama.com   ← (optionnel, c'est la valeur par défaut)
 
 const SYSTEM_PROMPT = `You are STAFF7_AGENT, an embedded AI assistant inside Staffd — a SaaS platform for consulting firms to manage consultants, projects, timesheets, leaves, and financials.
 
@@ -21,55 +18,27 @@ Rules:
 - Be direct and analytical. No fluff.
 - Format numbers clearly (percentages, currency in €, days).
 - When data is missing, say so explicitly.
-- Use short markdown: **bold** for names/numbers, \`code\` for IDs, bullet lists for multi-item answers.
+- Use short markdown: **bold** for names/numbers, bullet lists for multi-item answers.
 - Never invent data that wasn't provided in context.
-- Respond in the same language as the user's message (FR or EN).
-
-Available slash commands the user may reference:
-/staff.find [skill] — find consultants by skill
-/staff.bench — list available consultants
-/staff.assign [consultant] [project] — suggest assignment
-/staff.gap [project] — identify missing skills
-/timesheet.status — check submission status for current week
-/timesheet.remind — list consultants with missing timesheets
-/timesheet.fill — suggest pre-filling from assignments
-/timesheet.reconcile — planned vs actual days
-/fin.margin — project profitability overview
-/fin.alerts — low margin warnings
-/fin.rates — average daily rates by consultant
-/fin.forecast — revenue projection
-/leave.check — who is currently on leave
-/leave.approve — pending approvals list
-/leave.impact [consultant] — risk analysis if they leave`
+- Respond in the same language as the user's message (FR or EN).`
 
 // ── Context Supabase ──────────────────────────────────────────
 
-async function fetchContext(
-  cmd: string,
-  supabaseUrl: string,
-  supabaseKey: string,
-): Promise<string> {
+async function fetchContext(cmd: string, supabaseUrl: string, supabaseKey: string): Promise<string> {
+  if (!supabaseUrl || !supabaseKey) return '{}'
+
   const headers = {
     'apikey':        supabaseKey,
     'Authorization': `Bearer ${supabaseKey}`,
     'Content-Type':  'application/json',
   }
-
   const rest = (table: string, select = '*', filter = '') =>
     fetch(
       `${supabaseUrl}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter ? `&${filter}` : ''}`,
-      { headers },
+      { headers }
     ).then(r => r.json()).catch(() => [])
 
   try {
-    if (cmd.startsWith('/staff') || cmd.startsWith('/leave') || !cmd.startsWith('/')) {
-      const [consultants, leaves] = await Promise.all([
-        rest('consultant_occupancy', 'id,name,role,status,occupancy_rate,leave_days_left,project_names'),
-        rest('leave_requests', 'id,consultant_id,type,start_date,end_date,days,status', 'status=eq.pending&limit=20'),
-      ])
-      return JSON.stringify({ consultants, pending_leaves: leaves })
-    }
-
     if (cmd.startsWith('/timesheet')) {
       const today  = new Date()
       const monday = new Date(today)
@@ -82,90 +51,89 @@ async function fetchContext(
       ])
       return JSON.stringify({ consultants, timesheets, week: { from, to } })
     }
-
     if (cmd.startsWith('/fin')) {
-      const financials = await rest('project_financials', '*')
-      return JSON.stringify({ financials })
+      return JSON.stringify({ financials: await rest('project_financials', '*') })
     }
-
-    // Fallback général
-    const [consultants, projects] = await Promise.all([
-      rest('consultant_occupancy', 'id,name,role,status,occupancy_rate'),
-      rest('projects', 'id,name,status,progress,end_date,client_name'),
+    const [consultants, leaves] = await Promise.all([
+      rest('consultant_occupancy', 'id,name,role,status,occupancy_rate,leave_days_left,project_names'),
+      rest('leave_requests', 'id,consultant_id,type,start_date,end_date,days,status', 'status=eq.pending&limit=20'),
     ])
-    return JSON.stringify({ consultants, projects })
-
+    return JSON.stringify({ consultants, pending_leaves: leaves })
   } catch (e) {
-    return JSON.stringify({ error: 'Failed to fetch context', detail: String(e) })
+    return JSON.stringify({ error: String(e) })
   }
 }
 
 // ── Route handler ─────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  const apiKey  = process.env.OLLAMA_API_KEY
-  const model   = process.env.OLLAMA_MODEL ?? 'kimi-k2.5:cloud'
-  const host    = process.env.OLLAMA_HOST  ?? 'https://ollama.com'
+  const apiKey = process.env.OLLAMA_API_KEY
+  const model  = process.env.OLLAMA_MODEL ?? 'kimi-k2.5:cloud'
+  const host   = (process.env.OLLAMA_HOST ?? 'https://ollama.com').replace(/\/$/, '')
 
+  // Erreur config → retourner un message lisible dans le terminal
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: 'OLLAMA_API_KEY not configured in env' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
-    )
+    return sseError('OLLAMA_API_KEY not set in environment variables.')
   }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL      ?? ''
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
   let body: { messages: { role: string; content: string }[]; cmd?: string }
   try { body = await req.json() }
   catch { return new Response('Invalid JSON', { status: 400 }) }
 
   const { messages, cmd = '' } = body
-  const context = await fetchContext(cmd, supabaseUrl, supabaseKey)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL      ?? ''
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+  const context     = await fetchContext(cmd, supabaseUrl, supabaseKey)
 
-  const systemWithContext = `${SYSTEM_PROMPT}
+  const systemFull = `${SYSTEM_PROMPT}\n\n--- LIVE CONTEXT ---\n${context}\n--- END ---`
 
---- LIVE DATA CONTEXT (Supabase, current company) ---
-${context}
---- END CONTEXT ---`
-
-  // Format Ollama natif — système = premier message role:system
   const ollamaMessages = [
-    { role: 'system', content: systemWithContext },
+    { role: 'system', content: systemFull },
     ...messages
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role, content: m.content })),
   ]
 
-  const ollamaRes = await fetch(`${host}/api/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: ollamaMessages,
-      stream:   true,
-    }),
-  })
-
-  if (!ollamaRes.ok) {
-    const err = await ollamaRes.text()
-    return new Response(err, { status: ollamaRes.status })
+  // ── Appel Ollama ──────────────────────────────────────────
+  let ollamaRes: Response
+  try {
+    ollamaRes = await fetch(`${host}/api/chat`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: ollamaMessages,
+        stream:   true,
+        // Optionnel : masquer le thinking dans le stream
+        options:  { think: false },
+      }),
+    })
+  } catch (e) {
+    return sseError(`Cannot reach ${host}: ${String(e)}`)
   }
 
-  // Ollama stream = NDJSON (une ligne JSON par chunk, pas SSE)
-  // On le convertit en SSE pour que le frontend puisse le lire uniformément.
-  const { readable, writable } = new TransformStream()
+  if (!ollamaRes.ok) {
+    const err = await ollamaRes.text().catch(() => '?')
+    return sseError(`HTTP ${ollamaRes.status}: ${err}`)
+  }
+
+  // ── NDJSON → SSE ──────────────────────────────────────────
+  // Ollama stream = une ligne JSON par token/chunk, pas du SSE.
+  // On convertit en SSE { text } pour le frontend.
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>()
   const writer  = writable.getWriter()
   const encoder = new TextEncoder()
   const decoder = new TextDecoder()
 
   ;(async () => {
     const reader = ollamaRes.body!.getReader()
-    let buffer   = ''
+    let   buffer = ''
+
+    const emit = (text: string) =>
+      writer.write(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
 
     try {
       while (true) {
@@ -174,34 +142,52 @@ ${context}
 
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''  // garder le fragment incomplet
+        buffer = lines.pop() ?? ''
 
         for (const line of lines) {
-          if (!line.trim()) continue
+          const t = line.trim()
+          if (!t) continue
           try {
-            const chunk = JSON.parse(line)
-            const text  = chunk?.message?.content ?? ''
-            if (text) {
-              // Émettre en SSE pour le client
-              await writer.write(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
-            }
-            if (chunk?.done) {
-              await writer.write(encoder.encode('data: [DONE]\n\n'))
-            }
-          } catch {
-            // ligne non-JSON — ignorer
-          }
+            const chunk = JSON.parse(t)
+            // Format Ollama natif : { message: { content, thinking? }, done }
+            // On ignore le champ `thinking` — c'est le raisonnement interne du modèle
+            const content = chunk?.message?.content
+            if (content) await emit(content)
+          } catch { /* ignorer les lignes non-JSON */ }
         }
       }
+
+      // Flush le reste si le stream se termine sans \n final
+      if (buffer.trim()) {
+        try {
+          const chunk   = JSON.parse(buffer.trim())
+          const content = chunk?.message?.content
+          if (content) await emit(content)
+        } catch { /* ignore */ }
+      }
+
+    } catch (e) {
+      await emit(`\n[Erreur stream: ${String(e)}]`)
     } finally {
+      await writer.write(encoder.encode('data: [DONE]\n\n'))
       await writer.close()
     }
   })()
 
   return new Response(readable, {
     headers: {
-      'Content-Type':  'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Content-Type':      'text/event-stream',
+      'Cache-Control':     'no-cache',
+      'X-Accel-Buffering': 'no',
     },
   })
+}
+
+// ── Helper ────────────────────────────────────────────────────
+
+function sseError(msg: string): Response {
+  return new Response(
+    `data: ${JSON.stringify({ text: `⚠ ${msg}` })}\n\ndata: [DONE]\n\n`,
+    { headers: { 'Content-Type': 'text/event-stream' } }
+  )
 }
