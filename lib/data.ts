@@ -90,17 +90,24 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
 
 // ── Hook générique ────────────────────────────────────────────
 
-function useSupabase<T>(fetcher: () => Promise<T>, deps: any[] = []) {
+function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [data,    setData]    = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false   // ← empêche le setState si le composant est démonté
+                            //   OU si les deps ont changé avant la fin du fetch
     setLoading(true)
+    setError(null)
+
     fetcher()
-      .then(d  => { setData(d); setError(null) })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
+      .then(d  => { if (!cancelled) { setData(d);           setError(null)       } })
+      .catch(e => { if (!cancelled) { setError(e.message);  setLoading(false)    } })
+      .finally(()=> { if (!cancelled)  setLoading(false) })
+
+    return () => { cancelled = true }  // ← cleanup : annule le précédent fetch
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
   return { data, loading, error }
@@ -488,20 +495,18 @@ export async function createLeaveRequest(data: {
   if (error) throw new Error(error.message)
 }
 
-// ── Types ─────────────────────────────────────────────────────
-
 export interface Timesheet {
   id:           string
   consultantId: string
   projectId:    string | null
-  date:         string        // ISO date: '2025-03-10'
-  value:        number        // 0 | 0.5 | 1
+  date:         string          // 'YYYY-MM-DD'
+  value:        number          // 0 | 0.5 | 1
   status:       'draft' | 'submitted' | 'approved'
 }
 
 function toTimesheet(row: Record<string, unknown>): Timesheet {
   return {
-    id:           row.id          as string,
+    id:           row.id           as string,
     consultantId: row.consultant_id as string,
     projectId:    (row.project_id  as string | null) ?? null,
     date:         row.date         as string,
@@ -510,15 +515,13 @@ function toTimesheet(row: Record<string, unknown>): Timesheet {
   }
 }
 
-// ── Hook useTimesheets ────────────────────────────────────────
-// Charge les timesheets de la semaine (lundi → vendredi)
+// ── useTimesheets(monday) ─────────────────────────────────────
+// Charge les timesheets lun → ven de la semaine donnée.
+// Refetch automatique quand `monday` change (dep = ISO string).
 
 export function useTimesheets(monday: Date) {
   const from = monday.toISOString().slice(0, 10)
-  const to   = new Date(monday.getTime() + 4 * 86400000).toISOString().slice(0, 10)
-
-  // Use dep string so the hook refetches when the week changes
-  const dep = from
+  const to   = new Date(monday.getTime() + 4 * 86_400_000).toISOString().slice(0, 10)
 
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -530,7 +533,42 @@ export function useTimesheets(monday: Date) {
 
     if (error) throw new Error(error.message)
     return (data ?? []).map(toTimesheet)
-  }, [dep])
+  }, [from]) // ← dep = string primitive → refetch quand la semaine change
+}
+
+// ── useConsultantProjectsMap() ────────────────────────────────
+// Retourne un objet { consultantId: { id, name }[] }
+// → Un seul appel Supabase pour toute la grille,
+//   chaque consultant ne voit que SES projets actifs dans le popup.
+
+export function useConsultantProjectsMap() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select(`
+        consultant_id,
+        projects!inner ( id, name, status )
+      `)
+
+    if (error) throw new Error(error.message)
+
+    const map: Record<string, { id: string; name: string }[]> = {}
+
+    for (const row of data ?? []) {
+      const cid  = row.consultant_id as string
+      const proj = row.projects as { id: string; name: string; status: string } | null
+      if (!proj) continue
+      // Exclure les projets terminés / archivés
+      if (proj.status === 'completed' || proj.status === 'archived') continue
+      if (!map[cid]) map[cid] = []
+      // Éviter les doublons (un consultant peut avoir plusieurs assignments sur un projet)
+      if (!map[cid].some(p => p.id === proj.id)) {
+        map[cid].push({ id: proj.id, name: proj.name })
+      }
+    }
+
+    return map
+  }, [])
 }
 
 // ── Mutations ─────────────────────────────────────────────────
@@ -540,47 +578,47 @@ export async function upsertTimesheet(params: {
   projectId:    string
   date:         string
   value:        number
-}) {
+}): Promise<Timesheet> {
   const { consultantId, projectId, date, value } = params
 
-  // Get company_id from current user's session (needed for RLS insert)
   const { data: { user } } = await supabase.auth.getUser()
   const companyId = user?.app_metadata?.company_id ?? null
 
-  // upsert on unique(consultant_id, date, project_id)
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('timesheets')
-    .upsert({
-      company_id:    companyId,
-      consultant_id: consultantId,
-      project_id:    projectId,
-      date,
-      value,
-      status:        'draft',
-      updated_at:    new Date().toISOString(),
-    }, {
-      onConflict: 'consultant_id,date,project_id',
-    })
+    .upsert(
+      {
+        company_id:    companyId,
+        consultant_id: consultantId,
+        project_id:    projectId,
+        date,
+        value,
+        status:        'draft',
+        updated_at:    new Date().toISOString(),
+      },
+      { onConflict: 'consultant_id,date,project_id' }
+    )
+    .select()
+    .single()
 
   if (error) throw new Error(error.message)
+  return toTimesheet(data as Record<string, unknown>)
 }
 
-export async function submitTimesheets(ids: string[]) {
+export async function submitTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
     .update({ status: 'submitted', updated_at: new Date().toISOString() })
     .in('id', ids)
     .eq('status', 'draft')
-
   if (error) throw new Error(error.message)
 }
 
-export async function approveTimesheets(ids: string[]) {
+export async function approveTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
     .update({ status: 'approved', updated_at: new Date().toISOString() })
     .in('id', ids)
     .eq('status', 'submitted')
-
   if (error) throw new Error(error.message)
 }
