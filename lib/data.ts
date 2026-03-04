@@ -162,6 +162,17 @@ export function useProjects(dep?: number, includeArchived = false) {
   }, [dep, includeArchived])
 }
 
+
+export function useAssignments() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select('*, projects(name)')
+      .gte('end_date', new Date().toISOString().slice(0, 10))
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }, [])
+}
 // ── Clients ───────────────────────────────────────────────────
 
 export function useClients(dep?: number) {

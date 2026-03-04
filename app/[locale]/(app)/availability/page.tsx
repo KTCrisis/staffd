@@ -5,7 +5,12 @@ import { useTranslations }      from 'next-intl'
 import { Topbar }               from '@/components/layout/Topbar'
 import { Panel, StatRow }       from '@/components/ui'
 import { AvailabilityGrid }     from '@/components/availability/AvailabilityGrid'
-import { useConsultants }       from '@/lib/data'  // ← SUPABASE
+import { useConsultants, useLeaveRequests, useAssignments } from '@/lib/data'
+
+
+const { data: consultants, loading }    = useConsultants()
+const { data: leaveRequests }           = useLeaveRequests()
+const { data: assignments }             = useAssignments()
 
 function getMonday(d: Date): Date {
   const date = new Date(d)
@@ -90,6 +95,8 @@ export default function DisponibilitesPage() {
               <AvailabilityGrid
                 consultants={list}
                 weekStart={weekStart}
+                leaveRequests={leaveRequests ?? []}
+                assignments={assignments ?? []}
               />
             )}
           </div>
