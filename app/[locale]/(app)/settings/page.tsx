@@ -9,7 +9,7 @@ export default function SettingsPage() {
   const { user } = useAuthContext()
   
   // Sécurité : Seul le super_admin accède à ces réglages globaux
-  const isSuperAdmin = (user as any)?.app_metadata?.user_role === 'super_admin';
+  const isSuperAdmin = user?.role === 'super_admin'
 
   return (
     <>
