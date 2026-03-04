@@ -1,16 +1,11 @@
 'use client'
 
-import { useState }             from 'react'
-import { useTranslations }      from 'next-intl'
-import { Topbar }               from '@/components/layout/Topbar'
-import { Panel, StatRow }       from '@/components/ui'
-import { AvailabilityGrid }     from '@/components/availability/AvailabilityGrid'
+import { useState }        from 'react'
+import { useTranslations } from 'next-intl'
+import { Topbar }          from '@/components/layout/Topbar'
+import { Panel, StatRow }  from '@/components/ui'
+import { AvailabilityGrid } from '@/components/availability/AvailabilityGrid'
 import { useConsultants, useLeaveRequests, useAssignments } from '@/lib/data'
-
-
-const { data: consultants, loading }    = useConsultants()
-const { data: leaveRequests }           = useLeaveRequests()
-const { data: assignments }             = useAssignments()
 
 function getMonday(d: Date): Date {
   const date = new Date(d)
@@ -25,27 +20,19 @@ export default function DisponibilitesPage() {
   const t = useTranslations('disponibilites')
   const [weekStart, setWeekStart] = useState<Date>(() => getMonday(new Date()))
 
-  const { data: consultants, loading } = useConsultants()  // ← SUPABASE
+  // ── Données Supabase ─────────────────────────────────────
+  const { data: consultants, loading } = useConsultants()
+  const { data: leaveRequests }        = useLeaveRequests()
+  const { data: assignments }          = useAssignments()
 
-  const prevWeek = () => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() - 7)
-    setWeekStart(d)
-  }
-
-  const nextWeek = () => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + 7)
-    setWeekStart(d)
-  }
-
-  const goToday = () => setWeekStart(getMonday(new Date()))
+  // ── Navigation semaine ───────────────────────────────────
+  const prevWeek = () => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d) }
+  const nextWeek = () => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d) }
+  const goToday  = () => setWeekStart(getMonday(new Date()))
 
   const isCurrentWeek = getMonday(new Date()).getTime() === weekStart.getTime()
-
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekStart.getDate() + 4)
-
   const weekLabel = `${t('weekOf')} ${weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} → ${weekEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
 
   const list = consultants ?? []
@@ -59,25 +46,15 @@ export default function DisponibilitesPage() {
 
   return (
     <>
-      <Topbar
-        title={t('title')}
-        breadcrumb={t('breadcrumb')}
-        ctaLabel={t('cta')}
-        onCta={() => {}}
-      />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} ctaLabel={t('cta')} onCta={() => {}} />
 
       <div className="app-content">
-
         <StatRow stats={stats} />
 
         <div className="week-nav" style={{ marginBottom: 16 }}>
-          <button className="btn btn-ghost btn-sm" onClick={prevWeek}>
-            {t('prevWeek')}
-          </button>
+          <button className="btn btn-ghost btn-sm" onClick={prevWeek}>{t('prevWeek')}</button>
           <span className="week-label">{weekLabel}</span>
-          <button className="btn btn-ghost btn-sm" onClick={nextWeek}>
-            {t('nextWeek')}
-          </button>
+          <button className="btn btn-ghost btn-sm" onClick={nextWeek}>{t('nextWeek')}</button>
           {!isCurrentWeek && (
             <button className="btn btn-primary btn-sm" onClick={goToday} style={{ marginLeft: 8 }}>
               {t('today')}
@@ -88,7 +65,7 @@ export default function DisponibilitesPage() {
         <Panel noPadding>
           <div style={{ padding: '14px 18px' }}>
             {loading ? (
-              <div style={{ padding: 20, color: 'var(--text2)', fontFamily: 'var(--font)', fontSize: 12 }}>
+              <div style={{ padding: 20, color: 'var(--text2)', fontSize: 12 }}>
                 // chargement...
               </div>
             ) : (
@@ -116,7 +93,6 @@ export default function DisponibilitesPage() {
             </div>
           ))}
         </div>
-
       </div>
     </>
   )
