@@ -628,3 +628,16 @@ export async function approveTimesheets(ids: string[]): Promise<void> {
     .eq('status', 'submitted')
   if (error) throw new Error(error.message)
 }
+
+// ── useInternalProjectTypes ───────────────────────────────────
+export function useInternalProjectTypes() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('internal_project_types')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order')
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }, [])
+}

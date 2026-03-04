@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale} from 'next-intl'
 import { Topbar } from '@/components/layout/Topbar'
 import { Panel, StatRow } from '@/components/ui'
 import { Avatar } from '@/components/ui/Avatar'
@@ -12,6 +12,7 @@ import {
   upsertTimesheet,
   submitTimesheets,
   approveTimesheets,
+  useInternalProjectTypes
 } from '@/lib/data'
 import type { Timesheet } from '@/lib/data'
 import { useAuth, isAdmin, canEdit } from '@/lib/auth'
@@ -212,6 +213,16 @@ export default function TimesheetsPage() {
   const { data: timesheets, loading, error } = useTimesheets(monday)
   const { data: consultants } = useConsultants()
   const { data: projectsMap } = useConsultantProjectsMap()
+  const { data: internalTypes } = useInternalProjectTypes()
+  const locale = useLocale()
+
+  const systemProjects = useMemo(() =>
+    (internalTypes ?? []).map(t => ({
+      id:   `__${t.key}__`,
+      name: locale === 'fr' ? t.label_fr : t.label_en,
+    })),
+    [internalTypes, locale]
+  )
 
   const consultantsSafe = consultants ?? []
   const consultantsLoaded = Array.isArray(consultants)
@@ -410,8 +421,10 @@ export default function TimesheetsPage() {
                 <tbody>
                   {visibleConsultants.map(c => {
                     // Projets de ce consultant uniquement
-                    const consultantProjects = projectsMap?.[c.id] ?? []
-
+                    const consultantProjects = [
+                      ...(projectsMap?.[c.id] ?? []),
+                      ...systemProjects,
+]
                     // Entrées de la semaine pour ce consultant
                     const rowEntries = Object.values(lookup).filter(ts => ts.consultantId === c.id)
                     const weekTotal = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
