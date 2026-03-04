@@ -62,12 +62,12 @@ export default function FinancierPage() {
   const { data: projects, loading }      = useProjectFinancials()
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && user.role !== 'admin' && user.role !== 'super_admin') {
       router.push('/dashboard' as never)
     }
   }, [user, router])
 
-  if (!user || user.role !== 'admin') return null
+  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) return null
 
   const totalCA     = projects?.reduce((s: any, p: any) => s + ((p.tjm_vendu ?? 0) * (p.jours_vendus ?? 0)), 0) ?? 0
   const totalMarge  = projects?.reduce((s: any, p: any) => s + (p.marge_brute_totale ?? 0), 0) ?? 0
