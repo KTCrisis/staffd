@@ -466,3 +466,17 @@ input[type='number'].input {
   border-radius: 20px;
   letter-spacing: 1px;
 }
+
+/* ══════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════ */
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.2; }
+}
+
+.skeleton {
+  background: var(--bg3);
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}

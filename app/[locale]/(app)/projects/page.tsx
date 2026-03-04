@@ -264,7 +264,15 @@ export default function ProjectsPage() {
           ))}
         </div>
 
-        {loading && <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>{t('loading')}</div>}
+        {loading && (
+          <Panel noPadding>
+            <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1,2,3].map(i => (
+                <div key={i} style={{ height: 44, background: 'var(--bg3)', borderRadius: 4, opacity: 0.5, animation: 'pulse 1.5s ease-in-out infinite' }} />
+              ))}
+            </div>
+          </Panel>
+        )}
         {error   && <div style={{ padding: 16, color: 'var(--pink)', fontSize: 12 }}>{t('error')}: {error}</div>}
 
         {!loading && !error && (
