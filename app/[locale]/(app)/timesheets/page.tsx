@@ -216,14 +216,19 @@ export default function TimesheetsPage() {
   const { data: internalTypes } = useInternalProjectTypes()
   const locale = useLocale()
 
-  const systemProjects = useMemo(() =>
-    (internalTypes ?? []).map(t => ({
-      id:   `__${t.key}__`,
-      name: locale === 'fr' ? t.label_fr : t.label_en,
-    })),
-    [internalTypes, locale]
-  )
-
+  const systemProjects = useMemo(() => {
+    const seen = new Set<string>()
+    return (internalTypes ?? [])
+      .filter(t => {
+        if (seen.has(t.key)) return false
+        seen.add(t.key)
+        return true
+      })
+      .map(t => ({
+        id:   `__${t.key}__`,
+        name: locale === 'fr' ? t.label_fr : t.label_en,
+      }))
+  }, [internalTypes, locale])
   const consultantsSafe = consultants ?? []
   const consultantsLoaded = Array.isArray(consultants)
   const projectsLoaded = typeof projectsMap !== 'undefined' // map ou undefined
