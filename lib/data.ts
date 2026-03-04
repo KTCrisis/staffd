@@ -582,7 +582,13 @@ export async function upsertTimesheet(params: {
   const { consultantId, projectId, date, value } = params
 
   const { data: { user } } = await supabase.auth.getUser()
-  const companyId = user?.app_metadata?.company_id ?? null
+const { data: consultantRow } = await supabase
+  .from('consultants')
+  .select('company_id')
+  .eq('id', consultantId)
+  .single()
+
+const companyId = user?.app_metadata?.company_id ?? consultantRow?.company_id ?? null
 
   const { data, error } = await supabase
     .from('timesheets')

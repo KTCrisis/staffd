@@ -2,13 +2,13 @@
 
 import { supabase } from './supabase'
 
-export type UserRole = 'admin' | 'manager' | 'consultant' | 'viewer'
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'consultant' | 'viewer'
 
 export interface AuthUser {
-  id:    string
-  email: string
-  role:  UserRole
-  companyId: string | null  
+  id:        string
+  email:     string
+  role:      UserRole
+  companyId: string | null
 }
 
 // ── Login ─────────────────────────────────────────────────────
@@ -25,25 +25,21 @@ export async function signOut() {
 }
 
 // ── Utilisateur courant ───────────────────────────────────────
-// Utilise getUser() (vérification serveur) et lit le rôle depuis
-// app_metadata (non modifiable par l'utilisateur, réservé au service role)
 export async function getUser(): Promise<AuthUser | null> {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
 
-  // app_metadata est signé et non modifiable par l'utilisateur
-  // (à assigner via le service role ou le dashboard Supabase)
   const role = (user.app_metadata?.user_role ?? 'viewer') as UserRole
 
   return {
     id:        user.id,
     email:     user.email ?? '',
     role,
-    companyId: user.app_metadata?.company_id ?? null, 
+    companyId: user.app_metadata?.company_id ?? null,
   }
 }
 
-// ── Hook : écoute les changements de session ──────────────────
+// ── Hook ──────────────────────────────────────────────────────
 import { useEffect, useState } from 'react'
 
 export function useAuth() {
@@ -51,10 +47,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getUser().then(u => {
-      setUser(u)
-      setLoading(false)
-    })
+    getUser().then(u => { setUser(u); setLoading(false) })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -73,7 +66,9 @@ export function useAuth() {
 }
 
 // ── Helpers de rôle ───────────────────────────────────────────
-export const isAdmin          = (role?: UserRole) => role === 'admin'
-export const isManager        = (role?: UserRole) => role === 'admin' || role === 'manager'
-export const canEdit          = (role?: UserRole) => role === 'admin' || role === 'manager'
-export const canViewFinancials = (role?: UserRole) => role === 'admin'
+// super_admin > admin > manager > consultant > viewer
+export const isSuperAdmin      = (role?: UserRole) => role === 'super_admin'
+export const isAdmin           = (role?: UserRole) => role === 'super_admin' || role === 'admin'
+export const isManager         = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
+export const canEdit           = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
+export const canViewFinancials = (role?: UserRole) => role === 'super_admin' || role === 'admin'

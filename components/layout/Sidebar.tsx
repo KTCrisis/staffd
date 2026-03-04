@@ -15,19 +15,18 @@ export function Sidebar() {
   const t        = useTranslations('nav')
   const { user } = useAuthContext()
   const router   = useRouter()
-  const isAdminOrManager = user?.role === 'admin' || user?.role === 'manager'
+  const isSuperAdmin     = user?.role === 'super_admin'
+  const isAdminOrManager = isSuperAdmin || user?.role === 'admin' || user?.role === 'manager'
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
     : '??'
 
-  const roleLabel = user?.role === 'admin'
-    ? 'Admin'
-    : user?.role === 'manager'
-    ? 'Manager'
-    : user?.role === 'consultant'
-    ? 'Consultant'
-    : 'Viewer'
+const roleLabel =
+  isSuperAdmin           ? 'Super Admin' :
+  user?.role === 'admin'      ? 'Admin' :
+  user?.role === 'manager'    ? 'Manager' :
+  user?.role === 'consultant' ? 'Consultant' : 'Viewer'
 
   const [pendingCount, setPendingCount] = useState(0)
   const [command, setCommand] = useState('')
@@ -98,7 +97,7 @@ export function Sidebar() {
     {
       group: t('admin'),
       items: [
-        ...(user?.role === 'admin' ? [{ label: 'Finances', icon: '$', href: p('/financials') }] : []),
+        ...(isAdminOrManager  ? [{ label: 'Finances', icon: '$', href: p('/financials') }] : []),
         { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     },
