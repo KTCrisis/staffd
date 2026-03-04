@@ -168,7 +168,6 @@ export function useAssignments() {
     const { data, error } = await supabase
       .from('assignments')
       .select('*, projects(name)')
-      .gte('end_date', new Date().toISOString().slice(0, 10))
     if (error) throw new Error(error.message)
     return data ?? []
   }, [])
