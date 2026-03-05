@@ -33,6 +33,7 @@ export default function AdminDashboardPage() {
   const router = useRouter()
   const locale = useLocale()
 
+  const daysShort = t.raw('daysShort') as string[]
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const { data: consultants, loading: lC } = useConsultants()
@@ -134,7 +135,7 @@ export default function AdminDashboardPage() {
 
             {/* MiniCalendar compact — pas besoin de scale, le composant est déjà petit */}
             <Panel title={t('calendar')}>
-              <MiniCalendar />
+              <MiniCalendar daysShort={daysShort}/>
             </Panel>
           </div>
         </div>

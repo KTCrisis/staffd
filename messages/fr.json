@@ -62,6 +62,7 @@
       "leaveDays": "CP restants",
       "occupancy": "Taux occup."
     },
+    "daysShort": ["L", "M", "M", "J", "V", "S", "D"],
     "export": "↓ Exporter",
     "noResults": "// aucun résultat",
     "now": "Maintenant",
@@ -365,6 +366,7 @@
       "Sat": "Sam",
       "Sun": "Dim"
     },
+    "daysShort": ["L", "M", "M", "J", "V", "S", "D"],
     "noData": "// aucune donnée",
     "consultant": "Consultant"
   },

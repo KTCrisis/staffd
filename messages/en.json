@@ -62,6 +62,7 @@
       "leaveDays": "Days left",
       "occupancy": "Occupancy"
     },
+    "daysShort": ["M", "T", "W", "T", "F", "S", "S"],
     "export": "↓ Export",
     "noResults": "// no results",
     "now": "Now",
@@ -366,6 +367,7 @@
       "Sat": "Sat",
       "Sun": "Sun"
     },
+    "daysShort": ["M", "T", "W", "T", "F", "S", "S"],
     "noData": "// no data",
     "consultant": "Consultant"
   },

@@ -183,7 +183,7 @@ export default function AvailabilityPage() {
 
   // Mois et jours traduits
   const months   = tNav.raw('months') as string[]
-  const daysShort = ['L','M','M','J','V','S','D']
+  const daysShort = t.raw('daysShort') as string[]
 
   return (
     <>

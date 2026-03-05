@@ -40,6 +40,7 @@ interface MiniCalendarProps {
   initialYear?:  number
   initialMonth?: number
   today?:        { day: number; month: number; year: number }
+  daysShort?: string[]
 }
 
 export function MiniCalendar({
