@@ -15,10 +15,10 @@
     "projects": "Projects",
     "admin": "Admin",
     "agents": "Agents",
-    "business":      "Business",
-    "finance":       "Finance",
-    "appelsOffres":  "Bids / RFPs",
-    "financials":    "Finances",
+    "business": "Business",
+    "finance": "Finance",
+    "appelsOffres": "Bids / RFPs",
+    "financials": "Finances",
     "profitability": "Profitability"
   },
   "topbar": {
@@ -29,11 +29,32 @@
   "dashboard": {
     "title": "Dashboard",
     "breadcrumb": "// overview",
-    "daysShort":    ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-    "months":       ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    "calToday":     "↩ today",
-    "calUpcoming":  "Upcoming",
-    "calNoEvent":   "// no upcoming events",
+    "daysShort": [
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su"
+    ],
+    "months": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "calToday": "↩ today",
+    "calUpcoming": "Upcoming",
+    "calNoEvent": "// no upcoming events",
     "kpi": {
       "activeConsultants": "Active consultants",
       "activeProjects": "Active projects",
@@ -85,13 +106,28 @@
       "occupancy": "Occupancy",
       "rateLabel": "Occupancy rate",
       "edit": "✏ Edit",
-      "history": "📋 History"
+      "history": "📋 History",
+      "contract": "Contract",
+      "tjmCout": "Daily cost",
+      "tjmCible": "Target rate",
+      "salaire": "Annual salary"
     },
     "statuses": {
       "assigned": "On assignment",
       "available": "Available",
       "leave": "On leave",
       "partial": "Partial 50%"
+    },
+    "contractType": {
+      "label": "Contract",
+      "employee": "Employee",
+      "freelance": "Freelance"
+    },
+    "tjm": {
+      "cout": "Daily cost",
+      "facture": "Billed rate",
+      "cible": "Target rate",
+      "reel": "Actual cost"
     }
   },
   "conges": {
@@ -124,7 +160,6 @@
       "Absence autorisée": "Auth. absence"
     }
   },
-
   "clients": {
     "title": "Clients",
     "breadcrumb": "Clients",
@@ -135,72 +170,64 @@
     "notFound": "Client not found.",
     "search": "Search clients...",
     "confirmDelete": "Delete client \"{name}\" permanently? Projects linked to this client will not be deleted.",
-
-    "filters": { "all": "All" },
-
+    "filters": {
+      "all": "All"
+    },
     "stats": {
-      "total":   "Total clients",
+      "total": "Total clients",
       "sectors": "Sectors",
-      "active":  "With active projects"
+      "active": "With active projects"
     },
-
     "table": {
-      "name":     "Client",
-      "sector":   "Sector",
-      "contact":  "Contact",
+      "name": "Client",
+      "sector": "Sector",
+      "contact": "Contact",
       "projects": "Projects",
-      "actions":  "Actions"
+      "actions": "Actions"
     },
-
     "actions": {
-      "edit":   "Edit",
+      "edit": "Edit",
       "delete": "Delete"
     },
-
     "detail": {
-      "info":           "Client info",
-      "sector":         "Sector",
-      "website":        "Website",
-      "contactName":    "Contact",
-      "contactEmail":   "Email",
-      "contactPhone":   "Phone",
-      "projects":       "Projects",
-      "allProjects":    "See all projects",
-      "noProjects":     "No projects linked to this client.",
-      "totalProjects":  "Total projects",
+      "info": "Client info",
+      "sector": "Sector",
+      "website": "Website",
+      "contactName": "Contact",
+      "contactEmail": "Email",
+      "contactPhone": "Phone",
+      "projects": "Projects",
+      "allProjects": "See all projects",
+      "noProjects": "No projects linked to this client.",
+      "totalProjects": "Total projects",
       "activeProjects": "Active projects",
-      "totalRevenue":   "Total revenue",
-      "back":           "Back to clients"
+      "totalRevenue": "Total revenue",
+      "back": "Back to clients"
     },
-
     "form": {
       "titleCreate": "New client",
-      "titleEdit":   "Edit client",
-      "errorName":   "Client name is required.",
-      "saving":      "Saving...",
-      "save":        "Save changes",
-      "create":      "Create client",
-      "cancel":      "Cancel",
-
-      "sectionInfo":    "Identification",
+      "titleEdit": "Edit client",
+      "errorName": "Client name is required.",
+      "saving": "Saving...",
+      "save": "Save changes",
+      "create": "Create client",
+      "cancel": "Cancel",
+      "sectionInfo": "Identification",
       "sectionContact": "Main contact",
-      "sectionNotes":   "Notes",
-
-      "selectClient":   "Select a client",
+      "sectionNotes": "Notes",
+      "selectClient": "Select a client",
       "clientNotFound": "Client not in the list?",
-      "createClient":   "Create it here",
-
-      "name":             "Client name",
-      "sector":           "Sector",
-      "website":          "Website",
-      "contactName":      "Full name",
-      "contactEmail":     "Email",
-      "contactPhone":     "Phone",
-      "notes":            "Notes",
+      "createClient": "Create it here",
+      "name": "Client name",
+      "sector": "Sector",
+      "website": "Website",
+      "contactName": "Full name",
+      "contactEmail": "Email",
+      "contactPhone": "Phone",
+      "notes": "Notes",
       "notesPlaceholder": "Context, history, specific notes about this client..."
     }
-  }, 
-
+  },
   "timesheets": {
     "title": "Timesheets",
     "breadcrumb": "// log your days",
@@ -209,32 +236,31 @@
     "nextWeek": "Next week",
     "today": "Today",
     "stats": {
-      "totalDays":  "Days logged",
-      "draft":      "Draft",
-      "submitted":  "Submitted",
-      "approved":   "Approved"
+      "totalDays": "Days logged",
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved"
     },
     "table": {
       "consultant": "Consultant",
-      "total":      "Total",
-      "actions":    "Actions"
+      "total": "Total",
+      "actions": "Actions"
     },
     "actions": {
-      "submit":       "Submit",
-      "submitTitle":  "Submit all draft entries for this week",
-      "approve":      "Approve",
+      "submit": "Submit",
+      "submitTitle": "Submit all draft entries for this week",
+      "approve": "Approve",
       "approveTitle": "Approve all submitted entries for this consultant"
     },
     "legend": {
-      "empty":     "No entry",
-      "half":      "Half day",
-      "full":      "Full day",
-      "draft":     "Draft",
+      "empty": "No entry",
+      "half": "Half day",
+      "full": "Full day",
+      "draft": "Draft",
       "submitted": "Submitted",
-      "approved":  "Approved"
+      "approved": "Approved"
     }
   },
-
   "projects": {
     "title": "Projects",
     "breadcrumb": "Projects",
@@ -245,113 +271,102 @@
     "internal": "Internal",
     "confirmArchive": "Archive project \"{name}\"?",
     "confirmDelete": "Delete project \"{name}\" permanently? This action cannot be undone.",
-
     "filters": {
-      "all":       "All",
-      "active":    "Active",
-      "draft":     "Draft",
-      "on_hold":   "On hold",
+      "all": "All",
+      "active": "Active",
+      "draft": "Draft",
+      "on_hold": "On hold",
       "completed": "Completed"
     },
-
     "stats": {
-      "active":    "Active",
-      "draft":     "Draft",
-      "onHold":    "On hold",
+      "active": "Active",
+      "draft": "Draft",
+      "onHold": "On hold",
       "completed": "Completed"
     },
-
     "status": {
-      "draft":     "Draft",
-      "active":    "Active",
-      "on_hold":   "On hold",
+      "draft": "Draft",
+      "active": "Active",
+      "on_hold": "On hold",
       "completed": "Completed",
-      "archived":  "Archived"
+      "archived": "Archived"
     },
-
     "table": {
-      "name":     "Project",
-      "client":   "Client",
+      "name": "Project",
+      "client": "Client",
       "team": "Team",
       "deadline": "Deadline",
-      "status":   "Status",
-      "actions":  "Actions"
+      "status": "Status",
+      "actions": "Actions"
     },
-
     "actions": {
-      "edit":    "Edit",
+      "edit": "Edit",
       "archive": "Archive",
-      "delete":  "Delete"
+      "delete": "Delete"
     },
-
     "deadline": {
-      "overdue":  "Overdue",
-      "today":    "Today",
+      "overdue": "Overdue",
+      "today": "Today",
       "daysLeft": "days left"
     },
-
     "drawer": {
-      "label":     "Project details",
-      "edit":      "Edit",
-      "archive":   "Archive",
-      "delete":    "Delete",
-      "status":    "Status",
+      "label": "Project details",
+      "edit": "Edit",
+      "archive": "Archive",
+      "delete": "Delete",
+      "status": "Status",
       "startDate": "Start date",
-      "deadline":  "Deadline",
-      "tjm":       "Rate sold",
-      "jours":     "Days sold",
-      "budget":    "Total budget"
+      "deadline": "Deadline",
+      "tjm": "Rate sold",
+      "jours": "Days sold",
+      "budget": "Total budget"
     },
-
     "form": {
       "titleCreate": "New project",
-      "titleEdit":   "Edit project",
-      "errorName":   "Project name is required.",
+      "titleEdit": "Edit project",
+      "errorName": "Project name is required.",
       "errorClient": "Client name is required for external projects.",
-      "saving":      "Saving...",
-      "save":        "Save changes",
-      "create":      "Create project",
-      "cancel":      "Cancel",
-
-      "sectionInfo":      "Identification",
-      "sectionPlanning":  "Planning",
+      "saving": "Saving...",
+      "save": "Save changes",
+      "create": "Create project",
+      "cancel": "Cancel",
+      "sectionInfo": "Identification",
+      "sectionPlanning": "Planning",
       "sectionFinancial": "Financial",
-      "financialNote":    "Visible to admins only.",
-
-      "name":                    "Project name",
-      "isInternal":              "Internal project (NexDigital)",
-      "clientName":              "Client name",
-      "reference":               "Reference / contract no.",
-      "description":             "Description",
-      "descriptionPlaceholder":  "Brief project description...",
-      "startDate":               "Start date",
-      "endDate":                 "End date",
-      "status":                  "Status",
-      "tjmVendu":                "Rate sold (€/day)",
-      "joursVendus":             "Days sold",
-      "budgetTotal":             "Total budget (€)"
+      "financialNote": "Visible to admins only.",
+      "name": "Project name",
+      "isInternal": "Internal project (NexDigital)",
+      "clientName": "Client name",
+      "reference": "Reference / contract no.",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief project description...",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "status": "Status",
+      "tjmVendu": "Rate sold (€/day)",
+      "joursVendus": "Days sold",
+      "budgetTotal": "Total budget (€)"
     }
   },
   "assignments": {
-    "team":          "Team",
-    "assign":        "Assign",
-    "remove":        "Remove",
-    "loading":       "Loading team...",
+    "team": "Team",
+    "assign": "Assign",
+    "remove": "Remove",
+    "loading": "Loading team...",
     "noAssignments": "No consultants assigned to this project.",
     "confirmRemove": "Remove this consultant from the project?",
-    "saving":        "Saving...",
-    "cancel":        "Cancel",
-    "title":         "Assign consultant",
-    "consultant":    "Consultant",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "title": "Assign consultant",
+    "consultant": "Consultant",
     "selectConsultant": "Select a consultant",
-    "startDate":     "Start date",
-    "endDate":       "End date",
-    "allocation":    "Allocation",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "allocation": "Allocation",
     "errorConsultant": "Please select a consultant.",
-    "errorStartDate":  "Start date is required.",
-    "errorEndDate":    "End date is required."
+    "errorStartDate": "Start date is required.",
+    "errorEndDate": "End date is required."
   },
-
   "disponibilites": {
     "title": "Availability",
     "breadcrumb": "// weekly schedule",
@@ -376,7 +391,15 @@
       "Sat": "Sat",
       "Sun": "Sun"
     },
-    "daysShort": ["M", "T", "W", "T", "F", "S", "S"],
+    "daysShort": [
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
+    ],
     "noData": "// no data",
     "consultant": "Consultant"
   },
@@ -459,6 +482,90 @@
       "good": "Margin ≥ 20% — Good",
       "watch": "Margin 10–20% — Watch",
       "low": "Margin < 10% — Low"
+    }
+  },
+  "profitability": {
+    "title": "Profitability",
+    "breadcrumb": "// by consultant — admin only",
+    "adminBadge": "🔒 Confidential data — Admin only",
+    "alertCible": "{count} consultant(s) with an insufficient target rate (<10% margin on cost)",
+    "kpi": {
+      "totalCA": "Team total revenue",
+      "totalMarge": "Gross margin",
+      "avgOcc": "Avg. occupancy",
+      "avgMarge": "Avg. margin"
+    },
+    "sort": {
+      "label": "Sort by",
+      "ca": "Revenue",
+      "marge": "Margin",
+      "margePct": "Margin %",
+      "occupation": "Occupancy"
+    },
+    "table": {
+      "consultant": "Consultant",
+      "coutReel": "Actual cost",
+      "cibleVsCout": "Target vs cost",
+      "jours": "Days generated",
+      "occupation": "Occupancy",
+      "ca": "Revenue generated",
+      "margeGross": "Gross margin",
+      "margePct": "Margin %",
+      "charged": "charged",
+      "billed": "billed",
+      "noData": "// no data — set consultant costs and active projects"
+    },
+    "legend": {
+      "good": "Margin ≥ 25% — Excellent",
+      "watch": "Margin 15–25% — Good",
+      "low": "Margin < 15% — Watch",
+      "costNote": "Actual cost = fully-loaded salary / 218d (employee) · billed rate (freelance)"
+    }
+  },
+  "consultantForm": {
+    "titleCreate": "// new consultant",
+    "titleEdit": "// edit consultant",
+    "close": "✕ Close",
+    "sections": {
+      "identity": "Identity",
+      "contract": "Contract",
+      "objective": "Objective",
+      "leave": "Leave"
+    },
+    "fields": {
+      "name": "Name *",
+      "initials": "Initials",
+      "color": "Color",
+      "role": "Role *",
+      "email": "Email",
+      "stack": "Stack (comma-separated)",
+      "status": "Status",
+      "contractType": "Contract type",
+      "salaire": "Annual gross salary (€)",
+      "chargesPct": "Employer charges (%)",
+      "joursTravailles": "Working days / year",
+      "tjmFacture": "Billed daily rate (€/d)",
+      "tjmCoutReel": "Actual daily cost",
+      "tjmCible": "Target daily rate (€/d)",
+      "tjmLegacy": "Daily rate (legacy / fallback €/d)",
+      "leaveDays": "Paid leave days / year",
+      "margeCible": "Target margin"
+    },
+    "contractTypes": {
+      "employee": "👤 Employee",
+      "freelance": "🔗 Freelance"
+    },
+    "costLabels": {
+      "charged": "fully-loaded",
+      "billed": "billed rate"
+    },
+    "errors": {
+      "nameRequired": "Name and role are required"
+    },
+    "actions": {
+      "create": "✓ Create consultant",
+      "save": "✓ Save changes",
+      "cancel": "Cancel"
     }
   }
 }

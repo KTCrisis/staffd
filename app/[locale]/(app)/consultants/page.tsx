@@ -194,7 +194,21 @@ export default function ConsultantsPage() {
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
                     {selected.name}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>{selected.role}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text2)' }}>{selected.role}</span>
+                    {/* Badge contrat */}
+                    {selected.contractType && (
+                      <span style={{
+                        fontSize: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+                        padding: '1px 6px', borderRadius: 2,
+                        background: selected.contractType === 'freelance' ? 'rgba(0,229,255,0.1)' : 'rgba(255,255,255,0.06)',
+                        border:     selected.contractType === 'freelance' ? '1px solid rgba(0,229,255,0.3)' : '1px solid var(--border)',
+                        color:      selected.contractType === 'freelance' ? 'var(--cyan)' : 'var(--text2)',
+                      }}>
+                        {selected.contractType === 'freelance' ? 'Freelance' : 'Salarié'}
+                      </span>
+                    )}
+                  </div>
                   {selected.email && (
                     <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
                   )}
@@ -208,12 +222,24 @@ export default function ConsultantsPage() {
                 { label: t('drawer.available'), value: selected.availableFrom
                     ? new Date(selected.availableFrom).toLocaleDateString('fr-FR')
                     : t('now') },
-                { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
-                { label: t('drawer.occupancy'), value: `${selected.occupancyRate}%` },
-                // TJM — financialAccess uniquement (admin + super_admin)
-                ...(financialAccess && selected.tjm
-                  ? [{ label: 'TJM', value: `${selected.tjm} €/j` }]
+                // Congés — uniquement pour les salariés
+                ...(selected.contractType !== 'freelance'
+                  ? [{ label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` }]
                   : []),
+                { label: t('drawer.occupancy'), value: `${selected.occupancyRate}%` },
+                // Données financières — financialAccess uniquement
+                ...(financialAccess ? [
+                  // Coût réel (calculé selon contrat)
+                  ...(selected.tjmCoutReel != null
+                    ? [{ label: t('drawer.tjmCout'), value: `${selected.tjmCoutReel} €/j · ${selected.contractType === 'freelance' ? 'facturé' : 'chargé'}` }]
+                    : selected.tjm != null
+                    ? [{ label: t('drawer.tjmCout'), value: `${selected.tjm} €/j` }]
+                    : []),
+                  // TJM cible
+                  ...(selected.tjmCible != null
+                    ? [{ label: t('drawer.tjmCible'), value: `${selected.tjmCible} €/j cible` }]
+                    : []),
+                ] : []),
               ].map(row => (
                 <div key={row.label} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',

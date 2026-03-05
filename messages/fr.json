@@ -15,10 +15,10 @@
     "projects": "Projets",
     "admin": "Admin",
     "agents": "Agents",
-    "business":      "Business",
-    "finance":       "Finance",
-    "appelsOffres":  "Appels d'offres",
-    "financials":    "Finances",
+    "business": "Business",
+    "finance": "Finance",
+    "appelsOffres": "Appels d'offres",
+    "financials": "Finances",
     "profitability": "Rentabilité"
   },
   "topbar": {
@@ -29,11 +29,32 @@
   "dashboard": {
     "title": "Dashboard",
     "breadcrumb": "// overview",
-    "daysShort":    ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"],
-    "months":       ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
-    "calToday":     "↩ aujourd'hui",
-    "calUpcoming":  "À venir",
-    "calNoEvent":   "// aucun événement à venir",
+    "daysShort": [
+      "Lu",
+      "Ma",
+      "Me",
+      "Je",
+      "Ve",
+      "Sa",
+      "Di"
+    ],
+    "months": [
+      "Jan",
+      "Fév",
+      "Mar",
+      "Avr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Aoû",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Déc"
+    ],
+    "calToday": "↩ aujourd'hui",
+    "calUpcoming": "À venir",
+    "calNoEvent": "// aucun événement à venir",
     "kpi": {
       "activeConsultants": "Consultants actifs",
       "activeProjects": "Projets en cours",
@@ -85,13 +106,28 @@
       "occupancy": "Occupation",
       "rateLabel": "Taux d'occupation",
       "edit": "✏ Modifier",
-      "history": "📋 Historique"
+      "history": "📋 Historique",
+      "contract": "Contrat",
+      "tjmCout": "Coût journalier",
+      "tjmCible": "TJM cible",
+      "salaire": "Salaire annuel"
     },
     "statuses": {
       "assigned": "En mission",
       "available": "Disponible",
       "leave": "Congé",
       "partial": "Partiel 50%"
+    },
+    "contractType": {
+      "label": "Contrat",
+      "employee": "Salarié",
+      "freelance": "Freelance"
+    },
+    "tjm": {
+      "cout": "Coût journalier",
+      "facture": "TJM facturé",
+      "cible": "TJM cible",
+      "reel": "Coût réel"
     }
   },
   "conges": {
@@ -124,7 +160,6 @@
       "Absence autorisée": "Absence autorisée"
     }
   },
-
   "clients": {
     "title": "Clients",
     "breadcrumb": "Clients",
@@ -135,68 +170,62 @@
     "notFound": "Client introuvable.",
     "search": "Rechercher un client...",
     "confirmDelete": "Supprimer définitivement le client \"{name}\" ? Les projets liés ne seront pas supprimés.",
-
-    "filters": { "all": "Tous" },
-
+    "filters": {
+      "all": "Tous"
+    },
     "stats": {
-      "total":   "Total clients",
+      "total": "Total clients",
       "sectors": "Secteurs",
-      "active":  "Avec projets actifs"
+      "active": "Avec projets actifs"
     },
-
     "table": {
-      "name":     "Client",
-      "sector":   "Secteur",
-      "contact":  "Contact",
+      "name": "Client",
+      "sector": "Secteur",
+      "contact": "Contact",
       "projects": "Projets",
-      "actions":  "Actions"
+      "actions": "Actions"
     },
-
     "actions": {
-      "edit":   "Modifier",
+      "edit": "Modifier",
       "delete": "Supprimer"
     },
-
     "detail": {
-      "info":           "Informations client",
-      "sector":         "Secteur",
-      "website":        "Site web",
-      "contactName":    "Contact",
-      "contactEmail":   "Email",
-      "contactPhone":   "Téléphone",
-      "projects":       "Projets",
-      "allProjects":    "Voir tous les projets",
-      "noProjects":     "Aucun projet lié à ce client.",
-      "totalProjects":  "Projets total",
+      "info": "Informations client",
+      "sector": "Secteur",
+      "website": "Site web",
+      "contactName": "Contact",
+      "contactEmail": "Email",
+      "contactPhone": "Téléphone",
+      "projects": "Projets",
+      "allProjects": "Voir tous les projets",
+      "noProjects": "Aucun projet lié à ce client.",
+      "totalProjects": "Projets total",
       "activeProjects": "Projets actifs",
-      "totalRevenue":   "CA total",
-      "back":           "Retour aux clients"
+      "totalRevenue": "CA total",
+      "back": "Retour aux clients"
     },
-
     "form": {
       "titleCreate": "Nouveau client",
-      "titleEdit":   "Modifier le client",
-      "errorName":   "Le nom du client est requis.",
-      "saving":      "Enregistrement...",
-      "save":        "Enregistrer",
-      "create":      "Créer le client",
-      "cancel":      "Annuler",
-
-      "sectionInfo":    "Identification",
+      "titleEdit": "Modifier le client",
+      "errorName": "Le nom du client est requis.",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer",
+      "create": "Créer le client",
+      "cancel": "Annuler",
+      "sectionInfo": "Identification",
       "sectionContact": "Contact principal",
-      "sectionNotes":   "Notes",
-
-      "name":             "Nom du client",
-      "sector":           "Secteur",
-      "website":          "Site web",
-      "contactName":      "Nom complet",
-      "contactEmail":     "Email",
-      "contactPhone":     "Téléphone",
-      "notes":            "Notes",
+      "sectionNotes": "Notes",
+      "name": "Nom du client",
+      "sector": "Secteur",
+      "website": "Site web",
+      "contactName": "Nom complet",
+      "contactEmail": "Email",
+      "contactPhone": "Téléphone",
+      "notes": "Notes",
       "notesPlaceholder": "Contexte, historique, informations spécifiques sur ce client..."
     }
-  }, 
-   "timesheets": {
+  },
+  "timesheets": {
     "title": "Feuilles de temps",
     "breadcrumb": "// saisie journalière",
     "weekOf": "Semaine du",
@@ -204,32 +233,31 @@
     "nextWeek": "Sem. suiv.",
     "today": "Aujourd'hui",
     "stats": {
-      "totalDays":  "Jours saisis",
-      "draft":      "Brouillon",
-      "submitted":  "Soumis",
-      "approved":   "Approuvés"
+      "totalDays": "Jours saisis",
+      "draft": "Brouillon",
+      "submitted": "Soumis",
+      "approved": "Approuvés"
     },
     "table": {
       "consultant": "Consultant",
-      "total":      "Total",
-      "actions":    "Actions"
+      "total": "Total",
+      "actions": "Actions"
     },
     "actions": {
-      "submit":       "Soumettre",
-      "submitTitle":  "Soumettre toutes les saisies de la semaine",
-      "approve":      "Approuver",
+      "submit": "Soumettre",
+      "submitTitle": "Soumettre toutes les saisies de la semaine",
+      "approve": "Approuver",
       "approveTitle": "Approuver toutes les saisies soumises pour ce consultant"
     },
     "legend": {
-      "empty":     "Non saisi",
-      "half":      "Demi-journée",
-      "full":      "Journée complète",
-      "draft":     "Brouillon",
+      "empty": "Non saisi",
+      "half": "Demi-journée",
+      "full": "Journée complète",
+      "draft": "Brouillon",
       "submitted": "Soumis",
-      "approved":  "Approuvé"
+      "approved": "Approuvé"
     }
-  }, 
-  
+  },
   "projects": {
     "title": "Projets",
     "breadcrumb": "Projets",
@@ -240,116 +268,104 @@
     "internal": "Interne",
     "confirmArchive": "Archiver le projet \"{name}\" ?",
     "confirmDelete": "Supprimer définitivement le projet \"{name}\" ? Cette action est irréversible.",
-
     "filters": {
-      "all":       "Tous",
-      "active":    "Actifs",
-      "draft":     "Brouillon",
-      "on_hold":   "En pause",
+      "all": "Tous",
+      "active": "Actifs",
+      "draft": "Brouillon",
+      "on_hold": "En pause",
       "completed": "Terminés"
     },
-
     "stats": {
-      "active":    "Actifs",
-      "draft":     "Brouillon",
-      "onHold":    "En pause",
+      "active": "Actifs",
+      "draft": "Brouillon",
+      "onHold": "En pause",
       "completed": "Terminés"
     },
-
     "status": {
-      "draft":     "Brouillon",
-      "active":    "Actif",
-      "on_hold":   "En pause",
+      "draft": "Brouillon",
+      "active": "Actif",
+      "on_hold": "En pause",
       "completed": "Terminé",
-      "archived":  "Archivé"
+      "archived": "Archivé"
     },
-
     "table": {
-      "name":     "Projet",
-      "client":   "Client",
+      "name": "Projet",
+      "client": "Client",
       "team": "Équipe",
       "deadline": "Échéance",
-      "status":   "Statut",
-      "actions":  "Actions"
+      "status": "Statut",
+      "actions": "Actions"
     },
-
     "actions": {
-      "edit":    "Modifier",
+      "edit": "Modifier",
       "archive": "Archiver",
-      "delete":  "Supprimer"
+      "delete": "Supprimer"
     },
-
     "deadline": {
-      "overdue":  "En retard",
-      "today":    "Aujourd'hui",
+      "overdue": "En retard",
+      "today": "Aujourd'hui",
       "daysLeft": "j restants"
     },
-
     "drawer": {
-      "label":     "Détail projet",
-      "edit":      "Modifier",
-      "archive":   "Archiver",
-      "delete":    "Supprimer",
-      "status":    "Statut",
+      "label": "Détail projet",
+      "edit": "Modifier",
+      "archive": "Archiver",
+      "delete": "Supprimer",
+      "status": "Statut",
       "startDate": "Début",
-      "deadline":  "Échéance",
-      "tjm":       "TJM vendu",
-      "jours":     "Jours vendus",
-      "budget":    "Budget total"
+      "deadline": "Échéance",
+      "tjm": "TJM vendu",
+      "jours": "Jours vendus",
+      "budget": "Budget total"
     },
-
     "form": {
       "titleCreate": "Nouveau projet",
-      "titleEdit":   "Modifier le projet",
-      "errorName":   "Le nom du projet est requis.",
+      "titleEdit": "Modifier le projet",
+      "errorName": "Le nom du projet est requis.",
       "errorClient": "Le nom du client est requis pour un projet externe.",
-      "saving":      "Enregistrement...",
-      "save":        "Enregistrer",
-      "create":      "Créer le projet",
-      "cancel":      "Annuler",
-
-      "sectionInfo":      "Identification",
-      "sectionPlanning":  "Planning",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer",
+      "create": "Créer le projet",
+      "cancel": "Annuler",
+      "sectionInfo": "Identification",
+      "sectionPlanning": "Planning",
       "sectionFinancial": "Finances",
-      "financialNote":    "Visible par les admins uniquement.",
-
-      "selectClient":   "Sélectionner un client",
+      "financialNote": "Visible par les admins uniquement.",
+      "selectClient": "Sélectionner un client",
       "clientNotFound": "Client absent de la liste ?",
-      "createClient":   "Le créer ici",
-
-      "name":                    "Nom du projet",
-      "isInternal":              "Projet interne (NexDigital)",
-      "clientName":              "Nom du client",
-      "reference":               "Référence / N° contrat",
-      "description":             "Description",
-      "descriptionPlaceholder":  "Courte description du projet...",
-      "startDate":               "Date de début",
-      "endDate":                 "Date de fin",
-      "status":                  "Statut",
-      "tjmVendu":                "TJM vendu (€/j)",
-      "joursVendus":             "Jours vendus",
-      "budgetTotal":             "Budget total (€)"
+      "createClient": "Le créer ici",
+      "name": "Nom du projet",
+      "isInternal": "Projet interne (NexDigital)",
+      "clientName": "Nom du client",
+      "reference": "Référence / N° contrat",
+      "description": "Description",
+      "descriptionPlaceholder": "Courte description du projet...",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "status": "Statut",
+      "tjmVendu": "TJM vendu (€/j)",
+      "joursVendus": "Jours vendus",
+      "budgetTotal": "Budget total (€)"
     }
   },
-
   "assignments": {
-    "team":          "Équipe",
-    "assign":        "Affecter",
-    "remove":        "Retirer",
-    "loading":       "Chargement de l'équipe...",
+    "team": "Équipe",
+    "assign": "Affecter",
+    "remove": "Retirer",
+    "loading": "Chargement de l'équipe...",
     "noAssignments": "Aucun consultant affecté à ce projet.",
     "confirmRemove": "Retirer ce consultant du projet ?",
-    "saving":        "Enregistrement...",
-    "cancel":        "Annuler",
-    "title":         "Affecter un consultant",
-    "consultant":    "Consultant",
+    "saving": "Enregistrement...",
+    "cancel": "Annuler",
+    "title": "Affecter un consultant",
+    "consultant": "Consultant",
     "selectConsultant": "Sélectionner un consultant",
-    "startDate":     "Date de début",
-    "endDate":       "Date de fin",
-    "allocation":    "Allocation",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "allocation": "Allocation",
     "errorConsultant": "Veuillez sélectionner un consultant.",
-    "errorStartDate":  "La date de début est requise.",
-    "errorEndDate":    "La date de fin est requise."
+    "errorStartDate": "La date de début est requise.",
+    "errorEndDate": "La date de fin est requise."
   },
   "disponibilites": {
     "title": "Disponibilités",
@@ -375,7 +391,15 @@
       "Sat": "Sam",
       "Sun": "Dim"
     },
-    "daysShort": ["L", "M", "M", "J", "V", "S", "D"],
+    "daysShort": [
+      "L",
+      "M",
+      "M",
+      "J",
+      "V",
+      "S",
+      "D"
+    ],
     "noData": "// aucune donnée",
     "consultant": "Consultant"
   },
@@ -459,6 +483,89 @@
       "watch": "Marge 10–20% — À surveiller",
       "low": "Marge < 10% — Faible"
     }
+  },
+  "profitability": {
+    "title": "Rentabilité",
+    "breadcrumb": "// vue par consultant — admin uniquement",
+    "adminBadge": "🔒 Données confidentielles — Admin uniquement",
+    "alertCible": "{count} consultant(s) avec un TJM cible insuffisant (<10% de marge sur coût)",
+    "kpi": {
+      "totalCA": "CA total équipe",
+      "totalMarge": "Marge brute",
+      "avgOcc": "Taux occup. moyen",
+      "avgMarge": "Marge moyenne"
+    },
+    "sort": {
+      "label": "Trier par",
+      "ca": "CA",
+      "marge": "Marge",
+      "margePct": "Marge %",
+      "occupation": "Occupation"
+    },
+    "table": {
+      "consultant": "Consultant",
+      "coutReel": "Coût réel",
+      "cibleVsCout": "Cible vs coût",
+      "jours": "Jours générés",
+      "occupation": "Occupation",
+      "ca": "CA généré",
+      "margeGross": "Marge brute",
+      "margePct": "Marge %",
+      "charged": "chargé",
+      "billed": "facturé",
+      "noData": "// aucune donnée — renseignez les coûts consultants et projets actifs"
+    },
+    "legend": {
+      "good": "Marge ≥ 25% — Excellente",
+      "watch": "Marge 15–25% — Correcte",
+      "low": "Marge < 15% — À surveiller",
+      "costNote": "Coût réel = salaire chargé / 218j (salarié) · tarif facturé (freelance)"
+    }
+  },
+  "consultantForm": {
+    "titleCreate": "// nouveau consultant",
+    "titleEdit": "// modifier le consultant",
+    "close": "✕ Fermer",
+    "sections": {
+      "identity": "Identité",
+      "contract": "Contrat",
+      "objective": "Objectif",
+      "leave": "Congés"
+    },
+    "fields": {
+      "name": "Nom *",
+      "initials": "Initiales",
+      "color": "Couleur",
+      "role": "Rôle *",
+      "email": "Email",
+      "stack": "Stack (virgule-séparée)",
+      "status": "Statut",
+      "contractType": "Type de contrat",
+      "salaire": "Salaire brut annuel (€)",
+      "chargesPct": "Charges patronales (%)",
+      "joursTravailles": "Jours travaillés / an",
+      "tjmFacture": "TJM facturé (€/j)",
+      "tjmCoutReel": "Coût journalier réel",
+      "tjmCible": "TJM cible (€/j)",
+      "tjmLegacy": "TJM (legacy / fallback €/j)",
+      "leaveDays": "Jours CP / an",
+      "margeCible": "Marge cible"
+    },
+    "contractTypes": {
+      "employee": "👤 Salarié",
+      "freelance": "🔗 Freelance"
+    },
+    "costLabels": {
+      "charged": "chargé",
+      "billed": "facturé"
+    },
+    "errors": {
+      "nameRequired": "Le nom et le rôle sont obligatoires"
+    },
+    "actions": {
+      "create": "✓ Créer le consultant",
+      "save": "✓ Enregistrer",
+      "cancel": "Annuler"
+    }
   }
-
 }
