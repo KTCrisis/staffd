@@ -1,58 +1,65 @@
 export type Theme = 'dark' | 'light'
 
+export type ContractType    = 'employee' | 'freelance'
 export type ConsultantStatus = 'available' | 'assigned' | 'leave' | 'partial'
-
-export type LeaveStatus = 'pending' | 'approved' | 'refused'
-
-export type LeaveType = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
-
-export type ProjectStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
-
-export type AvatarColor = 'green' | 'pink' | 'cyan' | 'gold' | 'purple'
+export type LeaveStatus      = 'pending' | 'approved' | 'refused'
+export type LeaveType        = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
+export type ProjectStatus    = 'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
+export type AvatarColor      = 'green' | 'pink' | 'cyan' | 'gold' | 'purple'
 
 export interface Consultant {
-  id: string
-  user_id?: string | null
-  company_id?: string | null
-  name: string
-  initials: string
-  role: string
-  status: ConsultantStatus
-  avatarColor: AvatarColor
-  currentProject?: string
+  id:                string
+  user_id?:          string | null
+  company_id?:       string | null
+  name:              string
+  initials:          string
+  role:              string
+  status:            ConsultantStatus
+  avatarColor:       AvatarColor
+  currentProject?:   string
   currentProjectId?: string
-  availableFrom?: string
-  leaveDaysLeft: number
-  leaveDaysTotal?: number
-  occupancyRate: number
-  email?: string
-  tjm?: number
-  stack?: string[]
+  availableFrom?:    string
+  leaveDaysLeft:     number
+  leaveDaysTotal?:   number
+  occupancyRate:     number
+  email?:            string
+  stack?:            string[]
   // RTT
-  rttTotal?: number
-  rttTaken?: number
-  rttLeft?: number
+  rttTotal?:         number
+  rttTaken?:         number
+  rttLeft?:          number
+  // ── Contrat ────────────────────────────────────────────────
+  contractType?:     ContractType   // 'employee' | 'freelance'
+  // TJM
+  tjm?:              number         // fallback legacy
+  tjmFacture?:       number         // freelance : tarif facturé
+  tjmCible?:         number         // objectif commercial (analysable par IA)
+  tjmCoutReel?:      number         // calculé par la vue SQL (lecture seule)
+  // Employee — base de calcul du coût réel
+  salaireAnnuelBrut?: number        // ex : 55000
+  chargesPct?:        number        // charges patronales — défaut 42%
+  joursTravailles?:   number        // jours ouvrés/an — défaut 218
 }
 
 export interface Project {
-  id: string
-  name: string
-  client: string
+  id:            string
+  name:          string
+  client:        string
   consultantIds: string[]
-  team?: { id: string; name: string; initials: string; avatarColor: string }[]
-  progress: number
-  endDate?: string
-  status: ProjectStatus
-  startDate?:   string
-  clientName?:  string
-  clientId?:    string
-  reference?:   string
-  description?: string
-  budgetTotal?: number
-  tjmVendu?:    number
-  joursVendus?: number
-  isInternal?:  boolean
-  companyId?:   string
+  team?:         { id: string; name: string; initials: string; avatarColor: string }[]
+  progress:      number
+  endDate?:      string
+  status:        ProjectStatus
+  startDate?:    string
+  clientName?:   string
+  clientId?:     string
+  reference?:    string
+  description?:  string
+  budgetTotal?:  number
+  tjmVendu?:     number
+  joursVendus?:  number
+  isInternal?:   boolean
+  companyId?:    string
 }
 
 export interface Client {
@@ -70,15 +77,15 @@ export interface Client {
 }
 
 export interface LeaveRequest {
-  id: string
-  consultantId: string
+  id:             string
+  consultantId:   string
   consultantName: string
-  type: LeaveType
-  motif?: string
-  startDate: string
-  endDate: string
-  days: number
-  status: LeaveStatus
+  type:           LeaveType
+  motif?:         string
+  startDate:      string
+  endDate:        string
+  days:           number
+  status:         LeaveStatus
   impactWarning?: string
 }
 
@@ -104,26 +111,26 @@ export const ABSENCE_MOTIFS: AbsenceMotif[] = [
 
 export interface KpiData {
   activeConsultants: number
-  totalConsultants: number
-  activeProjects: number
-  pendingLeaves: number
-  occupancyRate: number
+  totalConsultants:  number
+  activeProjects:    number
+  pendingLeaves:     number
+  occupancyRate:     number
 }
 
 export interface ActivityItem {
-  id: string
-  type: 'leave' | 'assignment' | 'milestone' | 'alert'
+  id:      string
+  type:    'leave' | 'assignment' | 'milestone' | 'alert'
   message: string
-  time: string
-  read: boolean
+  time:    string
+  read:    boolean
 }
 
 export interface AvailabilityCell {
   consultantId: string
-  date: string
-  status: 'free' | 'busy' | 'partial' | 'leave' | 'weekend'
+  date:         string
+  status:       'free' | 'busy' | 'partial' | 'leave' | 'weekend'
   projectName?: string
-  percentage?: number
+  percentage?:  number
 }
 
 export interface ProjectConsultant {

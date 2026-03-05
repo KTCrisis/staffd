@@ -18,6 +18,8 @@ import type {
 // TYPES LOCAUX
 // ══════════════════════════════════════════════════════════════
 
+export type ContractType = 'employee' | 'freelance'
+
 export interface ProjectFinancials {
   id:                 string
   name:               string
@@ -37,7 +39,9 @@ export interface ConsultantProfitability {
   role:            string
   initials:        string
   avatar_color:    string | null
-  tjm_cout:        number | null
+  contract_type:   ContractType
+  tjm_cout:        number | null   // tjm_cout_reel calculé selon contrat
+  tjm_cible:       number | null   // objectif commercial
   occupancy_rate:  number | null
   status:          string
   nb_assignments:  number
@@ -61,13 +65,36 @@ export interface AssignmentWithConsultant {
   avatarColor:  string
 }
 
+export interface ConsultantInput {
+  company_id?:          string
+  name:                 string
+  initials:             string
+  email?:               string
+  role:                 string
+  avatar_color:         string
+  stack:                string[]
+  status:               string
+  contract_type:        ContractType
+  // employee
+  salaire_annuel_brut?: number
+  charges_pct?:         number    // défaut 42
+  jours_travailles?:    number    // défaut 218
+  // freelance
+  tjm_facture?:         number
+  // commun
+  tjm?:                 number    // fallback legacy
+  tjm_cible?:           number
+  leave_days_total?:    number
+}
+
 export interface AssignmentInput {
-  company_id:    string
-  consultant_id: string
-  project_id:    string
-  allocation:    number
-  start_date:    string
-  end_date:      string
+  company_id:              string
+  consultant_id:           string
+  project_id:              string
+  allocation:              number
+  start_date:              string
+  end_date:                string
+  tjm_facture_override?:   number   // freelance — tarif spécifique à cette mission
 }
 
 export interface ProjectInput {
@@ -112,23 +139,31 @@ export interface Timesheet {
 
 function toConsultant(row: Record<string, unknown>): Consultant {
   return {
-    id:             row.id as string,
-    user_id:        row.user_id as string | null,
-    name:           row.name as string,
-    initials:       row.initials as string,
-    role:           row.role as string,
-    avatarColor:    (row.avatar_color as Consultant['avatarColor']) ?? 'green',
-    status:         row.status as Consultant['status'],
-    currentProject: (row.project_names as string[] | null)?.[0] ?? undefined,
-    leaveDaysLeft:  (row.leave_days_left as number) ?? 0,
-    occupancyRate:  (row.occupancy_rate as number) ?? 0,
-    email:          row.email as string | undefined,
-    tjm:            row.tjm as number | undefined,
-    stack:          row.stack as string[] | undefined,
-    leaveDaysTotal: row.leave_days_total as number | undefined,
-    rttTotal:       row.rtt_total as number | undefined,
-    rttTaken:       row.rtt_taken as number | undefined,
-    rttLeft:        row.rtt_left as number | undefined,
+    id:                  row.id as string,
+    user_id:             row.user_id as string | null,
+    name:                row.name as string,
+    initials:            row.initials as string,
+    role:                row.role as string,
+    avatarColor:         (row.avatar_color as Consultant['avatarColor']) ?? 'green',
+    status:              row.status as Consultant['status'],
+    currentProject:      (row.project_names as string[] | null)?.[0] ?? undefined,
+    leaveDaysLeft:       (row.leave_days_left as number) ?? 0,
+    occupancyRate:       (row.occupancy_rate as number) ?? 0,
+    email:               row.email as string | undefined,
+    stack:               row.stack as string[] | undefined,
+    leaveDaysTotal:      row.leave_days_total as number | undefined,
+    rttTotal:            row.rtt_total as number | undefined,
+    rttTaken:            row.rtt_taken as number | undefined,
+    rttLeft:             row.rtt_left as number | undefined,
+    // Contrat & coût
+    contractType:        (row.contract_type as ContractType) ?? 'employee',
+    tjm:                 row.tjm as number | undefined,
+    tjmFacture:          row.tjm_facture as number | undefined,
+    tjmCible:            row.tjm_cible as number | undefined,
+    tjmCoutReel:         row.tjm_cout_reel as number | undefined,
+    salaireAnnuelBrut:   row.salaire_annuel_brut as number | undefined,
+    chargesPct:          row.charges_pct as number | undefined,
+    joursTravailles:     row.jours_travailles as number | undefined,
   }
 }
 
@@ -518,22 +553,14 @@ export function useActivity(limit = 10) {
 // MUTATIONS — CONSULTANTS
 // ══════════════════════════════════════════════════════════════
 
-export async function createConsultant(data: {
-  name: string; initials: string; email?: string; role: string
-  avatar_color: string; stack: string[]; status: string
-  tjm?: number; leave_days_total?: number; company_id?: string
-}) {
+export async function createConsultant(data: ConsultantInput) {
   const { error } = await supabase
     .from('consultants')
     .insert({ ...data, leave_days_taken: 0, occupancy_rate: 0 })
   if (error) throw new Error(error.message)
 }
 
-export async function updateConsultant(id: string, data: {
-  name?: string; initials?: string; email?: string; role?: string
-  avatar_color?: string; stack?: string[]; status?: string
-  tjm?: number; leave_days_total?: number
-}) {
+export async function updateConsultant(id: string, data: Partial<ConsultantInput>) {
   const { error } = await supabase.from('consultants').update(data).eq('id', id)
   if (error) throw new Error(error.message)
 }
