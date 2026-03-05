@@ -9,6 +9,7 @@ Rules: be direct, analytical, no fluff. Format numbers clearly. Use **bold** for
 async function fetchContext(cmd: string, url: string, key: string): Promise<string> {
   if (!url || !key) return '{}'
   const h = { 'apikey': key, 'Authorization': `Bearer ${key}` }
+  console.log('KEY used:', key?.slice(0, 20), 'URL:', url?.slice(0, 40))
   const q = (table: string, select: string, filter = '') =>
     fetch(`${url}/rest/v1/${table}?select=${encodeURIComponent(select)}${filter ? `&${filter}` : ''}`, { headers: h })
       .then(r => r.json()).catch(() => [])
