@@ -1,3 +1,37 @@
 User-agent: *
-Allow: /
+
+# Private — authenticated routes
+Disallow: /dashboard
+Disallow: /consultants
+Disallow: /projects
+Disallow: /clients
+Disallow: /leaves
+Disallow: /timesheets
+Disallow: /availability
+Disallow: /timeline
+Disallow: /financials
+Disallow: /profitability
+Disallow: /invoices
+Disallow: /settings
+Disallow: /ai
+Disallow: /fr/dashboard
+Disallow: /fr/consultants
+Disallow: /fr/projects
+Disallow: /fr/clients
+Disallow: /fr/leaves
+Disallow: /fr/timesheets
+Disallow: /fr/availability
+Disallow: /fr/timeline
+Disallow: /fr/financials
+Disallow: /fr/profitability
+Disallow: /fr/invoices
+Disallow: /fr/settings
+Disallow: /fr/ai
+
+# Public
+Allow: /docs
+Allow: /fr/docs
+Allow: /login
+Allow: /fr/login
+
 Sitemap: https://staffd.pages.dev/sitemap.xml
