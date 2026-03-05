@@ -9,6 +9,17 @@ import { useRouter }       from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import { supabase }        from '@/lib/supabase'
 
+// ── Couleur accent par groupe ────────────────────────────────
+const GROUP_COLORS: Record<string, string> = {
+  overview:  'var(--text2)',
+  team:      'var(--cyan)',
+  activity:  'var(--green)',
+  projects:  'var(--purple)',
+  finance:   'var(--gold)',
+  admin:     'var(--text2)',
+  agents:    'var(--pink)',
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const locale   = useLocale()
@@ -16,6 +27,9 @@ export function Sidebar() {
   const { user, companyMode } = useAuthContext()
   const isSolo = companyMode === 'solo'
   const router   = useRouter()
+
+  const [collapsed, setCollapsed] = useState(false)
+  const [command, setCommand]     = useState('')
 
   // ── Rôles ────────────────────────────────────────────────
   const isSuperAdmin     = user?.role === 'super_admin'
@@ -39,10 +53,9 @@ export function Sidebar() {
 
   // ── Badge congés pending ─────────────────────────────────
   const [pendingCount, setPendingCount] = useState(0)
-  const [command, setCommand] = useState('')
 
   useEffect(() => {
-    if (!isAdminOrManager) return  // consultant ne voit pas le badge
+    if (!isAdminOrManager) return
     const fetchPending = async () => {
       const { count } = await supabase
         .from('leave_requests')
@@ -68,131 +81,168 @@ export function Sidebar() {
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   // ══════════════════════════════════════════════════════════
-  // NAV — filtrée par rôle
+  // NAV
   // ══════════════════════════════════════════════════════════
-
   const NAV = [
-
-    // ── Overview ─────────────────────────────────────────────
     {
-      group: t('overview'),
+      group: t('overview'), key: 'overview',
       items: [
         { label: t('dashboard'), icon: '⬡', href: p('/dashboard') },
       ],
     },
 
-    // ── Team — masqué en mode solo ────────────────────────────
     ...(!isSolo ? [{
-      group: t('team'),
+      group: t('team'), key: 'team',
       items: [
         { label: t('consultants'), icon: '◈', href: p('/consultants') },
-
         ...(!isConsultantOnly ? [
           { label: t('disponibilites'), icon: '◫', href: p('/availability') },
         ] : []),
-
-        // Congés masqués pour freelance (pas de CP/RTT)
         ...(!isFreelance ? [{
-          label: t('conges'),
-          icon:  '◷',
-          href:  p('/leaves'),
+          label: t('conges'), icon: '◷', href: p('/leaves'),
           badge: isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
         }] : []),
       ],
     }] : []),
 
-    // ── Activity ──────────────────────────────────────────────
     {
-      group: t('activity'),
+      group: t('activity'), key: 'activity',
       items: [
         { label: t('timesheets'), icon: '⏱', href: p('/timesheets') },
       ],
     },
 
-    // ── Projects — admin/manager + solo, masqué pour consultant/freelance ──
     ...(!isConsultantOnly || isSolo ? [{
-      group: t('projects'),
+      group: t('projects'), key: 'projects',
       items: [
-        { label: t('projets'),  icon: '◧', href: p('/projects')  },
-        { label: t('clients'),  icon: '◉', href: p('/clients')   },
+        { label: t('projets'),  icon: '◧', href: p('/projects') },
+        { label: t('clients'),  icon: '◉', href: p('/clients')  },
         ...(!isSolo ? [
           { label: t('timeline'), icon: '▤', href: p('/timeline') },
         ] : []),
       ],
     }] : []),
 
-    // ── Finance — admin/manager/solo + freelance (invoices seulement) ────
     ...(isAdminOrManager || isSolo || isFreelance ? [{
-      group: t('finance'),
+      group: t('finance'), key: 'finance',
       items: [
-        // Financials + Profitability : admin/super_admin/solo uniquement (pas manager)
         ...(isSuperAdmin || isAdmin || isSolo ? [
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
         ] : []),
-        // Invoices : admin/manager/solo + freelance
         { label: 'Invoices', icon: '◉', href: p('/invoices') },
       ],
     }] : []),
 
-    // ── Admin — admin/super_admin uniquement ──────────────────
-    ...((isSuperAdmin || isAdmin) && !isSolo ? [{
-      group: t('admin'),
+    ...((isSuperAdmin || isAdmin || isSolo) ? [{
+      group: t('admin'), key: 'admin',
       items: [
         { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     }] : []),
 
-    // ── Settings solo ─────────────────────────────────────────
-    ...(isSolo ? [{
-      group: t('admin'),
-      items: [
-        { label: t('parametres'), icon: '◎', href: p('/settings') },
-      ],
-    }] : []),
-
-    // ── Agents AI : admin/super_admin uniquement ──────────────
     ...(isSuperAdmin || isAdmin ? [{
-      group: 'Agents',
-      items: [
-        {
-          label: 'Agentic AI',
-          icon:  '⚡',
-          href:  p('/ai'),
-          badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span>,
-        },
-      ],
+      group: 'Agents', key: 'agents',
+      items: [{
+        label: 'Agentic AI', icon: '⚡', href: p('/ai'),
+        badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span>,
+      }],
     }] : []),
   ]
 
+  // ══════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════
   return (
-    <aside className="sidebar">
-      <div className="sidebar-logo">
-        <div className="brand">staff<span>7</span></div>
-        <div className="sub">// AI-native PSA</div>
+    <aside
+      className="sidebar"
+      style={{
+        width:      collapsed ? 52 : undefined,
+        minWidth:   collapsed ? 52 : undefined,
+        overflow:   'hidden',
+        transition: 'width 0.2s ease, min-width 0.2s ease',
+      }}
+    >
+      {/* ── Logo + collapse toggle ── */}
+      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 8 }}>
+        {!collapsed && (
+          <div>
+            <div className="brand">staff<span>7</span></div>
+            <div className="sub">// AI-native PSA</div>
+          </div>
+        )}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          title={collapsed ? 'Expand' : 'Collapse'}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--text2)', fontSize: 14, padding: '4px 6px',
+            marginLeft: collapsed ? 'auto' : undefined,
+            transition: 'color 0.2s',
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--green)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text2)')}
+        >
+          {collapsed ? '▶' : '◀'}
+        </button>
       </div>
 
+      {/* ── Nav ── */}
       <nav className="sidebar-nav">
         {NAV.map(group => (
-          <div key={group.group} className="nav-group">
-            <div className="nav-group-label">{group.group}</div>
-            {group.items.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-item ${pathname.includes(item.href.replace(`/${locale}`, '')) ? 'active' : ''}`}
+          <div key={group.key} className="nav-group">
+            {/* Group label — masqué en mode collapsed */}
+            {!collapsed && (
+              <div
+                className="nav-group-label"
+                style={{ color: GROUP_COLORS[group.key] ?? 'var(--text2)' }}
               >
-                <span className="nav-icon">{item.icon}</span>
-                {item.label}
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
-              </Link>
-            ))}
+                {group.group}
+              </div>
+            )}
+            {group.items.map(item => {
+              const isActive = pathname.includes(item.href.replace(`/${locale}`, ''))
+              const accent   = GROUP_COLORS[group.key] ?? 'var(--text2)'
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                  title={collapsed ? item.label : undefined}
+                  style={isActive ? { color: accent, borderLeftColor: accent } : undefined}
+                >
+                  <span
+                    className="nav-icon"
+                    style={{ color: isActive ? accent : undefined }}
+                  >
+                    {item.icon}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      {item.label}
+                      {item.badge && <span className="nav-badge">{item.badge}</span>}
+                    </>
+                  )}
+                  {collapsed && item.badge && typeof item.badge === 'number' && (
+                    <span style={{
+                      position: 'absolute', top: 4, right: 4,
+                      background: 'var(--pink)', color: '#fff',
+                      borderRadius: '50%', width: 14, height: 14,
+                      fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </div>
         ))}
       </nav>
 
-      {/* ── Command bar AI (admin/super_admin uniquement) ── */}
-      {(isSuperAdmin || isAdmin) && (
+      {/* ── Command bar AI ── */}
+      {!collapsed && (isSuperAdmin || isAdmin) && (
         <div style={{ padding: '0 16px', marginBottom: 12 }}>
           <div style={{
             background: 'rgba(255,45,107,0.05)',
@@ -221,30 +271,35 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* ── Footer ── */}
       <div className="sidebar-footer">
-        <div className="user-card">
-          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11 }}>
+        <div className="user-card" style={{ justifyContent: collapsed ? 'center' : undefined }}>
+          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11, flexShrink: 0 }}>
             {initials}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
-              {user?.email ?? '—'}
-            </div>
-            <div className="user-role">{roleLabel}</div>
-          </div>
-          <button
-            onClick={handleLogout}
-            title="Déconnexion"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text2)', fontSize: 14, padding: '2px 4px',
-              flexShrink: 0, transition: 'color 0.2s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--pink)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text2)')}
-          >
-            ⏻
-          </button>
+          {!collapsed && (
+            <>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
+                  {user?.email ?? '—'}
+                </div>
+                <div className="user-role">{roleLabel}</div>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Déconnexion"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text2)', fontSize: 14, padding: '2px 4px',
+                  flexShrink: 0, transition: 'color 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--pink)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text2)')}
+              >
+                ⏻
+              </button>
+            </>
+          )}
         </div>
       </div>
     </aside>
