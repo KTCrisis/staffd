@@ -10,8 +10,13 @@ import { supabase }        from '@/lib/supabase'
 // TYPES
 // ══════════════════════════════════════════════════════════════
 
-type MsgRole = 'system' | 'user' | 'agent' | 'error'
+type MsgRole = 'system' | 'user' | 'agent' | 'error' | 'action'
 interface Msg { role: MsgRole; content: string; ts: number }
+
+interface PendingAction {
+  action: string
+  params: Record<string, string>
+}
 
 // ══════════════════════════════════════════════════════════════
 // COMMANDES DISPONIBLES
@@ -175,8 +180,9 @@ function AIContent() {
   const { user }     = useAuthContext()
 
   const [input,     setInput]     = useState('')
-  const [streaming, setStreaming] = useState(false)
-  const [showMenu,  setShowMenu]  = useState(false)
+  const [streaming,      setStreaming]      = useState(false)
+  const [showMenu,       setShowMenu]       = useState(false)
+  const [pendingAction,  setPendingAction]  = useState<PendingAction | null>(null)
   const [messages,  setMessages]  = useState<Msg[]>([
     { role: 'system', content: 'STAFF7_CORE_AGENT v2.0 · Ollama Cloud · RLS_ENABLED', ts: Date.now() },
     { role: 'agent',  content: 'Ready. Ask anything or type `/` to browse structured commands.', ts: Date.now() },
@@ -276,6 +282,16 @@ function AIContent() {
           if (data === '[DONE]') continue
           try {
             const parsed = JSON.parse(data)
+            if (parsed.action) {
+              // Action détectée — retirer le message "thinking", afficher confirmation
+              setPendingAction({ action: parsed.action, params: parsed.params ?? {} })
+              setMessages(prev => [...prev.slice(0, -1), {
+                role: 'action',
+                content: JSON.stringify({ action: parsed.action, params: parsed.params ?? {} }),
+                ts,
+              }])
+              return
+            }
             if (parsed.text) {
               fullText += parsed.text
               setMessages(prev => [...prev.slice(0, -1), { role: 'agent', content: fullText + '▋', ts }])
@@ -301,6 +317,46 @@ function AIContent() {
     }
   }, [streaming])
 
+  // ── Execute confirmed action ────────────────────────────────
+  const handleExecute = useCallback(async (action: string, params: Record<string, string>) => {
+    setPendingAction(null)
+    setStreaming(true)
+    const ts = Date.now()
+    setMessages(prev => [...prev, { role: 'agent', content: '▋', ts }])
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token ?? ''
+
+      const res = await fetch('/api/ai', {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body:    JSON.stringify({ action, params }),
+      })
+      const result = await res.json()
+      setMessages(prev => [...prev.slice(0, -1), {
+        role:    result.success ? 'agent' : 'error',
+        content: result.message,
+        ts,
+      }])
+      historyRef.current = [...historyRef.current, { role: 'assistant', content: result.message }]
+    } catch (e) {
+      setMessages(prev => [...prev.slice(0, -1), {
+        role: 'error', content: `Execution error: ${String(e)}`, ts,
+      }])
+    } finally {
+      setStreaming(false)
+      inputRef.current?.focus()
+    }
+  }, [])
+
+  const handleCancelAction = useCallback(() => {
+    setPendingAction(null)
+    setMessages(prev => [...prev.slice(0, -1), {
+      role: 'system', content: '// action cancelled', ts: Date.now(),
+    }])
+  }, [])
+
   // ── Couleurs / labels ────────────────────────────────────────
 
   const roleColor: Record<MsgRole, string> = {
@@ -308,12 +364,22 @@ function AIContent() {
     user:   'var(--text)',
     agent:  'var(--green)',
     error:  'var(--pink)',
+    action: 'var(--gold)',
   }
   const roleLabel: Record<MsgRole, string> = {
     system: 'SYS',
     user:   user?.email?.split('@')[0].toUpperCase() ?? 'USER',
     agent:  'STAFF7',
     error:  'ERR',
+    action: 'ACTION',
+  }
+
+  // ── Action label helper ───────────────────────────────────
+  const ACTION_LABELS: Record<string, string> = {
+    approve_leave:         'Approve leave request',
+    refuse_leave:          'Refuse leave request',
+    update_project_status: 'Update project status',
+    assign_consultant:     'Assign consultant',
   }
 
   // ── Render ──────────────────────────────────────────────────
@@ -391,22 +457,95 @@ function AIContent() {
           cursor:'text',
         }}
       >
-        {messages.map((m, i) => (
-          <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-            <span style={{ color:'var(--text2)', fontSize:9, flexShrink:0, marginTop:3, minWidth:58 }}>
-              {fmtTime(m.ts)}
-            </span>
-            <span style={{ color: roleColor[m.role], fontSize:10, fontWeight:700, flexShrink:0, minWidth:54 }}>
-              {roleLabel[m.role]}&gt;
-            </span>
-            <span
-              style={{ color: roleColor[m.role], fontSize:12, lineHeight:1.7, flex:1, wordBreak:'break-word' }}
-              dangerouslySetInnerHTML={{
-                __html: m.role === 'agent' ? renderMarkdown(m.content) : m.content,
-              }}
-            />
-          </div>
-        ))}
+        {messages.map((m, i) => {
+          // ── Action confirmation card ───────────────────────
+          if (m.role === 'action') {
+            let parsed: { action: string; params: Record<string, string> } | null = null
+            try { parsed = JSON.parse(m.content) } catch { /* skip */ }
+            if (!parsed) return null
+            const isLast    = i === messages.length - 1
+            const label     = ACTION_LABELS[parsed.action] ?? parsed.action
+            const isDanger  = parsed.action.includes('refuse') || parsed.action.includes('update')
+            return (
+              <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                <span style={{ color:'var(--text2)', fontSize:9, flexShrink:0, marginTop:3, minWidth:58 }}>
+                  {fmtTime(m.ts)}
+                </span>
+                <span style={{ color:'var(--gold)', fontSize:10, fontWeight:700, flexShrink:0, minWidth:54 }}>
+                  ACTION&gt;
+                </span>
+                <div style={{
+                  flex:1,
+                  background: 'rgba(255,209,102,0.06)',
+                  border:     '1px solid rgba(255,209,102,0.3)',
+                  borderRadius: 4, padding: '10px 14px',
+                }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--gold)', marginBottom:6 }}>
+                    ⚠ {label}
+                  </div>
+                  {/* Paramètres */}
+                  <div style={{ fontSize:10, color:'var(--text2)', marginBottom:10 }}>
+                    {Object.entries(parsed.params).map(([k, v]) => (
+                      <div key={k}>
+                        <span style={{ color:'var(--text2)' }}>{k}: </span>
+                        <span style={{ color:'var(--text)', fontWeight:600 }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Boutons — visibles seulement sur le dernier message action */}
+                  {isLast && pendingAction && (
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button
+                        onClick={() => handleExecute(parsed!.action, parsed!.params)}
+                        style={{
+                          background: isDanger ? 'rgba(255,45,107,0.15)' : 'rgba(0,255,136,0.12)',
+                          border:     `1px solid ${isDanger ? 'var(--pink)' : 'var(--green)'}`,
+                          color:      isDanger ? 'var(--pink)' : 'var(--green)',
+                          padding:    '5px 14px', borderRadius:3, cursor:'pointer',
+                          fontSize:10, fontWeight:700, letterSpacing:1,
+                          fontFamily: 'var(--font-mono, monospace)',
+                        }}
+                      >
+                        CONFIRM
+                      </button>
+                      <button
+                        onClick={handleCancelAction}
+                        style={{
+                          background: 'none',
+                          border:     '1px solid var(--border)',
+                          color:      'var(--text2)',
+                          padding:    '5px 14px', borderRadius:3, cursor:'pointer',
+                          fontSize:10, letterSpacing:1,
+                          fontFamily: 'var(--font-mono, monospace)',
+                        }}
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          // ── Message normal ─────────────────────────────────
+          return (
+            <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+              <span style={{ color:'var(--text2)', fontSize:9, flexShrink:0, marginTop:3, minWidth:58 }}>
+                {fmtTime(m.ts)}
+              </span>
+              <span style={{ color: roleColor[m.role], fontSize:10, fontWeight:700, flexShrink:0, minWidth:54 }}>
+                {roleLabel[m.role]}&gt;
+              </span>
+              <span
+                style={{ color: roleColor[m.role], fontSize:12, lineHeight:1.7, flex:1, wordBreak:'break-word' }}
+                dangerouslySetInnerHTML={{
+                  __html: m.role === 'agent' ? renderMarkdown(m.content) : m.content,
+                }}
+              />
+            </div>
+          )
+        })}
       </div>
 
       {/* Input + cmd menu */}
