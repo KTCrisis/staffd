@@ -1,9 +1,10 @@
 'use client'
 
-import { useState }         from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations }  from 'next-intl'
 import { useAuthContext }   from '@/components/layout/AuthProvider'
 import { isAdmin }          from '@/lib/auth'
+import { useRouter }        from '@/lib/navigation'
 import { Topbar }           from '@/components/layout/Topbar'
 import { Avatar }           from '@/components/ui/Avatar'
 import {
@@ -445,7 +446,16 @@ function TeamForm({
 
 export default function SettingsPage() {
   const { user } = useAuthContext()
-  const adminAccess  = isAdmin(user?.role)
+  const router      = useRouter()
+  const adminAccess = isAdmin(user?.role)
+
+  useEffect(() => {
+    if (user && !adminAccess) {
+      router.push('/dashboard' as never)
+    }
+  }, [user, adminAccess, router])
+
+  if (!user || !adminAccess) return null
 
   const [refresh,    setRefresh]    = useState(0)
   const [showForm,   setShowForm]   = useState(false)
@@ -502,17 +512,6 @@ export default function SettingsPage() {
     } finally {
       setDeleting(false)
     }
-  }
-
-  if (!adminAccess) {
-    return (
-      <>
-        <Topbar title="Settings" breadcrumb="Admin / Settings" />
-        <div style={{ padding: 40, color: 'var(--text2)', fontSize: 12 }}>
-          // accès restreint — admin uniquement
-        </div>
-      </>
-    )
   }
 
   const teamCount       = (teams ?? []).length
