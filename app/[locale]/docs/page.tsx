@@ -173,9 +173,7 @@ export default function DocsIndexPage() {
         <ul className="nav-links">
           <li><Link href="/docs/platform">Platform</Link></li>
           <li><Link href="/docs/ai">AI layer</Link></li>
-          <li><Link href="/login" style={{ fontSize:10, letterSpacing:2, color:'var(--text2)', padding:'8px 16px', border:'1px solid var(--border)', borderRadius:2, textDecoration:'none', textTransform:'uppercase' }}>
-              sign in →
-            </Link></li>
+          <li><Link href="/login" className="nav-cta">sign in →</Link></li>
         </ul>
       </nav>
 
