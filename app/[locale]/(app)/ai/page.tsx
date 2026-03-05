@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Topbar }          from '@/components/layout/Topbar'
 import { useAuthContext }  from '@/components/layout/AuthProvider'
+import { supabase }        from '@/lib/supabase'
 
 // ══════════════════════════════════════════════════════════════
 // TYPES
@@ -17,7 +18,7 @@ interface Msg { role: MsgRole; content: string; ts: number }
 // ══════════════════════════════════════════════════════════════
 
 interface Cmd {
-  key:     string   // ce qui est inséré dans l'input
+  id:      string   // ce qui est inséré dans l'input
   label:   string   // nom court
   desc:    string   // description
   context: string   // contexte chargé côté route
@@ -26,39 +27,46 @@ interface Cmd {
 
 const COMMANDS: Cmd[] = [
   {
-    key:     '/staff.bench',
+    id:      '/staff.bench',
     label:   'staff.bench',
     desc:    'Consultants disponibles + occupancy',
     context: '/staff',
     color:   'var(--green)',
   },
   {
-    key:     '/staff.all',
+    id:      '/staff.all',
     label:   'staff.all',
     desc:    'Tous les consultants + projets actifs',
     context: '/staff',
     color:   'var(--green)',
   },
   {
-    key:     '/leave.check',
+    id:      '/leave.check',
     label:   'leave.check',
     desc:    'Congés en attente de validation',
     context: '/leave',
     color:   'var(--gold)',
   },
   {
-    key:     '/fin.margin',
+    id:      '/fin.margin',
     label:   'fin.margin',
     desc:    'Marges et TJM par projet',
     context: '/fin',
     color:   'var(--cyan)',
   },
   {
-    key:     '/timesheet.week',
+    id:      '/timesheet.week',
     label:   'timesheet.week',
     desc:    'CRA de la semaine en cours',
     context: '/timesheet',
     color:   'var(--purple)',
+  },
+  {
+   id:      '/profit.analysis',
+    label:   'profit.analysis',
+    desc:    'Rentabilité par consultant — marges, cibles, freelance vs salarié',
+    context: '/profit',
+    color:   'var(--pink)',
   },
 ]
 
@@ -90,7 +98,7 @@ function CmdMenu({ query, onSelect }: {
   onSelect: (cmd: Cmd) => void
 }) {
   const filtered = COMMANDS.filter(c =>
-    query === '/' || c.key.includes(query.slice(1))
+    query === '/' || c.id.includes(query.slice(1))
   )
 
   if (!filtered.length) return null
@@ -118,7 +126,7 @@ function CmdMenu({ query, onSelect }: {
       </div>
       {filtered.map((cmd, i) => (
         <button
-          key={cmd.key}
+          key={cmd.id}
           onMouseDown={e => { e.preventDefault(); onSelect(cmd) }}
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
@@ -139,7 +147,7 @@ function CmdMenu({ query, onSelect }: {
             color: cmd.color,
             minWidth: 130,
           }}>
-            {cmd.key}
+            {cmd.id}
           </span>
           <span style={{ fontSize: 11, color: 'var(--text2)', flex: 1 }}>
             {cmd.desc}
@@ -203,7 +211,7 @@ function AIContent() {
 
   // Sélection d'une commande depuis le menu
   const handleSelectCmd = (cmd: Cmd) => {
-    setInput(cmd.key + ' ')
+    setInput(cmd.id + ' ')
     setShowMenu(false)
     inputRef.current?.focus()
   }
@@ -235,9 +243,16 @@ function AIContent() {
     setMessages(prev => [...prev, { role: 'agent', content: '▋', ts }])
 
     try {
+      // Récupérer le JWT de session pour que RLS isole les données par tenant
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token ?? ''
+
       const res = await fetch('/api/ai', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body:    JSON.stringify({ messages: historyRef.current, cmd }),
       })
 
@@ -335,8 +350,8 @@ function AIContent() {
         }}>
           {COMMANDS.slice(0,3).map(c => (
             <button
-              key={c.key}
-              onClick={() => { setInput(c.key + ' '); setShowMenu(false); inputRef.current?.focus() }}
+              key={c.id}
+              onClick={() => { setInput(c.id + ' '); setShowMenu(false); inputRef.current?.focus() }}
               style={{
                 background:'none', border:`1px solid ${c.color}33`,
                 color: c.color, fontSize:9, padding:'2px 8px',
@@ -345,7 +360,7 @@ function AIContent() {
                 letterSpacing:1,
               }}
             >
-              {c.key}
+              {c.id}
             </button>
           ))}
         </div>

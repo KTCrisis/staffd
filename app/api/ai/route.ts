@@ -27,9 +27,13 @@ Available commands (suggest them when relevant):
 
 // ── Context fetcher ──────────────────────────────────────────
 
-async function fetchContext(cmd: string, url: string, key: string): Promise<string> {
-  if (!url || !key) return '{}'
-  const h = { 'apikey': key, 'Authorization': `Bearer ${key}` }
+async function fetchContext(cmd: string, url: string, userToken: string): Promise<string> {
+  if (!url || !userToken) return '{}'
+  // RLS s'applique via le JWT utilisateur — chaque tenant ne voit que ses données
+  const h = {
+    'apikey':        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    'Authorization': `Bearer ${userToken}`,
+  }
 
   const q = (table: string, select: string, filter = '') =>
     fetch(
@@ -156,6 +160,12 @@ export async function POST(req: Request): Promise<Response> {
   const model  = process.env.OLLAMA_MODEL ?? 'kimi-k2.5:cloud'
   const host   = (process.env.OLLAMA_HOST ?? 'https://ollama.com').replace(/\/$/, '')
 
+  // ── JWT utilisateur — RLS isolation par tenant ───────────────────────────
+  // On utilise le token de session de l'utilisateur connecté, pas la service key.
+  // Ainsi my_company_id() retourne le bon tenant et RLS filtre automatiquement.
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const userToken  = authHeader.replace('Bearer ', '').trim()
+
   const enc  = new TextEncoder()
   const sse  = (text: string) => enc.encode(`data: ${JSON.stringify({ text })}\n\n`)
   const done = enc.encode('data: [DONE]\n\n')
@@ -179,6 +189,19 @@ export async function POST(req: Request): Promise<Response> {
     )
   }
 
+  if (!userToken) {
+    return new Response(
+      new ReadableStream({
+        start(c) {
+          c.enqueue(sse('⚠ Session expirée — veuillez vous reconnecter.'))
+          c.enqueue(done)
+          c.close()
+        },
+      }),
+      { headers }
+    )
+  }
+
   let body: { messages: { role: string; content: string }[]; cmd?: string }
   try { body = await req.json() }
   catch { return new Response('Bad request', { status: 400 }) }
@@ -191,7 +214,7 @@ export async function POST(req: Request): Promise<Response> {
   const context = await fetchContext(
     contextKey,
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+    userToken  // JWT utilisateur → RLS isolé par tenant
   )
 
   const ollamaMessages = [
