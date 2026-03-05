@@ -81,6 +81,18 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
+        {/* ── Projets actifs ── */}
+        <Panel title={t('activeProjects')} action={{ label: t('seeAll'), onClick: () => {} }} noPadding>
+          <div style={{ padding: '0 18px' }}>
+            {lP
+              ? <Skeleton h={80} />
+              : activeProjects.map(p => (
+                  <ProjectRow key={p.id} project={p} consultants={consultants ?? []} />
+                ))
+            }
+          </div>
+        </Panel>
+
         {/* ── Consultants + Activité + Calendrier ── */}
         <div className="two-col">
           <Panel title={t('consultants')} action={{ label: t('seeAll'), onClick: () => {} }}>
@@ -94,23 +106,20 @@ export default function AdminDashboardPage() {
             <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
               {lA ? <Skeleton h={120} /> : <ActivityFeed items={activity ?? []} />}
             </Panel>
+
+            {/* Calendrier compact */}
             <Panel title={t('calendar')}>
-              <MiniCalendar />
+              <div style={{
+                transform: 'scale(0.82)',
+                transformOrigin: 'top left',
+                width: '122%',
+                marginBottom: '-18%', // compense la hauteur perdue par le scale
+              }}>
+                <MiniCalendar />
+              </div>
             </Panel>
           </div>
         </div>
-
-        {/* ── Projets actifs ── */}
-        <Panel title={t('activeProjects')} action={{ label: t('seeAll'), onClick: () => {} }} noPadding>
-          <div style={{ padding: '0 18px' }}>
-            {lP
-              ? <Skeleton h={120} />
-              : activeProjects.map(p => (
-                  <ProjectRow key={p.id} project={p} consultants={consultants ?? []} />
-                ))
-            }
-          </div>
-        </Panel>
 
       </div>
     </>
