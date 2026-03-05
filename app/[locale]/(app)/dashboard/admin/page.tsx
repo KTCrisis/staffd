@@ -32,8 +32,7 @@ export default function AdminDashboardPage() {
   const t      = useTranslations('dashboard')
   const router = useRouter()
   const locale = useLocale()
-
-  const daysShort = t.raw('daysShort') as string[]
+  const tNav   = useTranslations('timeline')
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const { data: consultants, loading: lC } = useConsultants()
@@ -135,7 +134,13 @@ export default function AdminDashboardPage() {
 
             {/* MiniCalendar compact — pas besoin de scale, le composant est déjà petit */}
             <Panel title={t('calendar')}>
-              <MiniCalendar daysShort={daysShort}/>
+              <MiniCalendar
+              daysShort    = {t.raw('daysShort') as string[]}
+              months       = {tNav.raw('months') as string[]}
+              labelToday   = {t('calToday')}
+              labelUpcoming= {t('calUpcoming')}
+              labelNoEvent = {t('calNoEvent')}
+              />
             </Panel>
           </div>
         </div>

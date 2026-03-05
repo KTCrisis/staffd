@@ -62,7 +62,10 @@
       "leaveDays": "CP restants",
       "occupancy": "Taux occup."
     },
-    "daysShort": ["L", "M", "M", "J", "V", "S", "D"],
+    "daysShort":    ["L", "M", "M", "J", "V", "S", "D"],
+    "calToday":     "↩ aujourd'hui",
+    "calUpcoming":  "À venir",
+    "calNoEvent":   "// aucun événement à venir",
     "export": "↓ Exporter",
     "noResults": "// aucun résultat",
     "now": "Maintenant",

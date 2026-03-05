@@ -2,12 +2,6 @@
 
 import { useState } from 'react'
 
-const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-const MONTHS = [
-  'Janvier','Février','Mars','Avril','Mai','Juin',
-  'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
-]
-
 // Hardcoded pour mock — viendra de Supabase plus tard
 const EVENT_DAYS = [5, 12, 14, 15, 16, 17, 18, 24, 31]
 
@@ -34,17 +28,37 @@ function isSameDay(a: Date, b: Date): boolean {
          a.getDate()     === b.getDate()
 }
 
-// ── Composant ────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────
 
 interface MiniCalendarProps {
-  initialYear?:  number
-  initialMonth?: number
-  today?:        { day: number; month: number; year: number }
-  daysShort?: string[]
+  today?:         { day: number; month: number; year: number }
+  daysShort?:     string[]  // ['L','M','M','J','V','S','D'] ou ['M','T','W','T','F','S','S']
+  months?:        string[]  // ['Janvier','Février',...] ou ['January','February',...]
+  labelToday?:    string    // '↩ aujourd\'hui' ou '↩ today'
+  labelUpcoming?: string    // 'À venir' ou 'Upcoming'
+  labelNoEvent?:  string    // '// aucun événement' ou '// no upcoming events'
 }
 
+// Fallbacks FR
+const DEFAULT_DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+const DEFAULT_MONTHS_FR = [
+  'Janvier','Février','Mars','Avril','Mai','Juin',
+  'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
+]
+
+// ── Composant ────────────────────────────────────────────────
+
 export function MiniCalendar({
-  today = { day: new Date().getDate(), month: new Date().getMonth(), year: new Date().getFullYear() },
+  today = {
+    day:   new Date().getDate(),
+    month: new Date().getMonth(),
+    year:  new Date().getFullYear(),
+  },
+  daysShort    = DEFAULT_DAYS_FR,
+  months       = DEFAULT_MONTHS_FR,
+  labelToday    = "↩ aujourd'hui",
+  labelUpcoming = 'À venir',
+  labelNoEvent  = '// aucun événement à venir',
 }: MiniCalendarProps) {
   const todayDate = new Date(today.year, today.month, today.day)
   const [weekStart, setWeekStart] = useState(() => getMonday(todayDate))
@@ -53,20 +67,15 @@ export function MiniCalendar({
   const nextWeek = () => setWeekStart(d => addDays(d,  7))
   const goToday  = () => setWeekStart(getMonday(todayDate))
 
-  // Les 7 jours de la semaine affichée
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
-
-  // Mois affiché (celui du lundi ou du vendredi si à cheval)
+  const days         = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const displayMonth = weekStart.getMonth()
   const displayYear  = weekStart.getFullYear()
+  const isThisWeek   = isSameDay(weekStart, getMonday(todayDate))
 
-  // Prochains événements du mois
   const upcomingEvents = EVENT_DAYS
     .map(d => new Date(today.year, today.month, d))
     .filter(d => d >= todayDate)
     .slice(0, 3)
-
-  const isThisWeek = isSameDay(weekStart, getMonday(todayDate))
 
   return (
     <div style={{ fontFamily: "'JetBrains Mono', monospace" }}>
@@ -79,7 +88,7 @@ export function MiniCalendar({
         <button className="cal-btn" onClick={prevWeek}>‹</button>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>
-            {MONTHS[displayMonth]} {displayYear}
+            {months[displayMonth]} {displayYear}
           </div>
           {!isThisWeek && (
             <button
@@ -90,7 +99,7 @@ export function MiniCalendar({
                 textTransform: 'uppercase', padding: 0, marginTop: 1,
               }}
             >
-              ↩ aujourd'hui
+              {labelToday}
             </button>
           )}
         </div>
@@ -101,8 +110,7 @@ export function MiniCalendar({
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: 3,
-        marginBottom: 14,
+        gap: 3, marginBottom: 14,
       }}>
         {days.map((d, i) => {
           const isToday   = isSameDay(d, todayDate)
@@ -112,51 +120,39 @@ export function MiniCalendar({
 
           return (
             <div key={i} style={{ textAlign: 'center' }}>
-              {/* Jour label */}
+              {/* Jour label — vient de la prop daysShort */}
               <div style={{
-                fontSize: 8,
-                letterSpacing: 0.5,
-                textTransform: 'uppercase',
+                fontSize: 8, letterSpacing: 0.5, textTransform: 'uppercase',
                 color: isWeekend ? 'var(--border2)' : 'var(--text2)',
                 marginBottom: 4,
               }}>
-                {DAY_LABELS[i]}
+                {daysShort[i]}
               </div>
 
               {/* Numéro */}
               <div style={{
-                width: '100%',
-                aspectRatio: '1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 4,
-                fontSize: 11,
+                width: '100%', aspectRatio: '1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 4, fontSize: 11,
                 fontWeight: isToday ? 700 : 400,
                 position: 'relative',
                 background: isToday
                   ? 'rgba(0,255,136,0.15)'
-                  : isWeekend
-                  ? 'var(--bg3)'
-                  : 'transparent',
+                  : isWeekend ? 'var(--bg3)' : 'transparent',
                 border: isToday
                   ? '1px solid rgba(0,255,136,0.35)'
                   : '1px solid transparent',
                 color: isToday
                   ? 'var(--green)'
-                  : isPast || isWeekend
-                  ? 'var(--text2)'
-                  : 'var(--text)',
+                  : isPast || isWeekend ? 'var(--text2)' : 'var(--text)',
                 opacity: isPast ? 0.45 : 1,
               }}>
                 {d.getDate()}
-                {/* Dot événement */}
                 {hasEvent && (
                   <span style={{
                     position: 'absolute', bottom: 2, left: '50%',
                     transform: 'translateX(-50%)',
-                    width: 3, height: 3,
-                    borderRadius: '50%',
+                    width: 3, height: 3, borderRadius: '50%',
                     background: 'var(--pink)',
                   }} />
                 )}
@@ -176,18 +172,11 @@ export function MiniCalendar({
             fontSize: 8, letterSpacing: 2, textTransform: 'uppercase',
             color: 'var(--text2)', marginBottom: 2,
           }}>
-            À venir
+            {labelUpcoming}
           </div>
           {upcomingEvents.map((d, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 10, color: 'var(--text2)',
-            }}>
-              <span style={{
-                fontSize: 9, fontWeight: 700,
-                color: 'var(--pink)',
-                minWidth: 20,
-              }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--pink)', minWidth: 20 }}>
                 {d.getDate()}
               </span>
               <span style={{ color: 'var(--border2)' }}>—</span>
@@ -197,7 +186,7 @@ export function MiniCalendar({
         </div>
       ) : (
         <div style={{ fontSize: 10, color: 'var(--text2)', opacity: 0.6 }}>
-          // aucun événement à venir
+          {labelNoEvent}
         </div>
       )}
     </div>
