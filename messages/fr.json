@@ -24,6 +24,11 @@
   "dashboard": {
     "title": "Dashboard",
     "breadcrumb": "// overview",
+    "daysShort":    ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"],
+    "months":       ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
+    "calToday":     "↩ aujourd'hui",
+    "calUpcoming":  "À venir",
+    "calNoEvent":   "// aucun événement à venir",
     "kpi": {
       "activeConsultants": "Consultants actifs",
       "activeProjects": "Projets en cours",
@@ -62,10 +67,6 @@
       "leaveDays": "CP restants",
       "occupancy": "Taux occup."
     },
-    "daysShort":    ["L", "M", "M", "J", "V", "S", "D"],
-    "calToday":     "↩ aujourd'hui",
-    "calUpcoming":  "À venir",
-    "calNoEvent":   "// aucun événement à venir",
     "export": "↓ Exporter",
     "noResults": "// aucun résultat",
     "now": "Maintenant",
