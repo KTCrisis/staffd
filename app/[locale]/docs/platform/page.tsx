@@ -26,10 +26,11 @@ const SECTIONS = [
   { id:'dashboard',    label:'Dashboard',        icon:'▣' },
   { id:'consultants',  label:'Consultants',      icon:'◉' },
   { id:'projects',     label:'Projects',         icon:'◧' },
-  { id:'timesheets',   label:'Timesheets', icon:'⏱' },
+  { id:'timesheets',   label:'Timesheets / CRA', icon:'⏱' },
   { id:'leaves',       label:'Leave management', icon:'◷' },
   { id:'planning',     label:'Planning',         icon:'▦' },
   { id:'finance',      label:'Finance',          icon:'◬' },
+  { id:'invoices',     label:'Invoices',         icon:'◉' },
   { id:'roles',        label:'Roles & access',   icon:'🔐' },
   { id:'multitenancy', label:'Multi-tenancy',    icon:'⬡' },
 ]
@@ -243,7 +244,7 @@ export default function PlatformDocsPage() {
               <FeatureGrid items={[
                 { icon:'◉', title:'Consultant management',  desc:'Profiles, skills, status, occupancy, contract type (employee/freelance), and financial costs.' },
                 { icon:'◧', title:'Project & client tracking', desc:'External and internal projects, client CRM, assignment management, and budget tracking.' },
-                { icon:'⏱', title:'Timesheets',       desc:'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
+                { icon:'⏱', title:'Timesheets (CRA)',       desc:'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
                 { icon:'◷', title:'Leave management',       desc:'CP, RTT, unpaid, authorised absence — request, approve, and balance tracking.' },
                 { icon:'▦', title:'Planning & timeline',    desc:'Weekly availability grid and monthly Gantt-style view across the team.' },
                 { icon:'◬', title:'Financial tracking',     desc:'TJM sold vs actual, gross margin per project, profitability per consultant.' },
@@ -285,7 +286,7 @@ export default function PlatformDocsPage() {
               </p>
               <FeatureGrid items={[
                 { icon:'👤', title:'Employee profile',   desc:'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
-                { icon:'🔗', title:'Freelance profile',  desc:'Billed rate (TJM facturé) with per-assignment override. No CP/RTT entitlements.' },
+                { icon:'🔗', title:'Freelance profile',  desc:'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
                 { icon:'🎯', title:'Target rate (cible)',desc:'Admin sets a target TJM — the platform tracks the gap vs actual cost to flag margin risk.' },
                 { icon:'📋', title:'Occupancy tracking', desc:'Real-time occupancy % derived from active assignments, updated across planning views.' },
               ]} />
@@ -300,7 +301,7 @@ export default function PlatformDocsPage() {
                 ]}
               />
               <CodeBlock>{`// Actual daily cost formula (employee)
-tjm_cout_reel = salaire_annuel_brut × (1 + charges_pct / 100) / jours_travailles
+actual_daily_cost = gross_annual_salary × (1 + employer_charges_pct / 100) / working_days
 
 // Default values (FR market)
 charges_pct     = 42%   // employer charges
@@ -337,9 +338,9 @@ jours_travailles = 218  // working days / year`}</CodeBlock>
             </Section>
 
             {/* ── Timesheets ── */}
-            <Section id="timesheets" label="Timesheets" icon="⏱" color="var(--gold)">
+            <Section id="timesheets" label="Timesheets / CRA" icon="⏱" color="var(--gold)">
               <p>
-                The Timesheet module provides weekly time tracking with a structured validation workflow.
+                The CRA module provides weekly time tracking with a structured validation workflow.
                 Each day entry can be 0, 0.5, or 1 day — and moves through <strong>draft → submitted → approved</strong>.
               </p>
               <FeatureGrid items={[
@@ -374,21 +375,21 @@ approved  → locked`}</CodeBlock>
               <FeatureGrid items={[
                 { icon:'📝', title:'Leave request',     desc:'Consultant selects type, dates, and submits. Working days calculated automatically (weekends excluded).' },
                 { icon:'✓',  title:'Approval workflow', desc:'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
-                { icon:'📊', title:'Balance tracking',  desc:'Paid leave and flex days balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
+                { icon:'📊', title:'Balance tracking',  desc:'CP and RTT balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
                 { icon:'⚠',  title:'Impact warning',   desc:'System flags if an approved leave overlaps with an active project assignment.' },
               ]} />
               <Table
                 headers={['Type', 'Available to', 'Duration']}
                 rows={[
-                  ['Paid leave',       'Employee only', 'Custom — calculated in working days'],
-                  ['Flex Days',                  'Employee only', 'Custom — from flex day balance'],
-                  ['Unpaid',   'All',           'Custom'],
-                  ['Authorized absence',     'All',           'Fixed by legal motif (death, marriage…)'],
+                  ['CP (Paid leave)',       'Employee only', 'Custom — calculated in working days'],
+                  ['RTT',                  'Employee only', 'Custom — from RTT balance'],
+                  ['Sans solde (Unpaid)',   'All',           'Custom'],
+                  ['Absence autorisée',     'All',           'Fixed by legal motif (death, marriage…)'],
                 ]}
               />
               <Note color="var(--green)">
-                <strong>Authorized absence</strong> has a fixed legal duration per motif — the end date
-                is calculated automatically. No Paid leaves and flex days balance are deducted.
+                <strong>Absence autorisée</strong> has a fixed legal duration per motif — the end date
+                is calculated automatically. No CP/RTT balance is deducted.
               </Note>
             </Section>
 
@@ -423,9 +424,9 @@ approved  → locked`}</CodeBlock>
                 in <strong>Rentabilité</strong>.
               </p>
               <FeatureGrid items={[
-                { icon:'💶', title:'Project margins',       desc:'Daily rate sold vs real daily rate per project. Gross margin in € and %. Colour-coded by health threshold.' },
+                { icon:'💶', title:'Project margins',       desc:'TJM sold vs TJM réel per project. Gross margin in € and %. Colour-coded by health threshold.' },
                 { icon:'◉',  title:'Consultant profitability', desc:'Revenue generated, gross margin, occupancy rate — per consultant, sorted by any metric.' },
-                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a target daily rate per consultant. Platform shows the gap % — red if margin < 10%.' },
+                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a TJM cible per consultant. Platform shows the gap % — red if margin < 10%.' },
                 { icon:'⚠',  title:'Alert system',         desc:'Banner surfaces consultants whose target rate leaves less than 10% margin over actual cost.' },
               ]} />
               <CodeBlock>{`// Gross margin per consultant
@@ -446,13 +447,62 @@ marge_pct    = marge_brute / ca_genere × 100
               <Table
                 headers={['Metric', 'Source', 'Scope']}
                 rows={[
-                  ['TJM vendu',     'project.tjm_vendu',           'Per project'],
+                  ['Sold rate',     'project.sold_rate',           'Per project'],
                   ['TJM coût réel', 'consultant_profitability view','Per consultant (calculated)'],
-                  ['TJM cible',     'consultant.tjm_cible',         'Per consultant (admin-set)'],
-                  ['Marge brute',   'ca_genere − cout_consultant',  'Per consultant / project'],
-                  ['Marge %',       'marge_brute / ca_genere',      'Per consultant / project'],
+                  ['Target rate',   'consultant.target_rate',         'Per consultant (admin-set)'],
+                  ['Gross margin',  'revenue − consultant_cost',  'Per consultant / project'],
+                  ['Margin %',      'gross_margin / revenue',      'Per consultant / project'],
                 ]}
               />
+            </Section>
+
+            {/* ── Invoices ── */}
+            <Section id="invoices" label="Invoices" icon="◉" color="var(--cyan)">
+              <p>
+                The invoice module lets <strong>admins, managers, and freelancers</strong> generate
+                client invoices directly from approved timesheets or project budgets.
+                Each invoice carries a legal snapshot of emitter and client data at generation time.
+              </p>
+              <FeatureGrid items={[
+                { icon:'⏱', title:'Timesheet import',   desc:'Select a month — platform pulls all approved entries, groups by consultant × project, and pre-fills line items with quantities and rates.' },
+                { icon:'◧', title:'Project import',     desc:'Load a project directly to pre-fill the sold rate as a line item. Editable before save.' },
+                { icon:'✎', title:'Manual mode',        desc:'Full line-by-line entry. Units: day / hour / unit. Each line has a description, detail field, and live total.' },
+                { icon:'👁', title:'Live preview',      desc:'Split-screen layout — form on the left, PDF-style preview on the right, updating on every keystroke.' },
+                { icon:'📄', title:'Legal compliance',  desc:'SIRET, VAT number, IBAN/BIC, legal mention, auto-entrepreneur clause — all sourced from companies.billing_settings.' },
+                { icon:'🔢', title:'Auto-numbering',    desc:'Invoice numbers follow a configurable prefix + sequential counter (e.g. NEX-2026-0001). Thread-safe via atomic SQL update.' },
+              ]} />
+              <Table
+                headers={['Status', 'Description', 'Editable']}
+                rows={[
+                  ['draft',     'Created but not sent — fully editable',          'Yes'],
+                  ['sent',      'Marked as sent to client',                        'Admin only'],
+                  ['paid',      'Payment received — paid_at date recorded',        'No'],
+                  ['overdue',   'Past due date — computed automatically by view',  'No'],
+                  ['cancelled', 'Voided invoice',                                  'No'],
+                ]}
+              />
+              <CodeBlock>{`-- Invoice number generation (atomic, thread-safe)
+SELECT next_invoice_number(company_id);
+-- → 'NEX-2026-0004'
+
+-- billing_settings (companies table, jsonb)
+{
+  "siret":          "12345678901234",
+  "tva_number":     "FR12345678901",
+  "tva_rate":       20,
+  "payment_terms":  30,
+  "bank_iban":      "FR76 ...",
+  "bank_bic":       "BNPAFRPPXXX",
+  "legal_mention":  "Auto-entrepreneur...",
+  "invoice_prefix": "NEX-2026-",
+  "invoice_counter": 4
+}`}</CodeBlock>
+              <Note color="var(--cyan)">
+                <strong>Freelance RLS</strong> — a freelance user can only see and edit invoices
+                where <code style={{ color:'var(--cyan)' }}>consultant_id</code> matches their own
+                consultant record. Admins and managers see all company invoices.
+                Freelancers can only update or delete invoices in <strong>draft</strong> status.
+              </Note>
             </Section>
 
             {/* ── Roles ── */}
@@ -465,18 +515,30 @@ marge_pct    = marge_brute / ca_genere × 100
                 headers={['Role', 'Scope', 'Key permissions']}
                 rows={[
                   ['consultant', 'Own data only', 'View own assignments, submit timesheets, request leave'],
+                  ['freelance',  'Own data only', 'All consultant permissions + create and view own invoices. No leave (CP/RTT).'],
                   ['manager',    'Team',          'View team, approve timesheets & leave, manage assignments'],
-                  ['admin',      'Company',       'Full CRUD, financial views, invite consultants'],
+                  ['admin',      'Company',       'Full CRUD, financial views, invoices, invite consultants'],
                   ['super_admin','All tenants',   'Cross-tenant access, company management'],
                 ]}
               />
+              <Note color="var(--gold)">
+                <strong>freelance</strong> is a leaf role — it inherits all <strong>consultant</strong> permissions
+                and adds invoice creation scoped to the freelancer's own consultant record.
+                Leave requests (PTO / flex days) are hidden for freelance accounts.
+              </Note>
               <CodeBlock>{`// RLS JWT path (Supabase)
 auth.jwt() -> 'app_metadata' ->> 'user_role'
 
 // Guard helpers (lib/auth.ts)
-isAdmin(role)          // admin + super_admin
-canEdit(role)          // admin + manager + super_admin
-canViewFinancials(role)// admin + super_admin`}</CodeBlock>
+isAdmin(role)             // admin + super_admin
+canEdit(role)             // admin + manager + super_admin
+canViewFinancials(role)   // admin + super_admin
+canViewOwnInvoices(role)  // freelance + admin + manager + super_admin
+
+// Freelance invoice RLS — own records only
+consultant_id IN (
+  SELECT id FROM consultants WHERE user_id = auth.uid()
+)`}</CodeBlock>
             </Section>
 
             {/* ── Multi-tenancy ── */}
@@ -504,6 +566,21 @@ CREATE POLICY "super_admin_all" ON consultants
                 { icon:'⚡', title:'AI agent isolation',       desc:'The AI route uses the user\'s JWT — not a service key — so RLS applies to all agent queries.' },
                 { icon:'👑', title:'Super admin view',         desc:'super_admin role bypasses RLS via is_super_admin() — used for platform-level management.' },
               ]} />
+              <Note color="var(--cyan)">
+                <strong>Solo mode</strong> — a company can be created with{' '}
+                <code style={{ color:'var(--cyan)' }}>mode: &apos;solo&apos;</code> for independent
+                freelancers who use Staffd for themselves. The admin of a solo tenant sees a
+                simplified sidebar (no team management, no timeline) and full access to their own
+                projects, timesheets, and invoices. Multi-tenancy architecture is identical —
+                solo is a UI/UX mode, not a separate deployment.
+              </Note>
+              <Table
+                headers={['companies.mode', 'Team section', 'Leave management', 'Timeline', 'Finance']}
+                rows={[
+                  ['team', 'Visible', 'Visible', 'Visible', 'Full (admin/manager)'],
+                  ['solo', 'Hidden',  'Hidden',  'Hidden',  'Full (self only)'],
+                ]}
+              />
             </Section>
 
           </main>

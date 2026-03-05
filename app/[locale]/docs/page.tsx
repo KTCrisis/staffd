@@ -173,7 +173,7 @@ export default function DocsIndexPage() {
         <ul className="nav-links">
           <li><Link href="/docs/platform">Platform</Link></li>
           <li><Link href="/docs/ai">AI layer</Link></li>
-          <li><Link href="/login" className="nav-cta">sign in →</Link></li>
+          <li><a href="mailto:beta@staff7.io" className="nav-cta">join beta →</a></li>
         </ul>
       </nav>
 
@@ -204,10 +204,11 @@ export default function DocsIndexPage() {
             {[
               { icon:'◈', label:'Staffing ops',      desc:'Consultant availability, assignments, and occupancy in real time.' },
               { icon:'⏱', label:'Timesheet & CRA',   desc:'Weekly time tracking with submit/approve workflow and project allocation.' },
-              { icon:'◷', label:'Leave management',  desc:'Paid leave, flex days, unpaid — request, approve, and track balances automatically.' },
+              { icon:'◷', label:'Leave management',  desc:'PTO, flex days, unpaid — request, approve, and track balances automatically.' },
               { icon:'◧', label:'Project tracking',  desc:'Client CRM, missions, financial margins. External and internal.' },
+              { icon:'◉', label:'Invoicing',          desc:'Generate invoices from approved timesheets or project budgets. PDF preview, legal mentions, auto-numbering.' },
               { icon:'⚡', label:'AI console',        desc:'Ask your data in plain language. Local or cloud LLM, your choice.' },
-              { icon:'🔐', label:'Privacy-by-design', desc:'Multi-tenant, RLS-enforced. Your data never leaves without your consent.' },
+              { icon:'🔐', label:'Privacy-by-design', desc:'Multi-tenant, RLS-enforced. Solo mode for independents. Your data never leaves without your consent.' },
             ].map((p,i) => (
               <div key={i} className="pillar">
                 <div className="pillar-icon">{p.icon}</div>
@@ -249,7 +250,10 @@ export default function DocsIndexPage() {
               ))}
             </div>
             <div className="beta-actions">
-              <a href="mailto:flux7art@gmail.com" className="beta-cta-primary">→ join the beta</a>
+              <a href="mailto:beta@staff7.io" className="beta-cta-primary">→ join the beta</a>
+              <a href="https://github.com/staff7" target="_blank" rel="noreferrer" className="beta-cta-secondary">
+                ⚡ contribute on GitHub
+              </a>
             </div>
           </div>
 
@@ -264,7 +268,7 @@ export default function DocsIndexPage() {
                 leave management, project tracking, and financial margins.
               </p>
               <div className="portal-topics">
-                {['Consultant mgmt','Project staffing','Timesheets','Leave workflows','Roles & access','Multi-tenant'].map(t => (
+                {['Consultant mgmt','Project staffing','Timesheets','Leave workflows','Invoicing','Roles & access','Solo mode','Multi-tenant'].map(t => (
                   <span key={t} className="portal-tag">{t}</span>
                 ))}
               </div>
@@ -319,7 +323,7 @@ export default function DocsIndexPage() {
             <Link href="/login" style={{ fontSize:10, letterSpacing:2, color:'var(--text2)', padding:'8px 16px', border:'1px solid var(--border)', borderRadius:2, textDecoration:'none', textTransform:'uppercase' }}>
               sign in →
             </Link>
-            <a href="mailto:flux7art@gmail.com" className="doc-footer-cta">join beta →</a>
+            <a href="mailto:beta@staff7.io" className="doc-footer-cta">join beta →</a>
           </div>
         </div>
 
