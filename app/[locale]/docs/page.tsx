@@ -173,7 +173,7 @@ export default function DocsIndexPage() {
         <ul className="nav-links">
           <li><Link href="/docs/platform">Platform</Link></li>
           <li><Link href="/docs/ai">AI layer</Link></li>
-          <li><a href="mailto:beta@staff7.io" className="nav-cta">join beta →</a></li>
+          <li><a href="mailto:flux7art@gmail.com" className="nav-cta">join beta →</a></li>
         </ul>
       </nav>
 
@@ -250,8 +250,8 @@ export default function DocsIndexPage() {
               ))}
             </div>
             <div className="beta-actions">
-              <a href="mailto:beta@staff7.io" className="beta-cta-primary">→ join the beta</a>
-              <a href="https://github.com/staff7" target="_blank" rel="noreferrer" className="beta-cta-secondary">
+              <a href="mailto:flux7art@gmail.com" className="beta-cta-primary">→ join the beta</a>
+              <a href="https://github.com/KTCrisis/staffd" target="_blank" rel="noreferrer" className="beta-cta-secondary">
                 ⚡ contribute on GitHub
               </a>
             </div>
@@ -323,7 +323,7 @@ export default function DocsIndexPage() {
             <Link href="/login" style={{ fontSize:10, letterSpacing:2, color:'var(--text2)', padding:'8px 16px', border:'1px solid var(--border)', borderRadius:2, textDecoration:'none', textTransform:'uppercase' }}>
               sign in →
             </Link>
-            <a href="mailto:beta@staff7.io" className="doc-footer-cta">join beta →</a>
+            <a href="mailto:flux7art@gmail.com" className="doc-footer-cta">join beta →</a>
           </div>
         </div>
 
