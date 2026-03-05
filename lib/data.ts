@@ -592,13 +592,13 @@ export async function upsertTimesheet(params: {
   const { consultantId, projectId, date, value } = params
 
   const { data: { user } } = await supabase.auth.getUser()
-const { data: consultantRow } = await supabase
-  .from('consultants')
-  .select('company_id')
-  .eq('id', consultantId)
-  .single()
+  const { data: consultantRow } = await supabase
+    .from('consultants')
+    .select('company_id')
+    .eq('id', consultantId)
+    .single()
 
-const companyId = user?.app_metadata?.company_id ?? consultantRow?.company_id ?? null
+  const companyId = user?.app_metadata?.company_id ?? consultantRow?.company_id ?? null
 
   const { data, error } = await supabase
     .from('timesheets')
@@ -650,4 +650,25 @@ export function useInternalProjectTypes() {
     if (error) throw new Error(error.message)
     return data ?? []
   }, [])
+}
+// ── uHook profitability ───────────────────────────────────
+export interface ConsultantProfitability {
+  consultant_id: string; name: string; role: string
+  initials: string; avatar_color: string | null
+  tjm_cout: number | null; occupancy_rate: number | null
+  status: string; nb_assignments: number
+  jours_generes: number | null; ca_genere: number | null
+  cout_consultant: number | null; marge_brute: number | null
+  marge_pct: number | null
+}
+
+export function useConsultantProfitability() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('consultant_profitability')
+      .select('*')
+      .order('ca_genere', { ascending: false })
+    if (error) throw new Error(error.message)
+    return (data ?? []) as ConsultantProfitability[]
+  })
 }

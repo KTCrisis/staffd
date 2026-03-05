@@ -1,32 +1,22 @@
 'use client'
 
-import { useState, useMemo }  from 'react'
-import { useTranslations }    from 'next-intl'
-import { useAuthContext }     from '@/components/layout/AuthProvider'
-import { canViewFinancials }  from '@/lib/auth'
-import { Topbar }             from '@/components/layout/Topbar'
-import { Panel, StatRow }     from '@/components/ui'
-import { Avatar }             from '@/components/ui/Avatar'
-import type { AvatarColor } from '@/types'
-import { ProgressBar }        from '@/components/ui/ProgressBar'
+import { useState, useMemo }               from 'react'
+import { useAuthContext }                   from '@/components/layout/AuthProvider'
+import { canViewFinancials }                from '@/lib/auth'
+import { useConsultantProfitability }       from '@/lib/data'
+import type { AvatarColor }                from '@/types'
+import { Topbar }                           from '@/components/layout/Topbar'
+import { Panel }                            from '@/components/ui'
+import { Avatar }                           from '@/components/ui/Avatar'
 
-// ── Mock data ─────────────────────────────────────────────────
-const MOCK_CONSULTANTS: {
-  id: string; name: string; initials: string; avatarColor: AvatarColor
-  role: string; tjm: number; occupancy: number; months: number
-  ca: number; marge: number; margePct: number
-}[] = [
-  { id: '1', name: 'Alice Martin',   initials: 'AM', avatarColor: 'green',  role: 'Lead Developer',    tjm: 750, occupancy: 92, months: 11, ca: 68250, marge: 18750, margePct: 27 },
-  { id: '2', name: 'Baptiste Leroi', initials: 'BL', avatarColor: 'cyan',   role: 'Data Engineer',     tjm: 680, occupancy: 78, months: 10, ca: 53040, marge: 12040, margePct: 23 },
-  { id: '3', name: 'Clara Kim',      initials: 'CK', avatarColor: 'pink',   role: 'UX Designer',       tjm: 600, occupancy: 55, months: 8,  ca: 26400, marge: 4400,  margePct: 17 },
-  { id: '4', name: 'David Mora',     initials: 'DM', avatarColor: 'gold',   role: 'DevOps Engineer',   tjm: 720, occupancy: 100,months: 12, ca: 86400, marge: 26400, margePct: 31 },
-  { id: '5', name: 'Emma Petit',     initials: 'EP', avatarColor: 'purple', role: 'Backend Developer', tjm: 650, occupancy: 83, months: 9,  ca: 48750, marge: 9750,  margePct: 20 },
-]
-
-const PERIODS = ['3M', '6M', '12M']
+// ── Helpers ───────────────────────────────────────────────────
 
 function fmt(n: number) {
   return n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+}
+
+function Skeleton({ h = 80 }: { h?: number }) {
+  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4, animation: 'pulse 1.5s ease infinite' }} />
 }
 
 function MargeBadge({ pct }: { pct: number }) {
@@ -43,18 +33,27 @@ function MargeBadge({ pct }: { pct: number }) {
   )
 }
 
-function Skeleton({ h = 80 }: { h?: number }) {
-  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4, animation: 'pulse 1.5s ease infinite' }} />
+function MiniBar({ value, max = 100, color }: { value: number; max?: number; color: string }) {
+  const pct = Math.min((value / max) * 100, 100)
+  return (
+    <div style={{ flex: 1, height: 3, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2, transition: 'width 0.4s ease' }} />
+    </div>
+  )
 }
 
+// ── Page ──────────────────────────────────────────────────────
+
+type SortKey = 'ca_genere' | 'marge_brute' | 'occupancy_rate' | 'marge_pct'
+
 export default function ProfitabilityPage() {
-  const { user } = useAuthContext()
+  const { user }        = useAuthContext()
   const financialAccess = canViewFinancials(user?.role)
+  const [sort, setSort] = useState<SortKey>('ca_genere')
 
-  const [period, setPeriod] = useState('12M')
-  const [sort,   setSort]   = useState<'ca' | 'marge' | 'occupancy'>('ca')
+  const { data: consultants, loading, error } = useConsultantProfitability()
 
-  // Guard — page admin only
+  // Guard — admin only
   if (!financialAccess) {
     return (
       <div style={{ padding: 40, color: 'var(--text2)', fontSize: 12 }}>
@@ -63,26 +62,42 @@ export default function ProfitabilityPage() {
     )
   }
 
-  const sorted = [...MOCK_CONSULTANTS].sort((a, b) => b[sort] - a[sort])
+  const sorted = useMemo(() =>
+    [...(consultants ?? [])].sort((a, b) => (b[sort] ?? 0) - (a[sort] ?? 0)),
+    [consultants, sort]
+  )
 
-  const totalCA    = sorted.reduce((s, c) => s + c.ca, 0)
-  const totalMarge = sorted.reduce((s, c) => s + c.marge, 0)
-  const avgOcc     = Math.round(sorted.reduce((s, c) => s + c.occupancy, 0) / sorted.length)
-  const avgMarge   = Math.round(sorted.reduce((s, c) => s + c.margePct, 0) / sorted.length)
+  // ── KPIs globaux ──────────────────────────────────────────
+  const totalCA    = sorted.reduce((s, c) => s + (c.ca_genere    ?? 0), 0)
+  const totalMarge = sorted.reduce((s, c) => s + (c.marge_brute  ?? 0), 0)
+  const avgOcc     = sorted.length
+    ? Math.round(sorted.reduce((s, c) => s + (c.occupancy_rate ?? 0), 0) / sorted.length)
+    : 0
+  const avgMarge   = sorted.length
+    ? Math.round(sorted.reduce((s, c) => s + (c.marge_pct ?? 0), 0) / sorted.length)
+    : 0
 
   const stats = [
-    { value: fmt(totalCA),    label: 'CA total équipe',  color: 'var(--cyan)' },
-    { value: fmt(totalMarge), label: 'Marge brute',      color: 'var(--green)' },
-    { value: `${avgOcc}%`,    label: 'Taux occup. moyen',color: 'var(--gold)' },
-    { value: `${avgMarge}%`,  label: 'Marge moyenne',    color: avgMarge >= 20 ? 'var(--green)' : avgMarge >= 10 ? 'var(--gold)' : 'var(--pink)' },
+    { value: fmt(totalCA),    label: 'CA total équipe',   color: 'var(--cyan)' },
+    { value: fmt(totalMarge), label: 'Marge brute',       color: 'var(--green)' },
+    { value: `${avgOcc}%`,   label: 'Taux occup. moyen', color: 'var(--gold)' },
+    {
+      value: `${avgMarge}%`,
+      label: 'Marge moyenne',
+      color: avgMarge >= 20 ? 'var(--green)' : avgMarge >= 10 ? 'var(--gold)' : 'var(--pink)',
+    },
+  ]
+
+  const SORTS: { label: string; key: SortKey }[] = [
+    { label: 'CA',         key: 'ca_genere' },
+    { label: 'Marge',      key: 'marge_brute' },
+    { label: 'Marge %',    key: 'marge_pct' },
+    { label: 'Occupation', key: 'occupancy_rate' },
   ]
 
   return (
     <>
-      <Topbar
-        title="Rentabilité"
-        breadcrumb="// vue par consultant — admin only"
-      />
+      <Topbar title="Rentabilité" breadcrumb="// vue par consultant — admin only" />
 
       <div className="app-content">
 
@@ -99,122 +114,142 @@ export default function ProfitabilityPage() {
 
         {/* KPIs */}
         <div className="kpi-grid" style={{ marginBottom: 24 }}>
-          {stats.map(s => (
-            <div key={s.label} className="kpi-card" style={{ borderTop: `2px solid ${s.color}` }}>
-              <div className="kpi-label">{s.label}</div>
-              <div className="kpi-value" style={{ color: s.color, fontSize: 22 }}>{s.value}</div>
-            </div>
-          ))}
+          {loading
+            ? <>{[0,1,2,3].map(i => <Skeleton key={i} h={100} />)}</>
+            : stats.map(s => (
+                <div key={s.label} className="kpi-card" style={{ borderTop: `2px solid ${s.color}` }}>
+                  <div className="kpi-label">{s.label}</div>
+                  <div className="kpi-value" style={{ color: s.color, fontSize: 22 }}>{s.value}</div>
+                </div>
+              ))
+          }
         </div>
 
-        {/* Contrôles */}
+        {/* Tri */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-          <span style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>Période</span>
-          {PERIODS.map(p => (
+          <span style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
+            Trier par
+          </span>
+          {SORTS.map(s => (
             <button
-              key={p}
-              className={`btn btn-sm ${period === p ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setPeriod(p)}
+              key={s.key}
+              className={`btn btn-sm ${sort === s.key ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setSort(s.key)}
             >
-              {p}
+              {s.label}
             </button>
           ))}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <span style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', alignSelf: 'center' }}>Trier par</span>
-            {(['ca', 'marge', 'occupancy'] as const).map(s => (
-              <button
-                key={s}
-                className={`btn btn-sm ${sort === s ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setSort(s)}
-              >
-                {s === 'ca' ? 'CA' : s === 'marge' ? 'Marge' : 'Occupation'}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Table consultants */}
-        <Panel title={`${sorted.length} consultants`} noPadding>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Consultant</th>
-                  <th style={{ textAlign: 'right' }}>TJM</th>
-                  <th>Occupation</th>
-                  <th style={{ textAlign: 'right' }}>CA généré</th>
-                  <th style={{ textAlign: 'right' }}>Marge brute</th>
-                  <th>Marge %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((c, i) => (
-                  <tr key={c.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        {/* Rank */}
-                        <span style={{ fontSize: 9, color: 'var(--text2)', minWidth: 16 }}>#{i + 1}</span>
-                        <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
-                        <div>
-                          <div className="td-primary">{c.name}</div>
-                          <div style={{ fontSize: 9, color: 'var(--text2)' }}>{c.role}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text)' }}>
-                      {c.tjm} €/j
-                    </td>
-                    <td style={{ minWidth: 140 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, minWidth: 36,
-                          color: c.occupancy >= 80 ? 'var(--green)' : c.occupancy >= 50 ? 'var(--gold)' : 'var(--pink)',
-                        }}>
-                          {c.occupancy}%
-                        </span>
-                        <ProgressBar
-                          value={c.occupancy}
-                          style={{ flex: 1, minWidth: 80 }}
-                        />
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmt(c.ca)}</td>
-                    <td style={{ textAlign: 'right', color: 'var(--green)', fontWeight: 700 }}>{fmt(c.marge)}</td>
-                    <td style={{ minWidth: 120 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <MargeBadge pct={c.margePct} />
-                        <ProgressBar
-                          value={c.margePct}
-                          style={{ flex: 1, minWidth: 60 }}
-                          color={c.margePct >= 25 ? 'var(--green)' : c.margePct >= 15 ? 'var(--gold)' : 'var(--pink)'}
-                        />
-                      </div>
-                    </td>
+        {/* Table */}
+        <Panel title={loading ? '…' : `${sorted.length} consultant${sorted.length > 1 ? 's' : ''}`} noPadding>
+          {loading ? (
+            <div style={{ padding: 18 }}><Skeleton h={200} /></div>
+          ) : error ? (
+            <div style={{ padding: '24px 18px', color: 'var(--pink)', fontSize: 12 }}>
+              // erreur chargement — {error}
+            </div>
+          ) : sorted.length === 0 ? (
+            <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
+              // aucune donnée — renseignez les TJM consultants et projets actifs
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Consultant</th>
+                    <th style={{ textAlign: 'right' }}>TJM coût</th>
+                    <th style={{ textAlign: 'right' }}>Jours générés</th>
+                    <th>Occupation</th>
+                    <th style={{ textAlign: 'right' }}>CA généré</th>
+                    <th style={{ textAlign: 'right' }}>Marge brute</th>
+                    <th>Marge %</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {sorted.map((c, i) => {
+                    const occ      = c.occupancy_rate ?? 0
+                    const occColor = occ >= 80 ? 'var(--green)' : occ >= 50 ? 'var(--gold)' : 'var(--pink)'
+                    const mPct     = c.marge_pct ?? 0
+                    const mColor   = mPct >= 25 ? 'var(--green)' : mPct >= 15 ? 'var(--gold)' : 'var(--pink)'
 
-          {/* Légende */}
-          <div style={{ display: 'flex', gap: 20, padding: '12px 18px', borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
-            {[
-              { color: 'var(--green)', label: 'Marge ≥ 25% — Excellente' },
-              { color: 'var(--gold)',  label: 'Marge 15–25% — Correcte' },
-              { color: 'var(--pink)',  label: 'Marge < 15% — À surveiller' },
-            ].map(l => (
-              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
-                <span style={{ fontSize: 10, color: 'var(--text2)' }}>{l.label}</span>
-              </div>
-            ))}
-          </div>
+                    return (
+                      <tr key={c.consultant_id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 9, color: 'var(--text2)', minWidth: 16 }}>#{i + 1}</span>
+                            <Avatar
+                              initials={c.initials}
+                              color={(c.avatar_color ?? 'green') as AvatarColor}
+                              size="sm"
+                            />
+                            <div>
+                              <div className="td-primary">{c.name}</div>
+                              <div style={{ fontSize: 9, color: 'var(--text2)' }}>{c.role}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--text)' }}>
+                          {c.tjm_cout != null ? `${c.tjm_cout} €/j` : '—'}
+                        </td>
+                        <td style={{ textAlign: 'right', color: 'var(--text2)' }}>
+                          {c.jours_generes != null ? `${c.jours_generes}j` : '—'}
+                        </td>
+                        <td style={{ minWidth: 140 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, minWidth: 36, color: occColor }}>
+                              {occ}%
+                            </span>
+                            <MiniBar value={occ} color={occColor} />
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700 }}>
+                          {c.ca_genere ? fmt(c.ca_genere) : '—'}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: mColor }}>
+                          {c.marge_brute ? fmt(c.marge_brute) : '—'}
+                        </td>
+                        <td style={{ minWidth: 140 }}>
+                          {c.marge_pct != null ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <MargeBadge pct={mPct} />
+                              <MiniBar value={mPct} max={50} color={mColor} />
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text2)', fontSize: 10 }}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Légende + source */}
+          {!loading && sorted.length > 0 && (
+            <div style={{
+              display: 'flex', gap: 20, padding: '12px 18px',
+              borderTop: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center',
+            }}>
+              {[
+                { color: 'var(--green)', label: 'Marge ≥ 25% — Excellente' },
+                { color: 'var(--gold)',  label: 'Marge 15–25% — Correcte' },
+                { color: 'var(--pink)',  label: 'Marge < 15% — À surveiller' },
+              ].map(l => (
+                <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
+                  <span style={{ fontSize: 10, color: 'var(--text2)' }}>{l.label}</span>
+                </div>
+              ))}
+              <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--text2)', opacity: 0.5 }}>
+                // vue consultant_profitability · projets actifs uniquement
+              </span>
+            </div>
+          )}
         </Panel>
-
-        {/* Note mock */}
-        <div style={{ marginTop: 16, fontSize: 10, color: 'var(--text2)', opacity: 0.5 }}>
-          // données simulées — sera branché sur Supabase (vue project_financials × consultants)
-        </div>
 
       </div>
     </>
