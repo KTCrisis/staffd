@@ -4,8 +4,8 @@ import { useLocale }              from 'next-intl'
 import { useRouter, usePathname } from '@/lib/navigation'
 
 const LOCALES = [
-  { code: 'fr', flag: '🇫🇷', label: 'FR' },
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'fr', label: 'FR' },
+  { code: 'en', label: 'EN' },
 ]
 
 export function LangSwitcher() {
@@ -19,25 +19,26 @@ export function LangSwitcher() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {LOCALES.map(l => (
+    <div style={{ display: 'flex', gap: 2 }}>
+      {LOCALES.map((l, i) => (
         <button
           key={l.code}
           onClick={() => switchTo(l.code)}
           className="btn btn-ghost btn-sm"
           style={{
-            padding: '5px 8px',
-            gap: 4,
-            display: 'flex',
-            alignItems: 'center',
-            opacity:     locale === l.code ? 1 : 0.5,
-            borderColor: locale === l.code ? 'var(--green)'  : 'var(--border)',
-            color:       locale === l.code ? 'var(--green)'  : 'var(--text2)',
+            padding:     '5px 9px',
+            fontSize:    9,
+            letterSpacing: 1.5,
+            fontWeight:  700,
+            opacity:     locale === l.code ? 1 : 0.45,
+            borderColor: locale === l.code ? 'var(--green)' : 'transparent',
+            color:       locale === l.code ? 'var(--green)' : 'var(--text2)',
+            borderRight: i === 0 ? '1px solid var(--border)' : undefined,
+            borderRadius: 0,
           }}
           title={l.code === 'fr' ? 'Français' : 'English'}
         >
-          <span>{l.flag}</span>
-          <span style={{ fontSize: 9, letterSpacing: 1 }}>{l.label}</span>
+          {l.label}
         </button>
       ))}
     </div>
