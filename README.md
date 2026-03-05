@@ -13,7 +13,7 @@
 staff7 is built for:
 
 - **Consulting firms and staffing agencies** managing a team of consultants across multiple clients and projects
-- **ESNs** (Entreprises de Services du Numérique) that need timesheet tracking, leave management, and real-time profitability visibility
+- **IT Consulting Firms / ESNs** (Entreprises de Services du Numérique) that need timesheet tracking, leave management, and real-time profitability visibility
 - **Independent freelancers** via a solo mode — same platform, simplified interface, no team overhead
 - **Multi-tenant deployments** — each company gets a fully isolated workspace, making it suitable for resellers or white-label use
 
