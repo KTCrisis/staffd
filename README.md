@@ -110,4 +110,4 @@ This project is licensed under the [Business Source License 1.1 (BUSL-1.1)](http
 
 The code will convert to Apache 2.0 on **January 1, 2028**.
 
-To discuss commercial licensing or a partnership: `contact@staff7.app`
+To discuss commercial licensing or a partnership: `flux7art_at_gmail.com`
