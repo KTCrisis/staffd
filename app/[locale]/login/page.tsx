@@ -81,7 +81,7 @@ export default function LoginPage() {
             <span style={{ color: 'var(--green)' }}>7</span>
           </div>
           <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 3, textTransform: 'uppercase' }}>
-            // consultant manager
+            // Staffing ops, AI-first
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
           borderLeft: '2px solid var(--green)',
           paddingLeft: 10,
         }}>
-          Connexion requise
+          Required Connection
         </div>
 
         {/* Formulaire */}
@@ -176,7 +176,7 @@ export default function LoginPage() {
               opacity: (!email || !password) ? 0.5 : 1,
             }}
           >
-            {loading ? '// connexion...' : '→ Se connecter'}
+            {loading ? '// connection...' : '→ Connection'}
           </button>
 
         </div>
