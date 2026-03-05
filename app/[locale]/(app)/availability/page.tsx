@@ -2,6 +2,8 @@
 
 import { useState, useMemo }   from 'react'
 import { useTranslations }     from 'next-intl'
+import { useAuthContext }      from '@/components/layout/AuthProvider'
+import { isManager }           from '@/lib/auth'
 import { Topbar }              from '@/components/layout/Topbar'
 import { StatRow }             from '@/components/ui'
 import { Avatar }              from '@/components/ui/Avatar'
@@ -14,16 +16,16 @@ import { useConsultants, useLeaveRequests, useAssignments } from '@/lib/data'
 type CellType = 'free' | 'project' | 'leave' | 'partial' | 'weekend'
 
 interface DayCell {
-  type:        CellType
-  projectId?:  string
+  type:         CellType
+  projectId?:   string
   projectName?: string
-  leaveType?:  string
-  isToday:     boolean
-  isWeekend:   boolean
+  leaveType?:   string
+  isToday:      boolean
+  isWeekend:    boolean
 }
 
 // ══════════════════════════════════════════════════════════════
-// PALETTE PROJETS — couleurs distinctes par project_id
+// PALETTE PROJETS
 // ══════════════════════════════════════════════════════════════
 
 const PROJECT_COLORS = [
@@ -52,24 +54,16 @@ function toISO(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-function getMonday(d: Date): Date {
-  const date = new Date(d)
-  const day  = date.getDay()
-  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1))
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
 // ══════════════════════════════════════════════════════════════
-// CALCUL GRILLE — statut réel par jour × consultant
+// CALCUL GRILLE
 // ══════════════════════════════════════════════════════════════
 
 function buildGrid(
   consultants:   any[],
   year:          number,
   month:         number,
-  leaveRequests: any[],   // camelCase (toLeaveRequest)
-  assignments:   any[],   // snake_case (brut Supabase)
+  leaveRequests: any[],
+  assignments:   any[],
 ) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const today       = new Date(); today.setHours(0, 0, 0, 0)
@@ -88,7 +82,7 @@ function buildGrid(
         continue
       }
 
-      // ── Congé approuvé (camelCase) ──
+      // ── Congé ──
       const leave = leaveRequests.find(lr =>
         lr.consultantId === c.id &&
         lr.status !== 'refused' &&
@@ -100,7 +94,7 @@ function buildGrid(
         continue
       }
 
-      // ── Assignments actifs (snake_case) ──
+      // ── Assignments ──
       const active = assignments.filter(a =>
         a.consultant_id === c.id &&
         (!a.start_date || dateStr >= a.start_date) &&
@@ -108,22 +102,12 @@ function buildGrid(
       )
 
       const totalAlloc  = active.reduce((s: number, a: any) => s + (a.allocation ?? 0), 0)
-      const mainProject = active.sort((a: any, b: any) => (b.allocation ?? 0) - (a.allocation ?? 0))[0]
+      const mainProject = [...active].sort((a: any, b: any) => (b.allocation ?? 0) - (a.allocation ?? 0))[0]
 
       if (totalAlloc >= 100) {
-        cells.push({
-          type: 'project',
-          projectId:   mainProject?.project_id,
-          projectName: mainProject?.projects?.name,
-          isToday, isWeekend: false,
-        })
+        cells.push({ type: 'project', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else if (totalAlloc > 0) {
-        cells.push({
-          type: 'partial',
-          projectId:   mainProject?.project_id,
-          projectName: mainProject?.projects?.name,
-          isToday, isWeekend: false,
-        })
+        cells.push({ type: 'partial', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else {
         cells.push({ type: 'free', isToday, isWeekend: false })
       }
@@ -137,40 +121,46 @@ function buildGrid(
 // PAGE
 // ══════════════════════════════════════════════════════════════
 
-const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
-const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
-const DAYS_SHORT = ['M','T','W','T','F','S','S']
-
 export default function AvailabilityPage() {
-  const t   = useTranslations('disponibilites')
-  const now = new Date()
+  const t     = useTranslations('disponibilites')
+  const tNav  = useTranslations('timeline')
+  const { user } = useAuthContext()
+  const now   = new Date()
+
+  // ── Vues par rôle ──────────────────────────────────────────
+  const teamAccess = isManager(user?.role) // admin + manager voient tout
+  // consultant ne voit que lui-même (filtré après chargement)
 
   const [year,  setYear]  = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
 
-  // ── Données Supabase ─────────────────────────────────────
   const { data: consultants,   loading: lC } = useConsultants()
   const { data: leaveRequests, loading: lL } = useLeaveRequests()
   const { data: assignments,   loading: lA } = useAssignments()
 
   const loading = lC || lL || lA
 
-  // ── Navigation mois ──────────────────────────────────────
   const prevMonth = () => month === 0  ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)
   const nextMonth = () => month === 11 ? (setMonth(0),  setYear(y => y + 1)) : setMonth(m => m + 1)
   const goToday   = () => { setYear(now.getFullYear()); setMonth(now.getMonth()) }
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth()
 
-  // ── Grille ───────────────────────────────────────────────
+  // ── Filtrage par rôle ──────────────────────────────────────
+  const visibleConsultants = useMemo(() => {
+    const all = consultants ?? []
+    if (teamAccess) return all
+    // consultant : ne voit que sa propre ligne
+    return all.filter(c => c.user_id === user?.id)
+  }, [consultants, teamAccess, user?.id])
+
+  // ── Grille ────────────────────────────────────────────────
   const grid = useMemo(() =>
-    buildGrid(consultants ?? [], year, month, leaveRequests ?? [], assignments ?? []),
-    [consultants, year, month, leaveRequests, assignments]
+    buildGrid(visibleConsultants, year, month, leaveRequests ?? [], assignments ?? []),
+    [visibleConsultants, year, month, leaveRequests, assignments]
   )
 
-  // ── Palette projets (stable par session) ─────────────────
   const projectColorMap = useMemo(() => new Map<string, number>(), [])
 
-  // ── Header jours ────────────────────────────────────────
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const headerDays  = Array.from({ length: daysInMonth }, (_, i) => {
     const d = new Date(year, month, i + 1)
@@ -182,37 +172,42 @@ export default function AvailabilityPage() {
     }
   })
 
-  // ── Stats ────────────────────────────────────────────────
-  const list  = consultants ?? []
-  const stats = [
-    { value: list.filter(c => c.status === 'assigned').length,  label: t('stats.assigned') ?? 'En mission',  color: 'var(--cyan)' },
-    { value: list.filter(c => c.status === 'available').length, label: t('stats.available') ?? 'Disponibles', color: 'var(--green)' },
-    { value: list.filter(c => c.status === 'leave').length,     label: t('stats.leave') ?? 'En congé',       color: 'var(--gold)' },
-    { value: list.filter(c => c.status === 'partial').length,   label: t('stats.partial') ?? 'Partiel',      color: 'var(--purple)' },
-  ]
+  // ── Stats (admin + manager uniquement) ───────────────────
+  const allList = consultants ?? []
+  const stats = teamAccess ? [
+    { value: allList.filter(c => c.status === 'assigned').length,  label: t('legend.busy'),    color: 'var(--cyan)' },
+    { value: allList.filter(c => c.status === 'available').length, label: t('legend.free'),    color: 'var(--green)' },
+    { value: allList.filter(c => c.status === 'leave').length,     label: t('legend.leave'),   color: 'var(--gold)' },
+    { value: allList.filter(c => c.status === 'partial').length,   label: t('legend.partial'), color: 'var(--purple)' },
+  ] : []
+
+  // Mois et jours traduits
+  const months   = tNav.raw('months') as string[]
+  const daysShort = ['L','M','M','J','V','S','D']
 
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
-        <StatRow stats={stats} />
+
+        {teamAccess && <StatRow stats={stats} />}
 
         {/* ── Navigation mois ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
           <button className="btn btn-ghost btn-sm" onClick={prevMonth}>←</button>
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', minWidth: 160, textAlign: 'center' }}>
-            {MONTHS_EN[month]} {year}
+            {months[month]} {year}
           </span>
           <button className="btn btn-ghost btn-sm" onClick={nextMonth}>→</button>
           {!isCurrentMonth && (
             <button className="btn btn-primary btn-sm" onClick={goToday} style={{ marginLeft: 8 }}>
-              Today
+              {t('today')}
             </button>
           )}
         </div>
 
-        {/* ── Grille timeline ── */}
+        {/* ── Grille ── */}
         <div style={{
           background: 'var(--bg2)',
           border: '1px solid var(--border)',
@@ -221,13 +216,13 @@ export default function AvailabilityPage() {
         }}>
           {loading ? (
             <div style={{ padding: '32px 20px', color: 'var(--text2)', fontSize: 12 }}>
-              // chargement...
+              {t('noData')}
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <div style={{ minWidth: daysInMonth * 28 + 160 }}>
 
-                {/* ── En-tête jours ── */}
+                {/* En-tête jours */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: `160px repeat(${daysInMonth}, 1fr)`,
@@ -236,7 +231,7 @@ export default function AvailabilityPage() {
                   background: 'var(--bg2)', zIndex: 10,
                 }}>
                   <div style={{ padding: '8px 14px', fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-                    Consultant
+                    {t('consultant')}
                   </div>
                   {headerDays.map(d => (
                     <div key={d.num} style={{
@@ -250,7 +245,7 @@ export default function AvailabilityPage() {
                         color: d.isToday ? 'var(--green)' : d.isWeekend ? 'var(--border2)' : 'var(--text2)',
                         letterSpacing: 1,
                       }}>
-                        {DAYS_SHORT[(d.dow + 6) % 7]}
+                        {daysShort[(d.dow + 6) % 7]}
                       </div>
                       <div style={{
                         fontSize: 10,
@@ -263,14 +258,13 @@ export default function AvailabilityPage() {
                   ))}
                 </div>
 
-                {/* ── Lignes consultants ── */}
+                {/* Lignes consultants */}
                 {grid.map(({ consultant, cells }, rowIdx) => (
                   <div key={consultant.id} style={{
                     display: 'grid',
                     gridTemplateColumns: `160px repeat(${daysInMonth}, 1fr)`,
                     borderBottom: rowIdx < grid.length - 1 ? '1px solid var(--border)' : undefined,
                   }}>
-
                     {/* Nom */}
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: 8,
@@ -288,19 +282,17 @@ export default function AvailabilityPage() {
                       </div>
                     </div>
 
-                    {/* Cellules ── */}
+                    {/* Cellules */}
                     {cells.map((cell, dayIdx) => {
                       const color = cell.projectId
                         ? getProjectColor(cell.projectId, projectColorMap)
                         : null
 
-                      // Détecter si on est au début d'un segment de projet (pour afficher le label)
-                      const prevCell = cells[dayIdx - 1]
+                      const prevCell       = cells[dayIdx - 1]
                       const isSegmentStart = !prevCell ||
                         prevCell.projectId !== cell.projectId ||
                         prevCell.type !== cell.type
 
-                      // Compter la longueur du segment pour décider d'afficher le label
                       let segmentLen = 0
                       if (isSegmentStart && cell.projectName) {
                         for (let k = dayIdx; k < cells.length; k++) {
@@ -328,63 +320,43 @@ export default function AvailabilityPage() {
                             height: 44,
                             position: 'relative',
                             overflow: 'hidden',
-                            cursor: cell.type !== 'weekend' ? 'default' : undefined,
-
-                            // Background selon type
                             background:
                               cell.type === 'weekend' ? 'var(--bg3)' :
                               cell.type === 'leave'   ? 'rgba(255,209,102,0.12)' :
                               cell.type === 'project' ? (color?.bg ?? 'rgba(0,229,255,0.12)') :
                               cell.type === 'partial' ? (color?.bg ?? 'rgba(255,209,102,0.10)') :
                               'transparent',
-
-                            // Bordure haute colorée pour les segments projet
-                            borderTop: cell.type === 'project' || cell.type === 'partial'
-                              ? `2px solid ${color?.border ?? 'rgba(0,229,255,0.4)'}`
-                              : cell.type === 'leave'
-                              ? '2px solid rgba(255,209,102,0.4)'
-                              : '2px solid transparent',
-
-                            // Highlight aujourd'hui
-                            outline: cell.isToday ? '1px solid var(--green)' : undefined,
+                            borderTop:
+                              cell.type === 'project' || cell.type === 'partial'
+                                ? `2px solid ${color?.border ?? 'rgba(0,229,255,0.4)'}`
+                                : cell.type === 'leave'
+                                ? '2px solid rgba(255,209,102,0.4)'
+                                : '2px solid transparent',
+                            outline:       cell.isToday ? '1px solid var(--green)' : undefined,
                             outlineOffset: -1,
                           }}
                         >
-                          {/* Label projet si segment assez large */}
                           {showLabel && (
                             <div style={{
-                              position: 'absolute',
-                              left: 4, top: '50%',
+                              position: 'absolute', left: 4, top: '50%',
                               transform: 'translateY(-50%)',
-                              fontSize: 8,
-                              fontWeight: 700,
-                              letterSpacing: 0.5,
+                              fontSize: 8, fontWeight: 700, letterSpacing: 0.5,
                               color: color?.text ?? 'var(--cyan)',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: segmentLen * 27 - 8,
-                              pointerEvents: 'none',
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              maxWidth: segmentLen * 27 - 8, pointerEvents: 'none',
                             }}>
                               {cell.projectName}
                             </div>
                           )}
-
-                          {/* Icône congé */}
                           {cell.type === 'leave' && isSegmentStart && (
                             <div style={{
-                              position: 'absolute',
-                              left: 4, top: '50%',
+                              position: 'absolute', left: 4, top: '50%',
                               transform: 'translateY(-50%)',
-                              fontSize: 9,
-                              color: 'var(--gold)',
-                              pointerEvents: 'none',
+                              fontSize: 9, color: 'var(--gold)', pointerEvents: 'none',
                             }}>
                               ✦
                             </div>
                           )}
-
-                          {/* Point today */}
                           {cell.isToday && (
                             <div style={{
                               position: 'absolute', bottom: 3, left: '50%',
@@ -402,7 +374,7 @@ export default function AvailabilityPage() {
                 {/* Empty state */}
                 {grid.length === 0 && (
                   <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                    // no consultants
+                    {t('noData')}
                   </div>
                 )}
 
@@ -414,17 +386,16 @@ export default function AvailabilityPage() {
         {/* ── Légende ── */}
         <div style={{ display: 'flex', gap: 20, marginTop: 14, flexWrap: 'wrap' }}>
           {[
-            { bg: 'rgba(0,229,255,0.15)',  border: 'rgba(0,229,255,0.4)',  label: 'En mission (100%)' },
-            { bg: 'rgba(255,209,102,0.12)',border: 'rgba(255,209,102,0.4)',label: 'Partiel (<100%)' },
-            { bg: 'rgba(255,209,102,0.12)',border: 'rgba(255,209,102,0.4)',label: 'Congé ✦' },
-            { bg: 'transparent',           border: 'var(--border)',         label: 'Disponible' },
-            { bg: 'var(--bg3)',            border: 'var(--border)',         label: 'Weekend' },
+            { bg: 'rgba(0,229,255,0.15)',   border: 'rgba(0,229,255,0.4)',   label: t('legend.busy') + ' (100%)' },
+            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: t('legend.partial') + ' (<100%)' },
+            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: t('legend.leave') + ' ✦' },
+            { bg: 'transparent',            border: 'var(--border)',          label: t('legend.free') },
+            { bg: 'var(--bg3)',             border: 'var(--border)',          label: t('legend.weekend') },
           ].map(item => (
             <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{
                 width: 14, height: 14, borderRadius: 2, flexShrink: 0,
-                background: item.bg,
-                border: `1px solid ${item.border}`,
+                background: item.bg, border: `1px solid ${item.border}`,
               }} />
               <span style={{ fontSize: 10, color: 'var(--text2)' }}>{item.label}</span>
             </div>
