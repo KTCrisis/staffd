@@ -14,7 +14,12 @@
     "timesheets": "Timesheets",
     "projects": "Projects",
     "admin": "Admin",
-    "agents": "Agents"
+    "agents": "Agents",
+    "business":      "Business",
+    "finance":       "Finance",
+    "appelsOffres":  "Bids / RFPs",
+    "financials":    "Finances",
+    "profitability": "Profitability"
   },
   "topbar": {
     "search": "Search...",

@@ -14,7 +14,12 @@
     "timesheets": "CRAs",
     "projects": "Projets",
     "admin": "Admin",
-    "agents": "Agents"
+    "agents": "Agents",
+    "business":      "Business",
+    "finance":       "Finance",
+    "appelsOffres":  "Appels d'offres",
+    "financials":    "Finances",
+    "profitability": "Rentabilité"
   },
   "topbar": {
     "search": "Rechercher...",

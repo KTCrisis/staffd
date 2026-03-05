@@ -4,6 +4,7 @@ import Link                from 'next/link'
 import { usePathname }     from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useAuthContext }  from '@/components/layout/AuthProvider'
+import { isAdmin, isManager, canEdit, canViewFinancials } from '@/lib/auth'
 import { signOut }         from '@/lib/auth'
 import { useRouter }       from '@/lib/navigation'
 import { useEffect, useState } from 'react'
@@ -16,18 +17,17 @@ export function Sidebar() {
   const { user } = useAuthContext()
   const router   = useRouter()
 
-  // ── Rôles ────────────────────────────────────────────────
-  const isSuperAdmin     = user?.role === 'super_admin'
-  const isAdmin          = user?.role === 'admin'
-  const isManager        = user?.role === 'manager'
-  const isConsultant     = user?.role === 'consultant'
-  const isAdminOrManager = isSuperAdmin || isAdmin || isManager
+  // ── Guards rôle ──────────────────────────────────────────
+  const adminAccess     = isAdmin(user?.role)
+  const editAccess      = canEdit(user?.role)       // admin + manager
+  const financialAccess = canViewFinancials(user?.role)
+  const isConsultant    = user?.role === 'consultant'
 
   const roleLabel =
-    isSuperAdmin ? 'Super Admin' :
-    isAdmin      ? 'Admin' :
-    isManager    ? 'Manager' :
-    isConsultant ? 'Consultant' : 'Viewer'
+    user?.role === 'super_admin' ? 'Super Admin' :
+    user?.role === 'admin'       ? 'Admin' :
+    user?.role === 'manager'     ? 'Manager' :
+    user?.role === 'consultant'  ? 'Consultant' : 'Viewer'
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
@@ -35,10 +35,10 @@ export function Sidebar() {
 
   // ── Badge congés pending ─────────────────────────────────
   const [pendingCount, setPendingCount] = useState(0)
-  const [command, setCommand] = useState('')
+  const [command,      setCommand]      = useState('')
 
   useEffect(() => {
-    if (!isAdminOrManager) return  // consultant ne voit pas le badge
+    if (!editAccess) return
     const fetchPending = async () => {
       const { count } = await supabase
         .from('leave_requests')
@@ -54,7 +54,7 @@ export function Sidebar() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [isAdminOrManager])
+  }, [editAccess])
 
   const handleLogout = async () => {
     await signOut()
@@ -63,12 +63,16 @@ export function Sidebar() {
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
+  const isActive = (href: string) =>
+    pathname.includes(href.replace(`/${locale}`, ''))
+
   // ══════════════════════════════════════════════════════════
-  // NAV — filtrée par rôle
+  // NAV STRUCTURE
   // ══════════════════════════════════════════════════════════
 
   const NAV = [
-    // ── Overview (tous les rôles) ──
+
+    // ── OVERVIEW — tous les rôles ──────────────────────────
     {
       group: t('overview'),
       items: [
@@ -76,74 +80,65 @@ export function Sidebar() {
       ],
     },
 
-    // ── Team ──────────────────────────────────────────────
+    // ── ÉQUIPE — tous les rôles ────────────────────────────
     {
       group: t('team'),
       items: [
-        // Consultants : visible par tous (pour le consultant = sa fiche)
-        { label: t('consultants'), icon: '◈', href: p('/consultants') },
-
-        // Availability : admin/manager uniquement
-        ...(!isConsultant ? [
+        { label: t('consultants'),   icon: '◈', href: p('/consultants') },
+        ...(editAccess ? [
           { label: t('disponibilites'), icon: '◫', href: p('/availability') },
         ] : []),
-
-        // Congés : tout le monde (le consultant ne voit que les siens via RLS)
         {
-          label:  t('conges'),
-          icon:   '◷',
-          href:   p('/leaves'),
-          badge:  isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
+          label: t('conges'),
+          icon:  '◷',
+          href:  p('/leaves'),
+          badge: editAccess && pendingCount > 0 ? pendingCount : undefined,
         },
-      ],
-    },
-
-    // ── Activity (tous les rôles) ──
-    {
-      group: t('activity'),
-      items: [
         { label: t('timesheets'), icon: '⏱', href: p('/timesheets') },
       ],
     },
 
-    // ── Projects : admin/manager uniquement ──
-    ...(!isConsultant ? [{
-      group: t('projects'),
+    // ── BUSINESS — admin + manager ─────────────────────────
+    ...(editAccess ? [{
+      group: t('business'),
       items: [
-        { label: t('projets'),  icon: '◧', href: p('/projects') },
-        { label: t('clients'),  icon: '◉', href: p('/clients') },
-        { label: t('timeline'), icon: '▤', href: p('/timeline') },
+        { label: t('clients'),        icon: '◉', href: p('/clients') },
+        { label: t('projets'),        icon: '◧', href: p('/projects') },
+        { label: t('appelsOffres'),   icon: '◌', href: p('/bids') },
+        { label: t('timeline'),       icon: '▤', href: p('/timeline') },
       ],
     }] : []),
 
-    // ── Admin : admin/manager + super_admin ──
-    ...(isAdminOrManager ? [{
+    // ── FINANCE — admin uniquement ─────────────────────────
+    ...(financialAccess ? [{
+      group: t('finance'),
+      items: [
+        { label: t('financials'),     icon: '$', href: p('/financials') },
+        { label: t('profitability'),  icon: '◎', href: p('/profitability') },
+      ],
+    }] : []),
+
+    // ── ADMIN — admin uniquement ───────────────────────────
+    ...(adminAccess ? [{
       group: t('admin'),
       items: [
-        { label: 'Finances',     icon: '$', href: p('/financials') },
-        { label: t('parametres'),icon: '◎', href: p('/settings') },
-      ],
-    }] : []),
-
-    // ── Agents AI : admin/manager + super_admin ──
-    ...(isAdminOrManager ? [{
-      group: 'Agents',
-      items: [
+        { label: t('parametres'),     icon: '◎', href: p('/settings') },
         {
-          label: 'Agentic AI',
+          label: t('agents'),
           icon:  '⚡',
           href:  p('/ai'),
           badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span>,
         },
       ],
     }] : []),
+
   ]
 
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
         <div className="brand">staff<span>7</span></div>
-        <div className="sub">// consultant manager</div>
+        <div className="sub">// {roleLabel.toLowerCase()}</div>
       </div>
 
       <nav className="sidebar-nav">
@@ -154,7 +149,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item ${pathname.includes(item.href.replace(`/${locale}`, '')) ? 'active' : ''}`}
+                className={`nav-item ${isActive(item.href) ? 'active' : ''}`}
               >
                 <span className="nav-icon">{item.icon}</span>
                 {item.label}
@@ -165,8 +160,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── Command bar AI (admin/manager uniquement) ── */}
-      {isAdminOrManager && (
+      {/* ── Command bar AI ── */}
+      {editAccess && (
         <div style={{ padding: '0 16px', marginBottom: 12 }}>
           <div style={{
             background: 'rgba(255,45,107,0.05)',
@@ -181,7 +176,7 @@ export function Sidebar() {
               placeholder="Ask agent..."
               style={{
                 background: 'none', border: 'none', outline: 'none',
-                color: '#fff', fontSize: 11, width: '100%',
+                color: 'var(--text)', fontSize: 11, width: '100%',
                 fontFamily: 'var(--font)',
               }}
               onKeyDown={e => {
@@ -201,7 +196,10 @@ export function Sidebar() {
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
+            <div className="user-name" style={{
+              overflow: 'hidden', textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap', maxWidth: 110,
+            }}>
               {user?.email ?? '—'}
             </div>
             <div className="user-role">{roleLabel}</div>
