@@ -29,12 +29,12 @@ interface DayCell {
 // ══════════════════════════════════════════════════════════════
 
 const PROJECT_COLORS = [
-  { bg: 'rgba(0,229,255,0.15)',   border: 'rgba(0,229,255,0.40)',   text: '#00e5ff' },
-  { bg: 'rgba(0,255,136,0.13)',   border: 'rgba(0,255,136,0.38)',   text: '#00ff88' },
-  { bg: 'rgba(179,136,255,0.15)', border: 'rgba(179,136,255,0.40)', text: '#b388ff' },
-  { bg: 'rgba(255,209,102,0.15)', border: 'rgba(255,209,102,0.40)', text: '#ffd166' },
-  { bg: 'rgba(255,45,107,0.13)',  border: 'rgba(255,45,107,0.35)',  text: '#ff2d6b' },
-  { bg: 'rgba(100,200,150,0.15)', border: 'rgba(100,200,150,0.40)', text: '#64c896' },
+  { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064' },
+  { bg: 'rgba(0,255,136,0.15)',   border: 'rgba(0,255,136,0.48)',   text: '#1b5e20' },
+  { bg: 'rgba(179,136,255,0.16)', border: 'rgba(179,136,255,0.50)', text: '#4a148c' },
+  { bg: 'rgba(255,209,102,0.16)', border: 'rgba(255,209,102,0.50)', text: '#e65100' },
+  { bg: 'rgba(255,45,107,0.15)',  border: 'rgba(255,45,107,0.45)',  text: '#c62828' },
+  { bg: 'rgba(100,200,150,0.16)', border: 'rgba(100,200,150,0.50)', text: '#2e7d32' },
 ]
 
 function getProjectColor(projectId: string, projectIndex: Map<string, number>) {
@@ -341,7 +341,7 @@ export default function AvailabilityPage() {
                               position: 'absolute', left: 4, top: '50%',
                               transform: 'translateY(-50%)',
                               fontSize: 8, fontWeight: 700, letterSpacing: 0.5,
-                              color: color?.text ?? 'var(--cyan)',
+                              color: color?.text ?? '#006064',
                               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                               maxWidth: segmentLen * 27 - 8, pointerEvents: 'none',
                             }}>

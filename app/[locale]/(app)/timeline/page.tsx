@@ -23,10 +23,10 @@ interface DayCell {
 // ══════════════════════════════════════════════════════════════
 
 const STATUS_COLOR: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  active:    { bg: 'rgba(0,229,255,0.14)',   border: 'rgba(0,229,255,0.40)',   text: '#00e5ff', dot: '#00e5ff' },
-  on_hold:   { bg: 'rgba(255,209,102,0.14)', border: 'rgba(255,209,102,0.40)', text: '#ffd166', dot: '#ffd166' },
-  draft:     { bg: 'rgba(100,100,100,0.10)', border: 'rgba(100,100,100,0.25)', text: '#7a8a7a', dot: '#7a8a7a' },
-  completed: { bg: 'rgba(0,255,136,0.10)',   border: 'rgba(0,255,136,0.30)',   text: '#00ff88', dot: '#00ff88' },
+  active:    { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064', dot: '#00e5ff' },
+  on_hold:   { bg: 'rgba(255,209,102,0.16)', border: 'rgba(255,209,102,0.50)', text: '#e65100', dot: '#ffd166' },
+  draft:     { bg: 'rgba(100,100,100,0.12)', border: 'rgba(100,100,100,0.30)', text: '#455a64', dot: '#7a8a7a' },
+  completed: { bg: 'rgba(0,255,136,0.12)',   border: 'rgba(0,255,136,0.40)',   text: '#1b5e20', dot: '#00ff88' },
 }
 
 // ══════════════════════════════════════════════════════════════
