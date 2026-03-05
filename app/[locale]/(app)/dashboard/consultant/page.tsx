@@ -1,448 +1,390 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { useLocale }                      from 'next-intl'
-import { Topbar }                         from '@/components/layout/Topbar'
-import { Panel }                          from '@/components/ui'
-import { Avatar }                         from '@/components/ui/Avatar'
-import { MiniCalendar }                   from '@/components/dashboard/MiniCalendar'
-import {
-  useConsultants,
-  useAssignments,
-  useLeaveRequests,
-  useTimesheets,
-  useInternalProjectTypes,
-  upsertTimesheet,
-  submitTimesheets,
-} from '@/lib/data'
-import type { Timesheet } from '@/lib/data'
-import { useAuth } from '@/lib/auth'
-
-// ══════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════
-
-function getMondayOf(d: Date): Date {
-  const date = new Date(d)
-  const day  = date.getDay()
-  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1))
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-function toISO(d: Date): string { return d.toISOString().slice(0, 10) }
+import { useState }          from 'react'
+import { useTranslations }   from 'next-intl'
+import { useAuthContext }    from '@/components/layout/AuthProvider'
+import { Topbar }            from '@/components/layout/Topbar'
+import { Panel, StatRow }    from '@/components/ui'
+import { Avatar }            from '@/components/ui/Avatar'
+import { Badge }             from '@/components/ui/Badge'
+import { ProgressBar }       from '@/components/ui/ProgressBar'
+import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
+import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
+import { useConsultants, deleteConsultant } from '@/lib/data'
+import type { ConsultantStatus, Consultant } from '@/types'
 
 function Skeleton({ h = 80 }: { h?: number }) {
-  return (
-    <div style={{
-      height: h, background: 'var(--bg3)',
-      borderRadius: 4, animation: 'pulse 1.5s ease infinite',
-    }} />
-  )
+  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
 }
 
-// ══════════════════════════════════════════════════════════════
-// MINI CRA INLINE
-// ══════════════════════════════════════════════════════════════
+export default function ConsultantsPage() {
+  const t       = useTranslations('consultants')
+  const tCommon = useTranslations('common')
+  const { user } = useAuthContext()
 
-const CRA_VALUES = [
-  { label: '—', v: 0 },
-  { label: '½', v: 0.5 },
-  { label: '1', v: 1 },
-]
+  const [filter,        setFilter]        = useState<ConsultantStatus | 'all'>('all')
+  const [search,        setSearch]        = useState('')
+  const [selected,      setSelected]      = useState<Consultant | null>(null)
+  const [showForm,      setShowForm]      = useState(false)
+  const [editTarget,    setEditTarget]    = useState<Consultant | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting,      setDeleting]      = useState(false)
+  const [refresh,       setRefresh]       = useState(0)
 
-function MiniCra({ consultantId, projectOptions }: {
-  consultantId:   string
-  projectOptions: { id: string; name: string }[]
-}) {
-  const monday = getMondayOf(new Date())
-  const days   = Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return d
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteStatus,  setInviteStatus]  = useState<'idle' | 'sent' | 'already' | 'error'>('idle')
+
+  const { data: consultants, loading } = useConsultants(refresh)
+
+  const isAdmin   = user?.role === 'admin' || user?.role === 'super_admin'
+  const isManager = user?.role === 'manager'
+  const canCreate = isAdmin || isManager
+
+  const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
+    { label: t('filters.all'),       value: 'all' },
+    { label: t('filters.assigned'),  value: 'assigned' },
+    { label: t('filters.available'), value: 'available' },
+    { label: t('filters.leave'),     value: 'leave' },
+    { label: t('filters.partial'),   value: 'partial' },
+  ]
+
+  const all = consultants ?? []
+
+  const visible = all.filter(c => {
+    const matchFilter = filter === 'all' || c.status === filter
+    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
+                     || c.role.toLowerCase().includes(search.toLowerCase())
+    return matchFilter && matchSearch
   })
 
-  const { data: timesheets, loading } = useTimesheets(monday)
-  const [localEntries, setLocalEntries] = useState<Record<string, Timesheet>>({})
-  const [activeDay, setActiveDay]       = useState<string | null>(null)
-  const [val,  setVal]  = useState(0)
-  const [proj, setProj] = useState(projectOptions[0]?.id ?? '')
+  const stats = [
+    { value: all.filter(c => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
+    { value: all.filter(c => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
+    { value: all.filter(c => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
+    { value: all.filter(c => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
+  ]
 
-  // Lookup fusionné Supabase + local
-  const lookup = useMemo(() => {
-    const map: Record<string, Timesheet> = {}
-    ;(timesheets ?? [])
-      .filter(ts => ts.consultantId === consultantId)
-      .forEach(ts => { map[ts.date] = ts })
-    Object.assign(map, localEntries)
-    return map
-  }, [timesheets, localEntries, consultantId])
+  const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
 
-  const weekTotal = Object.values(lookup).reduce((s, ts) => s + (ts.value ?? 0), 0)
-  const draftEntries = Object.values(lookup).filter(ts => ts.status === 'draft')
-  const hasDraft     = draftEntries.length > 0
+  const handleSaved = () => setRefresh(r => r + 1)
 
-  const handleSave = useCallback(async () => {
-    if (!activeDay || !proj) return
-    const key = activeDay
-    setLocalEntries(prev => ({
-      ...prev,
-      [key]: { id: `local-${key}`, consultantId, projectId: proj, date: key, value: val, status: 'draft' },
-    }))
-    setActiveDay(null)
+  const handleDelete = async () => {
+    if (!selected) return
+    setDeleting(true)
     try {
-      const saved = await upsertTimesheet({ consultantId, date: key, value: val, projectId: proj })
-      setLocalEntries(prev => ({ ...prev, [key]: saved }))
-    } catch (e) {
-      console.error('upsertTimesheet error:', e)
+      await deleteConsultant(selected.id)
+      setSelected(null)
+      setConfirmDelete(false)
+      setRefresh(r => r + 1)
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setDeleting(false)
     }
-  }, [activeDay, proj, val, consultantId])
+  }
 
-  const handleSubmit = useCallback(async () => {
-    const ids = draftEntries
-      .map(ts => ts.id)
-      .filter(id => !id.startsWith('local-'))
-    if (!ids.length) return
-    await submitTimesheets(ids)
-    setLocalEntries(prev => {
-      const updated = { ...prev }
-      Object.entries(lookup).forEach(([k, ts]) => {
-        if (ts.status === 'draft') updated[k] = { ...ts, status: 'submitted' }
+  const handleInvite = async () => {
+    if (!selected?.email) return
+    setInviteLoading(true)
+    setInviteStatus('idle')
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consultantId: selected.id,
+          email:        selected.email,
+          companyId:    user?.companyId,
+        }),
       })
-      return updated
-    })
-  }, [draftEntries, lookup])
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      setInviteStatus(json.alreadyExisted ? 'already' : 'sent')
+      setRefresh(r => r + 1)
+    } catch {
+      setInviteStatus('error')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
 
-  if (loading) return <Skeleton h={80} />
-
-  return (
-    <div>
-      {/* ── Grille 5 jours ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 12 }}>
-        {days.map(d => {
-          const dateStr  = toISO(d)
-          const entry    = lookup[dateStr]
-          const isToday  = dateStr === toISO(new Date())
-          const isActive = activeDay === dateStr
-
-          return (
-            <div key={dateStr}>
-              {/* Label jour */}
-              <div style={{
-                textAlign: 'center', fontSize: 9, marginBottom: 4,
-                color: isToday ? 'var(--green)' : 'var(--text2)',
-                fontWeight: isToday ? 700 : 400, letterSpacing: 1,
-              }}>
-                {d.toLocaleDateString('en', { weekday: 'short' })}
-                <div style={{ fontSize: 9 }}>{d.getDate()}</div>
-              </div>
-
-              {/* Bouton cellule */}
-              <button
-                onClick={() => {
-                  if (isActive) { setActiveDay(null); return }
-                  setActiveDay(dateStr)
-                  setVal(entry?.value ?? 0)
-                  setProj(entry?.projectId ?? projectOptions[0]?.id ?? '')
-                }}
-                style={{
-                  width: '100%', height: 38, borderRadius: 6, cursor: 'pointer',
-                  border: `1px ${isActive ? 'solid' : entry ? 'solid' : 'dashed'} ${
-                    isActive ? 'var(--cyan)' : 'var(--border)'
-                  }`,
-                  background: isActive
-                    ? 'rgba(0,229,255,0.08)'
-                    : entry?.value ? 'var(--bg3)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 700, position: 'relative',
-                  color: entry?.value === 1
-                    ? 'var(--green)'
-                    : entry?.value === 0.5
-                    ? 'var(--gold)'
-                    : 'var(--text3)',
-                }}
-              >
-                {entry?.value === 1 ? '1' : entry?.value === 0.5 ? '½' : '+'}
-                {entry && (
-                  <span style={{
-                    position: 'absolute', top: 3, right: 3,
-                    width: 4, height: 4, borderRadius: '50%',
-                    background:
-                      entry.status === 'approved'  ? 'var(--green)' :
-                      entry.status === 'submitted' ? 'var(--gold)'  : 'var(--text3)',
-                  }} />
-                )}
-              </button>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* ── Éditeur inline ── */}
-      {activeDay && (
-        <div style={{
-          background: 'var(--bg3)', border: '1px solid var(--border)',
-          borderRadius: 8, padding: 12, marginBottom: 12,
-        }}>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-            {CRA_VALUES.map(o => (
-              <button key={o.v}
-                className={`btn ${val === o.v ? 'btn-primary' : 'btn-ghost'}`}
-                style={{ flex: 1, fontSize: 16, fontWeight: 700, padding: '4px 0' }}
-                onClick={() => setVal(o.v)}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-
-          {projectOptions.length > 0 && (
-            <select className="input" value={proj}
-              onChange={e => setProj(e.target.value)}
-              style={{ fontSize: 11, marginBottom: 8 }}>
-              {projectOptions.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          )}
-
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-primary" style={{ flex: 1, fontSize: 11 }} onClick={handleSave}>
-              ✓ Enregistrer
-            </button>
-            <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => setActiveDay(null)}>
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Footer total + soumettre ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11, color: 'var(--text2)' }}>
-          Total :
-          <strong style={{
-            marginLeft: 6, fontSize: 14,
-            color: weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text3)',
-          }}>
-            {weekTotal > 0 ? weekTotal.toFixed(1) : '—'} j
-          </strong>
-        </span>
-        {hasDraft && (
-          <button className="btn btn-ghost"
-            style={{ fontSize: 10, color: 'var(--cyan)', padding: '4px 10px' }}
-            onClick={handleSubmit}>
-            📤 Soumettre
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════════════════════════
-// PAGE
-// ══════════════════════════════════════════════════════════════
-
-export default function ConsultantDashboardPage() {
-  const { user }  = useAuth()
-  const locale    = useLocale()
-
-  const { data: consultants }             = useConsultants()
-  const { data: assignments }             = useAssignments()
-  const { data: leaveReqs, loading: lL } = useLeaveRequests()
-  const { data: internalTypes }           = useInternalProjectTypes()
-
-  // Consultant courant
-  const me = useMemo(() =>
-    (consultants ?? []).find(c => c.user_id === user?.id),
-    [consultants, user?.id]
-  )
-
-  // Ses assignments
-  const myAssignments = useMemo(() =>
-    (assignments ?? []).filter(a => a.consultant_id === me?.id),
-    [assignments, me?.id]
-  )
-
-  // Projets système dédoublonnés
-  const systemProjects = useMemo(() => {
-    const seen = new Set<string>()
-    return (internalTypes ?? [])
-      .filter(t => { if (seen.has(t.key)) return false; seen.add(t.key); return true })
-      .map(t => ({ id: `__${t.key}__`, name: locale === 'fr' ? t.label_fr : t.label_en }))
-  }, [internalTypes, locale])
-
-  // Options projets pour mini CRA
-  const projectOptions = useMemo(() => [
-    ...myAssignments.map(a => ({ id: a.project_id, name: a.projects?.name ?? a.project_id })),
-    ...systemProjects,
-  ], [myAssignments, systemProjects])
-
-  // Congés
-  const myLeaves = useMemo(() =>
-    (leaveReqs ?? []).filter(l => l.consultantId === me?.id),
-    [leaveReqs, me?.id]
-  )
-
-  const today = toISO(new Date())
+  const closeDrawer = () => {
+    setSelected(null)
+    setConfirmDelete(false)
+    setInviteStatus('idle')
+  }
 
   return (
     <>
-      <Topbar title="Mon espace" breadcrumb="Dashboard" />
+      <Topbar
+        title={t('title')}
+        breadcrumb={t('breadcrumb')}
+        /* CTA visible admin + manager uniquement */
+        ctaLabel={canCreate ? t('cta') : undefined}
+        onCta={canCreate ? () => setShowForm(true) : undefined}
+      />
 
       <div className="app-content">
 
-        {/* ── Bandeau profil ── */}
-        {me && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 16,
-            padding: '16px 20px', marginBottom: 20,
-            background: 'var(--bg2)', border: '1px solid var(--border)',
-            borderRadius: 6, borderLeft: '3px solid var(--green)',
-          }}>
-            <Avatar initials={me.initials} color={me.avatarColor} size="sm" />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{me.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{me.role}</div>
-            </div>
+        <StatRow stats={stats} />
 
-            {/* Soldes */}
-            <div style={{ display: 'flex', gap: 24 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--green)' }}>
-                  {me.leaveDaysLeft ?? '—'}
+        {/* Filtres + recherche */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {FILTERS.map(f => (
+            <button
+              key={f.value}
+              className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setFilter(f.value)}
+            >
+              {f.label}
+            </button>
+          ))}
+          <input
+            className="search-input"
+            style={{ marginLeft: 'auto' }}
+            placeholder={t('table.name') + '...'}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
+        <Panel title={countLabel} noPadding>
+          {loading
+            ? <div style={{ padding: 18 }}><Skeleton h={200} /></div>
+            : visible.length > 0
+              ? <ConsultantTable
+                  consultants={visible}
+                  onSelect={c => { setSelected(c); setInviteStatus('idle') }}
+                />
+              : <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
+                  {t('noResults')}
                 </div>
-                <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase' }}>
-                  CP restants
-                </div>
+          }
+        </Panel>
+
+        {/* ── Overlay + Drawer ── */}
+        {selected && (
+          <>
+            {/* Overlay cliquable pour fermer */}
+            <div
+              onClick={closeDrawer}
+              style={{
+                position: 'fixed', inset: 0,
+                background: 'rgba(0,0,0,0.25)',
+                zIndex: 199,
+              }}
+            />
+
+            <div style={{
+              position: 'fixed', top: 0, right: 0, bottom: 0, width: 360,
+              background: 'var(--bg2)', borderLeft: '1px solid var(--border)',
+              zIndex: 200, padding: 28, overflowY: 'auto',
+              boxShadow: '-4px 0 20px var(--shadow)',
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+                <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
+                  {t('drawer.label')}
+                </span>
+                <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>
+                  {t('drawer.close')}
+                </button>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--cyan)' }}>
-                  {me.rttLeft ?? '—'}
-                </div>
-                <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase' }}>
-                  RTT restants
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        <div className="two-col">
-
-          {/* ── Colonne gauche ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* Mini CRA */}
-            <Panel title="Mon CRA — semaine en cours">
-              {me
-                ? <MiniCra consultantId={me.id} projectOptions={projectOptions} />
-                : <Skeleton h={100} />
-              }
-            </Panel>
-
-            {/* Missions */}
-            <Panel title="Mes missions">
-              {myAssignments.length === 0 ? (
-                <div style={{ fontSize: 11, color: 'var(--text2)', padding: '8px 0' }}>
-                  Aucune mission en cours
-                </div>
-              ) : myAssignments.map(a => {
-                const isActive =
-                  (!a.end_date   || a.end_date   >= today) &&
-                  (!a.start_date || a.start_date <= today)
-                return (
-                  <div key={a.id} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '10px 0', borderBottom: '1px solid var(--border)',
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>
-                        {a.projects?.name ?? '—'}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                        {a.start_date ?? '?'} → {a.end_date ?? '∞'}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 700,
-                        color: a.allocation >= 100 ? 'var(--cyan)' : 'var(--gold)',
-                      }}>
-                        {a.allocation}%
-                      </span>
-                      <span style={{
-                        fontSize: 8, padding: '2px 6px', borderRadius: 3,
-                        textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700,
-                        background: isActive ? 'rgba(0,255,136,0.10)' : 'rgba(100,100,100,0.10)',
-                        color:      isActive ? 'var(--green)' : 'var(--text2)',
-                        border:     `1px solid ${isActive ? 'rgba(0,255,136,0.3)' : 'var(--border)'}`,
-                      }}>
-                        {isActive ? 'Active' : 'Upcoming'}
-                      </span>
-                    </div>
+              {/* Avatar + nom */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+                <Avatar initials={selected.initials} color={selected.avatarColor} size="md" />
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                    {selected.name}
                   </div>
-                )
-              })}
-            </Panel>
-
-          </div>
-
-          {/* ── Colonne droite ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* Congés */}
-            <Panel title="Mes congés">
-              {lL ? <Skeleton h={100} /> : myLeaves.length === 0 ? (
-                <div style={{ fontSize: 11, color: 'var(--text2)', padding: '8px 0' }}>
-                  Aucune demande
+                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>{selected.role}</div>
+                  {selected.email && (
+                    <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
+                  )}
                 </div>
-              ) : myLeaves.slice(0, 5).map(l => (
-                <div key={l.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '9px 0', borderBottom: '1px solid var(--border)',
+              </div>
+
+              {/* Données principales */}
+              {[
+                { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
+                { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
+                { label: t('drawer.available'), value: selected.availableFrom
+                    ? new Date(selected.availableFrom).toLocaleDateString('fr-FR')
+                    : t('now') },
+                { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
+                ...(selected.rttLeft != null
+                  ? [{ label: 'RTT restants', value: `${selected.rttLeft} ${tCommon('days')}` }]
+                  : []),
+                // TJM visible admin uniquement
+                ...(isAdmin && selected.tjm
+                  ? [{ label: 'TJM', value: `${selected.tjm} €/j` }]
+                  : []),
+              ].map(row => (
+                <div key={row.label} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
                 }}>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
-                      {l.type}
-                      <span style={{ fontWeight: 400, color: 'var(--text2)', marginLeft: 6 }}>
-                        {l.days}j
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 1 }}>
-                      {l.startDate} → {l.endDate}
-                    </div>
-                  </div>
-                  <span style={{
-                    fontSize: 8, padding: '2px 7px', borderRadius: 3,
-                    textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700,
-                    background:
-                      l.status === 'approved' ? 'rgba(0,255,136,0.10)' :
-                      l.status === 'pending'  ? 'rgba(255,209,102,0.10)' :
-                      'rgba(255,45,107,0.10)',
-                    color:
-                      l.status === 'approved' ? 'var(--green)' :
-                      l.status === 'pending'  ? 'var(--gold)'  : 'var(--pink)',
-                    border: `1px solid ${
-                      l.status === 'approved' ? 'rgba(0,255,136,0.3)'   :
-                      l.status === 'pending'  ? 'rgba(255,209,102,0.3)' :
-                      'rgba(255,45,107,0.3)'
-                    }`,
-                  }}>
-                    {l.status}
-                  </span>
+                  <span style={{ color: 'var(--text2)' }}>{row.label}</span>
+                  <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
                 </div>
               ))}
-            </Panel>
 
-            {/* Calendrier */}
-            <Panel title="Calendrier">
-              <MiniCalendar />
-            </Panel>
+              {/* Stack technique */}
+              {selected.stack && selected.stack.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
+                    Stack
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {selected.stack.map(s => (
+                      <span key={s} style={{
+                        fontSize: 9, letterSpacing: 1, textTransform: 'uppercase',
+                        padding: '2px 8px', borderRadius: 2,
+                        background: 'var(--bg3)', border: '1px solid var(--border)',
+                        color: 'var(--text2)',
+                      }}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          </div>
-        </div>
+              {/* Taux d'occupation */}
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
+                  {t('drawer.rateLabel')}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
+                  {selected.occupancyRate}%
+                </div>
+                <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
+              </div>
+
+              {/* ── Accès compte (admin uniquement) ── */}
+              {isAdmin && (
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 12 }}>
+                    // account access
+                  </div>
+
+                  {selected.user_id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16, color: 'var(--green)' }}>●</span>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text)', fontWeight: 600 }}>Compte lié</div>
+                        <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                        <span style={{ fontSize: 16, color: 'var(--text2)' }}>○</span>
+                        <div>
+                          <div style={{ fontSize: 11, color: 'var(--text2)' }}>Aucun compte</div>
+                          <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                            {selected.email
+                              ? selected.email
+                              : <span style={{ color: 'var(--pink)' }}>Email manquant</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        className="btn btn-ghost"
+                        style={{
+                          width: '100%',
+                          borderColor: 'var(--cyan)',
+                          color: 'var(--cyan)',
+                          opacity: (!selected.email || inviteLoading) ? 0.5 : 1,
+                        }}
+                        onClick={handleInvite}
+                        disabled={!selected.email || inviteLoading}
+                        title={!selected.email ? 'Ajoutez un email à ce consultant' : ''}
+                      >
+                        {inviteLoading ? '⏳ Envoi...' : '✉ Envoyer une invitation'}
+                      </button>
+
+                      {inviteStatus === 'sent'    && <p style={{ fontSize: 11, color: 'var(--green)',  marginTop: 8 }}>✓ Invitation envoyée à {selected.email}</p>}
+                      {inviteStatus === 'already' && <p style={{ fontSize: 11, color: 'var(--gold)',   marginTop: 8 }}>⚠ Compte existant — rôle mis à jour</p>}
+                      {inviteStatus === 'error'   && <p style={{ fontSize: 11, color: 'var(--pink)',   marginTop: 8 }}>✗ Erreur — vérifiez l'adresse email</p>}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Actions Edit / Delete — admin + manager */}
+              {canCreate && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+                  <button
+                    className="btn btn-primary"
+                    style={{ flex: 1 }}
+                    onClick={() => { setEditTarget(selected); setSelected(null) }}
+                  >
+                    {t('drawer.edit')}
+                  </button>
+                  {isAdmin && (
+                    <button
+                      className="btn btn-ghost"
+                      style={{ flex: 1, color: 'var(--pink)' }}
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      ✕ Supprimer
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Confirmation delete */}
+              {confirmDelete && (
+                <div style={{
+                  marginTop: 20, padding: '14px 16px',
+                  background: 'rgba(255,45,107,0.08)',
+                  border: '1px solid rgba(255,45,107,0.25)',
+                  borderRadius: 4,
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--text)', marginBottom: 12 }}>
+                    Supprimer <strong>{selected.name}</strong> définitivement ?
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      style={{ flex: 1 }}
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? '...' : '✕ Confirmer'}
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ flex: 1 }}
+                      onClick={() => setConfirmDelete(false)}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Formulaires */}
+        {showForm && (
+          <ConsultantForm
+            onClose={() => setShowForm(false)}
+            onSaved={handleSaved}
+          />
+        )}
+        {editTarget && (
+          <ConsultantForm
+            consultant={editTarget}
+            onClose={() => setEditTarget(null)}
+            onSaved={handleSaved}
+          />
+        )}
 
       </div>
     </>
