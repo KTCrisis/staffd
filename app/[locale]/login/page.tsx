@@ -188,7 +188,7 @@ export default function LoginPage() {
           alignItems: 'center',
         }}>
           <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
-            Accès sur invitation uniquement
+            Access by invitation only
           </div>
           <Link href="/docs" style={{
             fontSize: 10, color: 'var(--text2)', letterSpacing: 1,
