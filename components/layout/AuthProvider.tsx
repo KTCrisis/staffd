@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextValue>({ user: null, loading: true,
 
 // ── Helper : fetch company name ───────────────────────────────
 async function fetchCompanyName(role: UserRole, companyId: string | null): Promise<string | null> {
-  if (role === 'super_admin') return 'staffd'
+  if (role === 'super_admin') return 'staff7'
   if (!companyId) return null
   const { data } = await supabase
     .from('companies')
