@@ -234,6 +234,8 @@ export default function DocsPage() {
         .toc-link:hover{color:var(--green);border-left-color:rgba(0,255,136,0.4);}
         .toc-link.active{color:var(--green);border-left-color:var(--green);}
         .toc-link.sub{padding-left:36px;font-size:10px;}
+        .toc-back{display:block;padding:6px 0 20px 24px;font-size:10px;color:var(--text2);text-decoration:none;letter-spacing:1px;transition:color .15s;}
+        .toc-back:hover{color:var(--cyan);}
 
         /* ── MAIN ── */
         main{padding:48px 40px 120px 48px;}
