@@ -28,9 +28,7 @@ export async function signOut() {
 export async function getUser(): Promise<AuthUser | null> {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
-
   const role = (user.app_metadata?.user_role ?? 'viewer') as UserRole
-
   return {
     id:        user.id,
     email:     user.email ?? '',
