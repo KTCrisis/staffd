@@ -26,7 +26,7 @@ const SECTIONS = [
   { id:'dashboard',    label:'Dashboard',        icon:'▣' },
   { id:'consultants',  label:'Consultants',      icon:'◉' },
   { id:'projects',     label:'Projects',         icon:'◧' },
-  { id:'timesheets',   label:'Timesheets / CRA', icon:'⏱' },
+  { id:'timesheets',   label:'Timesheets', icon:'⏱' },
   { id:'leaves',       label:'Leave management', icon:'◷' },
   { id:'planning',     label:'Planning',         icon:'▦' },
   { id:'finance',      label:'Finance',          icon:'◬' },
@@ -243,7 +243,7 @@ export default function PlatformDocsPage() {
               <FeatureGrid items={[
                 { icon:'◉', title:'Consultant management',  desc:'Profiles, skills, status, occupancy, contract type (employee/freelance), and financial costs.' },
                 { icon:'◧', title:'Project & client tracking', desc:'External and internal projects, client CRM, assignment management, and budget tracking.' },
-                { icon:'⏱', title:'Timesheets (CRA)',       desc:'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
+                { icon:'⏱', title:'Timesheets',       desc:'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
                 { icon:'◷', title:'Leave management',       desc:'CP, RTT, unpaid, authorised absence — request, approve, and balance tracking.' },
                 { icon:'▦', title:'Planning & timeline',    desc:'Weekly availability grid and monthly Gantt-style view across the team.' },
                 { icon:'◬', title:'Financial tracking',     desc:'TJM sold vs actual, gross margin per project, profitability per consultant.' },
@@ -337,9 +337,9 @@ jours_travailles = 218  // working days / year`}</CodeBlock>
             </Section>
 
             {/* ── Timesheets ── */}
-            <Section id="timesheets" label="Timesheets / CRA" icon="⏱" color="var(--gold)">
+            <Section id="timesheets" label="Timesheets" icon="⏱" color="var(--gold)">
               <p>
-                The CRA module provides weekly time tracking with a structured validation workflow.
+                The Timesheet module provides weekly time tracking with a structured validation workflow.
                 Each day entry can be 0, 0.5, or 1 day — and moves through <strong>draft → submitted → approved</strong>.
               </p>
               <FeatureGrid items={[
@@ -374,21 +374,21 @@ approved  → locked`}</CodeBlock>
               <FeatureGrid items={[
                 { icon:'📝', title:'Leave request',     desc:'Consultant selects type, dates, and submits. Working days calculated automatically (weekends excluded).' },
                 { icon:'✓',  title:'Approval workflow', desc:'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
-                { icon:'📊', title:'Balance tracking',  desc:'CP and RTT balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
+                { icon:'📊', title:'Balance tracking',  desc:'Paid leave and flex days balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
                 { icon:'⚠',  title:'Impact warning',   desc:'System flags if an approved leave overlaps with an active project assignment.' },
               ]} />
               <Table
                 headers={['Type', 'Available to', 'Duration']}
                 rows={[
-                  ['CP (Paid leave)',       'Employee only', 'Custom — calculated in working days'],
-                  ['RTT',                  'Employee only', 'Custom — from RTT balance'],
-                  ['Sans solde (Unpaid)',   'All',           'Custom'],
-                  ['Absence autorisée',     'All',           'Fixed by legal motif (death, marriage…)'],
+                  ['Paid leave',       'Employee only', 'Custom — calculated in working days'],
+                  ['Flex Days',                  'Employee only', 'Custom — from flex day balance'],
+                  ['Unpaid',   'All',           'Custom'],
+                  ['Authorized absence',     'All',           'Fixed by legal motif (death, marriage…)'],
                 ]}
               />
               <Note color="var(--green)">
-                <strong>Absence autorisée</strong> has a fixed legal duration per motif — the end date
-                is calculated automatically. No CP/RTT balance is deducted.
+                <strong>Authorized absence</strong> has a fixed legal duration per motif — the end date
+                is calculated automatically. No Paid leaves and flex days balance are deducted.
               </Note>
             </Section>
 
@@ -423,9 +423,9 @@ approved  → locked`}</CodeBlock>
                 in <strong>Rentabilité</strong>.
               </p>
               <FeatureGrid items={[
-                { icon:'💶', title:'Project margins',       desc:'TJM sold vs TJM réel per project. Gross margin in € and %. Colour-coded by health threshold.' },
+                { icon:'💶', title:'Project margins',       desc:'Daily rate sold vs real daily rate per project. Gross margin in € and %. Colour-coded by health threshold.' },
                 { icon:'◉',  title:'Consultant profitability', desc:'Revenue generated, gross margin, occupancy rate — per consultant, sorted by any metric.' },
-                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a TJM cible per consultant. Platform shows the gap % — red if margin < 10%.' },
+                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a target daily rate per consultant. Platform shows the gap % — red if margin < 10%.' },
                 { icon:'⚠',  title:'Alert system',         desc:'Banner surfaces consultants whose target rate leaves less than 10% margin over actual cost.' },
               ]} />
               <CodeBlock>{`// Gross margin per consultant

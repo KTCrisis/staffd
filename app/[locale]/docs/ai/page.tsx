@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
+// ── Shared nav (identique index + ai) ────────────────────────────────────────
 function DocNav({ active }: { active: 'platform' | 'ai' }) {
   return (
     <nav className="doc-nav">
@@ -19,34 +20,38 @@ function DocNav({ active }: { active: 'platform' | 'ai' }) {
   )
 }
 
+// ── Sidebar sections ──────────────────────────────────────────────────────────
 const SECTIONS = [
-  { id:'overview',   label:'Overview',          icon:'⚡' },
-  { id:'console',    label:'AI Console',         icon:'◈' },
-  { id:'commands',   label:'Commands',           icon:'/' },
-  { id:'context',    label:'Live context',       icon:'◉' },
-  { id:'profitability', label:'Profitability AI',icon:'◬' },
-  { id:'privacy',    label:'Privacy & models',   icon:'🔐' },
-  { id:'rls',        label:'RLS & isolation',    icon:'⬡' },
-  { id:'mcp',        label:'MCP integration',    icon:'◧' },
+  { id:'overview',     label:'Overview',         icon:'◈' },
+  { id:'dashboard',    label:'Dashboard',        icon:'▣' },
+  { id:'consultants',  label:'Consultants',      icon:'◉' },
+  { id:'projects',     label:'Projects',         icon:'◧' },
+  { id:'timesheets',   label:'Timesheets / CRA', icon:'⏱' },
+  { id:'leaves',       label:'Leave management', icon:'◷' },
+  { id:'planning',     label:'Planning',         icon:'▦' },
+  { id:'finance',      label:'Finance',          icon:'◬' },
+  { id:'roles',        label:'Roles & access',   icon:'🔐' },
+  { id:'multitenancy', label:'Multi-tenancy',    icon:'⬡' },
 ]
 
 function Sidebar({ active }: { active: string }) {
   return (
     <aside style={{
       width: 220, flexShrink: 0, position: 'sticky', top: 80,
-      height: 'calc(100vh - 100px)', overflowY: 'auto', paddingRight: 20,
+      height: 'calc(100vh - 100px)', overflowY: 'auto',
+      paddingRight: 20,
     }}>
       <div style={{ fontSize: 9, letterSpacing: 3, color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 16 }}>
-        // ai layer docs
+        // platform docs
       </div>
       {SECTIONS.map(s => (
         <a key={s.id} href={`#${s.id}`} style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '8px 12px', borderRadius: 3, marginBottom: 2,
           textDecoration: 'none', fontSize: 11,
-          background: active === s.id ? 'rgba(255,45,107,.08)' : 'transparent',
-          borderLeft: `2px solid ${active === s.id ? 'var(--pink)' : 'transparent'}`,
-          color: active === s.id ? 'var(--pink)' : 'var(--text2)',
+          background: active === s.id ? 'rgba(0,229,255,.08)' : 'transparent',
+          borderLeft: `2px solid ${active === s.id ? 'var(--cyan)' : 'transparent'}`,
+          color: active === s.id ? 'var(--cyan)' : 'var(--text2)',
           transition: 'all .15s',
         }}>
           <span style={{ fontSize: 12, opacity: 0.7 }}>{s.icon}</span>
@@ -54,20 +59,21 @@ function Sidebar({ active }: { active: string }) {
         </a>
       ))}
       <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
-        <Link href="/docs/platform" style={{
+        <Link href="/docs/ai" style={{
           display: 'block', padding: '10px 12px',
-          background: 'rgba(0,229,255,.06)', border: '1px solid rgba(0,229,255,.2)',
+          background: 'rgba(255,45,107,.06)', border: '1px solid rgba(255,45,107,.2)',
           borderRadius: 3, textDecoration: 'none',
-          fontSize: 10, color: 'var(--cyan)', letterSpacing: 1,
+          fontSize: 10, color: 'var(--pink)', letterSpacing: 1,
         }}>
-          ◧ Platform docs →
+          ⚡ AI layer docs →
         </Link>
       </div>
     </aside>
   )
 }
 
-function Section({ id, label, icon, color = 'var(--pink)', children }: {
+// ── Section wrapper ───────────────────────────────────────────────────────────
+function Section({ id, label, icon, color = 'var(--cyan)', children }: {
   id: string; label: string; icon: string; color?: string; children: React.ReactNode
 }) {
   return (
@@ -108,44 +114,11 @@ function CodeBlock({ children }: { children: string }) {
     <pre style={{
       background: 'var(--bg2)', border: '1px solid var(--border)',
       borderRadius: 4, padding: '16px 20px', fontSize: 11,
-      color: 'var(--cyan)', overflowX: 'auto', lineHeight: 1.8, marginBottom: 24,
+      color: 'var(--cyan)', overflowX: 'auto', lineHeight: 1.8,
+      marginBottom: 24,
     }}>
       <code>{children}</code>
     </pre>
-  )
-}
-
-function CmdRow({ cmd, color, desc, context }: { cmd: string; color: string; desc: string; context: string }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 16,
-      padding: '12px 16px', background: 'var(--bg2)',
-      border: '1px solid var(--border)', borderRadius: 4, marginBottom: 8,
-    }}>
-      <span style={{
-        fontFamily: 'var(--font)', fontSize: 11, fontWeight: 700,
-        color, minWidth: 160,
-        padding: '2px 10px', borderRadius: 2,
-        background: `${color}12`, border: `1px solid ${color}30`,
-      }}>{cmd}</span>
-      <span style={{ fontSize: 11, color: 'var(--text2)', flex: 1 }}>{desc}</span>
-      <span style={{
-        fontSize: 9, padding: '1px 8px', borderRadius: 2, letterSpacing: 1,
-        background: `${color}10`, color, border: `1px solid ${color}25`,
-      }}>{context}</span>
-    </div>
-  )
-}
-
-function Note({ color = 'var(--gold)', children }: { color?: string; children: React.ReactNode }) {
-  return (
-    <div style={{
-      padding: '12px 16px', borderRadius: 4, marginBottom: 24,
-      background: `${color}08`, border: `1px solid ${color}25`,
-      fontSize: 11, color: 'var(--text2)', lineHeight: 1.7,
-    }}>
-      {children}
-    </div>
   )
 }
 
@@ -171,8 +144,11 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
               {row.map((cell, j) => (
                 <td key={j} style={{
                   padding: '10px 16px', color: j === 0 ? '#fff' : 'var(--text2)',
-                  borderBottom: '1px solid var(--border)', fontWeight: j === 0 ? 700 : 400,
-                }} dangerouslySetInnerHTML={{ __html: cell }} />
+                  borderBottom: '1px solid var(--border)',
+                  fontWeight: j === 0 ? 700 : 400,
+                }}
+                  dangerouslySetInnerHTML={{ __html: cell }}
+                />
               ))}
             </tr>
           ))}
@@ -182,15 +158,33 @@ function Table({ headers, rows }: { headers: string[]; rows: string[][] }) {
   )
 }
 
-export default function AiDocsPage() {
+function Note({ color = 'var(--gold)', children }: { color?: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      padding: '12px 16px', borderRadius: 4, marginBottom: 24,
+      background: `${color}08`, border: `1px solid ${color}25`,
+      fontSize: 11, color: 'var(--text2)', lineHeight: 1.7,
+    }}>
+      {children}
+    </div>
+  )
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+export default function PlatformDocsPage() {
   const [activeSection, setActiveSection] = useState('overview')
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      entries => { entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id) }) },
+      entries => {
+        entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id) })
+      },
       { rootMargin: '-30% 0px -60% 0px' }
     )
-    SECTIONS.forEach(s => { const el = document.getElementById(s.id); if (el) observer.observe(el) })
+    SECTIONS.forEach(s => {
+      const el = document.getElementById(s.id)
+      if (el) observer.observe(el)
+    })
     return () => observer.disconnect()
   }, [])
 
@@ -199,9 +193,9 @@ export default function AiDocsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap');
         :root {
-          --bg:#060a06;--bg2:#0c120c;--bg3:#111811;
-          --green:#00ff88;--pink:#ff2d6b;--cyan:#00e5ff;--gold:#ffd166;--purple:#b388ff;
-          --dim:#2a3a2a;--text:#b8ccb8;--text2:#5a7a5a;--border:#1a2a1a;
+          --bg:#060a06; --bg2:#0c120c; --bg3:#111811;
+          --green:#00ff88; --pink:#ff2d6b; --cyan:#00e5ff; --gold:#ffd166; --purple:#b388ff;
+          --dim:#2a3a2a; --text:#b8ccb8; --text2:#5a7a5a; --border:#1a2a1a;
           --font:'JetBrains Mono',monospace;
         }
         *{margin:0;padding:0;box-sizing:border-box;}
@@ -220,197 +214,296 @@ export default function AiDocsPage() {
         p{color:var(--text2);font-size:12px;line-height:1.9;margin-bottom:16px;}
         strong{color:#fff;font-weight:700;}
         ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
-        aside a:hover{color:var(--pink)!important;background:rgba(255,45,107,.05)!important;}
+        aside a:hover{color:var(--cyan)!important;background:rgba(0,229,255,.05)!important;}
         @media(max-width:800px){
-          .doc-nav{padding:16px 20px;}.nav-links{display:none;}
+          .doc-nav{padding:16px 20px;}
+          .nav-links{display:none;}
           .doc-layout{flex-direction:column!important;}
           aside{width:100%!important;position:static!important;height:auto!important;}
         }
       `}</style>
 
       <div className="grid-bg" />
-      <DocNav active="ai" />
+      <DocNav active="platform" />
 
       <div style={{ paddingTop: 70, maxWidth: 1100, margin: '0 auto', padding: '70px 40px 80px' }}>
         <div className="doc-layout" style={{ display: 'flex', gap: 60, alignItems: 'flex-start' }}>
+
           <Sidebar active={activeSection} />
 
           <main style={{ flex: 1, minWidth: 0 }}>
 
             {/* ── Overview ── */}
-            <Section id="overview" label="AI layer overview" icon="⚡">
+            <Section id="overview" label="Platform overview" icon="◈">
               <p>
-                The <strong>staff7 AI layer</strong> is an intelligence interface built directly on top
-                of the platform's live data. It lets users query their staffing, financial, and operational
-                data in plain language — without building queries or navigating multiple screens.
+                <strong>staff7</strong> is a multi-tenant SaaS platform built for <strong>ESNs, consulting agencies,
+                and independent firms</strong>. It centralises the full operational stack — from consultant
+                availability to project profitability — in a single, role-aware interface.
               </p>
               <FeatureGrid items={[
-                { icon:'◈', title:'AI Console',         desc:'Terminal-style chat interface. Type questions or use structured /commands to load specific context.' },
-                { icon:'⚡', title:'Streaming responses', desc:'Responses stream token by token via SSE — no waiting for full completion.' },
-                { icon:'🔐', title:'RLS-aware queries',  desc:'The agent uses your session JWT — it can only see your company\'s data. RLS enforces tenant isolation.' },
-                { icon:'🤖', title:'Bring your own model',desc:'Connect any Ollama-compatible model: local (privacy-first) or cloud (kimi-k2.5, llama3, mistral…).' },
+                { icon:'◉', title:'Consultant management',  desc:'Profiles, skills, status, occupancy, contract type (employee/freelance), and financial costs.' },
+                { icon:'◧', title:'Project & client tracking', desc:'External and internal projects, client CRM, assignment management, and budget tracking.' },
+                { icon:'⏱', title:'Timesheets (CRA)',       desc:'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
+                { icon:'◷', title:'Leave management',       desc:'Paid leaves, flex day, unpaid, authorised absence — request, approve, and balance tracking.' },
+                { icon:'▦', title:'Planning & timeline',    desc:'Weekly availability grid and monthly Gantt-style view across the team.' },
+                { icon:'◬', title:'Financial tracking',     desc:'Daily Rate sold vs actual, gross margin per project, profitability per consultant.' },
               ]} />
+              <Note color="var(--cyan)">
+                🔐 <strong>All data is multi-tenant and RLS-enforced.</strong> Each company's data is
+                isolated at the database level — no query can cross tenant boundaries.
+              </Note>
             </Section>
 
-            {/* ── Console ── */}
-            <Section id="console" label="AI Console" icon="◈" color="var(--green)">
+            {/* ── Dashboard ── */}
+            <Section id="dashboard" label="Dashboard" icon="▣" color="var(--green)">
               <p>
-                The console is a terminal-style chat interface accessible from the sidebar under <strong>Agents</strong>.
-                It maintains conversation history within the session and streams responses in real time.
+                The dashboard is the entry point for all roles. It aggregates key metrics in real time
+                and surfaces pending actions without navigating away.
               </p>
               <FeatureGrid items={[
-                { icon:'/',  title:'Command menu',     desc:'Type / to open the structured command browser. Select a command to pre-load the right data context.' },
-                { icon:'▋',  title:'Streaming cursor', desc:'Responses appear character-by-character. The ▋ cursor shows the agent is still generating.' },
-                { icon:'⌫',  title:'Clear history',   desc:'Clear button resets the conversation history. The agent starts fresh without prior context.' },
-                { icon:'◉',  title:'Agent status bar', desc:'Shows which sub-agents are ONLINE / THINKING / IDLE at a glance.' },
+                { icon:'📊', title:'KPI cards',        desc:'Active consultants, active projects, occupancy rate, and pending leave requests — updated on every load.' },
+                { icon:'📅', title:'Mini calendar',    desc:'Monthly calendar with colour-coded events: leave requests, project milestones, and availability blocks.' },
+                { icon:'⚡', title:'Activity feed',    desc:'Recent team actions — assignments, leave approvals, new projects — in reverse chronological order.' },
+                { icon:'▦',  title:'Project snapshot', desc:'Active projects with deadline proximity and assigned consultant count.' },
               ]} />
+              <Table
+                headers={['Role', 'What they see']}
+                rows={[
+                  ['consultant', 'Own assignments, own leave balance, personal occupancy'],
+                  ['manager', 'Team occupancy, pending validations, project status'],
+                  ['admin', 'Full KPIs, financial summary, all pending actions'],
+                  ['super_admin', 'Cross-tenant view (all companies)'],
+                ]}
+              />
+            </Section>
+
+            {/* ── Consultants ── */}
+            <Section id="consultants" label="Consultants" icon="◉" color="var(--cyan)">
+              <p>
+                The consultant directory is the operational core of the platform. Each profile
+                tracks availability, assignments, financial cost, and leave entitlements.
+              </p>
+              <FeatureGrid items={[
+                { icon:'👤', title:'Employee profile',   desc:'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
+                { icon:'🔗', title:'Freelance profile',  desc:'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
+                { icon:'🎯', title:'Target rate (cible)',desc:'Admin sets a target Daily Rate — the platform tracks the gap vs actual cost to flag margin risk.' },
+                { icon:'📋', title:'Occupancy tracking', desc:'Real-time occupancy % derived from active assignments, updated across planning views.' },
+              ]} />
+              <p style={{ marginBottom: 16 }}><strong>Contract types</strong> drive behaviour across the platform:</p>
+              <Table
+                headers={['Field', 'Employee', 'Freelance']}
+                rows={[
+                  ['Daily cost basis', 'Salary × (1 + charges%) ÷ days/yr', 'Billed Daily Rate (or per-assignment override)'],
+                  ['Paid leaves / flex day', '✓ tracked', '— not applicable'],
+                  ['Leave requests', 'Paid leaves, flex day, unpaid, auth. absence', 'Unpaid, auth. absence only'],
+                  ['Profitability margin', 'Revenue − fully-loaded cost', 'Revenue − billed rate'],
+                ]}
+              />
+              <CodeBlock>{`// Actual daily cost formula (employee)
+actual_daily_cost = gross_annual_salary × (1 + employer_charges_pct / 100) / working_days
+
+// Default values (FR market)
+charges_pct     = 42%   // employer charges
+jours_travailles = 218  // working days / year`}</CodeBlock>
+              <Note color="var(--cyan)">
+                Consultant accounts are linked via <strong>user_id</strong>. An admin can send an email
+                invitation directly from the consultant drawer — the platform creates a Supabase auth
+                account and sets the role in <code style={{ color:'var(--cyan)' }}>app_metadata</code>.
+              </Note>
+            </Section>
+
+            {/* ── Projects ── */}
+            <Section id="projects" label="Projects & clients" icon="◧" color="var(--purple)">
+              <p>
+                Projects are the financial and operational unit of the platform. Each project
+                links a client, a team, and a financial envelope.
+              </p>
+              <FeatureGrid items={[
+                { icon:'🏢', title:'Client CRM',           desc:'Client directory with sector, contact info, and linked projects. Revenue and active project counts per client.' },
+                { icon:'📁', title:'Project lifecycle',    desc:'Draft → Active → On hold → Completed → Archived. Each status gates what actions are available.' },
+                { icon:'👥', title:'Team assignments',     desc:'Assign consultants with start/end dates and allocation %. Freelancers can have a per-assignment Daily Rate override.' },
+                { icon:'💶', title:'Financial envelope',   desc:'Daily Rate sold, days sold, total budget — visible to admins only. Used to calculate gross margin.' },
+              ]} />
+              <Table
+                headers={['Status', 'Description', 'Visible in financials']}
+                rows={[
+                  ['draft',     'Project created, not yet active. No assignments.',           'No'],
+                  ['active',    'Ongoing — included in occupancy and financial views.',        '<span style="color:var(--green)">Yes</span>'],
+                  ['on_hold',   'Paused — consultants retained but not counted as assigned.',  'No'],
+                  ['completed', 'Closed — historical data preserved.',                         'No'],
+                  ['archived',  'Hidden from main views.',                                     'No'],
+                ]}
+              />
+            </Section>
+
+            {/* ── Timesheets ── */}
+            <Section id="timesheets" label="Timesheets / CRA" icon="⏱" color="var(--gold)">
+              <p>
+                The CRA module provides weekly time tracking with a structured validation workflow.
+                Each day entry can be 0, 0.5, or 1 day — and moves through <strong>draft → submitted → approved</strong>.
+              </p>
+              <FeatureGrid items={[
+                { icon:'📅', title:'Weekly grid',       desc:'Each consultant sees their week with day cells. Click to toggle empty → half → full day.' },
+                { icon:'✓',  title:'Submit workflow',   desc:'Consultant submits the week → manager/admin reviews and approves per consultant.' },
+                { icon:'👁', title:'Manager view',      desc:'Managers see all team members for the selected week. Can approve all submitted entries in one click.' },
+                { icon:'🔒', title:'Approval lock',     desc:'Approved entries are locked — no edits without admin override.' },
+              ]} />
+              <CodeBlock>{`// Entry states
+empty     → no entry (0j)
+half      → 0.5j (demi-journée)
+full      → 1j
+draft     → saved but not submitted
+submitted → awaiting manager approval
+approved  → locked`}</CodeBlock>
+              <Table
+                headers={['Role', 'Can enter', 'Can submit', 'Can approve']}
+                rows={[
+                  ['consultant', '✓ own', '✓ own', '—'],
+                  ['manager',    '✓ team', '✓ team', '✓ team'],
+                  ['admin',      '✓ all',  '✓ all',  '✓ all'],
+                ]}
+              />
+            </Section>
+
+            {/* ── Leaves ── */}
+            <Section id="leaves" label="Leave management" icon="◷" color="var(--green)">
+              <p>
+                The leave module handles request submission, manager approval, and balance tracking.
+                Freelancers have a restricted set of leave types — Paid leaves and flex day are not available.
+              </p>
+              <FeatureGrid items={[
+                { icon:'📝', title:'Leave request',     desc:'Consultant selects type, dates, and submits. Working days calculated automatically (weekends excluded).' },
+                { icon:'✓',  title:'Approval workflow', desc:'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
+                { icon:'📊', title:'Balance tracking',  desc:'Paid leaves and flex day balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
+                { icon:'⚠',  title:'Impact warning',   desc:'System flags if an approved leave overlaps with an active project assignment.' },
+              ]} />
+              <Table
+                headers={['Type', 'Available to', 'Duration']}
+                rows={[
+                  ['Paid leaves',       'Employee only', 'Custom — calculated in working days'],
+                  ['Flex day',                  'Employee only', 'Custom — from flex day balance'],
+                  ['Unpaid',   'All',           'Custom'],
+                  ['Absence autorisée',     'All',           'Fixed by legal motif (death, marriage…)'],
+                ]}
+              />
               <Note color="var(--green)">
-                The console uses <strong>SSE (Server-Sent Events)</strong> to stream the Ollama response.
-                The route at <code style={{ color:'var(--cyan)' }}>/api/ai</code> proxies to Ollama and
-                reformats NDJSON chunks as SSE events.
+                <strong>Absence autorisée</strong> has a fixed legal duration per motif — the end date
+                is calculated automatically. No Paid leaves/Flex day balance is deducted.
               </Note>
             </Section>
 
-            {/* ── Commands ── */}
-            <Section id="commands" label="Commands" icon="/" color="var(--cyan)">
+            {/* ── Planning ── */}
+            <Section id="planning" label="Planning" icon="▦" color="var(--purple)">
               <p>
-                Commands pre-load specific Supabase context before sending your message. Without a command,
-                the agent loads a general staff + profitability summary. With a command, it fetches
-                the most relevant data for your question.
-              </p>
-              <CmdRow cmd="/staff.bench"      color="var(--green)"  desc="Consultants disponibles + occupancy + congés pending + résumé rentabilité" context="staff" />
-              <CmdRow cmd="/staff.all"        color="var(--green)"  desc="Tous les consultants + projets actifs + profitabilité" context="staff" />
-              <CmdRow cmd="/leave.check"      color="var(--gold)"   desc="Congés en attente de validation avec détail consultant" context="leave" />
-              <CmdRow cmd="/fin.margin"       color="var(--cyan)"   desc="Marges et TJM par projet + vue profitabilité par consultant" context="fin" />
-              <CmdRow cmd="/timesheet.week"   color="var(--purple)" desc="CRA de la semaine en cours — tous consultants" context="timesheet" />
-              <CmdRow cmd="/profit.analysis"  color="var(--pink)"   desc="Analyse rentabilité complète : marges, cibles, freelance vs salarié" context="profit" />
-              <Note color="var(--cyan)">
-                Commands use <strong>prefix matching</strong> — <code style={{ color:'var(--cyan)' }}>/staff.bench</code> and <code style={{ color:'var(--cyan)' }}>/staff.all</code> both
-                load the <code style={{ color:'var(--cyan)' }}>/staff</code> context. The sub-label after the
-                dot is passed to the agent as a hint to focus its response.
-              </Note>
-            </Section>
-
-            {/* ── Context ── */}
-            <Section id="context" label="Live context injection" icon="◉" color="var(--cyan)">
-              <p>
-                Every request to <code style={{ color:'var(--cyan)' }}>/api/ai</code> fetches fresh data from
-                Supabase and injects it into the system prompt. The agent always sees current data —
-                no stale cache, no manual sync.
-              </p>
-              <Table
-                headers={['Command', 'Tables / views queried', 'Key fields']}
-                rows={[
-                  ['/staff',    'consultant_occupancy, leave_requests, consultant_profitability', 'status, contract_type, tjm_cout_reel, tjm_cible, occupancy_rate'],
-                  ['/fin',      'project_financials, consultant_profitability',                   'tjm_vendu, marge_pct, ca_genere, marge_brute'],
-                  ['/profit',   'consultant_profitability, consultant_occupancy',                 'Full profitability + pre-computed summary aggregates'],
-                  ['/timesheet','consultant_occupancy, timesheets',                               'date, value, status — current week only'],
-                  ['/leave',    'leave_requests, consultant_occupancy',                           'pending only, limit 30'],
-                ]}
-              />
-              <CodeBlock>{`// System prompt structure (every request)
-SYSTEM_PROMPT          // role + rules + field glossary
---- LIVE DATA ---
-{ consultants: [...], profitability_summary: {...} }
---- END ---
-[conversation history]
-[new user message]`}</CodeBlock>
-            </Section>
-
-            {/* ── Profitability AI ── */}
-            <Section id="profitability" label="Profitability AI" icon="◬" color="var(--pink)">
-              <p>
-                The <code style={{ color:'var(--cyan)' }}>/profit.analysis</code> command loads the richest
-                context — the full <strong>consultant_profitability</strong> view plus pre-computed
-                aggregates — enabling questions that span finance, staffing, and contract type.
+                Two complementary views give a spatial sense of team availability and workload.
               </p>
               <FeatureGrid items={[
-                { icon:'💶', title:'Margin analysis',   desc:'"Quel consultant est le moins rentable ?" — sorted by marge_pct with cost breakdown.' },
-                { icon:'🎯', title:'Target gap',        desc:'"Qui n\'atteint pas son TJM cible ?" — compares tjm_cible vs tjm_cout, flags < 10% margin.' },
-                { icon:'🔗', title:'Freelance vs employee', desc:'"Combien de freelances et quel est leur coût moyen ?" — contract_type in all contexts.' },
-                { icon:'⚠',  title:'Risk surface',     desc:'"Quels consultants sous-occupés avec une marge faible ?" — cross-metric analysis.' },
+                { icon:'▦', title:'Weekly availability', desc:'Row per consultant, column per weekday. Colour cells show: free / on assignment / partial / leave / weekend.' },
+                { icon:'▬', title:'Monthly timeline',    desc:'Gantt-style view. Assignment bars span across days. Leave blocks appear as a separate layer.' },
+                { icon:'↓', title:'Export',             desc:'Monthly view can be exported. Format depends on deployment configuration.' },
+                { icon:'◷', title:'Live status',        desc:'Views derive status from assignments and leave_requests in real time — no manual sync needed.' },
               ]} />
-              <CodeBlock>{`// Pre-computed summary injected into /profit context
-{
-  total_consultants: 11,
-  employees: 8,
-  freelances: 3,
-  total_ca: 312000,
-  total_marge: 142000,
-  avg_marge_pct: "34.2",
-  below_target_count: 2,
-  below_target: [
-    { name: "David Mora", tjm_cout: 680, tjm_cible: 700 },
-    { name: "Lucas Martin", tjm_cout: 450, tjm_cible: 460 }
-  ]
-}`}</CodeBlock>
-            </Section>
-
-            {/* ── Privacy ── */}
-            <Section id="privacy" label="Privacy & model choice" icon="🔐" color="var(--gold)">
-              <p>
-                staff7 is designed around <strong>privacy-by-design</strong>. You choose where your
-                data goes — local model or cloud API.
-              </p>
               <Table
-                headers={['Mode', 'Data leaves your infra?', 'Setup']}
+                headers={['Colour', 'Meaning']}
                 rows={[
-                  ['Local Ollama',       'Never — model runs on your server', 'Install Ollama, set OLLAMA_HOST=http://localhost:11434'],
-                  ['Ollama Cloud',       'Yes — sent to Ollama Cloud API',    'Set OLLAMA_HOST + OLLAMA_API_KEY'],
-                  ['Any OpenAI-compat.', 'Yes — sent to third-party API',     'Point OLLAMA_HOST to any compatible endpoint'],
+                  ['<span style="color:var(--green)">Green</span>',   'Free / available'],
+                  ['<span style="color:var(--cyan)">Cyan</span>',     'On assignment (100%)'],
+                  ['<span style="color:var(--gold)">Gold</span>',     'Partial / 50%'],
+                  ['<span style="color:#ff2d6b">Pink</span>',         'On leave'],
+                  ['<span style="color:var(--text2)">Dim</span>',     'Weekend'],
                 ]}
               />
-              <CodeBlock>{`# .env.local
-OLLAMA_HOST=http://localhost:11434   # local model
-OLLAMA_MODEL=llama3.2:3b            # or mistral, phi3, etc.
-OLLAMA_API_KEY=                     # empty for local
-
-# or cloud
-OLLAMA_HOST=https://ollama.com
-OLLAMA_MODEL=kimi-k2.5:cloud
-OLLAMA_API_KEY=sk-...`}</CodeBlock>
             </Section>
 
-            {/* ── RLS ── */}
-            <Section id="rls" label="RLS & tenant isolation" icon="⬡" color="var(--cyan)">
+            {/* ── Finance ── */}
+            <Section id="finance" label="Finance & profitability" icon="◬" color="var(--pink)">
               <p>
-                The AI route does <strong>not</strong> use the Supabase service role key. It uses
-                the authenticated user's JWT — so RLS policies apply to every query the agent makes.
-              </p>
-              <CodeBlock>{`// /api/ai — JWT extraction
-const authHeader = req.headers.get('Authorization') ?? ''
-const userToken  = authHeader.replace('Bearer ', '').trim()
-
-// Supabase query headers
-const h = {
-  'apikey':        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  'Authorization': \`Bearer \${userToken}\`,  // ← user JWT, not service key
-}
-
-// Result: RLS applies → agent only sees company's data`}</CodeBlock>
-              <Note color="var(--cyan)">
-                The client sends the token via <code style={{ color:'var(--cyan)' }}>Authorization: Bearer &lt;session.access_token&gt;</code>.
-                If the session has expired, the route returns an SSE error: <em>"Session expirée — veuillez vous reconnecter."</em>
-              </Note>
-            </Section>
-
-            {/* ── MCP ── */}
-            <Section id="mcp" label="MCP integration (roadmap)" icon="◧" color="var(--purple)">
-              <p>
-                The <strong>Model Context Protocol (MCP)</strong> is planned as the next evolution of
-                the AI layer — replacing raw Supabase REST fetches with structured tool calls.
+                Financial data is <strong>admin-only</strong>. Two views expose different angles:
+                project-level margins in <strong>Finances</strong>, and consultant-level profitability
+                in <strong>Rentabilité</strong>.
               </p>
               <FeatureGrid items={[
-                { icon:'◧', title:'MCP server',       desc:'A FastAPI-based MCP server will expose tools: get_consultants, get_profitability, approve_leave, etc.' },
-                { icon:'⚡', title:'Tool calling',     desc:'The model will autonomously decide which tools to call based on the question — no manual /commands needed.' },
-                { icon:'◉', title:'Write operations', desc:'MCP will enable the agent to act: assign a consultant, approve a leave, create a project — with confirmation.' },
-                { icon:'🔐', title:'Auth passthrough', desc:'MCP server validates the JWT before executing any tool — same RLS isolation as the current REST approach.' },
+                { icon:'💶', title:'Project margins',       desc:'Daily Rate sold vs Real Daily Rate réel per project. Gross margin in € and %. Colour-coded by health threshold.' },
+                { icon:'◉',  title:'Consultant profitability', desc:'Revenue generated, gross margin, occupancy rate — per consultant, sorted by any metric.' },
+                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a Daily Rate cible per consultant. Platform shows the gap % — red if margin < 10%.' },
+                { icon:'⚠',  title:'Alert system',         desc:'Banner surfaces consultants whose target rate leaves less than 10% margin over actual cost.' },
               ]} />
-              <Note color="var(--purple)">
-                MCP integration is <strong>deferred</strong> — the current REST approach is sufficient for
-                read-only queries. FastAPI + MCP will be introduced when write operations (approve leave,
-                assign consultant) via the agent are ready.
+              <CodeBlock>{`// Gross margin per consultant
+ca_genere    = SUM(tjm_vendu × jours) on active assignments
+cout         = tjm_cout_reel × jours_generes
+marge_brute  = ca_genere - cout
+marge_pct    = marge_brute / ca_genere × 100
+
+// Margin health thresholds
+≥ 25%  →  Excellent  (green)
+15–25% →  Correct    (gold)
+< 15%  →  Watch      (pink)`}</CodeBlock>
+              <Note color="var(--pink)">
+                Financial views are gated by <code style={{ color:'var(--cyan)' }}>canViewFinancials(role)</code> —
+                only <strong>admin</strong> and <strong>super_admin</strong> can access them.
+                Managers and consultants see no financial data.
               </Note>
+              <Table
+                headers={['Metric', 'Source', 'Scope']}
+                rows={[
+                  ['Sold rate',     'project.sold_rate',           'Per project'],
+                  ['Real daily rate', 'consultant_profitability view','Per consultant (calculated)'],
+                  ['Target rate',   'consultant.target_rate',         'Per consultant (admin-set)'],
+                  ['Gross margin',  'revenue − consultant_cost',  'Per consultant / project'],
+                  ['Margin %',      'gross_margin / revenue',      'Per consultant / project'],
+                ]}
+              />
+            </Section>
+
+            {/* ── Roles ── */}
+            <Section id="roles" label="Roles & access" icon="🔐" color="var(--gold)">
+              <p>
+                Roles are stored in <code style={{ color:'var(--cyan)' }}>auth.users.app_metadata.user_role</code> —
+                not in a user-editable table. They are set at invite time and can only be changed by an admin.
+              </p>
+              <Table
+                headers={['Role', 'Scope', 'Key permissions']}
+                rows={[
+                  ['consultant', 'Own data only', 'View own assignments, submit timesheets, request leave'],
+                  ['manager',    'Team',          'View team, approve timesheets & leave, manage assignments'],
+                  ['admin',      'Company',       'Full CRUD, financial views, invite consultants'],
+                  ['super_admin','All tenants',   'Cross-tenant access, company management'],
+                ]}
+              />
+              <CodeBlock>{`// RLS JWT path (Supabase)
+auth.jwt() -> 'app_metadata' ->> 'user_role'
+
+// Guard helpers (lib/auth.ts)
+isAdmin(role)          // admin + super_admin
+canEdit(role)          // admin + manager + super_admin
+canViewFinancials(role)// admin + super_admin`}</CodeBlock>
+            </Section>
+
+            {/* ── Multi-tenancy ── */}
+            <Section id="multitenancy" label="Multi-tenancy" icon="⬡" color="var(--cyan)">
+              <p>
+                Every table has a <code style={{ color:'var(--cyan)' }}>company_id</code> column.
+                Supabase RLS policies enforce that queries only return rows matching the user's tenant.
+                No application-level filtering is required.
+              </p>
+              <CodeBlock>{`-- RLS policy example (consultants table)
+CREATE POLICY "tenant_isolation" ON consultants
+  USING (company_id = my_company_id());
+
+-- my_company_id() helper function
+CREATE FUNCTION my_company_id() RETURNS uuid AS $$
+  SELECT (auth.jwt() -> 'app_metadata' ->> 'company_id')::uuid
+$$ LANGUAGE sql STABLE;
+
+-- super_admin bypass
+CREATE POLICY "super_admin_all" ON consultants
+  USING (is_super_admin());`}</CodeBlock>
+              <FeatureGrid items={[
+                { icon:'🔐', title:'Database-level isolation', desc:'RLS policies on every table. Even direct API calls cannot access another tenant\'s data.' },
+                { icon:'🏢', title:'Company profiles',         desc:'Each tenant has a companies record. The company name is displayed in the topbar badge.' },
+                { icon:'⚡', title:'AI agent isolation',       desc:'The AI route uses the user\'s JWT — not a service key — so RLS applies to all agent queries.' },
+                { icon:'👑', title:'Super admin view',         desc:'super_admin role bypasses RLS via is_super_admin() — used for platform-level management.' },
+              ]} />
             </Section>
 
           </main>

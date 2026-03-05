@@ -204,7 +204,7 @@ export default function DocsIndexPage() {
             {[
               { icon:'◈', label:'Staffing ops',      desc:'Consultant availability, assignments, and occupancy in real time.' },
               { icon:'⏱', label:'Timesheet & CRA',   desc:'Weekly time tracking with submit/approve workflow and project allocation.' },
-              { icon:'◷', label:'Leave management',  desc:'CP, RTT, unpaid — request, approve, and track balances automatically.' },
+              { icon:'◷', label:'Leave management',  desc:'Paid leave, flex days, unpaid — request, approve, and track balances automatically.' },
               { icon:'◧', label:'Project tracking',  desc:'Client CRM, missions, financial margins. External and internal.' },
               { icon:'⚡', label:'AI console',        desc:'Ask your data in plain language. Local or cloud LLM, your choice.' },
               { icon:'🔐', label:'Privacy-by-design', desc:'Multi-tenant, RLS-enforced. Your data never leaves without your consent.' },
@@ -249,10 +249,7 @@ export default function DocsIndexPage() {
               ))}
             </div>
             <div className="beta-actions">
-              <a href="mailto:beta@staff7.io" className="beta-cta-primary">→ join the beta</a>
-              <a href="https://github.com/staff7" target="_blank" rel="noreferrer" className="beta-cta-secondary">
-                ⚡ contribute on GitHub
-              </a>
+              <a href="mailto:flux7art@gmail.com" className="beta-cta-primary">→ join the beta</a>
             </div>
           </div>
 
