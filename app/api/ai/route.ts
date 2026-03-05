@@ -3,7 +3,8 @@
 
 const SYSTEM_PROMPT = `You are STAFF7_AGENT, an embedded AI assistant inside Staffd — a SaaS platform for consulting firms to manage consultants, projects, timesheets, leaves, and financials.
 You have access to real-time context from Supabase (injected below).
-Rules: be direct, analytical, no fluff. Format numbers clearly. Use **bold** for names/numbers. Respond in the user's language (FR or EN). Never invent data.`
+Rules: be direct, analytical, no fluff. Format numbers clearly. Use **bold** for names/numbers. Respond in the user's language (FR or EN). Never invent data.
+Key fields: contract_type ('employee'|'freelance'), tjm_cout_reel (actual daily cost calculated from salary or billed rate), tjm_cible (target rate set by admin), marge_pct (gross margin %). Freelance consultants have no CP/RTT entitlements.`
 
 // ── Context fetcher ──────────────────────────────────────────
 
@@ -20,8 +21,11 @@ async function fetchContext(cmd: string, url: string, key: string): Promise<stri
   try {
     // /fin ou /fin.margin → données financières projets
     if (cmd.startsWith('/fin')) {
-      const financials = await q('project_financials', '*')
-      return JSON.stringify({ financials })
+      const [financials, profitability] = await Promise.all([
+        q('project_financials', '*'),
+        q('consultant_profitability', 'consultant_id,name,contract_type,tjm_cout,tjm_cible,ca_genere,marge_brute,marge_pct,occupancy_rate'),
+      ])
+      return JSON.stringify({ financials, profitability })
     }
 
     // /timesheet ou /timesheet.week → CRA de la semaine
@@ -32,7 +36,7 @@ async function fetchContext(cmd: string, url: string, key: string): Promise<stri
       const from = mon.toISOString().slice(0, 10)
       const to   = new Date(mon.getTime() + 4 * 86400000).toISOString().slice(0, 10)
       const [consultants, timesheets] = await Promise.all([
-        q('consultant_occupancy', 'id,name,role'),
+        q('consultant_occupancy', 'id,name,role,contract_type'),
         q('timesheets', 'consultant_id,date,value,status', `date=gte.${from}&date=lte.${to}`),
       ])
       return JSON.stringify({ consultants, timesheets, week: { from, to } })
@@ -42,14 +46,14 @@ async function fetchContext(cmd: string, url: string, key: string): Promise<stri
     if (cmd.startsWith('/leave')) {
       const [leaves, consultants] = await Promise.all([
         q('leave_requests', 'id,consultant_id,type,start_date,end_date,days,status', 'status=eq.pending&limit=30'),
-        q('consultant_occupancy', 'id,name,role'),
+        q('consultant_occupancy', 'id,name,role,contract_type'),
       ])
       return JSON.stringify({ pending_leaves: leaves, consultants })
     }
 
     // /staff.bench, /staff.all ou par défaut → consultants + occupancy + congés pending
     const [consultants, leaves] = await Promise.all([
-      q('consultant_occupancy', 'id,name,role,status,occupancy_rate,leave_days_left,project_names'),
+      q('consultant_occupancy', 'id,name,role,status,contract_type,occupancy_rate,leave_days_left,tjm_cout_reel,tjm_cible,project_names'),
       q('leave_requests', 'id,consultant_id,type,start_date,end_date,days,status', 'status=eq.pending&limit=20'),
     ])
     return JSON.stringify({ consultants, pending_leaves: leaves })
