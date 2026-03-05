@@ -6,7 +6,7 @@
  */
 
 'use client'
-
+import { useActiveTenant } from './tenant-context'
 import { useEffect, useState } from 'react'
 import { supabase }            from './supabase'
 import type {
@@ -40,8 +40,8 @@ export interface ConsultantProfitability {
   initials:        string
   avatar_color:    string | null
   contract_type:   ContractType
-  tjm_cout:        number | null   // tjm_cout_reel calculé selon contrat
-  tjm_cible:       number | null   // objectif commercial
+  tjm_cout:        number | null
+  tjm_cible:       number | null
   occupancy_rate:  number | null
   status:          string
   nb_assignments:  number
@@ -75,14 +75,11 @@ export interface ConsultantInput {
   stack:                string[]
   status:               string
   contract_type:        ContractType
-  // employee
   salaire_annuel_brut?: number
-  charges_pct?:         number    // défaut 42
-  jours_travailles?:    number    // défaut 218
-  // freelance
+  charges_pct?:         number
+  jours_travailles?:    number
   tjm_facture?:         number
-  // commun
-  tjm?:                 number    // fallback legacy
+  tjm?:                 number
   tjm_cible?:           number
   leave_days_total?:    number
 }
@@ -94,7 +91,7 @@ export interface AssignmentInput {
   allocation:              number
   start_date:              string
   end_date:                string
-  tjm_facture_override?:   number   // freelance — tarif spécifique à cette mission
+  tjm_facture_override?:   number
 }
 
 export interface ProjectInput {
@@ -128,13 +125,13 @@ export interface Timesheet {
   id:           string
   consultantId: string
   projectId:    string | null
-  date:         string    // 'YYYY-MM-DD'
-  value:        number    // 0 | 0.5 | 1
+  date:         string
+  value:        number
   status:       'draft' | 'submitted' | 'approved'
 }
 
 // ══════════════════════════════════════════════════════════════
-// MAPPERS — snake_case Supabase → camelCase TypeScript
+// MAPPERS
 // ══════════════════════════════════════════════════════════════
 
 function toConsultant(row: Record<string, unknown>): Consultant {
@@ -155,7 +152,6 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     rttTotal:            row.rtt_total as number | undefined,
     rttTaken:            row.rtt_taken as number | undefined,
     rttLeft:             row.rtt_left as number | undefined,
-    // Contrat & coût
     contractType:        (row.contract_type as ContractType) ?? 'employee',
     tjm:                 row.tjm as number | undefined,
     tjmFacture:          row.tjm_facture as number | undefined,
@@ -234,7 +230,6 @@ function toTimesheet(row: Record<string, unknown>): Timesheet {
 
 // ══════════════════════════════════════════════════════════════
 // HOOK GÉNÉRIQUE useSupabase
-// Gère loading / error / cleanup (évite setState sur composant démonté)
 // ══════════════════════════════════════════════════════════════
 
 function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
@@ -244,15 +239,12 @@ function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
 
   useEffect(() => {
     let cancelled = false
-
     setLoading(true)
     setError(null)
-
     fetcher()
       .then(d  => { if (!cancelled) { setData(d);          setError(null)    } })
       .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
       .finally(()=> { if (!cancelled) setLoading(false) })
-
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
@@ -264,69 +256,56 @@ function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
 // QUERIES — CONSULTANTS
 // ══════════════════════════════════════════════════════════════
 
-/** Liste complète via vue consultant_occupancy (avec occupancy_rate calculé) */
 export function useConsultants(dep?: number) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('consultant_occupancy')
-      .select('*')
-      .order('name')
+    let q = supabase.from('consultant_occupancy').select('*').order('name')
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map(toConsultant)
-  }, [dep])
+  }, [dep, activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
 // QUERIES — PROJETS
 // ══════════════════════════════════════════════════════════════
 
-/** Projets avec équipe assignée (inclus dans assignments → consultants) */
 export function useProjects(dep?: number, includeArchived = false) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    let query = supabase
+    let q = supabase
       .from('projects')
-      .select(`
-        *,
-        assignments (
-          consultant_id,
-          consultants ( id, name, initials, avatar_color )
-        )
-      `)
+      .select(`*, assignments ( consultant_id, consultants ( id, name, initials, avatar_color ) )`)
       .order('end_date')
-    if (!includeArchived) query = query.neq('status', 'archived')
-    const { data, error } = await query
+    if (!includeArchived) q = q.neq('status', 'archived')
+    if (activeTenantId)   q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map((row: any) => {
       const team = (row.assignments as any[])
         .map((a: any) => a.consultants)
         .filter(Boolean)
         .map((c: any) => ({
-          id:          c.id           as string,
-          name:        c.name         as string,
-          initials:    c.initials     as string,
-          avatarColor: c.avatar_color as string,
+          id: c.id as string, name: c.name as string,
+          initials: c.initials as string, avatarColor: c.avatar_color as string,
         }))
-      return toProject({
-        ...row,
-        consultant_ids: team.map((c: any) => c.id),
-        team,
-      })
+      return toProject({ ...row, consultant_ids: team.map((c: any) => c.id), team })
     })
-  }, [dep, includeArchived])
+  }, [dep, includeArchived, activeTenantId])
 }
 
-/** Tous les assignments (pour la grille disponibilités / timeline) */
 export function useAssignments() {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*, projects(name)')
+    let q = supabase.from('assignments').select('*, projects(name)')
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return data ?? []
-  }, [])
+  }, [activeTenantId])
 }
 
-/** Assignments enrichis d'un projet spécifique */
 export function useProjectAssignments(projectId: string, dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -348,17 +327,17 @@ export function useProjectAssignments(projectId: string, dep?: number) {
       avatarColor:  row.consultants?.avatar_color ?? 'green',
     } satisfies AssignmentWithConsultant))
   }, [projectId, dep])
+  // Pas de filtre activeTenantId ici — scoped par projectId, pas besoin de cross-tenant
 }
 
-/**
- * Map consultantId → projets actifs
- * Un seul appel Supabase pour toute la grille timesheets
- */
 export function useConsultantProjectsMap() {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('assignments')
       .select('consultant_id, projects!inner ( id, name, status )')
+    if (activeTenantId) q = (q as any).eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
 
     const map: Record<string, { id: string; name: string }[]> = {}
@@ -373,44 +352,40 @@ export function useConsultantProjectsMap() {
       }
     }
     return map
-  }, [])
+  }, [activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
 // QUERIES — CLIENTS
 // ══════════════════════════════════════════════════════════════
 
-/** Liste clients avec comptage projets actifs / total */
 export function useClients(dep?: number) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*, projects!client_id (id, status)')
-      .order('name')
+    let q = supabase.from('clients').select('*, projects!client_id (id, status)').order('name')
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map((row: any) => toClient({
       ...row,
       active_projects: (row.projects as any[]).filter((p: any) => p.status === 'active').length,
       total_projects:  (row.projects as any[]).length,
     }))
-  }, [dep])
+  }, [dep, activeTenantId])
 }
 
-/** Client unique par id */
 export function useClient(id: string, dep?: number) {
+  // Pas de filtre activeTenantId — scoped par id
   return useSupabase(async () => {
     const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
-      .single()
+      .from('clients').select('*').eq('id', id).single()
     if (error) throw new Error(error.message)
     return toClient(data)
   }, [id, dep])
 }
 
-/** Projets liés à un client (page détail client) */
 export function useClientProjects(clientId: string, dep?: number) {
+  // Pas de filtre activeTenantId — scoped par clientId
   return useSupabase(async () => {
     const { data, error } = await supabase
       .from('projects')
@@ -429,85 +404,98 @@ export function useClientProjects(clientId: string, dep?: number) {
 // QUERIES — CONGÉS
 // ══════════════════════════════════════════════════════════════
 
-/** Toutes les demandes de congé (filtrée par RLS selon le rôle) */
 export function useLeaveRequests(dep?: any) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('leave_requests')
       .select('*, consultants (name)')
       .order('created_at', { ascending: false })
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map((row: any) => toLeaveRequest({
       ...row,
       consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
     }))
-  }, [dep])
+  }, [dep, activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
 // QUERIES — TIMESHEETS
 // ══════════════════════════════════════════════════════════════
 
-/**
- * Timesheets lun → ven de la semaine donnée
- * Refetch automatique quand `monday` change
- */
 export function useTimesheets(monday: Date) {
+  const { activeTenantId } = useActiveTenant()
   const from = monday.toISOString().slice(0, 10)
   const to   = new Date(monday.getTime() + 4 * 86_400_000).toISOString().slice(0, 10)
-
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('timesheets')
-      .select('*')
-      .gte('date', from)
-      .lte('date', to)
-      .order('date')
+    let q = supabase.from('timesheets').select('*').gte('date', from).lte('date', to).order('date')
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map(toTimesheet)
-  }, [from])
+  }, [from, activeTenantId])
+}
+
+export function useInternalProjectTypes() {
+  const { activeTenantId } = useActiveTenant()
+  return useSupabase(async () => {
+    let q = supabase
+      .from('projects')
+      .select('id, name')
+      .eq('is_internal', true)
+      .neq('status', 'archived')
+      .order('name')
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+    return (data ?? []) as { id: string; name: string }[]
+  }, [activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
 // QUERIES — FINANCE
 // ══════════════════════════════════════════════════════════════
 
-/** Marges par projet — vue project_financials (admin only via RLS) */
 export function useProjectFinancials() {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('project_financials')
-      .select('*')
-      .order('marge_brute_totale', { ascending: false })
+    let q = supabase.from('project_financials').select('*').order('marge_brute_totale', { ascending: false })
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []) as ProjectFinancials[]
-  })
+  }, [activeTenantId])
 }
 
-/** Rentabilité par consultant — vue consultant_profitability (admin only via RLS) */
 export function useConsultantProfitability() {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('consultant_profitability')
-      .select('*')
-      .order('ca_genere', { ascending: false })
+    let q = supabase.from('consultant_profitability').select('*').order('ca_genere', { ascending: false })
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []) as ConsultantProfitability[]
-  })
+  }, [activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
 // QUERIES — DASHBOARD
 // ══════════════════════════════════════════════════════════════
 
-/** KPIs globaux (3 requêtes parallèles) */
 export function useKpi(): { data: KpiData | null; loading: boolean; error: string | null } {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const [consultantsRes, projectsRes, leavesRes] = await Promise.all([
-      supabase.from('consultants').select('status, occupancy_rate'),
-      supabase.from('projects').select('status'),
-      supabase.from('leave_requests').select('status'),
-    ])
+    let qC = supabase.from('consultants').select('status, occupancy_rate')
+    let qP = supabase.from('projects').select('status')
+    let qL = supabase.from('leave_requests').select('status')
+    if (activeTenantId) {
+      qC = qC.eq('company_id', activeTenantId)
+      qP = qP.eq('company_id', activeTenantId)
+      qL = qL.eq('company_id', activeTenantId)
+    }
+    const [consultantsRes, projectsRes, leavesRes] = await Promise.all([qC, qP, qL])
     if (consultantsRes.error) throw new Error(consultantsRes.error.message)
     if (projectsRes.error)    throw new Error(projectsRes.error.message)
     if (leavesRes.error)      throw new Error(leavesRes.error.message)
@@ -527,17 +515,19 @@ export function useKpi(): { data: KpiData | null; loading: boolean; error: strin
       pendingLeaves:     leaves.filter((l: any)   => l.status === 'pending').length,
       occupancyRate:     avgOccupancy,
     } satisfies KpiData
-  })
+  }, [activeTenantId])
 }
 
-/** Flux d'activité récente */
 export function useActivity(limit = 10) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('activity_feed')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+    const { data, error } = await q
     if (error) throw new Error(error.message)
     return (data ?? []).map((row: any) => ({
       id:      row.id as string,
@@ -546,7 +536,7 @@ export function useActivity(limit = 10) {
       time:    row.created_at as string,
       read:    row.read as boolean,
     } satisfies ActivityItem))
-  })
+  }, [limit, activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -634,7 +624,6 @@ export async function createLeaveRequest(data: {
   if (error) throw new Error(error.message)
 }
 
-/** Approuver + incrémenter le compteur CP ou RTT */
 export async function approveLeave(id: string) {
   const { data: req, error: fetchErr } = await supabase
     .from('leave_requests')
@@ -674,7 +663,6 @@ export async function refuseLeave(id: string) {
 // MUTATIONS — TIMESHEETS
 // ══════════════════════════════════════════════════════════════
 
-/** Upsert une entrée timesheet (conflict sur consultant_id + date + project_id) */
 export async function upsertTimesheet(params: {
   consultantId: string
   projectId:    string
@@ -713,7 +701,6 @@ export async function upsertTimesheet(params: {
   return toTimesheet(data as Record<string, unknown>)
 }
 
-/** Soumettre des timesheets draft → submitted */
 export async function submitTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
@@ -723,7 +710,6 @@ export async function submitTimesheets(ids: string[]): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-/** Approuver des timesheets submitted → approved */
 export async function approveTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
@@ -731,23 +717,6 @@ export async function approveTimesheets(ids: string[]): Promise<void> {
     .in('id', ids)
     .eq('status', 'submitted')
   if (error) throw new Error(error.message)
-}
-
-/**
- * Projets internes (is_internal = true) — utilisés comme types dans les timesheets
- * Remplace la table internal_project_types qui n'existe pas
- */
-export function useInternalProjectTypes() {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('id, name')
-      .eq('is_internal', true)
-      .neq('status', 'archived')
-      .order('name')
-    if (error) throw new Error(error.message)
-    return (data ?? []) as { id: string; name: string }[]
-  }, [])
 }
 
 // ══════════════════════════════════════════════════════════════
