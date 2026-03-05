@@ -2,7 +2,7 @@
 
 import { supabase } from './supabase'
 
-export type UserRole = 'super_admin' | 'admin' | 'manager' | 'consultant' | 'viewer'
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'consultant' | 'freelance' | 'viewer'
 
 export interface AuthUser {
   id:        string
@@ -28,7 +28,9 @@ export async function signOut() {
 export async function getUser(): Promise<AuthUser | null> {
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
+
   const role = (user.app_metadata?.user_role ?? 'viewer') as UserRole
+
   return {
     id:        user.id,
     email:     user.email ?? '',
@@ -64,9 +66,11 @@ export function useAuth() {
 }
 
 // ── Helpers de rôle ───────────────────────────────────────────
-// super_admin > admin > manager > consultant > viewer
-export const isSuperAdmin      = (role?: UserRole) => role === 'super_admin'
-export const isAdmin           = (role?: UserRole) => role === 'super_admin' || role === 'admin'
-export const isManager         = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
-export const canEdit           = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
-export const canViewFinancials = (role?: UserRole) => role === 'super_admin' || role === 'admin'
+// super_admin > admin > manager > consultant | freelance > viewer
+export const isSuperAdmin        = (role?: UserRole) => role === 'super_admin'
+export const isAdmin             = (role?: UserRole) => role === 'super_admin' || role === 'admin'
+export const isManager           = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
+export const canEdit             = (role?: UserRole) => role === 'super_admin' || role === 'admin' || role === 'manager'
+export const canViewFinancials   = (role?: UserRole) => role === 'super_admin' || role === 'admin'
+export const isConsultantOrAbove = (role?: UserRole) => role === 'consultant' || role === 'freelance' || canEdit(role)
+export const canViewOwnInvoices  = (role?: UserRole) => role === 'freelance' || canEdit(role)

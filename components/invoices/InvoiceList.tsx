@@ -1,0 +1,306 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter }           from 'next/navigation'
+import { supabase }            from '@/lib/supabase'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+
+interface Invoice {
+  id:                  string
+  invoice_number:      string
+  invoice_date:        string
+  due_date:            string | null
+  status:              InvoiceStatus
+  subtotal:            number
+  tva_rate:            number
+  tva_amount:          number
+  total_ttc:           number
+  source_type:         string
+  source_period_start: string | null
+  source_period_end:   string | null
+  client_name:         string | null
+  project_name:        string | null
+  consultant_name:     string | null
+  is_overdue:          boolean
+  days_overdue:        number | null
+  paid_at:             string | null
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const STATUS: Record<InvoiceStatus, { label: string; color: string; bg: string }> = {
+  draft:     { label: 'Draft',     color: 'var(--text2)', bg: 'rgba(255,255,255,.05)' },
+  sent:      { label: 'Sent',      color: 'var(--cyan)',  bg: 'rgba(0,229,255,.08)'   },
+  paid:      { label: 'Paid',      color: 'var(--green)', bg: 'rgba(0,255,136,.08)'   },
+  overdue:   { label: 'Overdue',   color: 'var(--pink)',  bg: 'rgba(255,45,107,.08)'  },
+  cancelled: { label: 'Cancelled', color: 'var(--text2)', bg: 'rgba(255,255,255,.03)' },
+}
+
+const SOURCE_ICON: Record<string, string> = {
+  timesheet: '⏱',
+  project:   '◧',
+  manual:    '✎',
+}
+
+function fmt(n: number) {
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: InvoiceStatus }) {
+  const s = STATUS[status]
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+      padding: '2px 8px', borderRadius: 2,
+      color: s.color, background: s.bg, border: '1px solid ' + s.color + '33',
+    }}>
+      {s.label}
+    </span>
+  )
+}
+
+function KpiCard({ label, value, sub, color = 'var(--text)' }: {
+  label: string; value: string; sub?: string; color?: string
+}) {
+  return (
+    <div style={{ padding: '20px 24px', background: 'var(--bg2)',
+      border: '1px solid var(--border)', borderRadius: 4 }}>
+      <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
+        textTransform: 'uppercase', marginBottom: 10 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color, letterSpacing: -1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
+}
+
+// ── Mock data (replace with Supabase query) ───────────────────────────────────
+
+const MOCK: Invoice[] = [
+  {
+    id: '1', invoice_number: 'NEX-2026-0003', invoice_date: '2026-03-01',
+    due_date: '2026-03-31', status: 'sent', subtotal: 12000, tva_rate: 20,
+    tva_amount: 2400, total_ttc: 14400, source_type: 'timesheet',
+    source_period_start: '2026-02-01', source_period_end: '2026-02-28',
+    client_name: 'Acme Corp', project_name: 'Site refonte 2026',
+    consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: null,
+  },
+  {
+    id: '2', invoice_number: 'NEX-2026-0002', invoice_date: '2026-02-01',
+    due_date: '2026-02-15', status: 'overdue', subtotal: 9600, tva_rate: 20,
+    tva_amount: 1920, total_ttc: 11520, source_type: 'project',
+    source_period_start: null, source_period_end: null,
+    client_name: 'Studio Bleu', project_name: 'Branding Q1',
+    consultant_name: 'David Mora', is_overdue: true, days_overdue: 18, paid_at: null,
+  },
+  {
+    id: '3', invoice_number: 'NEX-2026-0001', invoice_date: '2026-01-15',
+    due_date: '2026-02-14', status: 'paid', subtotal: 7500, tva_rate: 20,
+    tva_amount: 1500, total_ttc: 9000, source_type: 'timesheet',
+    source_period_start: '2026-01-01', source_period_end: '2026-01-31',
+    client_name: 'NovaTech', project_name: 'API integration',
+    consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: '2026-02-10',
+  },
+  {
+    id: '4', invoice_number: 'NEX-2026-0004', invoice_date: '2026-03-05',
+    due_date: null, status: 'draft', subtotal: 4800, tva_rate: 20,
+    tva_amount: 960, total_ttc: 5760, source_type: 'manual',
+    source_period_start: null, source_period_end: null,
+    client_name: 'Freelance client', project_name: null,
+    consultant_name: 'Sophie Chen', is_overdue: false, days_overdue: null, paid_at: null,
+  },
+]
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function InvoiceList() {
+  const router = useRouter()
+  const [invoices, setInvoices] = useState<Invoice[]>(MOCK)
+  const [filter,   setFilter]   = useState<InvoiceStatus | 'all'>('all')
+
+  // Uncomment to load from Supabase:
+  // useEffect(() => {
+  //   supabase.from('invoice_list').select('*').order('invoice_date', { ascending: false })
+  //     .then(({ data }) => { if (data) setInvoices(data as Invoice[]) })
+  // }, [])
+
+  const filtered = filter === 'all' ? invoices : invoices.filter(i => i.status === filter)
+
+  const totalBilled   = invoices.reduce((s, i) => s + i.total_ttc, 0)
+  const totalPaid     = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
+  const totalPending  = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total_ttc, 0)
+  const overdueCount  = invoices.filter(i => i.is_overdue).length
+
+  return (
+    <>
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+        <KpiCard label="Total billed"  value={fmt(totalBilled)}   sub={invoices.length + ' invoices'} />
+        <KpiCard label="Collected"     value={fmt(totalPaid)}     color="var(--green)" />
+        <KpiCard label="Pending"       value={fmt(totalPending)}  color="var(--cyan)" sub="awaiting payment" />
+        <KpiCard label="Overdue"       value={String(overdueCount)}
+          color={overdueCount > 0 ? 'var(--pink)' : 'var(--text2)'}
+          sub={overdueCount > 0 ? 'requires action' : 'all good'} />
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(['all', 'draft', 'sent', 'paid', 'overdue', 'cancelled'] as const).map(s => {
+            const cfg   = s !== 'all' ? STATUS[s] : null
+            const active = filter === s
+            return (
+              <button key={s} onClick={() => setFilter(s)} style={{
+                padding: '5px 12px', borderRadius: 3, fontSize: 10, cursor: 'pointer',
+                fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1, textTransform: 'uppercase',
+                border:     active ? '1px solid ' + (cfg?.color ?? 'var(--text)') : '1px solid var(--border)',
+                background: active ? 'var(--bg3)' : 'none',
+                color:      active ? (cfg?.color ?? 'var(--text)') : 'var(--text2)',
+              }}>
+                {s === 'all' ? 'All' : cfg!.label}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          onClick={() => router.push('/invoices/new')}
+          style={{
+            background: 'var(--green)', color: '#060a06', border: 'none',
+            padding: '8px 20px', borderRadius: 3, fontSize: 11, fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
+          }}>
+          + New invoice
+        </button>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: 'auto' }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Number</th>
+              <th>Client</th>
+              <th>Project</th>
+              <th>Date</th>
+              <th>Due</th>
+              <th style={{ textAlign: 'right' }}>Subtotal HT</th>
+              <th style={{ textAlign: 'right' }}>VAT</th>
+              <th style={{ textAlign: 'right' }}>Total TTC</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(inv => (
+              <tr key={inv.id}>
+
+                {/* Number + source */}
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <span className="td-primary">{inv.invoice_number}</span>
+                    <span style={{ fontSize: 9, color: 'var(--text2)' }}>
+                      {SOURCE_ICON[inv.source_type] ?? '—'} {inv.source_type}
+                      {inv.source_period_start && (' · ' + fmtDate(inv.source_period_start))}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Client */}
+                <td style={{ color: inv.client_name ? 'var(--text)' : 'var(--text2)' }}>
+                  {inv.client_name ?? '—'}
+                </td>
+
+                {/* Project */}
+                <td style={{ color: inv.project_name ? 'var(--cyan)' : 'var(--text2)', fontSize: 11 }}>
+                  {inv.project_name ?? '—'}
+                </td>
+
+                {/* Date */}
+                <td style={{ color: 'var(--text2)', fontSize: 11 }}>
+                  {fmtDate(inv.invoice_date)}
+                </td>
+
+                {/* Due + overdue */}
+                <td>
+                  {inv.due_date ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{
+                        fontSize: 11,
+                        color:      inv.is_overdue ? 'var(--pink)' : 'var(--text2)',
+                        fontWeight: inv.is_overdue ? 700 : 400,
+                      }}>
+                        {fmtDate(inv.due_date)}
+                      </span>
+                      {inv.is_overdue && (
+                        <span style={{ fontSize: 9, color: 'var(--pink)' }}>
+                          {'⚠ ' + inv.days_overdue + 'd late'}
+                        </span>
+                      )}
+                      {inv.paid_at && (
+                        <span style={{ fontSize: 9, color: 'var(--green)' }}>
+                          {'✓ paid ' + fmtDate(inv.paid_at)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span style={{ color: 'var(--text2)', opacity: 0.4 }}>—</span>
+                  )}
+                </td>
+
+                {/* Amounts */}
+                <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>
+                  {fmt(inv.subtotal)}
+                </td>
+                <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'var(--text2)' }}>
+                  {fmt(inv.tva_amount)}
+                </td>
+                <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono, monospace)', fontSize: 13, fontWeight: 700 }}>
+                  {fmt(inv.total_ttc)}
+                </td>
+
+                {/* Status */}
+                <td><StatusBadge status={inv.status} /></td>
+
+                {/* Actions */}
+                <td>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button style={{
+                      background: 'none', border: '1px solid var(--border)',
+                      color: 'var(--cyan)', fontSize: 9, padding: '3px 8px',
+                      borderRadius: 2, cursor: 'pointer',
+                      fontFamily: 'var(--font-mono, monospace)',
+                    }}>
+                      preview
+                    </button>
+                    <button style={{
+                      background: 'none', border: '1px solid var(--border)',
+                      color: 'var(--text2)', fontSize: 9, padding: '3px 8px',
+                      borderRadius: 2, cursor: 'pointer',
+                      fontFamily: 'var(--font-mono, monospace)',
+                    }}>
+                      PDF ↓
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {filtered.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text2)', fontSize: 12 }}>
+          No invoices matching this filter.
+        </div>
+      )}
+    </>
+  )
+}
