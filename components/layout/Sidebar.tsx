@@ -15,23 +15,30 @@ export function Sidebar() {
   const t        = useTranslations('nav')
   const { user } = useAuthContext()
   const router   = useRouter()
+
+  // ── Rôles ────────────────────────────────────────────────
   const isSuperAdmin     = user?.role === 'super_admin'
-  const isAdminOrManager = isSuperAdmin || user?.role === 'admin' || user?.role === 'manager'
+  const isAdmin          = user?.role === 'admin'
+  const isManager        = user?.role === 'manager'
+  const isConsultant     = user?.role === 'consultant'
+  const isAdminOrManager = isSuperAdmin || isAdmin || isManager
+
+  const roleLabel =
+    isSuperAdmin ? 'Super Admin' :
+    isAdmin      ? 'Admin' :
+    isManager    ? 'Manager' :
+    isConsultant ? 'Consultant' : 'Viewer'
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
     : '??'
 
-const roleLabel =
-  isSuperAdmin           ? 'Super Admin' :
-  user?.role === 'admin'      ? 'Admin' :
-  user?.role === 'manager'    ? 'Manager' :
-  user?.role === 'consultant' ? 'Consultant' : 'Viewer'
-
+  // ── Badge congés pending ─────────────────────────────────
   const [pendingCount, setPendingCount] = useState(0)
   const [command, setCommand] = useState('')
 
   useEffect(() => {
+    if (!isAdminOrManager) return  // consultant ne voit pas le badge
     const fetchPending = async () => {
       const { count } = await supabase
         .from('leave_requests')
@@ -43,15 +50,11 @@ const roleLabel =
 
     const channel = supabase
       .channel('leave_requests_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'leave_requests',
-      }, () => fetchPending())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests' }, fetchPending)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [isAdminOrManager])
 
   const handleLogout = async () => {
     await signOut()
@@ -60,59 +63,80 @@ const roleLabel =
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
+  // ══════════════════════════════════════════════════════════
+  // NAV — filtrée par rôle
+  // ══════════════════════════════════════════════════════════
+
   const NAV = [
+    // ── Overview (tous les rôles) ──
     {
       group: t('overview'),
       items: [
         { label: t('dashboard'), icon: '⬡', href: p('/dashboard') },
       ],
     },
+
+    // ── Team ──────────────────────────────────────────────
     {
       group: t('team'),
       items: [
-        { label: t('consultants'),    icon: '◈', href: p('/consultants') },
-        { label: t('disponibilites'), icon: '◫', href: p('/availability') },
-        { label: t('conges'),         icon: '◷', href: p('/leaves'), badge: (isAdminOrManager) && pendingCount > 0 ? pendingCount : undefined},
-      ],
-    },
-    {
-      group: t('activity'), // "Activity" dans ton fichier i18n
-      items: [
-        { 
-          label: t('timesheets'), // "Timesheets" ou "CRA"
-          icon: '⏱', 
-          href: p('/timesheets'),
-          // Optionnel : badge si le CRA de la semaine n'est pas rempli
+        // Consultants : visible par tous (pour le consultant = sa fiche)
+        { label: t('consultants'), icon: '◈', href: p('/consultants') },
+
+        // Availability : admin/manager uniquement
+        ...(!isConsultant ? [
+          { label: t('disponibilites'), icon: '◫', href: p('/availability') },
+        ] : []),
+
+        // Congés : tout le monde (le consultant ne voit que les siens via RLS)
+        {
+          label:  t('conges'),
+          icon:   '◷',
+          href:   p('/leaves'),
+          badge:  isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
         },
       ],
     },
+
+    // ── Activity (tous les rôles) ──
     {
+      group: t('activity'),
+      items: [
+        { label: t('timesheets'), icon: '⏱', href: p('/timesheets') },
+      ],
+    },
+
+    // ── Projects : admin/manager uniquement ──
+    ...(!isConsultant ? [{
       group: t('projects'),
       items: [
         { label: t('projets'),  icon: '◧', href: p('/projects') },
         { label: t('clients'),  icon: '◉', href: p('/clients') },
         { label: t('timeline'), icon: '▤', href: p('/timeline') },
       ],
-    },
-    {
+    }] : []),
+
+    // ── Admin : admin/manager + super_admin ──
+    ...(isAdminOrManager ? [{
       group: t('admin'),
       items: [
-        ...(isAdminOrManager  ? [{ label: 'Finances', icon: '$', href: p('/financials') }] : []),
-        { label: t('parametres'), icon: '◎', href: p('/settings') },
+        { label: 'Finances',     icon: '$', href: p('/financials') },
+        { label: t('parametres'),icon: '◎', href: p('/settings') },
       ],
-    },
+    }] : []),
 
-    {
-    group: ('agents'),
-    items: [
-      { 
-        label: 'Agentic AI', 
-        icon: '⚡', 
-        href: p('/ai'), 
-        badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span> 
-      },
-    ],
-  },
+    // ── Agents AI : admin/manager + super_admin ──
+    ...(isAdminOrManager ? [{
+      group: 'Agents',
+      items: [
+        {
+          label: 'Agentic AI',
+          icon:  '⚡',
+          href:  p('/ai'),
+          badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span>,
+        },
+      ],
+    }] : []),
   ]
 
   return (
@@ -141,45 +165,41 @@ const roleLabel =
         ))}
       </nav>
 
-{/* --- NOUVEAU : AGENTIC COMMAND BAR --- */}
-      <div className="ai-command-zone" style={{ padding: '0 16px', marginBottom: 12 }}>
-        <div style={{ 
-          background: 'rgba(255, 45, 107, 0.05)', 
-          border: '1px solid rgba(255, 45, 107, 0.2)',
-          borderRadius: '4px',
-          padding: '8px 12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <span style={{ color: 'var(--pink)', fontSize: 10, fontWeight: 'bold' }}>&gt;_</span>
-          <input 
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            placeholder="Ask agent..." 
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              outline: 'none', 
-              color: '#fff', 
-              fontSize: 11,
-              width: '100%',
-              fontFamily: 'var(--font)'
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                // Ici tu rediriges vers /ai avec la query ou tu ouvres un panel
-                router.push(`${p('/ai')}?q=${encodeURIComponent(command)}` as any)
-                setCommand('')
-              }
-            }}
-          />
+      {/* ── Command bar AI (admin/manager uniquement) ── */}
+      {isAdminOrManager && (
+        <div style={{ padding: '0 16px', marginBottom: 12 }}>
+          <div style={{
+            background: 'rgba(255,45,107,0.05)',
+            border: '1px solid rgba(255,45,107,0.2)',
+            borderRadius: 4, padding: '8px 12px',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ color: 'var(--pink)', fontSize: 10, fontWeight: 'bold' }}>&gt;_</span>
+            <input
+              value={command}
+              onChange={e => setCommand(e.target.value)}
+              placeholder="Ask agent..."
+              style={{
+                background: 'none', border: 'none', outline: 'none',
+                color: '#fff', fontSize: 11, width: '100%',
+                fontFamily: 'var(--font)',
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  router.push(`${p('/ai')}?q=${encodeURIComponent(command)}` as any)
+                  setCommand('')
+                }
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="sidebar-footer">
         <div className="user-card">
-          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11 }}>{initials}</div>
+          <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11 }}>
+            {initials}
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
               {user?.email ?? '—'}

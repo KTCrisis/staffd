@@ -1,23 +1,25 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useTranslations, useLocale} from 'next-intl'
-import { Topbar } from '@/components/layout/Topbar'
-import { Panel, StatRow } from '@/components/ui'
-import { Avatar } from '@/components/ui/Avatar'
+import { useTranslations, useLocale }                from 'next-intl'
+import { Topbar }                                    from '@/components/layout/Topbar'
+import { Panel, StatRow }                            from '@/components/ui'
+import { Avatar }                                    from '@/components/ui/Avatar'
 import {
   useTimesheets,
   useConsultants,
   useConsultantProjectsMap,
+  useInternalProjectTypes,
   upsertTimesheet,
   submitTimesheets,
   approveTimesheets,
-  useInternalProjectTypes
 } from '@/lib/data'
 import type { Timesheet } from '@/lib/data'
 import { useAuth, isAdmin, canEdit } from '@/lib/auth'
 
-// ── Helpers ──────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
 
 function getMondayOf(date: Date): Date {
   const d = new Date(date)
@@ -47,6 +49,10 @@ function fmtDay(d: Date) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════════════════════════
+
 type TSStatus = 'draft' | 'submitted' | 'approved'
 
 const VALUES = [
@@ -67,62 +73,80 @@ function dotColor(s: TSStatus) {
   return 'var(--text3)'
 }
 
-// Remplace Badge — Badge ne supporte pas les statuts timesheets
+// ══════════════════════════════════════════════════════════════
+// PILL — statut timesheet
+// ══════════════════════════════════════════════════════════════
+
 function Pill({ status }: { status: TSStatus }) {
   const cfg: Record<TSStatus, { bg: string; color: string }> = {
-    draft: { bg: 'rgba(100,100,100,.2)', color: 'var(--text3)' },
-    submitted: { bg: 'rgba(255,209,102,.15)', color: 'var(--gold)' },
-    approved: { bg: 'rgba(0,255,136,.12)', color: 'var(--green)' },
+    draft:     { bg: 'rgba(100,100,100,.2)',    color: 'var(--text3)' },
+    submitted: { bg: 'rgba(255,209,102,.15)',   color: 'var(--gold)' },
+    approved:  { bg: 'rgba(0,255,136,.12)',     color: 'var(--green)' },
   }
   return (
-    <span
-      style={{
-        fontSize: 9,
-        fontWeight: 700,
-        letterSpacing: '.06em',
-        textTransform: 'uppercase',
-        padding: '2px 6px',
-        borderRadius: 4,
-        ...cfg[status],
-      }}
-    >
+    <span style={{
+      fontSize: 9, fontWeight: 700,
+      letterSpacing: '.06em', textTransform: 'uppercase',
+      padding: '2px 6px', borderRadius: 4,
+      ...cfg[status],
+    }}>
       {status}
     </span>
   )
 }
 
-// ── CellEditor ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// CELL EDITOR — popup de saisie
+// ══════════════════════════════════════════════════════════════
 
 interface CellEditorProps {
-  entry: Timesheet | undefined
-  projects: { id: string; name: string }[]
+  entry:        Timesheet | undefined
+  projects:     { id: string; name: string }[]
   canEditEntry: boolean
-  onSave: (value: number, projectId: string) => void
-  onClose: () => void
+  x:            number
+  y:            number
+  onSave:       (value: number, projectId: string) => void
+  onClose:      () => void
 }
 
-function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEditorProps) {
-  const [val, setVal] = useState(entry?.value ?? 0)
+function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: CellEditorProps) {
+  const [val,  setVal]  = useState(entry?.value ?? 0)
   const [proj, setProj] = useState(entry?.projectId ?? projects[0]?.id ?? '')
 
-  // Si entry/projets changent en live (ré-fetch), on resynchronise l'UI du popup
-  useEffect(() => {
-    setVal(entry?.value ?? 0)
-  }, [entry?.value])
+  useEffect(() => { setVal(entry?.value ?? 0) },                        [entry?.value])
+  useEffect(() => { setProj(entry?.projectId ?? projects[0]?.id ?? '') }, [entry?.projectId, projects])
 
+  // Fermer sur Escape
   useEffect(() => {
-    setProj(entry?.projectId ?? projects[0]?.id ?? '')
-  }, [entry?.projectId, projects])
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  // Position : éviter de sortir de l'écran
+  const safeX = Math.min(x, window.innerWidth  - 190)
+  const safeY = Math.min(y, window.innerHeight - 200)
+
+  const popupStyle: React.CSSProperties = {
+    position: 'fixed',
+    top:      safeY,
+    left:     safeX,
+    zIndex:   1000,
+    background:   'var(--bg2)',
+    border:       '1px solid var(--border)',
+    borderRadius: 12,
+    padding:      12,
+    minWidth:     170,
+    boxShadow:    '0 8px 32px rgba(0,0,0,.55)',
+  }
 
   if (!canEditEntry) {
     return (
-      <div className="ts-popup">
+      <div style={popupStyle}>
         <Pill status={entry?.status ?? 'draft'} />
-        <button
-          className="btn btn-ghost"
+        <button className="btn btn-ghost"
           style={{ marginTop: 8, fontSize: 10, padding: '2px 8px' }}
-          onClick={onClose}
-        >
+          onClick={onClose}>
           ✕ Close
         </button>
       </div>
@@ -131,18 +155,16 @@ function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEdit
 
   if (projects.length === 0) {
     return (
-      <div className="ts-popup" style={{ color: 'var(--text3)', fontSize: 11 }}>
+      <div style={{ ...popupStyle, color: 'var(--text3)', fontSize: 11 }}>
         No active project assigned.
-        <button className="btn btn-ghost" style={{ marginTop: 8, fontSize: 10 }} onClick={onClose}>
-          ✕
-        </button>
+        <button className="btn btn-ghost" style={{ marginTop: 8, fontSize: 10 }} onClick={onClose}>✕</button>
       </div>
     )
   }
 
   return (
-    <div className="ts-popup">
-      {/* Value */}
+    <div style={popupStyle}>
+      {/* Valeur */}
       <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
         {VALUES.map(o => (
           <button
@@ -156,7 +178,7 @@ function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEdit
         ))}
       </div>
 
-      {/* Project */}
+      {/* Projet */}
       <select
         className="input"
         value={proj}
@@ -164,9 +186,7 @@ function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEdit
         style={{ fontSize: 11, padding: '5px 8px', marginBottom: 10, width: '100%' }}
       >
         {projects.map(p => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
+          <option key={p.id} value={p.id}>{p.name}</option>
         ))}
       </select>
 
@@ -175,12 +195,7 @@ function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEdit
         <button
           className="btn btn-primary"
           style={{ flex: 1, fontSize: 11, padding: '4px 0' }}
-          onClick={() => {
-            if (proj) {
-              onSave(val, proj)
-              onClose()
-            }
-          }}
+          onClick={() => { if (proj) { onSave(val, proj); onClose() } }}
         >
           ✓ Save
         </button>
@@ -192,83 +207,98 @@ function CellEditor({ entry, projects, canEditEntry, onSave, onClose }: CellEdit
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// PAGE
+// ══════════════════════════════════════════════════════════════
 
 export default function TimesheetsPage() {
-  const t = useTranslations('timesheets')
-  const { user } = useAuth()
-  const role = user?.role
+  const t             = useTranslations('timesheets')
+  const locale        = useLocale()
+  const { user }      = useAuth()
+  const role          = user?.role
   const currentUserId = user?.id ?? null
 
-  // ── Week nav ──────────────────────────────────────────────
+  // ── Navigation semaine ───────────────────────────────────
   const [monday, setMonday] = useState(() => getMondayOf(new Date()))
-  const days = useMemo(() => getWeekDays(monday), [monday])
+  const days       = useMemo(() => getWeekDays(monday), [monday])
   const isThisWeek = toISO(getMondayOf(new Date())) === toISO(monday)
 
   const prevWeek = () => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })
   const nextWeek = () => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() + 7); return n })
-  const goToday = () => setMonday(getMondayOf(new Date()))
+  const goToday  = () => setMonday(getMondayOf(new Date()))
 
-  // ── Remote data ───────────────────────────────────────────
-  const { data: timesheets, loading, error } = useTimesheets(monday)
-  const { data: consultants } = useConsultants()
-  const { data: projectsMap } = useConsultantProjectsMap()
-  const { data: internalTypes } = useInternalProjectTypes()
-  const locale = useLocale()
+  // ── Données Supabase ─────────────────────────────────────
+  const { data: timesheets,   loading, error } = useTimesheets(monday)
+  const { data: consultants }                  = useConsultants()
+  const { data: projectsMap }                  = useConsultantProjectsMap()
+  const { data: internalTypes }                = useInternalProjectTypes()
 
+  const consultantsSafe  = consultants ?? []
+  const consultantsLoaded = Array.isArray(consultants)
+  const projectsLoaded   = typeof projectsMap !== 'undefined'
+
+  // ── Projets système (internes) dédoublonnés ──────────────
   const systemProjects = useMemo(() => {
     const seen = new Set<string>()
     return (internalTypes ?? [])
-      .filter(t => {
-        if (seen.has(t.key)) return false
-        seen.add(t.key)
-        return true
-      })
+      .filter(t => { if (seen.has(t.key)) return false; seen.add(t.key); return true })
       .map(t => ({
         id:   `__${t.key}__`,
         name: locale === 'fr' ? t.label_fr : t.label_en,
       }))
   }, [internalTypes, locale])
-  const consultantsSafe = consultants ?? []
-  const consultantsLoaded = Array.isArray(consultants)
-  const projectsLoaded = typeof projectsMap !== 'undefined' // map ou undefined
 
   // ── Optimistic local state ────────────────────────────────
   const [localEntries, setLocalEntries] = useState<Record<string, Timesheet>>({})
 
-  // Reset du local state quand on change de semaine (IMPORTANT: pas de setState dans le render)
   useEffect(() => {
     setLocalEntries({})
-    // fermer le popup quand on navigue
     setPopup(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toISO(monday)])
 
-  // ── Popup ─────────────────────────────────────────────────
-  const [popup, setPopup] = useState<{ consultantId: string; date: string } | null>(null)
+  // ── Popup (position fixed) ───────────────────────────────
+  const [popup, setPopup] = useState<{
+    consultantId: string
+    date:         string
+    x:            number
+    y:            number
+  } | null>(null)
 
-  // ── Merged lookup: Supabase + local overrides ─────────────
+  // Fermer popup en cliquant en dehors
+  useEffect(() => {
+    if (!popup) return
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.ts-popup-fixed') && !target.closest('.ts-cell')) {
+        setPopup(null)
+      }
+    }
+    window.addEventListener('mousedown', handler)
+    return () => window.removeEventListener('mousedown', handler)
+  }, [popup])
+
+  // ── Merged lookup : Supabase + local overrides ────────────
   const lookup = useMemo(() => {
     const map: Record<string, Timesheet> = {}
     ;(timesheets ?? []).forEach(ts => { map[`${ts.consultantId}__${ts.date}`] = ts })
-    Object.assign(map, localEntries) // optimistic override
+    Object.assign(map, localEntries)
     return map
   }, [timesheets, localEntries])
 
-  // ── Stats ─────────────────────────────────────────────────
+  // ── Stats ────────────────────────────────────────────────
   const stats = useMemo(() => {
     const all = Object.values(lookup)
     const daysCount = all.reduce((s, ts) => s + (ts.value ?? 0), 0)
     return [
-      { value: daysCount.toFixed(1), label: t('stats.totalDays'), color: 'var(--cyan)' },
-      { value: all.filter(ts => ts.status === 'draft').length, label: t('stats.draft'), color: 'var(--text2)' },
-      { value: all.filter(ts => ts.status === 'submitted').length, label: t('stats.submitted'), color: 'var(--gold)' },
-      { value: all.filter(ts => ts.status === 'approved').length, label: t('stats.approved'), color: 'var(--green)' },
+      { value: daysCount.toFixed(1),                                    label: t('stats.totalDays'), color: 'var(--cyan)' },
+      { value: all.filter(ts => ts.status === 'draft').length,          label: t('stats.draft'),     color: 'var(--text2)' },
+      { value: all.filter(ts => ts.status === 'submitted').length,      label: t('stats.submitted'), color: 'var(--gold)' },
+      { value: all.filter(ts => ts.status === 'approved').length,       label: t('stats.approved'),  color: 'var(--green)' },
     ]
   }, [lookup, t])
 
-  // ── Visible consultants by role ───────────────────────────
-  // consultant → seulement lui-même (match sur user_id)
+  // ── Consultants visibles selon rôle ──────────────────────
   const visibleConsultants = useMemo(() => {
     if (!consultantsLoaded) return []
     if (role === 'consultant') {
@@ -280,58 +310,42 @@ export default function TimesheetsPage() {
 
   const isConsultant = role === 'consultant'
 
-  // ── Save handler (optimistic) ─────────────────────────────
+  // ── Save handler (optimistic) ────────────────────────────
   const handleSave = useCallback(async (
     consultantId: string,
-    date: string,
-    value: number,
-    projectId: string,
+    date:         string,
+    value:        number,
+    projectId:    string,
   ) => {
     const key = `${consultantId}__${date}`
 
-    // 1. Optimistic immédiat
     setLocalEntries(prev => ({
       ...prev,
-      [key]: {
-        id: prev[key]?.id ?? `local-${key}`,
-        consultantId,
-        projectId,
-        date,
-        value,
-        status: 'draft',
-      },
+      [key]: { id: prev[key]?.id ?? `local-${key}`, consultantId, projectId, date, value, status: 'draft' },
     }))
 
-    // 2. Persistance
     try {
       const saved = await upsertTimesheet({ consultantId, date, value, projectId })
       setLocalEntries(prev => ({ ...prev, [key]: saved }))
     } catch (e) {
       console.error('upsertTimesheet error:', e)
-      setLocalEntries(prev => {
-        const n = { ...prev }
-        delete n[key]
-        return n
-      })
+      setLocalEntries(prev => { const n = { ...prev }; delete n[key]; return n })
     }
   }, [])
 
-  // ── Submit / Approve ──────────────────────────────────────
+  // ── Submit / Approve ─────────────────────────────────────
   const handleSubmitAll = useCallback(async (consultantId: string) => {
     const draftIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'draft')
       .map(ts => ts.id)
       .filter(id => !id.startsWith('local-'))
-
     if (!draftIds.length) return
     await submitTimesheets(draftIds)
-
     setLocalEntries(prev => {
       const updated = { ...prev }
       for (const ts of Object.values(lookup)) {
-        if (ts.consultantId === consultantId && ts.status === 'draft') {
+        if (ts.consultantId === consultantId && ts.status === 'draft')
           updated[`${ts.consultantId}__${ts.date}`] = { ...ts, status: 'submitted' }
-        }
       }
       return updated
     })
@@ -342,26 +356,21 @@ export default function TimesheetsPage() {
       .filter(ts => ts.consultantId === consultantId && ts.status === 'submitted')
       .map(ts => ts.id)
       .filter(id => !id.startsWith('local-'))
-
     if (!submittedIds.length) return
     await approveTimesheets(submittedIds)
-
     setLocalEntries(prev => {
       const updated = { ...prev }
       for (const ts of Object.values(lookup)) {
-        if (ts.consultantId === consultantId && ts.status === 'submitted') {
+        if (ts.consultantId === consultantId && ts.status === 'submitted')
           updated[`${ts.consultantId}__${ts.date}`] = { ...ts, status: 'approved' }
-        }
       }
       return updated
     })
   }, [lookup])
 
-  // ── Garde UX : consultant sans data prête ──────────────────
-  // Empêche l'état "page visible mais tout est disabled / vide" pendant le chargement consultants/map.
   const consultantDataReady = !isConsultant || (!!currentUserId && consultantsLoaded && projectsLoaded)
 
-  // ── Render ────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
@@ -383,14 +392,12 @@ export default function TimesheetsPage() {
           )}
         </div>
 
-        {loading && (
-          <p style={{ color: 'var(--text3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>// loading…</p>
-        )}
-        {error && <p style={{ color: 'var(--pink)' }}>{error}</p>}
+        {loading && <p style={{ color: 'var(--text3)', fontSize: 12 }}>// loading…</p>}
+        {error   && <p style={{ color: 'var(--pink)' }}>{error}</p>}
 
         {!consultantDataReady && (
           <Panel>
-            <div style={{ padding: 18, color: 'var(--text3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+            <div style={{ padding: 18, color: 'var(--text3)', fontSize: 12 }}>
               // loading your profile & assignments…
             </div>
           </Panel>
@@ -409,12 +416,8 @@ export default function TimesheetsPage() {
                       const today = toISO(d) === toISO(new Date())
                       return (
                         <th key={toISO(d)} style={{ textAlign: 'center', minWidth: 86 }}>
-                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text2)', fontSize: 10, fontWeight: 600 }}>
-                            {dow}
-                          </div>
-                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text1)', fontSize: 12, fontWeight: 700 }}>
-                            {num}
-                          </div>
+                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text2)', fontSize: 10, fontWeight: 600 }}>{dow}</div>
+                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text1)', fontSize: 12, fontWeight: 700 }}>{num}</div>
                         </th>
                       )
                     })}
@@ -425,19 +428,16 @@ export default function TimesheetsPage() {
 
                 <tbody>
                   {visibleConsultants.map(c => {
-                    // Projets de ce consultant uniquement
                     const consultantProjects = [
                       ...(projectsMap?.[c.id] ?? []),
                       ...systemProjects,
-]
-                    // Entrées de la semaine pour ce consultant
-                    const rowEntries = Object.values(lookup).filter(ts => ts.consultantId === c.id)
-                    const weekTotal = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
-                    const hasDraft = rowEntries.some(ts => ts.status === 'draft')
+                    ]
+
+                    const rowEntries  = Object.values(lookup).filter(ts => ts.consultantId === c.id)
+                    const weekTotal   = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
+                    const hasDraft    = rowEntries.some(ts => ts.status === 'draft')
                     const hasSubmitted = rowEntries.some(ts => ts.status === 'submitted')
-
                     const rowStatus: TSStatus = hasDraft ? 'draft' : hasSubmitted ? 'submitted' : 'approved'
-
                     const isSelf = isConsultant && c.user_id === currentUserId
 
                     return (
@@ -455,43 +455,44 @@ export default function TimesheetsPage() {
 
                         {/* Cellules jours */}
                         {days.map(d => {
-                          const dateStr = toISO(d)
-                          const key = `${c.id}__${dateStr}`
-                          const entry = lookup[key]
-                          const isOpen = popup?.consultantId === c.id && popup?.date === dateStr
+                          const dateStr    = toISO(d)
+                          const key        = `${c.id}__${dateStr}`
+                          const entry      = lookup[key]
+                          const isOpen     = popup?.consultantId === c.id && popup?.date === dateStr
                           const entryIsDraft = !entry || entry.status === 'draft'
-
-                          // Règle d'édition:
-                          // - admin/manager: canEdit(role)
-                          // - consultant: uniquement sa ligne, et uniquement en draft
-                          const canEditCell = canEdit(role) || (isSelf && entryIsDraft)
-
-                          // Désactivation "visuelle" des cellules si consultant sur une autre ligne
-                          const disabled = isConsultant && !isSelf
+                          const canEditCell  = canEdit(role) || (isSelf && entryIsDraft)
+                          const disabled     = isConsultant && !isSelf
 
                           return (
                             <td key={dateStr} style={{ textAlign: 'center', position: 'relative' }}>
                               <button
                                 className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
                                 style={{ color: valueColor(entry?.value) }}
-                                onClick={() => setPopup(isOpen ? null : { consultantId: c.id, date: dateStr })}
+                                onClick={e => {
+                                  if (isOpen) { setPopup(null); return }
+                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                  setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
+                                }}
                                 title={entry?.status ?? 'No entry'}
                                 disabled={disabled}
                               >
                                 {entry ? (entry.value === 1 ? '1' : entry.value === 0.5 ? '½' : '—') : '+'}
-                                {entry && (
-                                  <span className="ts-status-dot" style={{ background: dotColor(entry.status) }} />
-                                )}
+                                {entry && <span className="ts-status-dot" style={{ background: dotColor(entry.status) }} />}
                               </button>
 
+                              {/* Popup rendu au niveau du td mais positionné en fixed */}
                               {isOpen && (
-                                <CellEditor
-                                  entry={entry}
-                                  projects={consultantProjects}
-                                  canEditEntry={canEditCell}
-                                  onSave={(val, proj) => handleSave(c.id, dateStr, val, proj)}
-                                  onClose={() => setPopup(null)}
-                                />
+                                <div className="ts-popup-fixed">
+                                  <CellEditor
+                                    entry={entry}
+                                    projects={consultantProjects}
+                                    canEditEntry={canEditCell}
+                                    x={popup!.x}
+                                    y={popup!.y}
+                                    onSave={(val, proj) => handleSave(c.id, dateStr, val, proj)}
+                                    onClose={() => setPopup(null)}
+                                  />
+                                </div>
                               )}
                             </td>
                           )
@@ -499,21 +500,14 @@ export default function TimesheetsPage() {
 
                         {/* Total semaine */}
                         <td style={{ textAlign: 'center' }}>
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-mono)',
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color:
-                                weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text3)',
-                            }}
-                          >
+                          <span style={{
+                            fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
+                            color: weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text3)',
+                          }}>
                             {weekTotal > 0 ? weekTotal.toFixed(1) : '—'}
                           </span>
                           {rowEntries.length > 0 && (
-                            <div style={{ marginTop: 3 }}>
-                              <Pill status={rowStatus} />
-                            </div>
+                            <div style={{ marginTop: 3 }}><Pill status={rowStatus} /></div>
                           )}
                         </td>
 
@@ -523,14 +517,8 @@ export default function TimesheetsPage() {
                             {hasDraft && (canEdit(role) || (isConsultant && isSelf)) && (
                               <button
                                 className="btn btn-ghost"
-                                style={{
-                                  fontSize: 10,
-                                  padding: '2px 8px',
-                                  color: 'var(--cyan)',
-                                  whiteSpace: 'nowrap',
-                                }}
+                                style={{ fontSize: 10, padding: '2px 8px', color: 'var(--cyan)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleSubmitAll(c.id)}
-                                title={t('actions.submitTitle')}
                               >
                                 📤 {t('actions.submit')}
                               </button>
@@ -538,14 +526,8 @@ export default function TimesheetsPage() {
                             {hasSubmitted && isAdmin(role) && (
                               <button
                                 className="btn btn-ghost"
-                                style={{
-                                  fontSize: 10,
-                                  padding: '2px 8px',
-                                  color: 'var(--green)',
-                                  whiteSpace: 'nowrap',
-                                }}
+                                style={{ fontSize: 10, padding: '2px 8px', color: 'var(--green)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleApproveAll(c.id)}
-                                title={t('actions.approveTitle')}
                               >
                                 ✅ {t('actions.approve')}
                               </button>
@@ -558,16 +540,10 @@ export default function TimesheetsPage() {
 
                   {visibleConsultants.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={days.length + 3}
-                        style={{
-                          textAlign: 'center',
-                          color: 'var(--text3)',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 12,
-                          padding: '32px 0',
-                        }}
-                      >
+                      <td colSpan={days.length + 3} style={{
+                        textAlign: 'center', color: 'var(--text3)',
+                        fontSize: 12, padding: '32px 0',
+                      }}>
                         // no consultants
                       </td>
                     </tr>
@@ -581,19 +557,18 @@ export default function TimesheetsPage() {
         {/* Légende */}
         <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
           {([
-            { color: 'var(--text3)', square: true, label: t('legend.empty') },
-            { color: 'var(--gold)', square: true, label: t('legend.half') },
-            { color: 'var(--green)', square: true, label: t('legend.full') },
+            { color: 'var(--text3)', square: true,  label: t('legend.empty') },
+            { color: 'var(--gold)',  square: true,  label: t('legend.half') },
+            { color: 'var(--green)', square: true,  label: t('legend.full') },
             { color: 'var(--text3)', square: false, label: t('legend.draft') },
-            { color: 'var(--gold)', square: false, label: t('legend.submitted') },
+            { color: 'var(--gold)',  square: false, label: t('legend.submitted') },
             { color: 'var(--green)', square: false, label: t('legend.approved') },
           ] as { color: string; square: boolean; label: string }[]).map(item => (
             <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {item.square ? (
-                <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color, display: 'inline-block' }} />
-              ) : (
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
-              )}
+              {item.square
+                ? <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color, display: 'inline-block' }} />
+                : <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
+              }
               <span style={{ fontSize: 11, color: 'var(--text2)' }}>{item.label}</span>
             </div>
           ))}
@@ -602,7 +577,7 @@ export default function TimesheetsPage() {
 
       {/* Styles scopés */}
       <style>{`
-        .ts-table { width:100%; border-collapse:collapse; }
+        .ts-table { width: 100%; border-collapse: collapse; }
         .ts-table th {
           padding: 8px 12px;
           color: var(--text3);
@@ -633,13 +608,6 @@ export default function TimesheetsPage() {
         .ts-status-dot {
           position: absolute; top: 3px; right: 3px;
           width: 5px; height: 5px; border-radius: 50%;
-        }
-        .ts-popup {
-          position: absolute; top: calc(100% + 6px); left: 50%;
-          transform: translateX(-50%); z-index: 200;
-          background: var(--bg2); border: 1px solid var(--border);
-          border-radius: 12px; padding: 12px; min-width: 170px;
-          box-shadow: 0 8px 32px rgba(0,0,0,.45);
         }
       `}</style>
     </>
