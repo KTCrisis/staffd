@@ -13,7 +13,8 @@ export function Sidebar() {
   const pathname = usePathname()
   const locale   = useLocale()
   const t        = useTranslations('nav')
-  const { user } = useAuthContext()
+  const { user, companyMode } = useAuthContext()
+  const isSolo = companyMode === 'solo'
   const router   = useRouter()
 
   // ── Rôles ────────────────────────────────────────────────
@@ -23,7 +24,7 @@ export function Sidebar() {
   const isConsultant     = user?.role === 'consultant'
   const isFreelance      = user?.role === 'freelance'
   const isAdminOrManager = isSuperAdmin || isAdmin || isManager
-  const isConsultantOnly = isConsultant || isFreelance   // pure leaf roles
+  const isConsultantOnly = isConsultant || isFreelance
 
   const roleLabel =
     isSuperAdmin ? 'Super Admin' :
@@ -71,7 +72,8 @@ export function Sidebar() {
   // ══════════════════════════════════════════════════════════
 
   const NAV = [
-    // ── Overview (tous les rôles) ──
+
+    // ── Overview ─────────────────────────────────────────────
     {
       group: t('overview'),
       items: [
@@ -79,29 +81,27 @@ export function Sidebar() {
       ],
     },
 
-    // ── Team ──────────────────────────────────────────────
-    {
+    // ── Team — masqué en mode solo ────────────────────────────
+    ...(!isSolo ? [{
       group: t('team'),
       items: [
-        // Consultants : visible par tous (pour le consultant/freelance = sa fiche)
         { label: t('consultants'), icon: '◈', href: p('/consultants') },
 
-        // Availability : admin/manager uniquement
         ...(!isConsultantOnly ? [
           { label: t('disponibilites'), icon: '◫', href: p('/availability') },
         ] : []),
 
-        // Congés : tout le monde sauf freelance (pas de CP/RTT)
+        // Congés masqués pour freelance (pas de CP/RTT)
         ...(!isFreelance ? [{
-          label:  t('conges'),
-          icon:   '◷',
-          href:   p('/leaves'),
-          badge:  isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
+          label: t('conges'),
+          icon:  '◷',
+          href:  p('/leaves'),
+          badge: isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
         }] : []),
       ],
-    },
+    }] : []),
 
-    // ── Activity (tous les rôles) ──
+    // ── Activity ──────────────────────────────────────────────
     {
       group: t('activity'),
       items: [
@@ -109,38 +109,49 @@ export function Sidebar() {
       ],
     },
 
-    // ── Billing : admin/manager/freelance ──
-    ...(isAdminOrManager || isFreelance ? [{
-      group: 'Billing',
-      items: [
-        {
-          label: 'Invoices',
-          icon:  '◉',
-          href:  p('/invoices'),
-        },
-      ],
-    }] : []),
-
-    // ── Projects : admin/manager uniquement ──
-    ...(!isConsultantOnly ? [{
+    // ── Projects — admin/manager + solo, masqué pour consultant/freelance ──
+    ...(!isConsultantOnly || isSolo ? [{
       group: t('projects'),
       items: [
-        { label: t('projets'),  icon: '◧', href: p('/projects') },
-        { label: t('clients'),  icon: '◉', href: p('/clients') },
-        { label: t('timeline'), icon: '▤', href: p('/timeline') },
+        { label: t('projets'),  icon: '◧', href: p('/projects')  },
+        { label: t('clients'),  icon: '◉', href: p('/clients')   },
+        ...(!isSolo ? [
+          { label: t('timeline'), icon: '▤', href: p('/timeline') },
+        ] : []),
       ],
     }] : []),
 
-    // ── Admin : admin/manager + super_admin ──
-    ...(isAdminOrManager ? [{
+    // ── Finance — admin/manager/solo + freelance (invoices seulement) ────
+    ...(isAdminOrManager || isSolo || isFreelance ? [{
+      group: t('finance'),
+      items: [
+        // Financials + Profitability : admin/manager/solo uniquement
+        ...(isAdminOrManager || isSolo ? [
+          { label: t('financials'),    icon: '$', href: p('/financials')    },
+          { label: t('profitability'), icon: '◈', href: p('/profitability') },
+        ] : []),
+        // Invoices : admin/manager/solo + freelance
+        { label: 'Invoices', icon: '◉', href: p('/invoices') },
+      ],
+    }] : []),
+
+    // ── Admin ─────────────────────────────────────────────────
+    ...(isAdminOrManager && !isSolo ? [{
       group: t('admin'),
       items: [
-        { label: 'Finances',     icon: '$', href: p('/financials') },
-        { label: t('parametres'),icon: '◎', href: p('/settings') },
+        { label: t('parametres'), icon: '◎', href: p('/settings') },
       ],
     }] : []),
 
-    // ── Agents AI : admin/manager + super_admin ──
+    // ── Settings solo ─────────────────────────────────────────
+    ...(isSolo ? [{
+      group: t('admin'),
+      items: [
+        { label: t('parametres'), icon: '◎', href: p('/settings') },
+      ],
+    }] : []),
+
+    // ── Agents AI : admin/manager/super_admin ─────────────────
     ...(isAdminOrManager ? [{
       group: 'Agents',
       items: [

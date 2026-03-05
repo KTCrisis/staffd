@@ -8,77 +8,71 @@ import { supabase } from '@/lib/supabase'
 interface AuthContextValue {
   user:        AuthUser | null
   loading:     boolean
-  companyName: string | null
+  companyMode: 'solo' | 'team' | null
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyName: null })
+const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyMode: null })
 
-// ── Helper : fetch company name ───────────────────────────────
-async function fetchCompanyName(role: UserRole, companyId: string | null): Promise<string | null> {
-  if (role === 'super_admin') return 'staff7'
-  if (!companyId) return null
-  const { data } = await supabase
-    .from('companies')
-    .select('name')
-    .eq('id', companyId)
-    .single()
-  return data?.name ?? null
-}
-
-// ── Helper : build AuthUser from supabase user ─────────────────
-function buildUser(supaUser: any): AuthUser {
-  const role      = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
-  const companyId = supaUser.app_metadata?.company_id ?? null
-  return { id: supaUser.id, email: supaUser.email ?? '', role, companyId }
-}
-
-// ── Provider ──────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [user,        setUser]        = useState<AuthUser | null>(null)
   const [loading,     setLoading]     = useState(true)
-  const [companyName, setCompanyName] = useState<string | null>(null)
+  const [companyMode, setCompanyMode] = useState<'solo' | 'team' | null>(null)
+
+  // Fetch company mode after user is set
+  const fetchCompanyMode = async (companyId: string | null) => {
+    if (!companyId) { setCompanyMode(null); return }
+    const { data } = await supabase
+      .from('companies')
+      .select('mode')
+      .eq('id', companyId)
+      .single()
+    setCompanyMode((data?.mode as 'solo' | 'team') ?? 'team')
+  }
 
   useEffect(() => {
-    let mounted = true
+    const checkUser = async () => {
+      try {
+        await supabase.auth.refreshSession() 
+        // getUser() vérifie la session côté serveur (non falsifiable)
+        const { data: { user: supaUser }, error } = await supabase.auth.getUser()
 
-    // onAuthStateChange est la source de vérité principale
-    // Il se déclenche immédiatement avec la session courante (INITIAL_SESSION)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return
+        if (error || !supaUser) {
+          setUser(null)
+          return
+        }
 
-      if (session?.user) {
-        const authUser = buildUser(session.user)
-        setUser(authUser)
-        // Fetch company name en arrière-plan (non-bloquant)
-        fetchCompanyName(authUser.role, authUser.companyId)
-          .then(name => { if (mounted) setCompanyName(name) })
-          .catch(() => {})
-      } else {
+        // Rôle depuis app_metadata (non modifiable par l'utilisateur)
+        const role = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
+        const companyId = supaUser.app_metadata?.company_id ?? null
+        setUser({ id: supaUser.id, email: supaUser.email ?? '', role, companyId })
+        await fetchCompanyMode(companyId)
+      } catch (error) {
+        console.error('Auth error:', error)
         setUser(null)
-        setCompanyName(null)
-      }
-
-      // Loading résolu dès le premier événement
-      if (mounted) setLoading(false)
-    })
-
-    // Timeout de sécurité — si onAuthStateChange ne répond pas en 3s
-    const timeout = setTimeout(() => {
-      if (mounted && loading) {
+      } finally {
         setLoading(false)
       }
-    }, 3000)
-
-    return () => {
-      mounted = false
-      clearTimeout(timeout)
-      subscription.unsubscribe()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const role = (session.user.app_metadata?.user_role ?? 'viewer') as UserRole
+        const companyId = session.user.app_metadata?.company_id ?? null
+        setUser({ id: session.user.id, email: session.user.email ?? '', role, companyId })
+        fetchCompanyMode(companyId)
+      } else {
+        setUser(null)
+      }
+      setLoading(false)
+    })
+
+    return () => { subscription.unsubscribe() }
   }, [])
 
-  // Redirection si pas de session après chargement
+  // Redirection de sécurité côté client (le middleware gère déjà côté serveur)
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
@@ -106,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!user) return null
 
   return (
-    <AuthContext.Provider value={{ user, loading, companyName }}>
+    <AuthContext.Provider value={{ user, loading, companyMode }}>
       {children}
     </AuthContext.Provider>
   )
