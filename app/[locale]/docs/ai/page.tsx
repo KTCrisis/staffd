@@ -404,6 +404,7 @@ export default function DocsPage() {
 
         {/* ── Sidebar TOC ── */}
         <aside>
+          <Link href="/docs" className="toc-back">← back to docs</Link> 
           <div className="toc-label">// contents</div>
           <a href="#overview"   className="toc-link active">Overview</a>
           <a href="#ai-console" className="toc-link">AI Console</a>
