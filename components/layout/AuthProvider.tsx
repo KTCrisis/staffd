@@ -8,74 +8,90 @@ import { supabase } from '@/lib/supabase'
 interface AuthContextValue {
   user:        AuthUser | null
   loading:     boolean
-  companyMode: 'solo' | 'team' | null
   companyName: string | null
+  companyMode: 'solo' | 'team' | null
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyMode: null, companyName: null })
+const AuthContext = createContext<AuthContextValue>({
+  user: null, loading: true, companyName: null, companyMode: null,
+})
 
+// ── Helper : fetch company name + mode ───────────────────────
+async function fetchCompanyInfo(
+  role: UserRole,
+  companyId: string | null
+): Promise<{ name: string | null; mode: 'solo' | 'team' | null }> {
+  if (role === 'super_admin') return { name: 'staff7', mode: 'team' }
+  if (!companyId) return { name: null, mode: null }
+  const { data } = await supabase
+    .from('companies')
+    .select('name, mode')
+    .eq('id', companyId)
+    .single()
+  return {
+    name: data?.name ?? null,
+    mode: (data?.mode as 'solo' | 'team') ?? 'team',
+  }
+}
+
+// ── Helper : build AuthUser from supabase user ────────────────
+function buildUser(supaUser: any): AuthUser {
+  const role      = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
+  const companyId = supaUser.app_metadata?.company_id ?? null
+  return { id: supaUser.id, email: supaUser.email ?? '', role, companyId }
+}
+
+// ── Provider ──────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [user,        setUser]        = useState<AuthUser | null>(null)
   const [loading,     setLoading]     = useState(true)
-  const [companyMode, setCompanyMode] = useState<'solo' | 'team' | null>(null)
   const [companyName, setCompanyName] = useState<string | null>(null)
-
-  // Fetch company mode + name after user is set
-  const fetchCompanyMode = async (companyId: string | null) => {
-    if (!companyId) { setCompanyMode(null); setCompanyName(null); return }
-    const { data } = await supabase
-      .from('companies')
-      .select('mode, name')
-      .eq('id', companyId)
-      .single()
-    setCompanyMode((data?.mode as 'solo' | 'team') ?? 'team')
-    setCompanyName(data?.name ?? null)
-  }
+  const [companyMode, setCompanyMode] = useState<'solo' | 'team' | null>(null)
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        await supabase.auth.refreshSession() 
-        // getUser() vérifie la session côté serveur (non falsifiable)
-        const { data: { user: supaUser }, error } = await supabase.auth.getUser()
+    let mounted = true
 
-        if (error || !supaUser) {
-          setUser(null)
-          return
-        }
-
-        // Rôle depuis app_metadata (non modifiable par l'utilisateur)
-        const role = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
-        const companyId = supaUser.app_metadata?.company_id ?? null
-        setUser({ id: supaUser.id, email: supaUser.email ?? '', role, companyId })
-        await fetchCompanyMode(companyId)
-      } catch (error) {
-        console.error('Auth error:', error)
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkUser()
-
+    // onAuthStateChange est la source de vérité principale
+    // Il se déclenche immédiatement avec la session courante (INITIAL_SESSION)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return
+
       if (session?.user) {
-        const role = (session.user.app_metadata?.user_role ?? 'viewer') as UserRole
-        const companyId = session.user.app_metadata?.company_id ?? null
-        setUser({ id: session.user.id, email: session.user.email ?? '', role, companyId })
-        fetchCompanyMode(companyId)
+        const authUser = buildUser(session.user)
+        setUser(authUser)
+        // Fetch company info en arrière-plan (non-bloquant)
+        fetchCompanyInfo(authUser.role, authUser.companyId)
+          .then(({ name, mode }) => {
+            if (!mounted) return
+            setCompanyName(name)
+            setCompanyMode(mode)
+          })
+          .catch(() => {})
       } else {
         setUser(null)
+        setCompanyName(null)
+        setCompanyMode(null)
       }
-      setLoading(false)
+
+      // Loading résolu dès le premier événement
+      if (mounted) setLoading(false)
     })
 
-    return () => { subscription.unsubscribe() }
+    // Timeout de sécurité — si onAuthStateChange ne répond pas en 3s
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false)
+    }, 3000)
+
+    return () => {
+      mounted = false
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Redirection de sécurité côté client (le middleware gère déjà côté serveur)
+  // Redirection si pas de session après chargement
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
@@ -103,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!user) return null
 
   return (
-    <AuthContext.Provider value={{ user, loading, companyMode, companyName }}>
+    <AuthContext.Provider value={{ user, loading, companyName, companyMode }}>
       {children}
     </AuthContext.Provider>
   )
