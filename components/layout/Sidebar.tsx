@@ -125,8 +125,8 @@ export function Sidebar() {
     ...(isAdminOrManager || isSolo || isFreelance ? [{
       group: t('finance'),
       items: [
-        // Financials + Profitability : admin/manager/solo uniquement
-        ...(isAdminOrManager || isSolo ? [
+        // Financials + Profitability : admin/super_admin/solo uniquement (pas manager)
+        ...(isSuperAdmin || isAdmin || isSolo ? [
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
         ] : []),
@@ -135,8 +135,8 @@ export function Sidebar() {
       ],
     }] : []),
 
-    // ── Admin ─────────────────────────────────────────────────
-    ...(isAdminOrManager && !isSolo ? [{
+    // ── Admin — admin/super_admin uniquement ──────────────────
+    ...((isSuperAdmin || isAdmin) && !isSolo ? [{
       group: t('admin'),
       items: [
         { label: t('parametres'), icon: '◎', href: p('/settings') },
@@ -151,8 +151,8 @@ export function Sidebar() {
       ],
     }] : []),
 
-    // ── Agents AI : admin/manager/super_admin ─────────────────
-    ...(isAdminOrManager ? [{
+    // ── Agents AI : admin/super_admin uniquement ──────────────
+    ...(isSuperAdmin || isAdmin ? [{
       group: 'Agents',
       items: [
         {
@@ -191,8 +191,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── Command bar AI (admin/manager uniquement) ── */}
-      {isAdminOrManager && (
+      {/* ── Command bar AI (admin/super_admin uniquement) ── */}
+      {(isSuperAdmin || isAdmin) && (
         <div style={{ padding: '0 16px', marginBottom: 12 }}>
           <div style={{
             background: 'rgba(255,45,107,0.05)',

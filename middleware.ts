@@ -57,7 +57,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // 4. Session valide → intl + transfert COMPLET des cookies Supabase
+  // 4. Protection routes par rôle
+  const role = session.user.app_metadata?.user_role as string | undefined
+  const localePrefix = pathname.startsWith('/fr') ? '/fr' : ''
+
+  const isAdminOrSuperAdmin  = role === 'admin' || role === 'super_admin'
+  const isAdminOrManager     = isAdminOrSuperAdmin || role === 'manager'
+  const isFreelance          = role === 'freelance'
+
+  // admin + super_admin uniquement
+  const ADMIN_ONLY = ['financials', 'profitability', 'settings', 'ai']
+  if (ADMIN_ONLY.some(s => pathWithoutLocale === `/${s}` || pathWithoutLocale.startsWith(`/${s}/`))) {
+    if (!isAdminOrSuperAdmin) {
+      return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, request.url))
+    }
+  }
+
+  // admin + manager + super_admin + freelance (pas consultant)
+  if (pathWithoutLocale === '/invoices' || pathWithoutLocale.startsWith('/invoices/')) {
+    if (!isAdminOrManager && !isFreelance) {
+      return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, request.url))
+    }
+  }
+
+  // 5. Session valide → intl + transfert COMPLET des cookies Supabase
   // ⚠️ Sans les options (secure, httpOnly, sameSite, path), iOS Safari
   // rejette les cookies → session perdue → redirect loop sur mobile
   const intlResponse = intlMiddleware(request)

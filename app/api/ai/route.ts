@@ -202,6 +202,27 @@ export async function POST(req: Request): Promise<Response> {
     )
   }
 
+  // ── Vérification rôle — admin/super_admin uniquement ────────
+  // Le JWT Supabase contient app_metadata.user_role, encodé en base64 (partie payload).
+  try {
+    const payload = JSON.parse(atob(userToken.split('.')[1]))
+    const role    = payload?.app_metadata?.user_role as string | undefined
+    if (role !== 'admin' && role !== 'super_admin') {
+      return new Response(
+        new ReadableStream({
+          start(c) {
+            c.enqueue(sse('⚠ Accès refusé — console réservée aux administrateurs.'))
+            c.enqueue(done)
+            c.close()
+          },
+        }),
+        { headers }
+      )
+    }
+  } catch {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
   let body: { messages: { role: string; content: string }[]; cmd?: string }
   try { body = await req.json() }
   catch { return new Response('Bad request', { status: 400 }) }
