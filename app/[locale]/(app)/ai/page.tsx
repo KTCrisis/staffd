@@ -77,11 +77,10 @@ function fmtTime(ts: number) {
 
 function renderMarkdown(text: string) {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#e8e8e8">$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
     .replace(/`(.+?)`/g,       '<code style="color:var(--cyan);font-family:inherit">$1</code>')
     .replace(/\n/g,            '<br/>')
 }
-
 // ══════════════════════════════════════════════════════════════
 // CMD MENU
 // ══════════════════════════════════════════════════════════════
@@ -291,7 +290,7 @@ function AIContent() {
 
   const roleColor: Record<MsgRole, string> = {
     system: 'var(--text2)',
-    user:   '#e8e8e8',
+    user:   'var(--text)',
     agent:  'var(--green)',
     error:  'var(--pink)',
   }
@@ -324,8 +323,8 @@ function AIContent() {
               color: a.color,
               animation: a.status === 'THINKING' ? 'pulse 1s infinite' : 'none',
             }}>●</span>
-            <span style={{ color:'var(--text1)', fontWeight:600 }}>{a.name}</span>
-            <span style={{ color:'var(--text3)' }}>[{a.status}]</span>
+            <span style={{ color:'var(--text)', fontWeight:600 }}>{a.name}</span>
+            <span style={{ color:'var(--text2)' }}>[{a.status}]</span>
           </div>
         ))}
 
@@ -379,7 +378,7 @@ function AIContent() {
       >
         {messages.map((m, i) => (
           <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-            <span style={{ color:'var(--text3)', fontSize:9, flexShrink:0, marginTop:3, minWidth:58 }}>
+            <span style={{ color:'var(--text2)', fontSize:9, flexShrink:0, marginTop:3, minWidth:58 }}>
               {fmtTime(m.ts)}
             </span>
             <span style={{ color: roleColor[m.role], fontSize:10, fontWeight:700, flexShrink:0, minWidth:54 }}>
@@ -426,7 +425,7 @@ function AIContent() {
                 flex:1, background:'var(--bg3)',
                 border:`1px solid ${showMenu ? 'var(--pink)' : 'var(--border)'}`,
                 borderRadius:4,
-                color:'#fff', padding:'12px 14px',
+                color:'var(--text)', padding:'12px 14px',
                 fontFamily:'var(--font-mono, monospace)', fontSize:12,
                 outline:'none', transition:'border-color .15s',
                 opacity: streaming ? .6 : 1,
@@ -454,7 +453,7 @@ function AIContent() {
           </div>
         </div>
 
-        <div style={{ marginTop:6, fontSize:9, color:'var(--text3)', fontFamily:'var(--font-mono)' }}>
+        <div style={{ marginTop:6, fontSize:9, color:'var(--text2)', fontFamily:'var(--font-mono)' }}>
           ↵ send · / commands · esc close menu · context live Supabase · {process.env.NEXT_PUBLIC_AI_MODEL ?? 'kimi-k2.5:cloud'}
         </div>
       </div>
@@ -477,7 +476,7 @@ export default function AIPage() {
       <Topbar title="Agentic Console" breadcrumb="// staff7 intelligence" />
       <div className="app-content">
         <Suspense fallback={
-          <div style={{ color:'var(--text3)', fontFamily:'var(--font-mono)', fontSize:12 }}>
+          <div style={{ color:'var(--text2)', fontFamily:'var(--font-mono)', fontSize:12 }}>
             // initializing agents…
           </div>
         }>

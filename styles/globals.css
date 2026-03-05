@@ -72,6 +72,16 @@
   --tl-weekend:   #dfe3df;
 }
 
+
+/* ══════════════════════════════════════
+   ALIASES — variables de compatibilité
+══════════════════════════════════════ */
+[data-theme='light'],
+[data-theme='dark'] {
+  --text1: var(--text);
+  --text3: var(--text2);
+}
+
 /* ══════════════════════════════════════
    BASE RESET
 ══════════════════════════════════════ */
