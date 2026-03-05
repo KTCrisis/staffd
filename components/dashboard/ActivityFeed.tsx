@@ -9,11 +9,42 @@ const DOT_COLOR: Record<ActivityItem['type'], string> = {
   alert:      'var(--gold)',
 }
 
+// ── Formate une date ISO ou string relative en texte lisible ──
+function formatTime(raw: string): string {
+  // Si c'est déjà une string relative (mock), on la retourne telle quelle
+  if (!raw.includes('T') && !raw.includes('-')) return raw
+
+  try {
+    const date = new Date(raw)
+    const now  = new Date()
+    const diffMs  = now.getTime() - date.getTime()
+    const diffMin = Math.floor(diffMs / 60000)
+    const diffH   = Math.floor(diffMin / 60)
+    const diffD   = Math.floor(diffH / 24)
+
+    if (diffMin < 1)  return "à l'instant"
+    if (diffMin < 60) return `il y a ${diffMin} min`
+    if (diffH < 24)   return `il y a ${diffH}h`
+    if (diffD === 1)  return `hier · ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return raw
+  }
+}
+
 interface ActivityFeedProps {
   items: ActivityItem[]
 }
 
 export function ActivityFeed({ items }: ActivityFeedProps) {
+  if (items.length === 0) {
+    return (
+      <div style={{ fontSize: 11, color: 'var(--text2)', fontStyle: 'italic', padding: '8px 0' }}>
+        // aucune activité récente
+      </div>
+    )
+  }
+
   return (
     <div>
       {items.map(item => (
@@ -24,7 +55,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
               className="notif-text"
               dangerouslySetInnerHTML={{ __html: item.message }}
             />
-            <div className="notif-time">{item.time}</div>
+            <div className="notif-time">{formatTime(item.time)}</div>
           </div>
         </div>
       ))}
