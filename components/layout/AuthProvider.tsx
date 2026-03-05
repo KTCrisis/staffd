@@ -9,25 +9,28 @@ interface AuthContextValue {
   user:        AuthUser | null
   loading:     boolean
   companyMode: 'solo' | 'team' | null
+  companyName: string | null
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyMode: null })
+const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyMode: null, companyName: null })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [user,        setUser]        = useState<AuthUser | null>(null)
   const [loading,     setLoading]     = useState(true)
   const [companyMode, setCompanyMode] = useState<'solo' | 'team' | null>(null)
+  const [companyName, setCompanyName] = useState<string | null>(null)
 
-  // Fetch company mode after user is set
+  // Fetch company mode + name after user is set
   const fetchCompanyMode = async (companyId: string | null) => {
-    if (!companyId) { setCompanyMode(null); return }
+    if (!companyId) { setCompanyMode(null); setCompanyName(null); return }
     const { data } = await supabase
       .from('companies')
-      .select('mode')
+      .select('mode, name')
       .eq('id', companyId)
       .single()
     setCompanyMode((data?.mode as 'solo' | 'team') ?? 'team')
+    setCompanyName(data?.name ?? null)
   }
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (!user) return null
 
   return (
-    <AuthContext.Provider value={{ user, loading, companyMode }}>
+    <AuthContext.Provider value={{ user, loading, companyMode, companyName }}>
       {children}
     </AuthContext.Provider>
   )
