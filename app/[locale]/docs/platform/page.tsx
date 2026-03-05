@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-// ── Shared nav (identique index + ai) ────────────────────────────────────────
+// ── Shared nav ──────────────────────────────────────────────────────────────
 function DocNav({ active }: { active: 'platform' | 'ai' }) {
   return (
     <nav className="doc-nav">
@@ -20,18 +20,18 @@ function DocNav({ active }: { active: 'platform' | 'ai' }) {
   )
 }
 
-// ── Sidebar sections ──────────────────────────────────────────────────────────
+// ── Sidebar sections ───────────────────────────────────────────────────────────
 const SECTIONS = [
   { id:'overview',     label:'Overview',         icon:'◈' },
   { id:'dashboard',    label:'Dashboard',        icon:'▣' },
   { id:'consultants',  label:'Consultants',      icon:'◉' },
   { id:'projects',     label:'Projects',         icon:'◧' },
-  { id:'timesheets',   label:'Timesheets / CRA', icon:'⏱' },
+  { id:'timesheets',   label:'Timesheets', icon:'⏱' },
   { id:'leaves',       label:'Leave management', icon:'◷' },
   { id:'planning',     label:'Planning',         icon:'▦' },
   { id:'finance',      label:'Finance',          icon:'◬' },
   { id:'invoices',     label:'Invoices',         icon:'◉' },
-  { id:'roles',        label:'Roles & access',   icon:'🔐' },
+  { id:'roles',        label:'Roles & access',   icon:'◫' },
   { id:'multitenancy', label:'Multi-tenancy',    icon:'⬡' },
 ]
 
@@ -73,7 +73,7 @@ function Sidebar({ active }: { active: string }) {
   )
 }
 
-// ── Section wrapper ───────────────────────────────────────────────────────────
+// ── Section wrapper ────────────────────────────────────────────────────────────
 function Section({ id, label, icon, color = 'var(--cyan)', children }: {
   id: string; label: string; icon: string; color?: string; children: React.ReactNode
 }) {
@@ -171,7 +171,7 @@ function Note({ color = 'var(--gold)', children }: { color?: string; children: R
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function PlatformDocsPage() {
   const [activeSection, setActiveSection] = useState('overview')
 
@@ -250,7 +250,7 @@ export default function PlatformDocsPage() {
                 { icon:'◬', title:'Financial tracking',     desc:'TJM sold vs actual, gross margin per project, profitability per consultant.' },
               ]} />
               <Note color="var(--cyan)">
-                🔐 <strong>All data is multi-tenant and RLS-enforced.</strong> Each company's data is
+                ⬡ <strong>All data is multi-tenant and RLS-enforced.</strong> Each company's data is
                 isolated at the database level — no query can cross tenant boundaries.
               </Note>
             </Section>
@@ -262,8 +262,8 @@ export default function PlatformDocsPage() {
                 and surfaces pending actions without navigating away.
               </p>
               <FeatureGrid items={[
-                { icon:'📊', title:'KPI cards',        desc:'Active consultants, active projects, occupancy rate, and pending leave requests — updated on every load.' },
-                { icon:'📅', title:'Mini calendar',    desc:'Monthly calendar with colour-coded events: leave requests, project milestones, and availability blocks.' },
+                { icon:'◈', title:'KPI cards',        desc:'Active consultants, active projects, occupancy rate, and pending leave requests — updated on every load.' },
+                { icon:'▦', title:'Mini calendar',    desc:'Monthly calendar with colour-coded events: leave requests, project milestones, and availability blocks.' },
                 { icon:'⚡', title:'Activity feed',    desc:'Recent team actions — assignments, leave approvals, new projects — in reverse chronological order.' },
                 { icon:'▦',  title:'Project snapshot', desc:'Active projects with deadline proximity and assigned consultant count.' },
               ]} />
@@ -285,10 +285,10 @@ export default function PlatformDocsPage() {
                 tracks availability, assignments, financial cost, and leave entitlements.
               </p>
               <FeatureGrid items={[
-                { icon:'👤', title:'Employee profile',   desc:'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
-                { icon:'🔗', title:'Freelance profile',  desc:'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
-                { icon:'🎯', title:'Target rate (cible)',desc:'Admin sets a target TJM — the platform tracks the gap vs actual cost to flag margin risk.' },
-                { icon:'📋', title:'Occupancy tracking', desc:'Real-time occupancy % derived from active assignments, updated across planning views.' },
+                { icon:'◉', title:'Employee profile',   desc:'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
+                { icon:'◧', title:'Freelance profile',  desc:'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
+                { icon:'◎', title:'Target rate',desc:'Admin sets a target daily rate — the platform tracks the gap vs actual cost to flag margin risk.' },
+                { icon:'◬', title:'Occupancy tracking', desc:'Real-time occupancy % derived from active assignments, updated across planning views.' },
               ]} />
               <p style={{ marginBottom: 16 }}><strong>Contract types</strong> drive behaviour across the platform:</p>
               <Table
@@ -304,8 +304,8 @@ export default function PlatformDocsPage() {
 actual_daily_cost = gross_annual_salary × (1 + employer_charges_pct / 100) / working_days
 
 // Default values (FR market)
-charges_pct     = 42%   // employer charges
-jours_travailles = 218  // working days / year`}</CodeBlock>
+charges_pct      = 42%  // employer charges
+working_days     = 218  // working days / year`}</CodeBlock>
               <Note color="var(--cyan)">
                 Consultant accounts are linked via <strong>user_id</strong>. An admin can send an email
                 invitation directly from the consultant drawer — the platform creates a Supabase auth
@@ -320,10 +320,10 @@ jours_travailles = 218  // working days / year`}</CodeBlock>
                 links a client, a team, and a financial envelope.
               </p>
               <FeatureGrid items={[
-                { icon:'🏢', title:'Client CRM',           desc:'Client directory with sector, contact info, and linked projects. Revenue and active project counts per client.' },
-                { icon:'📁', title:'Project lifecycle',    desc:'Draft → Active → On hold → Completed → Archived. Each status gates what actions are available.' },
-                { icon:'👥', title:'Team assignments',     desc:'Assign consultants with start/end dates and allocation %. Freelancers can have a per-assignment TJM override.' },
-                { icon:'💶', title:'Financial envelope',   desc:'TJM sold, days sold, total budget — visible to admins only. Used to calculate gross margin.' },
+                { icon:'◈', title:'Client CRM',           desc:'Client directory with sector, contact info, and linked projects. Revenue and active project counts per client.' },
+                { icon:'◧', title:'Project lifecycle',    desc:'Draft → Active → On hold → Completed → Archived. Each status gates what actions are available.' },
+                { icon:'◉', title:'Team assignments',     desc:'Assign consultants with start/end dates and allocation %. Freelancers can have a per-assignment TJM override.' },
+                { icon:'◬', title:'Financial envelope',   desc:'TJM sold, days sold, total budget — visible to admins only. Used to calculate gross margin.' },
               ]} />
               <Table
                 headers={['Status', 'Description', 'Visible in financials']}
@@ -338,21 +338,21 @@ jours_travailles = 218  // working days / year`}</CodeBlock>
             </Section>
 
             {/* ── Timesheets ── */}
-            <Section id="timesheets" label="Timesheets / CRA" icon="⏱" color="var(--gold)">
+            <Section id="timesheets" label="Timesheets" icon="⏱" color="var(--gold)">
               <p>
-                The CRA module provides weekly time tracking with a structured validation workflow.
+                The timesheet module provides weekly time tracking with a structured validation workflow.
                 Each day entry can be 0, 0.5, or 1 day — and moves through <strong>draft → submitted → approved</strong>.
               </p>
               <FeatureGrid items={[
-                { icon:'📅', title:'Weekly grid',       desc:'Each consultant sees their week with day cells. Click to toggle empty → half → full day.' },
-                { icon:'✓',  title:'Submit workflow',   desc:'Consultant submits the week → manager/admin reviews and approves per consultant.' },
-                { icon:'👁', title:'Manager view',      desc:'Managers see all team members for the selected week. Can approve all submitted entries in one click.' },
-                { icon:'🔒', title:'Approval lock',     desc:'Approved entries are locked — no edits without admin override.' },
+                { icon:'▦', title:'Weekly grid',       desc:'Each consultant sees their week with day cells. Click to toggle empty → half → full day.' },
+                { icon:'◎', title:'Submit workflow',   desc:'Consultant submits the week → manager/admin reviews and approves per consultant.' },
+                { icon:'◉', title:'Manager view',      desc:'Managers see all team members for the selected week. Can approve all submitted entries in one click.' },
+                { icon:'◫', title:'Approval lock',     desc:'Approved entries are locked — no edits without admin override.' },
               ]} />
               <CodeBlock>{`// Entry states
-empty     → no entry (0j)
-half      → 0.5j (demi-journée)
-full      → 1j
+empty     → no entry (0d)
+half      → 0.5d (half day)
+full      → 1d
 draft     → saved but not submitted
 submitted → awaiting manager approval
 approved  → locked`}</CodeBlock>
@@ -373,22 +373,22 @@ approved  → locked`}</CodeBlock>
                 Freelancers have a restricted set of leave types — CP and RTT are not available.
               </p>
               <FeatureGrid items={[
-                { icon:'📝', title:'Leave request',     desc:'Consultant selects type, dates, and submits. Working days calculated automatically (weekends excluded).' },
-                { icon:'✓',  title:'Approval workflow', desc:'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
-                { icon:'📊', title:'Balance tracking',  desc:'CP and RTT balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
-                { icon:'⚠',  title:'Impact warning',   desc:'System flags if an approved leave overlaps with an active project assignment.' },
+                { icon:'◈', title:'Leave request',     desc:'Consultant selects type, dates, and submits. Working days calculated automatically (weekends excluded).' },
+                { icon:'◎', title:'Approval workflow', desc:'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
+                { icon:'◧', title:'Balance tracking',  desc:'CP and RTT balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
+                { icon:'▲', title:'Impact warning',   desc:'System flags if an approved leave overlaps with an active project assignment.' },
               ]} />
               <Table
                 headers={['Type', 'Available to', 'Duration']}
                 rows={[
-                  ['CP (Paid leave)',       'Employee only', 'Custom — calculated in working days'],
-                  ['RTT',                  'Employee only', 'Custom — from RTT balance'],
-                  ['Sans solde (Unpaid)',   'All',           'Custom'],
-                  ['Absence autorisée',     'All',           'Fixed by legal motif (death, marriage…)'],
+                  ['Paid leave (CP)',       'Employee only', 'Custom — calculated in working days'],
+                  ['Flex days (RTT)',       'Employee only', 'Custom — from RTT balance'],
+                  ['Unpaid leave',          'All',           'Custom'],
+                  ['Authorised absence',    'All',           'Fixed by legal motif (bereavement, marriage…)'],
                 ]}
               />
               <Note color="var(--green)">
-                <strong>Absence autorisée</strong> has a fixed legal duration per motif — the end date
+                <strong>Authorised absence</strong> has a fixed legal duration per motif — the end date
                 is calculated automatically. No CP/RTT balance is deducted.
               </Note>
             </Section>
@@ -421,19 +421,19 @@ approved  → locked`}</CodeBlock>
               <p>
                 Financial data is <strong>admin-only</strong>. Two views expose different angles:
                 project-level margins in <strong>Finances</strong>, and consultant-level profitability
-                in <strong>Rentabilité</strong>.
+                in <strong>Profitability</strong>.
               </p>
               <FeatureGrid items={[
-                { icon:'💶', title:'Project margins',       desc:'TJM sold vs TJM réel per project. Gross margin in € and %. Colour-coded by health threshold.' },
-                { icon:'◉',  title:'Consultant profitability', desc:'Revenue generated, gross margin, occupancy rate — per consultant, sorted by any metric.' },
-                { icon:'🎯', title:'Target vs actual',      desc:'Admin sets a TJM cible per consultant. Platform shows the gap % — red if margin < 10%.' },
-                { icon:'⚠',  title:'Alert system',         desc:'Banner surfaces consultants whose target rate leaves less than 10% margin over actual cost.' },
+                { icon:'◬', title:'Project margins',       desc:'Sold rate vs actual daily cost per project. Gross margin in € and %. Colour-coded by health threshold.' },
+                { icon:'◈', title:'Consultant profitability', desc:'Revenue generated, gross margin, occupancy rate — per consultant, sorted by any metric.' },
+                { icon:'◎', title:'Target vs actual',      desc:'Admin sets a target daily rate per consultant. Platform shows the gap % — red if margin < 10%.' },
+                { icon:'▲', title:'Alert system',         desc:'Banner surfaces consultants whose target rate leaves less than 10% margin over actual cost.' },
               ]} />
               <CodeBlock>{`// Gross margin per consultant
-ca_genere    = SUM(tjm_vendu × jours) on active assignments
-cout         = tjm_cout_reel × jours_generes
-marge_brute  = ca_genere - cout
-marge_pct    = marge_brute / ca_genere × 100
+revenue      = SUM(sold_rate × days) on active assignments
+cost         = actual_daily_cost × billed_days
+gross_margin = revenue - cost
+margin_pct   = gross_margin / revenue × 100
 
 // Margin health thresholds
 ≥ 25%  →  Excellent  (green)
@@ -448,7 +448,7 @@ marge_pct    = marge_brute / ca_genere × 100
                 headers={['Metric', 'Source', 'Scope']}
                 rows={[
                   ['Sold rate',     'project.sold_rate',           'Per project'],
-                  ['TJM coût réel', 'consultant_profitability view','Per consultant (calculated)'],
+                  ['Actual daily cost', 'consultant_profitability view','Per consultant (calculated)'],
                   ['Target rate',   'consultant.target_rate',         'Per consultant (admin-set)'],
                   ['Gross margin',  'revenue − consultant_cost',  'Per consultant / project'],
                   ['Margin %',      'gross_margin / revenue',      'Per consultant / project'],
@@ -467,9 +467,9 @@ marge_pct    = marge_brute / ca_genere × 100
                 { icon:'⏱', title:'Timesheet import',   desc:'Select a month — platform pulls all approved entries, groups by consultant × project, and pre-fills line items with quantities and rates.' },
                 { icon:'◧', title:'Project import',     desc:'Load a project directly to pre-fill the sold rate as a line item. Editable before save.' },
                 { icon:'✎', title:'Manual mode',        desc:'Full line-by-line entry. Units: day / hour / unit. Each line has a description, detail field, and live total.' },
-                { icon:'👁', title:'Live preview',      desc:'Split-screen layout — form on the left, PDF-style preview on the right, updating on every keystroke.' },
-                { icon:'📄', title:'Legal compliance',  desc:'SIRET, VAT number, IBAN/BIC, legal mention, auto-entrepreneur clause — all sourced from companies.billing_settings.' },
-                { icon:'🔢', title:'Auto-numbering',    desc:'Invoice numbers follow a configurable prefix + sequential counter (e.g. NEX-2026-0001). Thread-safe via atomic SQL update.' },
+                { icon:'◉', title:'Live preview',      desc:'Split-screen layout — form on the left, PDF-style preview on the right, updating on every keystroke.' },
+                { icon:'◧', title:'Legal compliance',  desc:'SIRET, VAT number, IBAN/BIC, legal mention, auto-entrepreneur clause — all sourced from companies.billing_settings.' },
+                { icon:'◬', title:'Auto-numbering',    desc:'Invoice numbers follow a configurable prefix + sequential counter (e.g. NEX-2026-0001). Thread-safe via atomic SQL update.' },
               ]} />
               <Table
                 headers={['Status', 'Description', 'Editable']}
@@ -506,7 +506,7 @@ SELECT next_invoice_number(company_id);
             </Section>
 
             {/* ── Roles ── */}
-            <Section id="roles" label="Roles & access" icon="🔐" color="var(--gold)">
+            <Section id="roles" label="Roles & access" icon="◫" color="var(--gold)">
               <p>
                 Roles are stored in <code style={{ color:'var(--cyan)' }}>auth.users.app_metadata.user_role</code> —
                 not in a user-editable table. They are set at invite time and can only be changed by an admin.
@@ -561,10 +561,10 @@ $$ LANGUAGE sql STABLE;
 CREATE POLICY "super_admin_all" ON consultants
   USING (is_super_admin());`}</CodeBlock>
               <FeatureGrid items={[
-                { icon:'🔐', title:'Database-level isolation', desc:'RLS policies on every table. Even direct API calls cannot access another tenant\'s data.' },
-                { icon:'🏢', title:'Company profiles',         desc:'Each tenant has a companies record. The company name is displayed in the topbar badge.' },
+                { icon:'⬡', title:'Database-level isolation', desc:'RLS policies on every table. Even direct API calls cannot access another tenant\'s data.' },
+                { icon:'◈', title:'Company profiles',         desc:'Each tenant has a companies record. The company name is displayed in the topbar badge.' },
                 { icon:'⚡', title:'AI agent isolation',       desc:'The AI route uses the user\'s JWT — not a service key — so RLS applies to all agent queries.' },
-                { icon:'👑', title:'Super admin view',         desc:'super_admin role bypasses RLS via is_super_admin() — used for platform-level management.' },
+                { icon:'◎', title:'Super admin view',         desc:'super_admin role bypasses RLS via is_super_admin() — used for platform-level management.' },
               ]} />
               <Note color="var(--cyan)">
                 <strong>Solo mode</strong> — a company can be created with{' '}
