@@ -1,114 +1,16 @@
 // @ts-nocheck
 /**
  * lib/data.ts
- * Couche données Supabase — hooks + mutations
- * Toutes les données viennent de Supabase (pas de mock)
+ * Remplace lib/mock.ts — toutes les données viennent de Supabase
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { supabase }            from './supabase'
-import type {
-  Consultant, Project, Client,
-  LeaveRequest, KpiData, ActivityItem,
-} from '@/types'
+import type { Consultant, Project, Client, LeaveRequest, KpiData, ActivityItem } from '@/types'
 
-// ══════════════════════════════════════════════════════════════
-// TYPES LOCAUX
-// ══════════════════════════════════════════════════════════════
-
-export interface ProjectFinancials {
-  id:                 string
-  name:               string
-  client:             string
-  tjm_vendu:          number | null
-  jours_vendus:       number | null
-  tjm_reel:           number | null
-  marge_par_jour:     number | null
-  marge_brute_totale: number | null
-  marge_pct:          number | null
-  team_size:          number
-}
-
-export interface ConsultantProfitability {
-  consultant_id:   string
-  name:            string
-  role:            string
-  initials:        string
-  avatar_color:    string | null
-  tjm_cout:        number | null
-  occupancy_rate:  number | null
-  status:          string
-  nb_assignments:  number
-  jours_generes:   number | null
-  ca_genere:       number | null
-  cout_consultant: number | null
-  marge_brute:     number | null
-  marge_pct:       number | null
-}
-
-export interface AssignmentWithConsultant {
-  id:           string
-  consultantId: string
-  projectId:    string
-  allocation:   number
-  startDate?:   string
-  endDate?:     string
-  name:         string
-  initials:     string
-  role:         string
-  avatarColor:  string
-}
-
-export interface AssignmentInput {
-  company_id:    string
-  consultant_id: string
-  project_id:    string
-  allocation:    number
-  start_date:    string
-  end_date:      string
-}
-
-export interface ProjectInput {
-  name:          string
-  client_name?:  string
-  client_id?:    string
-  reference?:    string
-  description?:  string
-  start_date?:   string
-  end_date?:     string
-  tjm_vendu?:    number
-  jours_vendus?: number
-  budget_total?: number
-  is_internal:   boolean
-  status?:       'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
-  company_id:    string
-}
-
-export interface ClientInput {
-  name:           string
-  sector?:        string
-  website?:       string
-  contact_name?:  string
-  contact_email?: string
-  contact_phone?: string
-  notes?:         string
-  company_id:     string
-}
-
-export interface Timesheet {
-  id:           string
-  consultantId: string
-  projectId:    string | null
-  date:         string    // 'YYYY-MM-DD'
-  value:        number    // 0 | 0.5 | 1
-  status:       'draft' | 'submitted' | 'approved'
-}
-
-// ══════════════════════════════════════════════════════════════
-// MAPPERS — snake_case Supabase → camelCase TypeScript
-// ══════════════════════════════════════════════════════════════
+// ── Mappers ──────────────────────────────────────────────────
 
 function toConsultant(row: Record<string, unknown>): Consultant {
   return {
@@ -126,9 +28,9 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     tjm:            row.tjm as number | undefined,
     stack:          row.stack as string[] | undefined,
     leaveDaysTotal: row.leave_days_total as number | undefined,
-    rttTotal:       row.rtt_total as number | undefined,
-    rttTaken:       row.rtt_taken as number | undefined,
-    rttLeft:        row.rtt_left as number | undefined,
+    rttTotal:      row.rtt_total as number | undefined,
+    rttTaken:      row.rtt_taken as number | undefined,
+    rttLeft: row.rtt_left as number | undefined,
   }
 }
 
@@ -186,21 +88,7 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
   }
 }
 
-function toTimesheet(row: Record<string, unknown>): Timesheet {
-  return {
-    id:           row.id           as string,
-    consultantId: row.consultant_id as string,
-    projectId:    (row.project_id  as string | null) ?? null,
-    date:         row.date         as string,
-    value:        (row.value       as number) ?? 1,
-    status:       (row.status      as Timesheet['status']) ?? 'draft',
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-// HOOK GÉNÉRIQUE useSupabase
-// Gère loading / error / cleanup (évite setState sur composant démonté)
-// ══════════════════════════════════════════════════════════════
+// ── Hook générique ────────────────────────────────────────────
 
 function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [data,    setData]    = useState<T | null>(null)
@@ -208,28 +96,25 @@ function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false
-
+    let cancelled = false   // ← empêche le setState si le composant est démonté
+                            //   OU si les deps ont changé avant la fin du fetch
     setLoading(true)
     setError(null)
 
     fetcher()
-      .then(d  => { if (!cancelled) { setData(d);          setError(null)    } })
-      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
-      .finally(()=> { if (!cancelled) setLoading(false) })
+      .then(d  => { if (!cancelled) { setData(d);           setError(null)       } })
+      .catch(e => { if (!cancelled) { setError(e.message);  setLoading(false)    } })
+      .finally(()=> { if (!cancelled)  setLoading(false) })
 
-    return () => { cancelled = true }
+    return () => { cancelled = true }  // ← cleanup : annule le précédent fetch
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
   return { data, loading, error }
 }
 
-// ══════════════════════════════════════════════════════════════
-// QUERIES — CONSULTANTS
-// ══════════════════════════════════════════════════════════════
+// ── Consultants ───────────────────────────────────────────────
 
-/** Liste complète via vue consultant_occupancy (avec occupancy_rate calculé) */
 export function useConsultants(dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -241,11 +126,8 @@ export function useConsultants(dep?: number) {
   }, [dep])
 }
 
-// ══════════════════════════════════════════════════════════════
-// QUERIES — PROJETS
-// ══════════════════════════════════════════════════════════════
+// ── Projets ───────────────────────────────────────────────────
 
-/** Projets avec équipe assignée (inclus dans assignments → consultants) */
 export function useProjects(dep?: number, includeArchived = false) {
   return useSupabase(async () => {
     let query = supabase
@@ -266,9 +148,9 @@ export function useProjects(dep?: number, includeArchived = false) {
         .map((a: any) => a.consultants)
         .filter(Boolean)
         .map((c: any) => ({
-          id:          c.id           as string,
-          name:        c.name         as string,
-          initials:    c.initials     as string,
+          id:          c.id          as string,
+          name:        c.name        as string,
+          initials:    c.initials    as string,
           avatarColor: c.avatar_color as string,
         }))
       return toProject({
@@ -280,7 +162,7 @@ export function useProjects(dep?: number, includeArchived = false) {
   }, [dep, includeArchived])
 }
 
-/** Tous les assignments (pour la grille disponibilités / timeline) */
+
 export function useAssignments() {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -290,62 +172,8 @@ export function useAssignments() {
     return data ?? []
   }, [])
 }
+// ── Clients ───────────────────────────────────────────────────
 
-/** Assignments enrichis d'un projet spécifique */
-export function useProjectAssignments(projectId: string, dep?: number) {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*, consultants (name, initials, role, avatar_color)')
-      .eq('project_id', projectId)
-      .order('created_at')
-    if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      id:           row.id as string,
-      consultantId: row.consultant_id as string,
-      projectId:    row.project_id as string,
-      allocation:   row.allocation as number,
-      startDate:    row.start_date as string | undefined,
-      endDate:      row.end_date as string | undefined,
-      name:         row.consultants?.name ?? '',
-      initials:     row.consultants?.initials ?? '',
-      role:         row.consultants?.role ?? '',
-      avatarColor:  row.consultants?.avatar_color ?? 'green',
-    } satisfies AssignmentWithConsultant))
-  }, [projectId, dep])
-}
-
-/**
- * Map consultantId → projets actifs
- * Un seul appel Supabase pour toute la grille timesheets
- */
-export function useConsultantProjectsMap() {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('consultant_id, projects!inner ( id, name, status )')
-    if (error) throw new Error(error.message)
-
-    const map: Record<string, { id: string; name: string }[]> = {}
-    for (const row of data ?? []) {
-      const cid  = row.consultant_id as string
-      const proj = row.projects as { id: string; name: string; status: string } | null
-      if (!proj) continue
-      if (proj.status === 'completed' || proj.status === 'archived') continue
-      if (!map[cid]) map[cid] = []
-      if (!map[cid].some(p => p.id === proj.id)) {
-        map[cid].push({ id: proj.id, name: proj.name })
-      }
-    }
-    return map
-  }, [])
-}
-
-// ══════════════════════════════════════════════════════════════
-// QUERIES — CLIENTS
-// ══════════════════════════════════════════════════════════════
-
-/** Liste clients avec comptage projets actifs / total */
 export function useClients(dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -361,7 +189,6 @@ export function useClients(dep?: number) {
   }, [dep])
 }
 
-/** Client unique par id */
 export function useClient(id: string, dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -374,7 +201,6 @@ export function useClient(id: string, dep?: number) {
   }, [id, dep])
 }
 
-/** Projets liés à un client (page détail client) */
 export function useClientProjects(clientId: string, dep?: number) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -390,54 +216,16 @@ export function useClientProjects(clientId: string, dep?: number) {
   }, [clientId, dep])
 }
 
-// ══════════════════════════════════════════════════════════════
-// QUERIES — CONGÉS
-// ══════════════════════════════════════════════════════════════
+// ── Project financials ────────────────────────────────────────
 
-/** Toutes les demandes de congé (filtrée par RLS selon le rôle) */
-export function useLeaveRequests(dep?: any) {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('leave_requests')
-      .select('*, consultants (name)')
-      .order('created_at', { ascending: false })
-    if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toLeaveRequest({
-      ...row,
-      consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
-    }))
-  }, [dep])
+export interface ProjectFinancials {
+  id: string; name: string; client: string
+  tjm_vendu: number | null; jours_vendus: number | null
+  tjm_reel: number | null; marge_par_jour: number | null
+  marge_brute_totale: number | null; marge_pct: number | null
+  team_size: number
 }
 
-// ══════════════════════════════════════════════════════════════
-// QUERIES — TIMESHEETS
-// ══════════════════════════════════════════════════════════════
-
-/**
- * Timesheets lun → ven de la semaine donnée
- * Refetch automatique quand `monday` change
- */
-export function useTimesheets(monday: Date) {
-  const from = monday.toISOString().slice(0, 10)
-  const to   = new Date(monday.getTime() + 4 * 86_400_000).toISOString().slice(0, 10)
-
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('timesheets')
-      .select('*')
-      .gte('date', from)
-      .lte('date', to)
-      .order('date')
-    if (error) throw new Error(error.message)
-    return (data ?? []).map(toTimesheet)
-  }, [from])
-}
-
-// ══════════════════════════════════════════════════════════════
-// QUERIES — FINANCE
-// ══════════════════════════════════════════════════════════════
-
-/** Marges par projet — vue project_financials (admin only via RLS) */
 export function useProjectFinancials() {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -449,23 +237,22 @@ export function useProjectFinancials() {
   })
 }
 
-/** Rentabilité par consultant — vue consultant_profitability (admin only via RLS) */
-export function useConsultantProfitability() {
-  return useSupabase(async () => {
-    const { data, error } = await supabase
-      .from('consultant_profitability')
-      .select('*')
-      .order('ca_genere', { ascending: false })
-    if (error) throw new Error(error.message)
-    return (data ?? []) as ConsultantProfitability[]
-  })
-}
+// ── Congés ────────────────────────────────────────────────────
+  export function useLeaveRequests(dep?: any) {
+    return useSupabase(async () => {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*, consultants (name)')
+        .order('created_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []).map((row: any) => toLeaveRequest({
+        ...row,
+        consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
+      }))
+    }, [dep])
+  }
+// ── KPIs ─────────────────────────────────────────────────────
 
-// ══════════════════════════════════════════════════════════════
-// QUERIES — DASHBOARD
-// ══════════════════════════════════════════════════════════════
-
-/** KPIs globaux (3 requêtes parallèles) */
 export function useKpi(): { data: KpiData | null; loading: boolean; error: string | null } {
   return useSupabase(async () => {
     const [consultantsRes, projectsRes, leavesRes] = await Promise.all([
@@ -489,13 +276,14 @@ export function useKpi(): { data: KpiData | null; loading: boolean; error: strin
       activeConsultants: active.length,
       totalConsultants:  consultants.length,
       activeProjects:    projects.filter((p: any) => p.status === 'active').length,
-      pendingLeaves:     leaves.filter((l: any)   => l.status === 'pending').length,
+      pendingLeaves:     leaves.filter((l: any) => l.status === 'pending').length,
       occupancyRate:     avgOccupancy,
     } satisfies KpiData
   })
 }
 
-/** Flux d'activité récente */
+// ── Activity feed ─────────────────────────────────────────────
+
 export function useActivity(limit = 10) {
   return useSupabase(async () => {
     const { data, error } = await supabase
@@ -514,101 +302,10 @@ export function useActivity(limit = 10) {
   })
 }
 
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — CONSULTANTS
-// ══════════════════════════════════════════════════════════════
+// ── Mutations Leaves ──────────────────────────────────────────
 
-export async function createConsultant(data: {
-  name: string; initials: string; email?: string; role: string
-  avatar_color: string; stack: string[]; status: string
-  tjm?: number; leave_days_total?: number; company_id?: string
-}) {
-  const { error } = await supabase
-    .from('consultants')
-    .insert({ ...data, leave_days_taken: 0, occupancy_rate: 0 })
-  if (error) throw new Error(error.message)
-}
-
-export async function updateConsultant(id: string, data: {
-  name?: string; initials?: string; email?: string; role?: string
-  avatar_color?: string; stack?: string[]; status?: string
-  tjm?: number; leave_days_total?: number
-}) {
-  const { error } = await supabase.from('consultants').update(data).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-export async function deleteConsultant(id: string) {
-  const { error } = await supabase.from('consultants').delete().eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — PROJETS
-// ══════════════════════════════════════════════════════════════
-
-export async function createProject(data: ProjectInput) {
-  const { error } = await supabase
-    .from('projects')
-    .insert({ ...data, status: data.status ?? 'draft', progress: 0 })
-  if (error) throw new Error(error.message)
-}
-
-export async function updateProject(id: string, data: Partial<ProjectInput>) {
-  const { error } = await supabase.from('projects').update(data).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-export async function archiveProject(id: string) {
-  const { error } = await supabase.from('projects').update({ status: 'archived' }).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-export async function deleteProject(id: string) {
-  const { error } = await supabase.from('projects').delete().eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — CLIENTS
-// ══════════════════════════════════════════════════════════════
-
-export async function createClient(data: ClientInput) {
-  const { error } = await supabase.from('clients').insert(data)
-  if (error) throw new Error(error.message)
-}
-
-export async function updateClient(id: string, data: Partial<ClientInput>) {
-  const { error } = await supabase.from('clients').update(data).eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-export async function deleteClient(id: string) {
-  const { error } = await supabase.from('clients').delete().eq('id', id)
-  if (error) throw new Error(error.message)
-}
-
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — CONGÉS
-// ══════════════════════════════════════════════════════════════
-
-export async function createLeaveRequest(data: {
-  motif?:        string
-  consultant_id: string
-  company_id:    string
-  type:          'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
-  start_date:    string
-  end_date:      string
-  days:          number
-}) {
-  const { error } = await supabase
-    .from('leave_requests')
-    .insert({ ...data, status: 'pending' })
-  if (error) throw new Error(error.message)
-}
-
-/** Approuver + incrémenter le compteur CP ou RTT */
 export async function approveLeave(id: string) {
+  // Récupérer le type et les jours avant d'approuver
   const { data: req, error: fetchErr } = await supabase
     .from('leave_requests')
     .select('consultant_id, days, type')
@@ -622,6 +319,7 @@ export async function approveLeave(id: string) {
     .eq('id', id)
   if (error) throw new Error(error.message)
 
+  // Incrémenter le compteur selon le type
   if (req?.type === 'CP') {
     await supabase.rpc('increment_leave_taken', {
       p_consultant_id: req.consultant_id,
@@ -643,11 +341,248 @@ export async function refuseLeave(id: string) {
   if (error) throw new Error(error.message)
 }
 
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — TIMESHEETS
-// ══════════════════════════════════════════════════════════════
+// ── Mutations Consultant ──────────────────────────────────────
 
-/** Upsert une entrée timesheet (conflict sur consultant_id + date + project_id) */
+export async function createConsultant(data: {
+  name: string; initials: string; email?: string; role: string
+  avatar_color: string; stack: string[]; status: string
+  tjm?: number; leave_days_total?: number
+  company_id?: string  // ← ajouter
+}) {
+  const { error } = await supabase
+    .from('consultants')
+    .insert({ ...data, leave_days_taken: 0, occupancy_rate: 0 })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateConsultant(id: string, data: {
+  name?: string; initials?: string; email?: string; role?: string
+  avatar_color?: string; stack?: string[]; status?: string
+  tjm?: number; leave_days_total?: number
+}) {
+  const { error } = await supabase.from('consultants').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteConsultant(id: string) {
+  const { error } = await supabase.from('consultants').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutations Projet ──────────────────────────────────────────
+
+export type ProjectInput = {
+  name: string; client_name?: string; client_id?: string
+  reference?: string; description?: string
+  start_date?: string; end_date?: string
+  tjm_vendu?: number; jours_vendus?: number; budget_total?: number
+  is_internal: boolean
+  status?: 'draft' | 'active' | 'on_hold' | 'completed' | 'archived'
+  company_id: string
+}
+
+export async function createProject(data: ProjectInput) {
+  const { error } = await supabase.from('projects').insert({ ...data, status: data.status ?? 'draft', progress: 0 })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateProject(id: string, data: Partial<ProjectInput>) {
+  const { error } = await supabase.from('projects').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function archiveProject(id: string) {
+  const { error } = await supabase.from('projects').update({ status: 'archived' }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteProject(id: string) {
+  const { error } = await supabase.from('projects').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutations Client ──────────────────────────────────────────
+
+export type ClientInput = {
+  name: string; sector?: string; website?: string
+  contact_name?: string; contact_email?: string; contact_phone?: string
+  notes?: string; company_id: string
+}
+
+export async function createClient(data: ClientInput) {
+  const { error } = await supabase.from('clients').insert(data)
+  if (error) throw new Error(error.message)
+}
+
+export async function updateClient(id: string, data: Partial<ClientInput>) {
+  const { error } = await supabase.from('clients').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteClient(id: string) {
+  const { error } = await supabase.from('clients').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+
+// ── Type Assignment enrichi ───────────────────────────────────
+
+export interface AssignmentWithConsultant {
+  id:          string
+  consultantId: string
+  projectId:   string
+  allocation:  number
+  startDate?:  string
+  endDate?:    string
+  name:        string
+  initials:    string
+  role:        string
+  avatarColor: string
+}
+
+// ── Hook : assignments d'un projet ───────────────────────────
+
+export function useProjectAssignments(projectId: string, dep?: number) {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select('*, consultants (name, initials, role, avatar_color)')
+      .eq('project_id', projectId)
+      .order('created_at')
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row: any) => ({
+      id:           row.id as string,
+      consultantId: row.consultant_id as string,
+      projectId:    row.project_id as string,
+      allocation:   row.allocation as number,
+      startDate:    row.start_date as string | undefined,
+      endDate:      row.end_date as string | undefined,
+      name:         row.consultants?.name ?? '',
+      initials:     row.consultants?.initials ?? '',
+      role:         row.consultants?.role ?? '',
+      avatarColor:  row.consultants?.avatar_color ?? 'green',
+    } satisfies AssignmentWithConsultant))
+  }, [projectId, dep])
+}
+
+// ── Mutation : créer un assignment ────────────────────────────
+
+export type AssignmentInput = {
+  company_id:    string
+  consultant_id: string
+  project_id:    string
+  allocation:    number
+  start_date:    string
+  end_date:      string
+}
+
+export async function createAssignment(data: AssignmentInput) {
+  const { error } = await supabase.from('assignments').insert(data)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutation : supprimer un assignment ────────────────────────
+
+export async function deleteAssignment(id: string) {
+  const { error } = await supabase.from('assignments').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Mutation : demande de congés ────────────────────────
+
+export async function createLeaveRequest(data: {
+  motif?: string
+  consultant_id: string
+  company_id: string
+  type: 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
+  start_date: string
+  end_date: string
+  days: number
+}) {
+  const { error } = await supabase
+    .from('leave_requests')
+    .insert({ ...data, status: 'pending' })
+  if (error) throw new Error(error.message)
+}
+
+export interface Timesheet {
+  id:           string
+  consultantId: string
+  projectId:    string | null
+  date:         string          // 'YYYY-MM-DD'
+  value:        number          // 0 | 0.5 | 1
+  status:       'draft' | 'submitted' | 'approved'
+}
+
+function toTimesheet(row: Record<string, unknown>): Timesheet {
+  return {
+    id:           row.id           as string,
+    consultantId: row.consultant_id as string,
+    projectId:    (row.project_id  as string | null) ?? null,
+    date:         row.date         as string,
+    value:        (row.value       as number) ?? 1,
+    status:       (row.status      as Timesheet['status']) ?? 'draft',
+  }
+}
+
+// ── useTimesheets(monday) ─────────────────────────────────────
+// Charge les timesheets lun → ven de la semaine donnée.
+// Refetch automatique quand `monday` change (dep = ISO string).
+
+export function useTimesheets(monday: Date) {
+  const from = monday.toISOString().slice(0, 10)
+  const to   = new Date(monday.getTime() + 4 * 86_400_000).toISOString().slice(0, 10)
+
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('timesheets')
+      .select('*')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date')
+
+    if (error) throw new Error(error.message)
+    return (data ?? []).map(toTimesheet)
+  }, [from]) // ← dep = string primitive → refetch quand la semaine change
+}
+
+// ── useConsultantProjectsMap() ────────────────────────────────
+// Retourne un objet { consultantId: { id, name }[] }
+// → Un seul appel Supabase pour toute la grille,
+//   chaque consultant ne voit que SES projets actifs dans le popup.
+
+export function useConsultantProjectsMap() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select(`
+        consultant_id,
+        projects!inner ( id, name, status )
+      `)
+
+    if (error) throw new Error(error.message)
+
+    const map: Record<string, { id: string; name: string }[]> = {}
+
+    for (const row of data ?? []) {
+      const cid  = row.consultant_id as string
+      const proj = row.projects as { id: string; name: string; status: string } | null
+      if (!proj) continue
+      // Exclure les projets terminés / archivés
+      if (proj.status === 'completed' || proj.status === 'archived') continue
+      if (!map[cid]) map[cid] = []
+      // Éviter les doublons (un consultant peut avoir plusieurs assignments sur un projet)
+      if (!map[cid].some(p => p.id === proj.id)) {
+        map[cid].push({ id: proj.id, name: proj.name })
+      }
+    }
+
+    return map
+  }, [])
+}
+
+// ── Mutations ─────────────────────────────────────────────────
+
 export async function upsertTimesheet(params: {
   consultantId: string
   projectId:    string
@@ -686,7 +621,6 @@ export async function upsertTimesheet(params: {
   return toTimesheet(data as Record<string, unknown>)
 }
 
-/** Soumettre des timesheets draft → submitted */
 export async function submitTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
@@ -696,7 +630,6 @@ export async function submitTimesheets(ids: string[]): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-/** Approuver des timesheets submitted → approved */
 export async function approveTimesheets(ids: string[]): Promise<void> {
   const { error } = await supabase
     .from('timesheets')
@@ -706,16 +639,37 @@ export async function approveTimesheets(ids: string[]): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
-// ══════════════════════════════════════════════════════════════
-// MUTATIONS — ASSIGNMENTS
-// ══════════════════════════════════════════════════════════════
-
-export async function createAssignment(data: AssignmentInput) {
-  const { error } = await supabase.from('assignments').insert(data)
-  if (error) throw new Error(error.message)
+// ── useInternalProjectTypes ───────────────────────────────────
+export function useInternalProjectTypes() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('internal_project_types')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order')
+    if (error) throw new Error(error.message)
+    return data ?? []
+  }, [])
+}
+// ── uHook profitability ───────────────────────────────────
+export interface ConsultantProfitability {
+  consultant_id: string; name: string; role: string
+  initials: string; avatar_color: string | null
+  tjm_cout: number | null; occupancy_rate: number | null
+  status: string; nb_assignments: number
+  jours_generes: number | null; ca_genere: number | null
+  cout_consultant: number | null; marge_brute: number | null
+  marge_pct: number | null
 }
 
-export async function deleteAssignment(id: string) {
-  const { error } = await supabase.from('assignments').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+export function useConsultantProfitability() {
+  return useSupabase(async () => {
+    const { data, error } = await supabase
+      .from('consultant_profitability')
+      .select('*')
+      .order('ca_genere', { ascending: false })
+    if (error) throw new Error(error.message)
+    return (data ?? []) as ConsultantProfitability[]
+  })
 }
+
