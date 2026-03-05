@@ -13,6 +13,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({ user: null, loading: true, companyName: null })
 
+// ── Helper : fetch company name ───────────────────────────────
+async function fetchCompanyName(role: UserRole, companyId: string | null): Promise<string | null> {
+  if (role === 'super_admin') return 'staffd'
+  if (!companyId) return null
+  const { data } = await supabase
+    .from('companies')
+    .select('name')
+    .eq('id', companyId)
+    .single()
+  return data?.name ?? null
+}
+
+// ── Helper : build AuthUser from supabase user ─────────────────
+function buildUser(supaUser: any): AuthUser {
+  const role      = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
+  const companyId = supaUser.app_metadata?.company_id ?? null
+  return { id: supaUser.id, email: supaUser.email ?? '', role, companyId }
+}
+
+// ── Provider ──────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [user,        setUser]        = useState<AuthUser | null>(null)
@@ -20,69 +40,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [companyName, setCompanyName] = useState<string | null>(null)
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        await supabase.auth.refreshSession()
-        const { data: { user: supaUser }, error } = await supabase.auth.getUser()
+    let mounted = true
 
-        if (error || !supaUser) {
-          setUser(null)
-          return
-        }
-
-        const role      = (supaUser.app_metadata?.user_role ?? 'viewer') as UserRole
-        const companyId = supaUser.app_metadata?.company_id ?? null
-
-        setUser({ id: supaUser.id, email: supaUser.email ?? '', role, companyId })
-
-        // Nom du tenant — super_admin affiche "staffd"
-        if (role === 'super_admin') {
-          setCompanyName('staffd')
-        } else if (companyId) {
-          const { data } = await supabase
-            .from('companies')
-            .select('name')
-            .eq('id', companyId)
-            .single()
-          setCompanyName(data?.name ?? null)
-        }
-      } catch (error) {
-        console.error('Auth error:', error)
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkUser()
-
+    // onAuthStateChange est la source de vérité principale
+    // Il se déclenche immédiatement avec la session courante (INITIAL_SESSION)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const role      = (session.user.app_metadata?.user_role ?? 'viewer') as UserRole
-        const companyId = session.user.app_metadata?.company_id ?? null
-        setUser({ id: session.user.id, email: session.user.email ?? '', role, companyId })
+      if (!mounted) return
 
-        if (role === 'super_admin') {
-          setCompanyName('staffd')
-        } else if (companyId) {
-          const { data } = await supabase
-            .from('companies')
-            .select('name')
-            .eq('id', companyId)
-            .single()
-          setCompanyName(data?.name ?? null)
-        }
+      if (session?.user) {
+        const authUser = buildUser(session.user)
+        setUser(authUser)
+        // Fetch company name en arrière-plan (non-bloquant)
+        fetchCompanyName(authUser.role, authUser.companyId)
+          .then(name => { if (mounted) setCompanyName(name) })
+          .catch(() => {})
       } else {
         setUser(null)
         setCompanyName(null)
       }
-      setLoading(false)
+
+      // Loading résolu dès le premier événement
+      if (mounted) setLoading(false)
     })
 
-    return () => { subscription.unsubscribe() }
+    // Timeout de sécurité — si onAuthStateChange ne répond pas en 3s
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        setLoading(false)
+      }
+    }, 3000)
+
+    return () => {
+      mounted = false
+      clearTimeout(timeout)
+      subscription.unsubscribe()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Redirection de sécurité côté client
+  // Redirection si pas de session après chargement
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
