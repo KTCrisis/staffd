@@ -240,13 +240,12 @@ export default function TimesheetsPage() {
   // ── Projets système (internes) dédoublonnés ──────────────
   const systemProjects = useMemo(() => {
     const seen = new Set<string>()
-    return (internalTypes ?? [])
-      .filter(t => { if (seen.has(t.key)) return false; seen.add(t.key); return true })
-      .map(t => ({
-        id:   `__${t.key}__`,
-        name: locale === 'fr' ? t.label_fr : t.label_en,
-      }))
-  }, [internalTypes, locale])
+    return (internalTypes ?? []).filter(p => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+  }, [internalTypes])
 
   // ── Optimistic local state ────────────────────────────────
   const [localEntries, setLocalEntries] = useState<Record<string, Timesheet>>({})
