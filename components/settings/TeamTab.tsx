@@ -5,7 +5,7 @@
 // Gestion des équipes : TeamCard, TeamForm, modaux, state
 // ══════════════════════════════════════════════════════════════
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Avatar }   from '@/components/ui/Avatar'
 import {
   useTeams, useConsultants,
@@ -42,9 +42,11 @@ function TeamCard({
   const [selectedConsultantId, setSelectedConsultantId] = useState('')
 
   const memberIds = new Set(team.members.map(m => m.id))
+  // On affiche uniquement les consultants sans équipe (UNIQUE consultant_id dans team_members)
+  // c.role est le titre de poste — on ne filtre PAS dessus
   const available = consultants.filter(c =>
-    !memberIds.has(c.id) &&
-    (c.role === 'consultant' || c.role === 'freelance' || c.role === 'manager')
+    !memberIds.has(c.id) &&   // pas déjà dans CETTE équipe
+    !(c as any).teamId         // pas dans une autre équipe
   )
 
   const handleAdd = async () => {
@@ -395,15 +397,30 @@ export function TeamTab({ companyId }: { companyId: string }) {
   const { data: teams,       loading: lT } = useTeams(refresh)
   const { data: consultants, loading: lC } = useConsultants(refresh)
 
+  // IDs retirés optimistiquement — cleared au prochain re-fetch
+  const [optimisticRemovedIds, setOptimisticRemovedIds] = useState<Set<string>>(new Set())
+
   const allConsultants = consultants ?? []
-  const managers = allConsultants.filter(c =>
+
+  // Applique l'optimistic override : on force teamId = undefined pour les IDs retirés
+  const allConsultantsOptimistic = allConsultants.map(c =>
+    optimisticRemovedIds.has(c.id) ? { ...c, teamId: undefined } : c
+  )
+
+  // Quand les vraies données arrivent, on vide l'override
+
+  useEffect(() => {
+    if (!lC && !lT) setOptimisticRemovedIds(new Set())
+  }, [lC, lT])
+
+  const managers = allConsultantsOptimistic.filter(c =>
     c.role?.toLowerCase().includes('manager') ||
     c.role?.toLowerCase().includes('lead') ||
     c.role?.toLowerCase().includes('directeur')
   )
 
   const teamCount  = (teams ?? []).length
-  const unassigned = allConsultants.filter(c => !(c as any).teamId && (c.role !== 'admin')).length
+  const unassigned = allConsultantsOptimistic.filter(c => !(c as any).teamId && (c.role !== 'admin')).length
 
   const handleRefresh = () => setRefresh(r => r + 1)
 
@@ -436,11 +453,19 @@ export function TeamTab({ companyId }: { companyId: string }) {
   const doRemoveMember = async () => {
     if (!confirmRemoveMember) return
     setRemovingMember(true)
+    // Optimistic : retire immédiatement le consultant des équipes côté UI
+    setOptimisticRemovedIds(prev => new Set([...prev, confirmRemoveMember.consultantId]))
+    setConfirmRemoveMember(null)
     try {
       await removeTeamMember(confirmRemoveMember.consultantId)
-      setConfirmRemoveMember(null)
       handleRefresh()
     } catch (e: any) {
+      // Rollback optimistic en cas d'erreur
+      setOptimisticRemovedIds(prev => {
+        const next = new Set(prev)
+        next.delete(confirmRemoveMember.consultantId)
+        return next
+      })
       alert(e.message)
     } finally {
       setRemovingMember(false)
@@ -525,7 +550,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
                 <TeamCard
                   key={team.id}
                   team={team}
-                  consultants={allConsultants}
+                  consultants={allConsultantsOptimistic}
                   onEdit={t => { setEditTarget(t); setShowForm(true) }}
                   onDelete={t => setConfirmDel(t)}
                   onAddMember={handleAddMember}
@@ -548,7 +573,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
                 ⚠ {unassigned} consultant{unassigned > 1 ? 's' : ''} sans équipe
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {allConsultants
+                {allConsultantsOptimistic
                   .filter(c => !(c as any).teamId && c.contractType !== undefined)
                   .map(c => (
                     <div key={c.id} style={{
