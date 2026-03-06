@@ -511,6 +511,107 @@ export default function TimesheetsPage() {
   // ── Render ───────────────────────────────────────────────
   return (
     <>
+      {/* ── Styles CRA ─────────────────────────────────────────── */}
+      <style>{`
+        .ts-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: var(--font-mono);
+          font-size: 12px;
+        }
+        .ts-table th {
+          padding: 6px 8px;
+          color: var(--text3);
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg2);
+        }
+        .ts-table td {
+          padding: 4px 4px;
+          border-bottom: 1px solid var(--border);
+          vertical-align: middle;
+        }
+        .ts-table tbody tr:hover td {
+          background: var(--bg3);
+        }
+
+        /* ── Cellule standard ── */
+        .ts-cell {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          width: 72px;
+          height: 48px;
+          margin: 0 auto;
+          border-radius: 6px;
+          border: 1px solid var(--border);
+          background: var(--bg3);
+          cursor: pointer;
+          transition: border-color .12s, background .12s;
+          font-family: var(--font-mono);
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .ts-cell:hover {
+          border-color: var(--cyan);
+          background: var(--bg4);
+        }
+        .ts-cell--empty {
+          color: var(--text3);
+          font-size: 16px;
+          font-weight: 400;
+          border-style: dashed;
+        }
+        .ts-cell--empty:hover {
+          color: var(--cyan);
+          border-style: solid;
+        }
+        .ts-cell--filled {
+          border-color: var(--border2);
+        }
+        .ts-cell--holiday {
+          width: 72px;
+          height: 48px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: 1px solid rgba(255,209,102,.25);
+          background: rgba(255,209,102,.06);
+        }
+        .ts-cell--leave {
+          width: 72px;
+          height: 48px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 6px;
+          border: 1px solid rgba(0,229,255,.2);
+          background: rgba(0,229,255,.05);
+        }
+
+        /* ── Dot statut (coin bas-droit) ── */
+        .ts-status-dot {
+          position: absolute;
+          bottom: 4px;
+          right: 4px;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+        }
+
+        /* ── Popup overlay ── */
+        .ts-popup-fixed {
+          position: fixed;
+          z-index: 1000;
+        }
+      `}</style>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
@@ -595,7 +696,7 @@ export default function TimesheetsPage() {
 
                     const rowEntries   = Object.values(lookup).filter(ts => ts.consultantId === c.id)
                     const weekTotal    = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
-                    const hasDraft     = rowEntries.some(ts => ts.status === 'draft')
+                    const hasDraft     = rowEntries.some(ts => ts.status === 'draft' && (ts.value ?? 0) > 0)
                     const hasSubmitted = rowEntries.some(ts => ts.status === 'submitted')
                     const rowStatus: TSStatus = hasDraft ? 'draft' : hasSubmitted ? 'submitted' : 'approved'
                     const isSelf = isConsultant && c.user_id === currentUserId

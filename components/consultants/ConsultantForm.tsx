@@ -10,6 +10,8 @@ const COLORS   = ['green', 'cyan', 'pink', 'gold', 'purple']
 const STATUSES = ['available', 'assigned', 'partial', 'leave']
 const COUNTRIES = [
   { code: 'FR', label: 'France' },
+  { code: 'US', label: 'USA' },
+  { code: 'CA', label: 'Canada' },
   { code: 'BE', label: 'Belgique' },
   { code: 'CH', label: 'Suisse' },
   { code: 'LU', label: 'Luxembourg' },
