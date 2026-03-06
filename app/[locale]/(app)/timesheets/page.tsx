@@ -307,7 +307,7 @@ export default function TimesheetsPage() {
 
   const role          = user?.role ?? 'consultant'
   const currentUserId = user?.id ?? null
-  const isConsultant  = role === 'consultant'
+  const isConsultant  = role === 'consultant' || role === 'freelance'
 
   // ── Navigation semaine ───────────────────────────────────
   const [monday, setMonday] = useState(() => getMondayOf(new Date()))
@@ -506,7 +506,7 @@ export default function TimesheetsPage() {
     })
   }, [lookup])
 
-  const consultantDataReady = !isConsultant || (!currentUserId && consultantsLoaded && projectsLoaded)
+  const consultantDataReady = !isConsultant || (!!currentUserId && consultantsLoaded && projectsLoaded)
 
   // ── Render ───────────────────────────────────────────────
   return (
