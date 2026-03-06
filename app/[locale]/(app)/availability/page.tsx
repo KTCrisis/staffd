@@ -8,12 +8,14 @@ import { Topbar }              from '@/components/layout/Topbar'
 import { StatRow }             from '@/components/ui'
 import { Avatar }              from '@/components/ui/Avatar'
 import { useConsultants, useLeaveRequests, useAssignments } from '@/lib/data'
+import { AssignmentDrawer }    from '@/components/assignments/AssignmentDrawer'
+import type { Consultant }     from '@/types'
 
 // ══════════════════════════════════════════════════════════════
 // TYPES
 // ══════════════════════════════════════════════════════════════
 
-type CellType = 'free' | 'project' | 'leave' | 'partial' | 'weekend'
+type CellType = 'free' | 'project' | 'leave' | 'partial' | 'overloaded' | 'weekend'
 
 interface DayCell {
   type:         CellType
@@ -104,7 +106,9 @@ function buildGrid(
       const totalAlloc  = active.reduce((s: number, a: any) => s + (a.allocation ?? 0), 0)
       const mainProject = [...active].sort((a: any, b: any) => (b.allocation ?? 0) - (a.allocation ?? 0))[0]
 
-      if (totalAlloc >= 100) {
+      if (totalAlloc > 100) {
+        cells.push({ type: 'overloaded', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
+      } else if (totalAlloc >= 100) {
         cells.push({ type: 'project', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else if (totalAlloc > 0) {
         cells.push({ type: 'partial', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
@@ -122,7 +126,8 @@ function buildGrid(
 // ══════════════════════════════════════════════════════════════
 
 export default function AvailabilityPage() {
-  const t     = useTranslations('disponibilites')
+  const t     = useTranslations('staffing')
+  const tDisp = useTranslations('disponibilites')
   const tNav  = useTranslations('timeline')
   const { user } = useAuthContext()
   const now   = new Date()
@@ -133,6 +138,12 @@ export default function AvailabilityPage() {
 
   const [year,  setYear]  = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
+
+  // ── Drawer affectation rapide ──────────────────────────────
+  const [assignTarget, setAssignTarget] = useState<{
+    consultant: Consultant
+    date:       string
+  } | null>(null)
 
   const { data: consultants,   loading: lC } = useConsultants()
   const { data: leaveRequests, loading: lL } = useLeaveRequests()
@@ -175,15 +186,15 @@ export default function AvailabilityPage() {
   // ── Stats (admin + manager uniquement) ───────────────────
   const allList = consultants ?? []
   const stats = teamAccess ? [
-    { value: allList.filter(c => c.status === 'assigned').length,  label: t('legend.busy'),    color: 'var(--cyan)' },
-    { value: allList.filter(c => c.status === 'available').length, label: t('legend.free'),    color: 'var(--green)' },
-    { value: allList.filter(c => c.status === 'leave').length,     label: t('legend.leave'),   color: 'var(--gold)' },
-    { value: allList.filter(c => c.status === 'partial').length,   label: t('legend.partial'), color: 'var(--purple)' },
+    { value: allList.filter(c => c.status === 'assigned').length,  label: tDisp('legend.busy'),    color: 'var(--cyan)' },
+    { value: allList.filter(c => c.status === 'available').length, label: tDisp('legend.free'),    color: 'var(--green)' },
+    { value: allList.filter(c => c.status === 'leave').length,     label: tDisp('legend.leave'),   color: 'var(--gold)' },
+    { value: allList.filter(c => c.status === 'partial').length,   label: tDisp('legend.partial'), color: 'var(--purple)' },
   ] : []
 
   // Mois et jours traduits
-  const months   = tNav.raw('months') as string[]
-  const daysShort = t.raw('daysShort') as string[]
+  const months    = tNav.raw('months') as string[]
+  const daysShort = tDisp.raw('daysShort') as string[]
 
   return (
     <>
@@ -202,7 +213,7 @@ export default function AvailabilityPage() {
           <button className="btn btn-ghost btn-sm" onClick={nextMonth}>→</button>
           {!isCurrentMonth && (
             <button className="btn btn-primary btn-sm" onClick={goToday} style={{ marginLeft: 8 }}>
-              {t('today')}
+              {tDisp('today')}
             </button>
           )}
         </div>
@@ -216,7 +227,7 @@ export default function AvailabilityPage() {
         }}>
           {loading ? (
             <div style={{ padding: '32px 20px', color: 'var(--text2)', fontSize: 12 }}>
-              {t('noData')}
+              {tDisp('noData')}
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -231,7 +242,7 @@ export default function AvailabilityPage() {
                   background: 'var(--bg2)', zIndex: 10,
                 }}>
                   <div style={{ padding: '8px 14px', fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-                    {t('consultant')}
+                    {tDisp('consultant')}
                   </div>
                   {headerDays.map(d => (
                     <div key={d.num} style={{
@@ -307,12 +318,20 @@ export default function AvailabilityPage() {
                         <div
                           key={dayIdx}
                           title={
-                            cell.type === 'project' || cell.type === 'partial'
+                            cell.type === 'project' || cell.type === 'partial' || cell.type === 'overloaded'
                               ? cell.projectName
                               : cell.type === 'leave'
-                              ? `Congé${cell.leaveType ? ` (${cell.leaveType})` : ''}`
+                              ? `${tDisp('legend.leave')}${cell.leaveType ? ` (${cell.leaveType})` : ''}`
                               : cell.type === 'free'
-                              ? 'Disponible'
+                              ? tDisp('legend.free')
+                              : undefined
+                          }
+                          onClick={
+                            teamAccess && cell.type === 'free'
+                              ? () => {
+                                  const dateStr = toISO(new Date(year, month, dayIdx + 1))
+                                  setAssignTarget({ consultant, date: dateStr })
+                                }
                               : undefined
                           }
                           style={{
@@ -320,17 +339,23 @@ export default function AvailabilityPage() {
                             height: 44,
                             position: 'relative',
                             overflow: 'hidden',
+                            cursor: teamAccess && cell.type === 'free' ? 'pointer' : 'default',
                             background:
-                              cell.type === 'weekend' ? 'var(--bg3)' :
-                              cell.type === 'leave'   ? 'rgba(255,209,102,0.12)' :
-                              cell.type === 'project' ? (color?.bg ?? 'rgba(0,229,255,0.12)') :
-                              cell.type === 'partial' ? (color?.bg ?? 'rgba(255,209,102,0.10)') :
+                              cell.type === 'weekend'    ? 'var(--bg3)' :
+                              cell.type === 'leave'      ? 'rgba(255,209,102,0.12)' :
+                              cell.type === 'overloaded' ? 'rgba(255,45,107,0.12)' :
+                              cell.type === 'project'    ? (color?.bg ?? 'rgba(0,229,255,0.12)') :
+                              cell.type === 'partial'    ? (color?.bg ?? 'rgba(255,209,102,0.10)') :
                               'transparent',
                             borderTop:
                               cell.type === 'project' || cell.type === 'partial'
                                 ? `2px solid ${color?.border ?? 'rgba(0,229,255,0.4)'}`
+                                : cell.type === 'overloaded'
+                                ? '2px solid rgba(255,45,107,0.6)'
                                 : cell.type === 'leave'
                                 ? '2px solid rgba(255,209,102,0.4)'
+                                : teamAccess && cell.type === 'free'
+                                ? '2px solid transparent'
                                 : '2px solid transparent',
                             outline:       cell.isToday ? '1px solid var(--green)' : undefined,
                             outlineOffset: -1,
@@ -357,6 +382,28 @@ export default function AvailabilityPage() {
                               ✦
                             </div>
                           )}
+                          {cell.type === 'overloaded' && isSegmentStart && (
+                            <div style={{
+                              position: 'absolute', left: 4, top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: 9, color: 'var(--pink)', pointerEvents: 'none',
+                            }}>
+                              ⚠
+                            </div>
+                          )}
+                          {teamAccess && cell.type === 'free' && (
+                            <div style={{
+                              position: 'absolute', inset: 0,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              opacity: 0, transition: 'opacity 0.15s',
+                              fontSize: 12, color: 'var(--green)',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                            onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+                            >
+                              +
+                            </div>
+                          )}
                           {cell.isToday && (
                             <div style={{
                               position: 'absolute', bottom: 3, left: '50%',
@@ -374,7 +421,7 @@ export default function AvailabilityPage() {
                 {/* Empty state */}
                 {grid.length === 0 && (
                   <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                    {t('noData')}
+                    {tDisp('noData')}
                   </div>
                 )}
 
@@ -386,11 +433,12 @@ export default function AvailabilityPage() {
         {/* ── Légende ── */}
         <div style={{ display: 'flex', gap: 20, marginTop: 14, flexWrap: 'wrap' }}>
           {[
-            { bg: 'rgba(0,229,255,0.15)',   border: 'rgba(0,229,255,0.4)',   label: t('legend.busy') + ' (100%)' },
-            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: t('legend.partial') + ' (<100%)' },
-            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: t('legend.leave') + ' ✦' },
-            { bg: 'transparent',            border: 'var(--border)',          label: t('legend.free') },
-            { bg: 'var(--bg3)',             border: 'var(--border)',          label: t('legend.weekend') },
+            { bg: 'rgba(0,229,255,0.15)',   border: 'rgba(0,229,255,0.4)',   label: tDisp('legend.busy') + ' (100%)' },
+            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: tDisp('legend.partial') + ' (<100%)' },
+            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: tDisp('legend.leave') + ' ✦' },
+            { bg: 'rgba(255,45,107,0.12)',  border: 'rgba(255,45,107,0.4)',  label: '⚠ Overloaded (>100%)' },
+            { bg: 'transparent',            border: 'var(--border)',          label: tDisp('legend.free') },
+            { bg: 'var(--bg3)',             border: 'var(--border)',          label: tDisp('legend.weekend') },
           ].map(item => (
             <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{
@@ -403,6 +451,16 @@ export default function AvailabilityPage() {
         </div>
 
       </div>
+
+      {/* ── Drawer affectation rapide ── */}
+      {assignTarget && (
+        <AssignmentDrawer
+          consultant={assignTarget.consultant}
+          defaultDate={assignTarget.date}
+          onClose={() => setAssignTarget(null)}
+          onSaved={() => setAssignTarget(null)}
+        />
+      )}
     </>
   )
 }

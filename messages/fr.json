@@ -2,7 +2,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "consultants": "Consultants",
-    "disponibilites": "Disponibilités",
+    "disponibilites": "Staffing",
     "conges": "Congés",
     "clients": "Clients",
     "projets": "Projets",
@@ -160,43 +160,43 @@
       "Absence autorisée": "Absence autorisée"
     },
     "form": {
-      "title":             "// nouvelle demande de congé",
-      "close":             "✕ Fermer",
-      "loadingProfile":    "// chargement profil...",
-      "freelanceBadge":    "🔗 Freelance — CP et RTT non disponibles",
-      "typeLabel":         "Type",
-      "motifLabel":        "Motif *",
-      "motifPlaceholder":  "— Sélectionner un motif —",
-      "startDate":         "Date de début",
-      "endDate":           "Date de fin",
-      "endDateAuto":       "Date de fin (auto)",
-      "legalDuration":     "Durée légale",
-      "workingDays":       "Jours ouvrés",
-      "submit":            "✓ Soumettre la demande",
-      "cancel":            "Annuler"
+      "title": "// nouvelle demande de congé",
+      "close": "✕ Fermer",
+      "loadingProfile": "// chargement profil...",
+      "freelanceBadge": "🔗 Freelance — CP et RTT non disponibles",
+      "typeLabel": "Type",
+      "motifLabel": "Motif *",
+      "motifPlaceholder": "— Sélectionner un motif —",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "endDateAuto": "Date de fin (auto)",
+      "legalDuration": "Durée légale",
+      "workingDays": "Jours ouvrés",
+      "submit": "✓ Soumettre la demande",
+      "cancel": "Annuler"
     },
     "errors": {
-      "startDate":          "Veuillez sélectionner une date de début",
-      "endDate":            "Veuillez sélectionner une date de fin",
-      "motif":              "Veuillez sélectionner un motif",
-      "dateOrder":          "La date de fin doit être après la date de début",
-      "noDays":             "Aucun jour ouvré dans la période sélectionnée",
-      "noProfile":          "Aucun profil consultant lié à ce compte",
+      "startDate": "Veuillez sélectionner une date de début",
+      "endDate": "Veuillez sélectionner une date de fin",
+      "motif": "Veuillez sélectionner un motif",
+      "dateOrder": "La date de fin doit être après la date de début",
+      "noDays": "Aucun jour ouvré dans la période sélectionnée",
+      "noProfile": "Aucun profil consultant lié à ce compte",
       "freelanceRestriction": "CP et RTT non disponibles pour les freelances",
-      "notEnoughCP":        "Solde CP insuffisant ({remaining} jours restants)",
-      "notEnoughRTT":       "Solde RTT insuffisant ({remaining} jours restants)"
+      "notEnoughCP": "Solde CP insuffisant ({remaining} jours restants)",
+      "notEnoughRTT": "Solde RTT insuffisant ({remaining} jours restants)"
     },
     "motifs": {
-      "mariage_salarie":   "Mariage / Pacs salarié",
-      "mariage_enfant":    "Mariage d'un enfant",
-      "naissance":         "Naissance / Adoption",
-      "deces_conjoint":    "Décès conjoint / partenaire",
-      "deces_enfant":      "Décès d'un enfant",
-      "deces_pere_mere":   "Décès père / mère",
-      "deces_ascendant":   "Décès autre ascendant",
+      "mariage_salarie": "Mariage / Pacs salarié",
+      "mariage_enfant": "Mariage d'un enfant",
+      "naissance": "Naissance / Adoption",
+      "deces_conjoint": "Décès conjoint / partenaire",
+      "deces_enfant": "Décès d'un enfant",
+      "deces_pere_mere": "Décès père / mère",
+      "deces_ascendant": "Décès autre ascendant",
       "deces_frere_soeur": "Décès frère / sœur",
       "deces_beau_parent": "Décès beau-père / belle-mère",
-      "paternite":         "Congé paternité",
+      "paternite": "Congé paternité",
       "paternite_gemeaux": "Paternité gémellaire"
     }
   },
@@ -405,11 +405,12 @@
     "allocation": "Allocation",
     "errorConsultant": "Veuillez sélectionner un consultant.",
     "errorStartDate": "La date de début est requise.",
-    "errorEndDate": "La date de fin est requise."
+    "errorEndDate": "La date de fin est requise.",
+    "errorProject": "Veuillez sélectionner un projet."
   },
   "disponibilites": {
-    "title": "Disponibilités",
-    "breadcrumb": "// planning semaine",
+    "title": "Staffing",
+    "breadcrumb": "// disponibilités & affectations",
     "cta": "+ Bloquer",
     "weekOf": "Semaine du",
     "prevWeek": "← Semaine préc.",
@@ -606,6 +607,22 @@
       "create": "✓ Créer le consultant",
       "save": "✓ Enregistrer",
       "cancel": "Annuler"
+    }
+  },
+  "staffing": {
+    "title": "Staffing",
+    "breadcrumb": "// disponibilités & affectations",
+    "drawer": {
+      "title": "// affectation rapide",
+      "project": "Projet",
+      "selectProject": "— Sélectionner un projet —",
+      "projectEnd": "fin le",
+      "occupied": "occupé",
+      "submit": "✓ Affecter",
+      "overallocation": "⚠ Taux total : {total}% — surcharge détectée"
+    },
+    "errors": {
+      "dateOrder": "La date de fin doit être après la date de début"
     }
   }
 }
