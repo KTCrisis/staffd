@@ -74,6 +74,7 @@ export interface ConsultantInput {
   avatar_color:         string
   stack:                string[]
   status:               string
+  country_code?:        string
   contract_type:        ContractType
   salaire_annuel_brut?: number
   charges_pct?:         number
