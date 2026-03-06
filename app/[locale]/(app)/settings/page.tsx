@@ -124,14 +124,13 @@ function SaveBar({
   if (!dirty && !saving) return null
   return (
     <div style={{
-      position: 'sticky', bottom: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '12px 20px',
-      background: 'var(--bg2)', border: '1px solid var(--border)',
-      borderRadius: 4, marginTop: 8,
-      boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+      padding: '12px 16px', marginTop: 16,
+      background: 'rgba(0,229,255,.06)',
+      border: '1px solid rgba(0,229,255,.25)',
+      borderRadius: 6,
     }}>
-      <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
+      <span style={{ fontSize: 10, color: 'var(--cyan)', letterSpacing: 1 }}>
         // unsaved changes
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -724,14 +723,14 @@ export default function SettingsPage() {
   const ai = companyData?.ai_settings ?? {}
   const hr = (companyData?.hr_settings ?? {}) as Partial<HRSettings>
 
-  const companyDirty = companyData ? (
-    companyName    !== (companyData.name ?? '') ||
-    companyAddress !== (b.address    ?? '') ||
-    companySiret   !== (b.siret      ?? '') ||
-    companyTva     !== (b.tva_number ?? '')
-  ) : false
+  const companyDirty = (
+    companyName    !== (companyData?.name                    ?? '') ||
+    companyAddress !== (b.address                           ?? '') ||
+    companySiret   !== (b.siret                             ?? '') ||
+    companyTva     !== (b.tva_number                        ?? '')
+  )
 
-  const billingDirty = companyData ? (
+  const billingDirty = (
     iban          !== (b.bank_iban      ?? '') ||
     bic           !== (b.bank_bic       ?? '') ||
     bankName      !== (b.bank_name      ?? '') ||
@@ -739,22 +738,22 @@ export default function SettingsPage() {
     paymentTerms  !== String(b.payment_terms ?? 30) ||
     legalMention  !== (b.legal_mention  ?? '') ||
     tvaRate       !== String(b.tva_rate ?? 20)
-  ) : false
+  )
 
-  const aiDirty = companyData ? (
+  const aiDirty = (
     ollamaEndpoint !== (ai.ollama_endpoint ?? '') ||
     ollamaModel    !== (ai.ollama_model    ?? 'kimi-k2.5:cloud') ||
     agentsEnabled  !== (ai.agents_enabled  ?? false)
-  ) : false
+  )
 
-  const hrDirty = companyData ? (
+  const hrDirty = (
     hrCountry     !== (hr.country_code               ?? 'FR')  ||
     hrCp          !== String(hr.default_cp            ?? 25)   ||
     hrRtt         !== String(hr.default_rtt           ?? 10)   ||
     hrWorkDays    !== String(hr.working_days_per_year  ?? 218)  ||
     hrCraDeadline !== String(hr.cra_submission_deadline ?? 5)  ||
     hrAutoApprove !== (hr.leave_auto_approve          ?? false)
-  ) : false
+  )
 
   const handleSaveCompany = async () => {
     setSettingsSaving(true)
