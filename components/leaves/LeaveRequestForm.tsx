@@ -15,7 +15,7 @@ interface Props {
   onSaved: () => void
 }
 
-function countWorkingDays(start: string, end: string): number {
+function countWorkingDays(start: string, end: string, holidays: Set<string> = new Set()): number {
   if (!start || !end) return 0
   const s = new Date(start)
   const e = new Date(end)
@@ -23,8 +23,9 @@ function countWorkingDays(start: string, end: string): number {
   let count = 0
   const cur = new Date(s)
   while (cur <= e) {
-    const day = cur.getDay()
-    if (day !== 0 && day !== 6) count++
+    const day     = cur.getDay()
+    const dateStr = cur.toISOString().slice(0, 10)
+    if (day !== 0 && day !== 6 && !holidays.has(dateStr)) count++
     cur.setDate(cur.getDate() + 1)
   }
   return count
@@ -39,6 +40,8 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
   const [error,          setError]          = useState<string | null>(null)
   const [contractType,   setContractType]   = useState<ContractType | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
+  const [countryCode,    setCountryCode]    = useState<string>('FR')
+  const [holidays,       setHolidays]       = useState<Set<string>>(new Set())
 
   const [form, setForm] = useState({
     type:       'CP' as LeaveType,
@@ -47,20 +50,41 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
     end_date:   '',
   })
 
-  // ── Fetch contract_type du consultant connecté ──────────────────────────
+  // ── Fetch contract_type + country_code du consultant connecté ─────────
   useEffect(() => {
     if (!user?.id) return
     const fetchProfile = async () => {
       try {
         const { data } = await supabase
           .from('consultants')
-          .select('contract_type')
+          .select('contract_type, country_code, company_id')
           .eq('user_id', user.id)
           .single()
         const ct = (data?.contract_type ?? 'employee') as ContractType
         setContractType(ct)
         if (ct === 'freelance') {
           setForm(f => ({ ...f, type: 'Sans solde' }))
+        }
+
+        // Pays : consultant.country_code → sinon company hr_settings → sinon 'FR'
+        let cc = data?.country_code as string | null
+        if (!cc && data?.company_id) {
+          const { data: company } = await supabase
+            .from('companies')
+            .select('hr_settings')
+            .eq('id', data.company_id)
+            .single()
+          cc = (company?.hr_settings as any)?.country_code ?? 'FR'
+        }
+        const resolvedCC = cc ?? 'FR'
+        setCountryCode(resolvedCC)
+
+        // Fetch jours fériés pour l'année courante
+        const year = new Date().getFullYear()
+        const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${resolvedCC}`)
+        const hData = await r.json()
+        if (Array.isArray(hData)) {
+          setHolidays(new Set(hData.map((h: { date: string }) => h.date)))
         }
       } catch (_) {
         // profil non trouvé — on garde les défauts employee
@@ -88,7 +112,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
 
   const days = isAbsence
     ? (selectedMotif?.days ?? 0)
-    : countWorkingDays(form.start_date, form.end_date)
+    : countWorkingDays(form.start_date, form.end_date, holidays)
 
   const computedEndDate = isAbsence && form.start_date && selectedMotif
     ? (() => {
@@ -96,7 +120,9 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
         let added = 0
         while (added < selectedMotif.days - 1) {
           d.setDate(d.getDate() + 1)
-          if (d.getDay() !== 0 && d.getDay() !== 6) added++
+          const dow     = d.getDay()
+          const dateStr = d.toISOString().slice(0, 10)
+          if (dow !== 0 && dow !== 6 && !holidays.has(dateStr)) added++
         }
         return d.toISOString().split('T')[0]
       })()
@@ -274,9 +300,16 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
                 padding: '12px 16px', background: 'var(--bg3)', borderRadius: 4,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
-                <span style={{ fontSize: 11, color: 'var(--text2)' }}>
-                  {isAbsence ? t('form.legalDuration') : t('form.workingDays')}
-                </span>
+                <div>
+                  <span style={{ fontSize: 11, color: 'var(--text2)' }}>
+                    {isAbsence ? t('form.legalDuration') : t('form.workingDays')}
+                  </span>
+                  {!isAbsence && holidays.size > 0 && (
+                    <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2, letterSpacing: 0.5 }}>
+                      weekends + jours fériés {countryCode} exclus
+                    </div>
+                  )}
+                </div>
                 <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--cyan)' }}>
                   {days} {tCommon('days')}
                 </span>

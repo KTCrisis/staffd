@@ -2,12 +2,24 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthContext }               from '@/components/layout/AuthProvider'
-import { createConsultant, updateConsultant } from '@/lib/data'
+import { createConsultant, updateConsultant, useCompanySettings } from '@/lib/data'
 import type { Consultant }              from '@/types'
 import type { ContractType }            from '@/lib/data'
 
 const COLORS   = ['green', 'cyan', 'pink', 'gold', 'purple']
 const STATUSES = ['available', 'assigned', 'partial', 'leave']
+const COUNTRIES = [
+  { code: 'FR', label: 'France' },
+  { code: 'BE', label: 'Belgique' },
+  { code: 'CH', label: 'Suisse' },
+  { code: 'LU', label: 'Luxembourg' },
+  { code: 'DE', label: 'Allemagne' },
+  { code: 'GB', label: 'Royaume-Uni' },
+  { code: 'ES', label: 'Espagne' },
+  { code: 'IT', label: 'Italie' },
+  { code: 'NL', label: 'Pays-Bas' },
+  { code: 'PT', label: 'Portugal' },
+]
 
 interface Props {
   consultant?: Consultant
@@ -35,10 +47,14 @@ function calcTjmCoutReel(
 
 export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
   const { user } = useAuthContext()
+  const { data: companyData } = useCompanySettings()
+  const companyCountry = (companyData?.hr_settings as any)?.country_code ?? 'FR'
+
   const isEdit   = !!consultant
 
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
+  const [countryCode, setCountryCode] = useState<string | null>(null) // null = hérite de la company
 
   const [form, setForm] = useState({
     name:               '',
@@ -64,6 +80,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
 
   useEffect(() => {
     if (consultant) {
+      setCountryCode(consultant.country_code ?? null)
       setForm({
         name:                consultant.name,
         initials:            consultant.initials,
@@ -138,6 +155,8 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
         tjm:                 form.tjm ? parseFloat(form.tjm) : undefined,
         tjm_cible:           form.tjm_cible ? parseFloat(form.tjm_cible) : undefined,
         leave_days_total:    parseInt(form.leave_days_total) || 25,
+        // Pays — null = hérite du pays de la company (hr_settings)
+        country_code:        countryCode ?? undefined,
       }
 
       if (isEdit) {
@@ -210,6 +229,37 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
           <Field label="Email">
             <input className="search-input" style={{ width: '100%' }} placeholder="alice@company.com" type="email"
               value={form.email} onChange={e => set('email', e.target.value)} />
+          </Field>
+
+          <Field label="Pays (jours fériés)">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select
+                className="search-input"
+                style={{ flex: 1 }}
+                value={countryCode ?? ''}
+                onChange={e => setCountryCode(e.target.value || null)}
+              >
+                <option value="">— Hérite de la company ({companyCountry})</option>
+                {COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>{c.code} · {c.label}</option>
+                ))}
+              </select>
+              {countryCode && (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setCountryCode(null)}
+                  title="Réinitialiser au pays de la company"
+                  style={{ fontSize: 10, color: 'var(--text3)', flexShrink: 0 }}
+                >
+                  reset
+                </button>
+              )}
+            </div>
+            {!countryCode && (
+              <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 4, letterSpacing: 0.5 }}>
+                Utilise le pays par défaut de la company : <strong style={{ color: 'var(--text2)' }}>{companyCountry}</strong>
+              </div>
+            )}
           </Field>
 
           <Field label="Stack (virgule-séparée)">

@@ -245,6 +245,7 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     chargesPct:          row.charges_pct as number | undefined,
     joursTravailles:     row.jours_travailles as number | undefined,
     teamId:              row.team_id as string | undefined,
+    country_code:        row.country_code as string | null ?? null,
   }
 }
 
@@ -979,4 +980,61 @@ export async function updateHRSettings(payload: {
     p_patch:      payload.hr_settings,
   })
   if (error) throw new Error(error.message)
+}
+// ══════════════════════════════════════════════════════════════
+// LEAVE OVERLAYS — pour la grille timesheet
+// ══════════════════════════════════════════════════════════════
+
+export interface LeaveOverlay {
+  consultantId: string
+  date:         string   // YYYY-MM-DD
+  type:         string   // 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
+  leaveId:      string
+}
+
+/**
+ * Charge tous les congés approved qui chevauchent la semaine affichée,
+ * et les explose en entrées par jour (weekends exclus).
+ * weekStart / weekEnd : YYYY-MM-DD (lundi et vendredi de la semaine)
+ */
+export function useApprovedLeavesForWeek(weekStart: string, weekEnd: string) {
+  const { activeTenantId } = useActiveTenant()
+  return useSupabase(async () => {
+    let q = supabase
+      .from('leave_requests')
+      .select('id, consultant_id, type, start_date, end_date')
+      .eq('status', 'approved')
+      .lte('start_date', weekEnd)   // congé commence avant ou pendant la semaine
+      .gte('end_date', weekStart)   // congé finit après ou pendant la semaine
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
+
+    const { data, error } = await q
+    if (error) throw new Error(error.message)
+
+    // Expand chaque congé en une entrée par jour ouvré dans la fenêtre
+    const overlays: LeaveOverlay[] = []
+    for (const leave of (data ?? [])) {
+      const start  = new Date(leave.start_date)
+      const end    = new Date(leave.end_date)
+      const wStart = new Date(weekStart)
+      const wEnd   = new Date(weekEnd)
+      const from   = start < wStart ? wStart : start
+      const to     = end   > wEnd   ? wEnd   : end
+
+      const d = new Date(from)
+      while (d <= to) {
+        const dow = d.getDay()
+        if (dow !== 0 && dow !== 6) {   // exclure samedi et dimanche
+          overlays.push({
+            consultantId: leave.consultant_id,
+            date:         d.toISOString().slice(0, 10),
+            type:         leave.type,
+            leaveId:      leave.id,
+          })
+        }
+        d.setDate(d.getDate() + 1)
+      }
+    }
+    return overlays
+  }, [weekStart, weekEnd, activeTenantId])
 }

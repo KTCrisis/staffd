@@ -10,12 +10,16 @@ import {
   useConsultants,
   useConsultantProjectsMap,
   useInternalProjectTypes,
+  useApprovedLeavesForWeek,
+  useCompanySettings,
   upsertTimesheet,
   submitTimesheets,
   approveTimesheets,
 } from '@/lib/data'
-import type { Timesheet } from '@/lib/data'
-import { useAuth, isAdmin, canEdit } from '@/lib/auth'
+import type { Timesheet, LeaveOverlay } from '@/lib/data'
+import { useAuthContext }   from '@/components/layout/AuthProvider'
+import { useActiveTenant }  from '@/lib/tenant-context'
+import { isAdmin, canEdit } from '@/lib/auth'
 
 // ══════════════════════════════════════════════════════════════
 // HELPERS
@@ -55,11 +59,17 @@ function fmtDay(d: Date) {
 
 type TSStatus = 'draft' | 'submitted' | 'approved'
 
-const VALUES = [
-  { label: '—', v: 0 },
-  { label: '½', v: 0.5 },
-  { label: '1', v: 1 },
-]
+interface HolidayEntry {
+  date:      string  // YYYY-MM-DD
+  localName: string
+}
+
+// Map : countryCode → HolidayEntry[]
+type HolidayMap = Record<string, HolidayEntry[]>
+
+// ══════════════════════════════════════════════════════════════
+// COLORS
+// ══════════════════════════════════════════════════════════════
 
 function valueColor(v?: number) {
   if (!v) return 'var(--text3)'
@@ -96,6 +106,65 @@ function Pill({ status }: { status: TSStatus }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// LEAVE BADGE — affiché dans les cellules congés approuvés
+// ══════════════════════════════════════════════════════════════
+
+function LeaveBadge({ type }: { type: string }) {
+  const short: Record<string, string> = {
+    'CP': 'CP', 'RTT': 'RTT',
+    'Sans solde': 'SLD', 'Absence autorisée': 'ABS',
+  }
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      gap: 2,
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700, letterSpacing: 1,
+        color: 'var(--cyan)',
+        background: 'rgba(0,229,255,.1)',
+        border: '1px solid rgba(0,229,255,.25)',
+        borderRadius: 3, padding: '1px 5px',
+      }}>
+        {short[type] ?? type}
+      </div>
+      <div style={{ fontSize: 8, color: 'var(--text3)', letterSpacing: 0.5 }}>congé</div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════
+// HOLIDAY BADGE — affiché dans les cellules jours fériés
+// ══════════════════════════════════════════════════════════════
+
+function HolidayBadge({ name }: { name: string }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      gap: 2,
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700,
+        color: 'var(--gold)',
+        background: 'rgba(255,209,102,.1)',
+        border: '1px solid rgba(255,209,102,.25)',
+        borderRadius: 3, padding: '1px 5px',
+        maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>
+        ◈ férié
+      </div>
+      <div style={{
+        fontSize: 7, color: 'var(--text3)', letterSpacing: 0.3,
+        maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        textAlign: 'center',
+      }}>
+        {name}
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════
 // CELL EDITOR — popup de saisie
 // ══════════════════════════════════════════════════════════════
 
@@ -109,98 +178,117 @@ interface CellEditorProps {
   onClose:      () => void
 }
 
+const VALUES = [
+  { label: '—', v: 0 },
+  { label: '½', v: 0.5 },
+  { label: '1', v: 1 },
+]
+
 function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: CellEditorProps) {
   const [val,  setVal]  = useState(entry?.value ?? 0)
   const [proj, setProj] = useState(entry?.projectId ?? projects[0]?.id ?? '')
 
-  useEffect(() => { setVal(entry?.value ?? 0) },                        [entry?.value])
+  useEffect(() => { setVal(entry?.value ?? 0) }, [entry?.value])
   useEffect(() => { setProj(entry?.projectId ?? projects[0]?.id ?? '') }, [entry?.projectId, projects])
 
-  // Fermer sur Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Position : éviter de sortir de l'écran
-  const safeX = Math.min(x, window.innerWidth  - 190)
-  const safeY = Math.min(y, window.innerHeight - 200)
+  const safeX = Math.min(x, window.innerWidth  - 200)
+  const safeY = Math.min(y, window.innerHeight - 210)
 
   const popupStyle: React.CSSProperties = {
-    position: 'fixed',
-    top:      safeY,
-    left:     safeX,
-    zIndex:   1000,
-    background:   'var(--bg2)',
-    border:       '1px solid var(--border)',
-    borderRadius: 12,
-    padding:      12,
-    minWidth:     170,
-    boxShadow:    '0 8px 32px rgba(0,0,0,.55)',
+    position: 'fixed', top: safeY, left: safeX, zIndex: 1000,
+    background: 'var(--bg2)', border: '1px solid var(--border)',
+    borderRadius: 12, padding: 12, minWidth: 180,
+    boxShadow: '0 8px 32px rgba(0,0,0,.55)',
   }
 
   if (!canEditEntry) {
     return (
       <div style={popupStyle}>
         <Pill status={entry?.status ?? 'draft'} />
-        <button className="btn btn-ghost"
-          style={{ marginTop: 8, fontSize: 10, padding: '2px 8px' }}
-          onClick={onClose}>
-          ✕ Close
+        <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 8 }}>
+          {entry?.projectId ?? '—'}
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 10, width: '100%', background: 'var(--bg3)',
+            border: '1px solid var(--border)', borderRadius: 6,
+            color: 'var(--text2)', fontSize: 10, padding: '5px 0', cursor: 'pointer',
+          }}
+        >
+          Close
         </button>
-      </div>
-    )
-  }
-
-  if (projects.length === 0) {
-    return (
-      <div style={{ ...popupStyle, color: 'var(--text3)', fontSize: 11 }}>
-        No active project assigned.
-        <button className="btn btn-ghost" style={{ marginTop: 8, fontSize: 10 }} onClick={onClose}>✕</button>
       </div>
     )
   }
 
   return (
     <div style={popupStyle}>
-      {/* Valeur */}
-      <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
-        {VALUES.map(o => (
+      {/* Sélecteur valeur */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {VALUES.map(({ label, v }) => (
           <button
-            key={o.v}
-            className={`btn ${val === o.v ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ flex: 1, padding: '5px 0', fontSize: 14, fontWeight: 700 }}
-            onClick={() => setVal(o.v)}
+            key={v}
+            onClick={() => setVal(v)}
+            style={{
+              flex: 1, padding: '6px 0', borderRadius: 6, cursor: 'pointer',
+              fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
+              background: val === v ? 'var(--green)' : 'var(--bg3)',
+              color: val === v ? '#000' : 'var(--text2)',
+              border: val === v ? '1px solid var(--green)' : '1px solid var(--border)',
+            }}
           >
-            {o.label}
+            {label}
           </button>
         ))}
       </div>
 
-      {/* Projet */}
-      <select
-        className="input"
-        value={proj}
-        onChange={e => setProj(e.target.value)}
-        style={{ fontSize: 11, padding: '5px 8px', marginBottom: 10, width: '100%' }}
-      >
-        {projects.map(p => (
-          <option key={p.id} value={p.id}>{p.name}</option>
-        ))}
-      </select>
+      {/* Sélecteur projet */}
+      {projects.length > 0 && (
+        <select
+          value={proj}
+          onChange={e => setProj(e.target.value)}
+          style={{
+            width: '100%', background: 'var(--bg3)',
+            border: '1px solid var(--border2)',
+            color: 'var(--text)', padding: '6px 8px',
+            borderRadius: 4, fontSize: 11,
+            fontFamily: 'inherit', marginBottom: 10,
+          }}
+        >
+          {projects.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      )}
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 6 }}>
         <button
-          className="btn btn-primary"
-          style={{ flex: 1, fontSize: 11, padding: '4px 0' }}
-          onClick={() => { if (proj) { onSave(val, proj); onClose() } }}
+          onClick={() => { onSave(val, proj); onClose() }}
+          style={{
+            flex: 1, background: 'var(--green)', color: '#000',
+            border: 'none', borderRadius: 6, padding: '6px 0',
+            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          }}
         >
-          ✓ Save
+          Save
         </button>
-        <button className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={onClose}>
-          ✕
+        <button
+          onClick={onClose}
+          style={{
+            flex: 1, background: 'var(--bg3)', color: 'var(--text2)',
+            border: '1px solid var(--border)', borderRadius: 6,
+            padding: '6px 0', fontSize: 11, cursor: 'pointer',
+          }}
+        >
+          Cancel
         </button>
       </div>
     </div>
@@ -212,15 +300,20 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
 // ══════════════════════════════════════════════════════════════
 
 export default function TimesheetsPage() {
-  const t             = useTranslations('timesheets')
-  const locale        = useLocale()
-  const { user }      = useAuth()
-  const role          = user?.role
+  const t              = useTranslations('timesheets')
+  const locale         = useLocale()
+  const { user }       = useAuthContext()
+  const { activeTenantId } = useActiveTenant()
+
+  const role          = user?.role ?? 'consultant'
   const currentUserId = user?.id ?? null
+  const isConsultant  = role === 'consultant'
 
   // ── Navigation semaine ───────────────────────────────────
   const [monday, setMonday] = useState(() => getMondayOf(new Date()))
   const days       = useMemo(() => getWeekDays(monday), [monday])
+  const weekStart  = useMemo(() => toISO(monday), [monday])
+  const weekEnd    = useMemo(() => toISO(days[4]), [days])
   const isThisWeek = toISO(getMondayOf(new Date())) === toISO(monday)
 
   const prevWeek = () => setMonday(d => { const n = new Date(d); n.setDate(n.getDate() - 7); return n })
@@ -228,16 +321,71 @@ export default function TimesheetsPage() {
   const goToday  = () => setMonday(getMondayOf(new Date()))
 
   // ── Données Supabase ─────────────────────────────────────
-  const { data: timesheets,   loading, error } = useTimesheets(monday)
-  const { data: consultants }                  = useConsultants()
-  const { data: projectsMap }                  = useConsultantProjectsMap()
-  const { data: internalTypes }                = useInternalProjectTypes()
+  const { data: timesheets,   loading, error }  = useTimesheets(monday)
+  const { data: consultants }                   = useConsultants()
+  const { data: projectsMap }                   = useConsultantProjectsMap()
+  const { data: internalTypes }                 = useInternalProjectTypes()
+  const { data: companyData }                   = useCompanySettings()
+  const { data: approvedLeaves }                = useApprovedLeavesForWeek(weekStart, weekEnd)
 
-  const consultantsSafe  = consultants ?? []
+  const consultantsSafe   = consultants ?? []
   const consultantsLoaded = Array.isArray(consultants)
-  const projectsLoaded   = typeof projectsMap !== 'undefined'
+  const projectsLoaded    = typeof projectsMap !== 'undefined'
 
-  // ── Projets système (internes) dédoublonnés ──────────────
+  // ── Pays par défaut de la company ────────────────────────
+  const companyCountry = useMemo(
+    () => (companyData?.hr_settings as any)?.country_code ?? 'FR',
+    [companyData]
+  )
+
+  // ── Fetch jours fériés depuis Nager — un par pays unique ─
+  const [holidayMap, setHolidayMap] = useState<HolidayMap>({})
+
+  useEffect(() => {
+    if (!consultantsSafe.length) return
+
+    // Collecter tous les pays uniques (consultant.country_code ou fallback company)
+    const countries = new Set<string>()
+    countries.add(companyCountry)
+    for (const c of consultantsSafe) {
+      if (c.country_code) countries.add(c.country_code)
+    }
+
+    const year = monday.getFullYear()
+
+    Promise.all(
+      Array.from(countries).map(async cc => {
+        try {
+          const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${cc}`)
+          const data: HolidayEntry[] = await r.json()
+          return [cc, Array.isArray(data) ? data : []] as [string, HolidayEntry[]]
+        } catch {
+          return [cc, []] as [string, HolidayEntry[]]
+        }
+      })
+    ).then(results => {
+      const map: HolidayMap = {}
+      for (const [cc, entries] of results) map[cc] = entries
+      setHolidayMap(map)
+    })
+  }, [companyCountry, consultantsSafe, monday.getFullYear()])
+
+  // ── Helper : est-ce un jour férié pour un consultant ? ───
+  const getHoliday = useCallback((consultantCountry: string | null | undefined, dateStr: string): HolidayEntry | undefined => {
+    const cc = consultantCountry ?? companyCountry
+    return holidayMap[cc]?.find(h => h.date === dateStr)
+  }, [holidayMap, companyCountry])
+
+  // ── Leave overlay map : consultantId__date → LeaveOverlay
+  const leaveOverlayMap = useMemo(() => {
+    const map: Record<string, LeaveOverlay> = {}
+    for (const l of (approvedLeaves ?? [])) {
+      map[`${l.consultantId}__${l.date}`] = l
+    }
+    return map
+  }, [approvedLeaves])
+
+  // ── Projets internes dédoublonnés ────────────────────────
   const systemProjects = useMemo(() => {
     const seen = new Set<string>()
     return (internalTypes ?? []).filter(p => {
@@ -254,9 +402,9 @@ export default function TimesheetsPage() {
     setLocalEntries({})
     setPopup(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toISO(monday)])
+  }, [weekStart])
 
-  // ── Popup (position fixed) ───────────────────────────────
+  // ── Popup ─────────────────────────────────────────────────
   const [popup, setPopup] = useState<{
     consultantId: string
     date:         string
@@ -264,20 +412,17 @@ export default function TimesheetsPage() {
     y:            number
   } | null>(null)
 
-  // Fermer popup en cliquant en dehors
   useEffect(() => {
     if (!popup) return
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (!target.closest('.ts-popup-fixed') && !target.closest('.ts-cell')) {
-        setPopup(null)
-      }
+      if (!target.closest('.ts-popup-fixed') && !target.closest('.ts-cell')) setPopup(null)
     }
     window.addEventListener('mousedown', handler)
     return () => window.removeEventListener('mousedown', handler)
   }, [popup])
 
-  // ── Merged lookup : Supabase + local overrides ────────────
+  // ── Merged lookup ────────────────────────────────────────
   const lookup = useMemo(() => {
     const map: Record<string, Timesheet> = {}
     ;(timesheets ?? []).forEach(ts => { map[`${ts.consultantId}__${ts.date}`] = ts })
@@ -307,8 +452,6 @@ export default function TimesheetsPage() {
     return consultantsSafe
   }, [consultantsLoaded, consultantsSafe, role, currentUserId])
 
-  const isConsultant = role === 'consultant'
-
   // ── Save handler (optimistic) ────────────────────────────
   const handleSave = useCallback(async (
     consultantId: string,
@@ -317,12 +460,10 @@ export default function TimesheetsPage() {
     projectId:    string,
   ) => {
     const key = `${consultantId}__${date}`
-
     setLocalEntries(prev => ({
       ...prev,
       [key]: { id: prev[key]?.id ?? `local-${key}`, consultantId, projectId, date, value, status: 'draft' },
     }))
-
     try {
       const saved = await upsertTimesheet({ consultantId, date, value, projectId })
       setLocalEntries(prev => ({ ...prev, [key]: saved }))
@@ -336,8 +477,7 @@ export default function TimesheetsPage() {
   const handleSubmitAll = useCallback(async (consultantId: string) => {
     const draftIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'draft')
-      .map(ts => ts.id)
-      .filter(id => !id.startsWith('local-'))
+      .map(ts => ts.id).filter(id => !id.startsWith('local-'))
     if (!draftIds.length) return
     await submitTimesheets(draftIds)
     setLocalEntries(prev => {
@@ -353,8 +493,7 @@ export default function TimesheetsPage() {
   const handleApproveAll = useCallback(async (consultantId: string) => {
     const submittedIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'submitted')
-      .map(ts => ts.id)
-      .filter(id => !id.startsWith('local-'))
+      .map(ts => ts.id).filter(id => !id.startsWith('local-'))
     if (!submittedIds.length) return
     await approveTimesheets(submittedIds)
     setLocalEntries(prev => {
@@ -367,7 +506,7 @@ export default function TimesheetsPage() {
     })
   }, [lookup])
 
-  const consultantDataReady = !isConsultant || (!!currentUserId && consultantsLoaded && projectsLoaded)
+  const consultantDataReady = !isConsultant || (!currentUserId && consultantsLoaded && projectsLoaded)
 
   // ── Render ───────────────────────────────────────────────
   return (
@@ -381,7 +520,7 @@ export default function TimesheetsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
           <button className="btn btn-ghost" onClick={prevWeek}>← {t('prevWeek')}</button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>
-            {t('weekOf')} {monday.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {t('weekOf')} {monday.toLocaleDateString(locale === 'fr' ? 'fr' : 'en', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           <button className="btn btn-ghost" onClick={nextWeek}>{t('nextWeek')} →</button>
           {!isThisWeek && (
@@ -393,6 +532,27 @@ export default function TimesheetsPage() {
 
         {loading && <p style={{ color: 'var(--text3)', fontSize: 12 }}>// loading…</p>}
         {error   && <p style={{ color: 'var(--pink)' }}>{error}</p>}
+
+        {/* Légende */}
+        <div style={{
+          display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap',
+          fontSize: 10, color: 'var(--text3)',
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{
+              display: 'inline-block', width: 10, height: 10, borderRadius: 2,
+              background: 'rgba(0,229,255,.15)', border: '1px solid rgba(0,229,255,.3)',
+            }} />
+            Congé approuvé
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{
+              display: 'inline-block', width: 10, height: 10, borderRadius: 2,
+              background: 'rgba(255,209,102,.15)', border: '1px solid rgba(255,209,102,.3)',
+            }} />
+            Jour férié
+          </span>
+        </div>
 
         {!consultantDataReady && (
           <Panel>
@@ -412,9 +572,10 @@ export default function TimesheetsPage() {
                     <th style={{ minWidth: 190, textAlign: 'left' }}>{t('table.consultant')}</th>
                     {days.map(d => {
                       const { dow, num } = fmtDay(d)
-                      const today = toISO(d) === toISO(new Date())
+                      const dateStr = toISO(d)
+                      const today   = dateStr === toISO(new Date())
                       return (
-                        <th key={toISO(d)} style={{ textAlign: 'center', minWidth: 86 }}>
+                        <th key={dateStr} style={{ textAlign: 'center', minWidth: 86 }}>
                           <div style={{ color: today ? 'var(--cyan)' : 'var(--text2)', fontSize: 10, fontWeight: 600 }}>{dow}</div>
                           <div style={{ color: today ? 'var(--cyan)' : 'var(--text1)', fontSize: 12, fontWeight: 700 }}>{num}</div>
                         </th>
@@ -432,9 +593,9 @@ export default function TimesheetsPage() {
                       ...systemProjects,
                     ]
 
-                    const rowEntries  = Object.values(lookup).filter(ts => ts.consultantId === c.id)
-                    const weekTotal   = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
-                    const hasDraft    = rowEntries.some(ts => ts.status === 'draft')
+                    const rowEntries   = Object.values(lookup).filter(ts => ts.consultantId === c.id)
+                    const weekTotal    = rowEntries.reduce((s, ts) => s + (ts.value ?? 0), 0)
+                    const hasDraft     = rowEntries.some(ts => ts.status === 'draft')
                     const hasSubmitted = rowEntries.some(ts => ts.status === 'submitted')
                     const rowStatus: TSStatus = hasDraft ? 'draft' : hasSubmitted ? 'submitted' : 'approved'
                     const isSelf = isConsultant && c.user_id === currentUserId
@@ -447,39 +608,118 @@ export default function TimesheetsPage() {
                             <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                             <div>
                               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>{c.name}</div>
-                              <div style={{ fontSize: 10, color: 'var(--text3)' }}>{c.role}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text3)' }}>
+                                {c.role}
+                                {c.country_code && c.country_code !== companyCountry && (
+                                  <span style={{ marginLeft: 6, opacity: 0.6 }}>· {c.country_code}</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
 
                         {/* Cellules jours */}
                         {days.map(d => {
-                          const dateStr    = toISO(d)
-                          const key        = `${c.id}__${dateStr}`
-                          const entry      = lookup[key]
-                          const isOpen     = popup?.consultantId === c.id && popup?.date === dateStr
+                          const dateStr  = toISO(d)
+                          const key      = `${c.id}__${dateStr}`
+                          const entry    = lookup[key]
+                          const isOpen   = popup?.consultantId === c.id && popup?.date === dateStr
+
+                          // Overlay congé approuvé
+                          const leaveOverlay = leaveOverlayMap[key]
+
+                          // Jour férié selon pays du consultant (fallback company)
+                          const holiday = getHoliday(c.country_code, dateStr)
+
+                          // Règles d'édition
                           const entryIsDraft = !entry || entry.status === 'draft'
-                          const canEditCell  = canEdit(role) || (isSelf && entryIsDraft)
-                          const disabled     = isConsultant && !isSelf
+                          const adminCanEdit = isAdmin(role)
+                          // Un congé ou férié peut être écrasé par l'admin uniquement
+                          const cellLocked   = (leaveOverlay || holiday) && !adminCanEdit
+                          const canEditCell  = !cellLocked && (canEdit(role) || (isSelf && entryIsDraft))
+                          const disabled     = (isConsultant && !isSelf) || cellLocked
+
+                          // Fond de cellule selon type
+                          const cellBg = holiday
+                            ? 'rgba(255,209,102,.08)'
+                            : leaveOverlay
+                            ? 'rgba(0,229,255,.06)'
+                            : undefined
 
                           return (
-                            <td key={dateStr} style={{ textAlign: 'center', position: 'relative' }}>
-                              <button
-                                className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
-                                style={{ color: valueColor(entry?.value) }}
-                                onClick={e => {
-                                  if (isOpen) { setPopup(null); return }
-                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                                  setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
-                                }}
-                                title={entry?.status ?? 'No entry'}
-                                disabled={disabled}
-                              >
-                                {entry ? (entry.value === 1 ? '1' : entry.value === 0.5 ? '½' : '—') : '+'}
-                                {entry && <span className="ts-status-dot" style={{ background: dotColor(entry.status) }} />}
-                              </button>
+                            <td
+                              key={dateStr}
+                              style={{
+                                textAlign: 'center', position: 'relative',
+                                background: cellBg,
+                              }}
+                            >
+                              {/* Contenu de la cellule */}
+                              {holiday && !entry ? (
+                                // Jour férié sans saisie : badge non-cliquable (ou cliquable admin)
+                                adminCanEdit ? (
+                                  <button
+                                    className="ts-cell ts-cell--holiday"
+                                    style={{ opacity: 0.85 }}
+                                    title={holiday.localName}
+                                    onClick={e => {
+                                      if (isOpen) { setPopup(null); return }
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                      setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
+                                    }}
+                                  >
+                                    <HolidayBadge name={holiday.localName} />
+                                  </button>
+                                ) : (
+                                  <div className="ts-cell ts-cell--holiday" title={holiday.localName} style={{ cursor: 'default' }}>
+                                    <HolidayBadge name={holiday.localName} />
+                                  </div>
+                                )
+                              ) : leaveOverlay && !entry ? (
+                                // Congé approuvé sans saisie : badge pré-rempli
+                                adminCanEdit ? (
+                                  <button
+                                    className="ts-cell ts-cell--leave"
+                                    style={{ opacity: 0.9 }}
+                                    title={`Congé ${leaveOverlay.type} approuvé`}
+                                    onClick={e => {
+                                      if (isOpen) { setPopup(null); return }
+                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                      setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
+                                    }}
+                                  >
+                                    <LeaveBadge type={leaveOverlay.type} />
+                                  </button>
+                                ) : (
+                                  <div className="ts-cell ts-cell--leave" title={`Congé ${leaveOverlay.type} approuvé`} style={{ cursor: 'default' }}>
+                                    <LeaveBadge type={leaveOverlay.type} />
+                                  </div>
+                                )
+                              ) : (
+                                // Cellule normale
+                                <button
+                                  className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
+                                  style={{
+                                    color: valueColor(entry?.value),
+                                    opacity: disabled ? 0.4 : 1,
+                                  }}
+                                  onClick={e => {
+                                    if (disabled) return
+                                    if (isOpen) { setPopup(null); return }
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                    setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
+                                  }}
+                                  title={entry?.status ?? 'No entry'}
+                                  disabled={disabled}
+                                >
+                                  {entry
+                                    ? (entry.value === 1 ? '1' : entry.value === 0.5 ? '½' : '—')
+                                    : '+'}
+                                  {entry && <span className="ts-status-dot" style={{ background: dotColor(entry.status) }} />}
+                                </button>
+                              )}
 
-                              {/* Popup rendu au niveau du td mais positionné en fixed */}
+                              {/* Popup */}
                               {isOpen && (
                                 <div className="ts-popup-fixed">
                                   <CellEditor
@@ -519,7 +759,7 @@ export default function TimesheetsPage() {
                                 style={{ fontSize: 10, padding: '2px 8px', color: 'var(--cyan)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleSubmitAll(c.id)}
                               >
-                                📤 {t('actions.submit')}
+                                {t('actions.submit')}
                               </button>
                             )}
                             {hasSubmitted && isAdmin(role) && (
@@ -528,7 +768,7 @@ export default function TimesheetsPage() {
                                 style={{ fontSize: 10, padding: '2px 8px', color: 'var(--green)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleApproveAll(c.id)}
                               >
-                                ✅ {t('actions.approve')}
+                                {t('actions.approve')}
                               </button>
                             )}
                           </div>
@@ -552,63 +792,7 @@ export default function TimesheetsPage() {
             </div>
           </Panel>
         )}
-
-        {/* Légende */}
-        <div style={{ display: 'flex', gap: 20, marginTop: 16, flexWrap: 'wrap' }}>
-          {([
-            { color: 'var(--text3)', square: true,  label: t('legend.empty') },
-            { color: 'var(--gold)',  square: true,  label: t('legend.half') },
-            { color: 'var(--green)', square: true,  label: t('legend.full') },
-            { color: 'var(--text3)', square: false, label: t('legend.draft') },
-            { color: 'var(--gold)',  square: false, label: t('legend.submitted') },
-            { color: 'var(--green)', square: false, label: t('legend.approved') },
-          ] as { color: string; square: boolean; label: string }[]).map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {item.square
-                ? <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color, display: 'inline-block' }} />
-                : <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
-              }
-              <span style={{ fontSize: 11, color: 'var(--text2)' }}>{item.label}</span>
-            </div>
-          ))}
-        </div>
       </div>
-
-      {/* Styles scopés */}
-      <style>{`
-        .ts-table { width: 100%; border-collapse: collapse; }
-        .ts-table th {
-          padding: 8px 12px;
-          color: var(--text3);
-          font-size: 10px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: .08em;
-          border-bottom: 1px solid var(--border);
-        }
-        .ts-table td {
-          padding: 10px 12px;
-          border-bottom: 1px solid var(--border);
-          vertical-align: middle;
-        }
-        .ts-table tr:last-child td { border-bottom: none; }
-        .ts-table tbody tr:hover td { background: var(--bg3); }
-
-        .ts-cell {
-          display: inline-flex; align-items: center; justify-content: center;
-          width: 44px; height: 36px;
-          border-radius: 8px; border: 1px solid var(--border);
-          background: var(--bg3); cursor: pointer;
-          font-family: var(--font-mono); font-size: 14px; font-weight: 700;
-          position: relative;
-          transition: border-color .15s, background .15s;
-        }
-        .ts-cell:hover:not(:disabled) { border-color: var(--cyan); background: var(--bg2); }
-        .ts-cell:disabled { opacity: .4; cursor: default; }
-        .ts-cell--empty { color: var(--text3); border-style: dashed; }
-        .ts-status-dot {
-          position: absolute; top: 3px; right: 3px;
-          width: 5px; height: 5px; border-radius: 50%;
-        }
-      `}</style>
     </>
   )
 }
