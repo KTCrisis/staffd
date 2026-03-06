@@ -1,3 +1,6 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
 import type { Consultant } from '@/types'
 import { Avatar }          from '@/components/ui'
 
@@ -32,6 +35,8 @@ function SoldeRow({ label, left, total, color }: { label: string; left: number; 
 }
 
 export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSoldeProps) {
+  const t = useTranslations('conges')
+
   const visible = isConsultant && currentUserId
     ? consultants.filter(c => c.user_id === currentUserId)
     : consultants
@@ -51,16 +56,12 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
         const hasRtt      = !isFreelance && c.rttTotal != null && c.rttTotal > 0
 
         return (
-          <div key={c.id} style={{
-            padding: '12px 0',
-            borderBottom: '1px solid var(--border)',
-          }}>
+          <div key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div className="c-name">{c.name}</div>
-                  {/* Badge freelance — indique que CP/RTT ne s'appliquent pas */}
                   {isFreelance && (
                     <span style={{
                       fontSize: 8, fontWeight: 700, letterSpacing: 1,
@@ -78,24 +79,20 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
 
             <div style={{ paddingLeft: 36 }}>
               {isFreelance ? (
-                /* Freelance — pas de CP/RTT, message informatif */
-                <div style={{
-                  marginTop: 6, fontSize: 10, color: 'var(--text2)',
-                  fontStyle: 'italic', opacity: 0.7,
-                }}>
-                  // pas de CP ni RTT — contrat freelance
+                <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text2)', fontStyle: 'italic', opacity: 0.7 }}>
+                  {t('soldes.freelanceNote')}
                 </div>
               ) : (
                 <>
                   <SoldeRow
-                    label="CP"
+                    label={t('types.CP')}
                     left={c.leaveDaysLeft}
                     total={c.leaveDaysTotal ?? 25}
                     color={cpColor}
                   />
                   {hasRtt && (
                     <SoldeRow
-                      label="RTT"
+                      label={t('types.RTT')}
                       left={c.rttLeft ?? 0}
                       total={c.rttTotal ?? 0}
                       color={rttColor}
