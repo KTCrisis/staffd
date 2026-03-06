@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations }  from 'next-intl'
 import { useAuthContext }   from '@/components/layout/AuthProvider'
-import { isAdmin }          from '@/lib/auth'
+import { isAdmin, isSuperAdmin } from '@/lib/auth'
 import { useRouter }        from '@/lib/navigation'
 import { Topbar }           from '@/components/layout/Topbar'
 import { Avatar }           from '@/components/ui/Avatar'
@@ -25,6 +25,22 @@ function SectionLabel({ label }: { label: string }) {
       textTransform: 'uppercase', marginBottom: 16,
     }}>
       // {label}
+    </div>
+  )
+}
+
+// ── Stub section ──────────────────────────────────────────────
+function ComingSoon({ label }: { label: string }) {
+  return (
+    <div style={{
+      padding: '48px 24px', textAlign: 'center',
+      background: 'var(--bg2)', border: '1px solid var(--border)',
+      borderRadius: 4,
+    }}>
+      <div style={{ fontSize: 20, marginBottom: 12, opacity: 0.4 }}>⚙</div>
+      <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
+        // {label} — coming soon
+      </div>
     </div>
   )
 }
@@ -444,10 +460,22 @@ function TeamForm({
 // PAGE SETTINGS
 // ══════════════════════════════════════════════════════════════
 
+type Tab = 'company' | 'team' | 'hr' | 'billing' | 'ai' | 'superadmin'
+
+const TABS: { id: Tab; label: string; icon: string; adminOnly?: boolean; superOnly?: boolean }[] = [
+  { id: 'company',    label: 'Company',    icon: '🏢' },
+  { id: 'team',       label: 'Team',       icon: '◈' },
+  { id: 'hr',         label: 'HR',         icon: '📅' },
+  { id: 'billing',    label: 'Billing',    icon: '🧾' },
+  { id: 'ai',         label: 'AI & MCP',   icon: '🤖' },
+  { id: 'superadmin', label: 'Super Admin', icon: '⬡', superOnly: true },
+]
+
 export default function SettingsPage() {
   const { user } = useAuthContext()
   const router      = useRouter()
   const adminAccess = isAdmin(user?.role)
+  const superAccess = isSuperAdmin(user?.role)
 
   useEffect(() => {
     if (user && !adminAccess) {
@@ -457,6 +485,7 @@ export default function SettingsPage() {
 
   if (!user || !adminAccess) return null
 
+  const [activeTab,  setActiveTab]  = useState<Tab>('company')
   const [refresh,    setRefresh]    = useState(0)
   const [showForm,   setShowForm]   = useState(false)
   const [editTarget, setEditTarget] = useState<Team | null>(null)
@@ -468,11 +497,6 @@ export default function SettingsPage() {
 
   const allConsultants = consultants ?? []
 
-  // Liste des managers (rôle manager dans app_metadata)
-  // Note : on filtre sur le champ role du profil consultant
-  // qui reflète le métier (pas forcément le user_role Auth)
-  // Pour les managers Auth, on se base sur ceux qui ont le rôle consultant
-  // avec role = 'manager' dans le profil. Ajuster selon ton modèle.
   const managers = allConsultants.filter(c =>
     c.role?.toLowerCase().includes('manager') ||
     c.role?.toLowerCase().includes('lead') ||
@@ -514,124 +538,264 @@ export default function SettingsPage() {
     }
   }
 
-  const teamCount       = (teams ?? []).length
-  const unassigned      = allConsultants.filter(c => !(c as any).teamId && (c.role !== 'admin')).length
+  const teamCount  = (teams ?? []).length
+  const unassigned = allConsultants.filter(c => !(c as any).teamId && (c.role !== 'admin')).length
+
+  // Tabs visibles selon le rôle
+  const visibleTabs = TABS.filter(tab => {
+    if (tab.superOnly) return superAccess
+    return true
+  })
+
+  // CTA selon l'onglet actif
+  const ctaLabel = activeTab === 'team' ? '+ Nouvelle équipe' : undefined
+  const onCta    = activeTab === 'team' ? () => { setEditTarget(null); setShowForm(true) } : undefined
 
   return (
     <>
       <Topbar
         title="Settings"
-        breadcrumb="Admin / Settings"
-        ctaLabel="Nouvelle équipe"
-        onCta={() => { setEditTarget(null); setShowForm(true) }}
+        breadcrumb="// configuration"
+        ctaLabel={ctaLabel}
+        onCta={onCta}
       />
 
-      <div className="app-content" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <div className="app-content" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* ── Stats ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
-          {[
-            { label: 'Équipes',             value: teamCount,   color: 'var(--cyan)' },
-            { label: 'Consultants',         value: allConsultants.filter(c => c.contractType !== 'freelance').length, color: 'var(--green)' },
-            { label: 'Freelances',          value: allConsultants.filter(c => c.contractType === 'freelance').length, color: 'var(--gold)' },
-            { label: 'Non assignés',        value: unassigned,  color: unassigned > 0 ? 'var(--pink)' : 'var(--text2)' },
-          ].map(s => (
-            <div key={s.label} style={{
-              background: 'var(--bg2)', border: '1px solid var(--border)',
-              borderRadius: 4, padding: '16px 20px',
-            }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>
-                {s.value}
-              </div>
-              <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
-                {s.label}
-              </div>
-            </div>
+        {/* ── Tabs ── */}
+        <div style={{
+          display: 'flex', gap: 2,
+          borderBottom: '1px solid var(--border)',
+          paddingBottom: 0,
+        }}>
+          {visibleTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                fontSize: 11, padding: '8px 16px',
+                background: 'none', border: 'none',
+                borderBottom: activeTab === tab.id
+                  ? '2px solid var(--cyan)'
+                  : '2px solid transparent',
+                color: activeTab === tab.id ? 'var(--cyan)' : 'var(--text2)',
+                cursor: 'pointer', fontFamily: 'inherit',
+                fontWeight: activeTab === tab.id ? 700 : 400,
+                transition: 'color 0.15s',
+                display: 'flex', alignItems: 'center', gap: 6,
+                marginBottom: -1,
+              }}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
           ))}
         </div>
 
-        {/* ── Section équipes ── */}
-        <section>
-          <SectionLabel label="TEAM_MANAGEMENT" />
+        {/* ══════════════════════════════════════════════════
+            TAB: COMPANY
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'company' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <SectionLabel label="COMPANY_IDENTITY" />
+            {/* TODO: nom société, adresse, logo */}
+            <ComingSoon label="company_identity" />
 
-          {lT || lC ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Skeleton h={120} />
-              <Skeleton h={120} />
-            </div>
-          ) : (teams ?? []).length === 0 ? (
-            <div style={{
-              padding: '40px 24px', textAlign: 'center',
-              background: 'var(--bg2)', border: '1px solid var(--border)',
-              borderRadius: 4, color: 'var(--text2)', fontSize: 12,
-            }}>
-              <div style={{ fontSize: 24, marginBottom: 12 }}>◈</div>
-              <div style={{ marginBottom: 8 }}>Aucune équipe définie</div>
-              <div style={{ fontSize: 10, marginBottom: 20 }}>
-                Créez votre première équipe pour organiser vos consultants et managers.
-              </div>
-              <button
-                onClick={() => { setEditTarget(null); setShowForm(true) }}
-                style={{
-                  fontSize: 11, padding: '8px 20px', borderRadius: 2,
-                  background: 'var(--cyan)', color: '#000',
-                  border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700,
-                }}
-              >
-                + Créer une équipe
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {(teams ?? []).map(team => (
-                <TeamCard
-                  key={team.id}
-                  team={team}
-                  consultants={allConsultants}
-                  onEdit={t => { setEditTarget(t); setShowForm(true) }}
-                  onDelete={t => setConfirmDel(t)}
-                  onAddMember={handleAddMember}
-                  onRemoveMember={handleRemoveMember}
-                />
+            <SectionLabel label="LEGAL_INFO" />
+            {/* TODO: SIRET, N° TVA, forme juridique */}
+            <ComingSoon label="legal_info" />
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB: TEAM
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'team' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              {[
+                { label: 'Équipes',      value: teamCount,   color: 'var(--cyan)' },
+                { label: 'Consultants',  value: allConsultants.filter(c => c.contractType !== 'freelance').length, color: 'var(--green)' },
+                { label: 'Freelances',   value: allConsultants.filter(c => c.contractType === 'freelance').length, color: 'var(--gold)' },
+                { label: 'Non assignés', value: unassigned,  color: unassigned > 0 ? 'var(--pink)' : 'var(--text2)' },
+              ].map(s => (
+                <div key={s.label} style={{
+                  background: 'var(--bg2)', border: '1px solid var(--border)',
+                  borderRadius: 4, padding: '16px 20px',
+                }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)' }}>
+                    {s.value}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
+                    {s.label}
+                  </div>
+                </div>
               ))}
             </div>
-          )}
-        </section>
 
-        {/* ── Consultants non assignés ── */}
-        {unassigned > 0 && (
-          <section>
-            <SectionLabel label="NON_ASSIGNÉS" />
+            {/* Équipes */}
+            <section>
+              <SectionLabel label="TEAM_MANAGEMENT" />
+              {lT || lC ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <Skeleton h={120} />
+                  <Skeleton h={120} />
+                </div>
+              ) : (teams ?? []).length === 0 ? (
+                <div style={{
+                  padding: '40px 24px', textAlign: 'center',
+                  background: 'var(--bg2)', border: '1px solid var(--border)',
+                  borderRadius: 4, color: 'var(--text2)', fontSize: 12,
+                }}>
+                  <div style={{ fontSize: 24, marginBottom: 12 }}>◈</div>
+                  <div style={{ marginBottom: 8 }}>Aucune équipe définie</div>
+                  <div style={{ fontSize: 10, marginBottom: 20 }}>
+                    Créez votre première équipe pour organiser vos consultants et managers.
+                  </div>
+                  <button
+                    onClick={() => { setEditTarget(null); setShowForm(true) }}
+                    style={{
+                      fontSize: 11, padding: '8px 20px', borderRadius: 2,
+                      background: 'var(--cyan)', color: '#000',
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700,
+                    }}
+                  >
+                    + Créer une équipe
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {(teams ?? []).map(team => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      consultants={allConsultants}
+                      onEdit={t => { setEditTarget(t); setShowForm(true) }}
+                      onDelete={t => setConfirmDel(t)}
+                      onAddMember={handleAddMember}
+                      onRemoveMember={handleRemoveMember}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Consultants non assignés */}
+            {unassigned > 0 && (
+              <section>
+                <SectionLabel label="NON_ASSIGNÉS" />
+                <div style={{
+                  background: 'var(--bg2)', border: '1px solid rgba(255,209,102,0.2)',
+                  borderRadius: 4, padding: '16px 20px',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 12 }}>
+                    ⚠ {unassigned} consultant{unassigned > 1 ? 's' : ''} sans équipe
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {allConsultants
+                      .filter(c => !(c as any).teamId && c.contractType !== undefined)
+                      .map(c => (
+                        <div key={c.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '5px 10px', borderRadius: 2,
+                          background: 'var(--bg3)', border: '1px solid var(--border)',
+                        }}>
+                          <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
+                          <span style={{ fontSize: 11, color: 'var(--text)' }}>{c.name}</span>
+                          <RoleBadge role={c.contractType ?? 'consultant'} />
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB: HR
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'hr' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <SectionLabel label="LEAVE_DEFAULTS" />
+            {/* TODO: default_leave_days_total, default_rtt_total */}
+            <ComingSoon label="leave_defaults" />
+
+            <SectionLabel label="WORK_CALENDAR" />
+            {/* TODO: jours travaillés/an, charges patronales %, début exercice */}
+            <ComingSoon label="work_calendar" />
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB: BILLING
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'billing' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <SectionLabel label="BANK_DETAILS" />
+            {/* TODO: IBAN, BIC, nom banque */}
+            <ComingSoon label="bank_details" />
+
+            <SectionLabel label="INVOICE_SETTINGS" />
+            {/* TODO: préfixe, compteur, délai paiement, pied de facture */}
+            <ComingSoon label="invoice_settings" />
+
+            <SectionLabel label="TAX" />
+            {/* TODO: taux TVA, TVA non applicable */}
+            <ComingSoon label="tax_settings" />
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB: AI & MCP
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'ai' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <SectionLabel label="AI_MODEL" />
+            {/* TODO: choix modèle Ollama, URL endpoint, activer/désactiver agents */}
+            <ComingSoon label="ai_model_config" />
+
+            <SectionLabel label="MCP_TOOLS" />
+            {/* TODO: liste outils MCP connectés, status, logs */}
+            <ComingSoon label="mcp_tools" />
+
+            <SectionLabel label="USAGE" />
+            {/* TODO: quota tokens, dernière utilisation, historique appels */}
+            <ComingSoon label="ai_usage" />
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════
+            TAB: SUPER ADMIN
+        ══════════════════════════════════════════════════ */}
+        {activeTab === 'superadmin' && superAccess && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+            {/* Badge */}
             <div style={{
-              background: 'var(--bg2)', border: '1px solid rgba(255,209,102,0.2)',
-              borderRadius: 4, padding: '16px 20px',
+              padding: '8px 14px', borderRadius: 4,
+              background: 'rgba(255,45,107,0.06)', border: '1px solid rgba(255,45,107,0.2)',
+              fontSize: 10, color: 'var(--pink)', letterSpacing: 1,
             }}>
-              <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 12 }}>
-                ⚠ {unassigned} consultant{unassigned > 1 ? 's' : ''} sans équipe
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {allConsultants
-                  .filter(c => !(c as any).teamId && c.contractType !== undefined)
-                  .map(c => (
-                    <div key={c.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '5px 10px', borderRadius: 2,
-                      background: 'var(--bg3)', border: '1px solid var(--border)',
-                    }}>
-                      <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
-                      <span style={{ fontSize: 11, color: 'var(--text)' }}>{c.name}</span>
-                      <RoleBadge role={c.contractType ?? 'consultant'} />
-                    </div>
-                  ))
-                }
-              </div>
+              ⬡ Super Admin — cross-tenant access
             </div>
-          </section>
+
+            <SectionLabel label="TENANTS" />
+            {/* TODO: liste tenants, stats, créer nouveau tenant */}
+            <ComingSoon label="tenant_management" />
+
+            <SectionLabel label="PLATFORM_STATS" />
+            {/* TODO: coût infra, tokens AI consommés, nb users */}
+            <ComingSoon label="platform_stats" />
+          </div>
         )}
 
       </div>
 
-      {/* ── Modal formulaire ── */}
+      {/* ── Modal formulaire équipe ── */}
       {showForm && (
         <TeamForm
           initial={editTarget}
