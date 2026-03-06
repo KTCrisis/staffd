@@ -17,6 +17,106 @@ function Skeleton({ h = 80 }: { h?: number }) {
   return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
 }
 
+// ══════════════════════════════════════════════════════════════
+// VUE SIMPLIFIÉE — consultant / freelance (lecture seule, soi-même)
+// ══════════════════════════════════════════════════════════════
+function MyProfileView({ consultant }: { consultant: Consultant }) {
+  const tCommon = useTranslations('common')
+
+  const rows = [
+    { label: 'Statut',           value: <Badge variant={consultant.status} /> },
+    { label: 'Mission courante', value: consultant.currentProject ?? '—' },
+    { label: 'Disponible',       value: consultant.availableFrom
+        ? new Date(consultant.availableFrom).toLocaleDateString('fr-FR')
+        : 'Maintenant' },
+    { label: 'Taux occupation',  value: `${consultant.occupancyRate}%` },
+    ...(consultant.contractType !== 'freelance'
+      ? [
+          { label: 'CP restants',  value: `${consultant.leaveDaysLeft} ${tCommon('days')}` },
+          ...(consultant.rttLeft != null
+            ? [{ label: 'RTT restants', value: `${consultant.rttLeft} ${tCommon('days')}` }]
+            : []),
+        ]
+      : []),
+  ]
+
+  return (
+    <>
+      <Topbar title="Mon profil" breadcrumb="// my profile" />
+      <div className="app-content">
+        <Panel>
+          {/* En-tête */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
+            <Avatar initials={consultant.initials} color={consultant.avatarColor} size="lg" />
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>{consultant.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 3 }}>{consultant.role}</div>
+              {consultant.email && (
+                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{consultant.email}</div>
+              )}
+              {consultant.contractType === 'freelance' && (
+                <span style={{
+                  display: 'inline-block', marginTop: 6,
+                  fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+                  background: 'rgba(255,209,102,.15)', color: 'var(--gold)',
+                  padding: '2px 7px', borderRadius: 3,
+                }}>
+                  Freelance
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Infos */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {rows.map(row => (
+              <div key={row.label} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '11px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
+              }}>
+                <span style={{ color: 'var(--text2)' }}>{row.label}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Barre occupation */}
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
+              Taux d'occupation
+            </div>
+            <ProgressBar value={consultant.occupancyRate} style={{ height: 6 }} />
+          </div>
+
+          {/* Stack */}
+          {consultant.stack && consultant.stack.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
+                Stack
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {consultant.stack.map(s => (
+                  <span key={s} style={{
+                    fontSize: 9, letterSpacing: 1, textTransform: 'uppercase',
+                    padding: '2px 8px', borderRadius: 2,
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    color: 'var(--text2)',
+                  }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </Panel>
+      </div>
+    </>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAGE PRINCIPALE
+// ══════════════════════════════════════════════════════════════
 export default function ConsultantsPage() {
   const t       = useTranslations('consultants')
   const tCommon = useTranslations('common')
@@ -36,10 +136,42 @@ export default function ConsultantsPage() {
 
   const { data: consultants, loading } = useConsultants(refresh)
 
-  const isAdmin   = user?.role === 'admin' || user?.role === 'super_admin'
-  const isManager = user?.role === 'manager'
+  const role      = user?.role
+  const isAdmin   = role === 'admin' || role === 'super_admin'
+  const isManager = role === 'manager'
   const canCreate = isAdmin || isManager
 
+  // ── Vue simplifiée pour consultant / freelance ────────────
+  const isConsultantRole = role === 'consultant' || role === 'freelance'
+  if (isConsultantRole) {
+    if (loading) {
+      return (
+        <>
+          <Topbar title="Mon profil" breadcrumb="// my profile" />
+          <div className="app-content"><Skeleton h={300} /></div>
+        </>
+      )
+    }
+    // RLS ne retourne que leur propre enregistrement
+    const me = (consultants ?? []).find(c => c.user_id === user?.id) ?? (consultants ?? [])[0]
+    if (!me) {
+      return (
+        <>
+          <Topbar title="Mon profil" breadcrumb="// my profile" />
+          <div className="app-content">
+            <Panel>
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+                // profil non trouvé — contactez votre administrateur
+              </div>
+            </Panel>
+          </div>
+        </>
+      )
+    }
+    return <MyProfileView consultant={me} />
+  }
+
+  // ── Vue admin / manager ───────────────────────────────────
   const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
     { label: t('filters.all'),       value: 'all' },
     { label: t('filters.assigned'),  value: 'assigned' },
@@ -119,7 +251,6 @@ export default function ConsultantsPage() {
       <Topbar
         title={t('title')}
         breadcrumb={t('breadcrumb')}
-        /* CTA visible admin + manager uniquement */
         ctaLabel={canCreate ? t('cta') : undefined}
         onCta={canCreate ? () => setShowForm(true) : undefined}
       />
@@ -165,7 +296,6 @@ export default function ConsultantsPage() {
         {/* ── Overlay + Drawer ── */}
         {selected && (
           <>
-            {/* Overlay cliquable pour fermer */}
             <div
               onClick={closeDrawer}
               style={{
@@ -205,7 +335,7 @@ export default function ConsultantsPage() {
                 </div>
               </div>
 
-              {/* Données principales */}
+              {/* Données */}
               {[
                 { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
                 { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
@@ -216,7 +346,6 @@ export default function ConsultantsPage() {
                 ...(selected.rttLeft != null
                   ? [{ label: 'RTT restants', value: `${selected.rttLeft} ${tCommon('days')}` }]
                   : []),
-                // TJM visible admin uniquement
                 ...(isAdmin && selected.tjm
                   ? [{ label: 'TJM', value: `${selected.tjm} €/j` }]
                   : []),
@@ -230,7 +359,7 @@ export default function ConsultantsPage() {
                 </div>
               ))}
 
-              {/* Stack technique */}
+              {/* Stack */}
               {selected.stack && selected.stack.length > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
@@ -262,7 +391,7 @@ export default function ConsultantsPage() {
                 <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
               </div>
 
-              {/* ── Accès compte (admin uniquement) ── */}
+              {/* Accès compte — admin uniquement */}
               {isAdmin && (
                 <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 12 }}>
@@ -315,7 +444,7 @@ export default function ConsultantsPage() {
                 </div>
               )}
 
-              {/* Actions Edit / Delete — admin + manager */}
+              {/* Actions Edit / Delete */}
               {canCreate && (
                 <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
                   <button
