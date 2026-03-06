@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations }  from 'next-intl'
 import { useAuthContext }   from '@/components/layout/AuthProvider'
+import { useActiveTenant }  from '@/lib/tenant-context'
 import { isAdmin, isSuperAdmin } from '@/lib/auth'
 import { useRouter }        from '@/lib/navigation'
 import { Topbar }           from '@/components/layout/Topbar'
@@ -11,9 +12,9 @@ import {
   useTeams, useConsultants,
   createTeam, updateTeam, deleteTeam,
   addTeamMember, removeTeamMember,
-  useCompanySettings, updateCompanySettings,
+  useCompanySettings, updateCompanySettings, updateAISettings,
 } from '@/lib/data'
-import type { Team, TeamMember, CompanySettings, BillingSettings } from '@/lib/data'
+import type { Team, TeamMember, CompanySettings, BillingSettings, AISettings } from '@/lib/data'
 
 // ══════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
@@ -573,6 +574,7 @@ const TABS: { id: Tab; label: string; icon: string; adminOnly?: boolean; superOn
 
 export default function SettingsPage() {
   const { user } = useAuthContext()
+  const { activeTenantId } = useActiveTenant()
   const router      = useRouter()
   const adminAccess = isAdmin(user?.role)
   const superAccess = isSuperAdmin(user?.role)
@@ -607,6 +609,11 @@ export default function SettingsPage() {
   const [legalMention,  setLegalMention]  = useState('')
   const [tvaRate,       setTvaRate]       = useState('')
 
+  // AI tab state
+  const [ollamaEndpoint, setOllamaEndpoint] = useState('')
+  const [ollamaModel,    setOllamaModel]    = useState('')
+  const [agentsEnabled,  setAgentsEnabled]  = useState(false)
+
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [settingsError,  setSettingsError]  = useState<string | null>(null)
 
@@ -614,6 +621,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!companyData) return
     const b = companyData.billing_settings ?? {}
+    const ai = companyData.ai_settings ?? {}
     setCompanyName(companyData.name ?? '')
     setCompanyAddress(b.address ?? '')
     setCompanySiret(b.siret ?? '')
@@ -625,10 +633,15 @@ export default function SettingsPage() {
     setPaymentTerms(String(b.payment_terms ?? 30))
     setLegalMention(b.legal_mention ?? '')
     setTvaRate(String(b.tva_rate ?? 20))
+    setOllamaEndpoint(ai.ollama_endpoint ?? '')
+    setOllamaModel(ai.ollama_model ?? 'kimi-k2.5:cloud')
+    setAgentsEnabled(ai.agents_enabled ?? false)
   }, [companyData])
 
   // Dirty detection
-  const b = companyData?.billing_settings ?? {}
+  const b  = companyData?.billing_settings ?? {}
+  const ai = companyData?.ai_settings ?? {}
+
   const companyDirty = companyData ? (
     companyName    !== (companyData.name ?? '') ||
     companyAddress !== (b.address    ?? '') ||
@@ -646,17 +659,20 @@ export default function SettingsPage() {
     tvaRate       !== String(b.tva_rate ?? 20)
   ) : false
 
+  const aiDirty = companyData ? (
+    ollamaEndpoint !== (ai.ollama_endpoint ?? '') ||
+    ollamaModel    !== (ai.ollama_model    ?? 'kimi-k2.5:cloud') ||
+    agentsEnabled  !== (ai.agents_enabled  ?? false)
+  ) : false
+
   const handleSaveCompany = async () => {
     setSettingsSaving(true)
     setSettingsError(null)
     try {
       await updateCompanySettings({
         name: companyName,
-        billing_settings: {
-          address:    companyAddress,
-          siret:      companySiret,
-          tva_number: companyTva,
-        },
+        billing_settings: { address: companyAddress, siret: companySiret, tva_number: companyTva },
+        companyId: activeTenantId ?? undefined,
       })
       setSettingsRefresh(r => r + 1)
     } catch (e: any) {
@@ -672,14 +688,11 @@ export default function SettingsPage() {
     try {
       await updateCompanySettings({
         billing_settings: {
-          bank_iban:      iban,
-          bank_bic:       bic,
-          bank_name:      bankName,
-          invoice_prefix: invoicePrefix,
-          payment_terms:  Number(paymentTerms),
-          legal_mention:  legalMention,
-          tva_rate:       Number(tvaRate),
+          bank_iban: iban, bank_bic: bic, bank_name: bankName,
+          invoice_prefix: invoicePrefix, payment_terms: Number(paymentTerms),
+          legal_mention: legalMention, tva_rate: Number(tvaRate),
         },
+        companyId: activeTenantId ?? undefined,
       })
       setSettingsRefresh(r => r + 1)
     } catch (e: any) {
@@ -689,25 +702,53 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSaveAI = async () => {
+    setSettingsSaving(true)
+    setSettingsError(null)
+    try {
+      await updateAISettings({
+        ai_settings: {
+          ollama_endpoint: ollamaEndpoint,
+          ollama_model:    ollamaModel,
+          agents_enabled:  agentsEnabled,
+        },
+        companyId: activeTenantId ?? undefined,
+      })
+      setSettingsRefresh(r => r + 1)
+    } catch (e: any) {
+      setSettingsError(e.message)
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const handleResetAI = () => {
+    if (!companyData) return
+    const ai = companyData.ai_settings ?? {}
+    setOllamaEndpoint(ai.ollama_endpoint ?? '')
+    setOllamaModel(ai.ollama_model ?? 'kimi-k2.5:cloud')
+    setAgentsEnabled(ai.agents_enabled ?? false)
+  }
+
   const handleResetCompany = () => {
     if (!companyData) return
-    const b = companyData.billing_settings ?? {}
+    const bs = companyData.billing_settings ?? {}
     setCompanyName(companyData.name ?? '')
-    setCompanyAddress(b.address ?? '')
-    setCompanySiret(b.siret ?? '')
-    setCompanyTva(b.tva_number ?? '')
+    setCompanyAddress(bs.address ?? '')
+    setCompanySiret(bs.siret ?? '')
+    setCompanyTva(bs.tva_number ?? '')
   }
 
   const handleResetBilling = () => {
     if (!companyData) return
-    const b = companyData.billing_settings ?? {}
-    setIban(b.bank_iban ?? '')
-    setBic(b.bank_bic ?? '')
-    setBankName(b.bank_name ?? '')
-    setInvoicePrefix(b.invoice_prefix ?? '')
-    setPaymentTerms(String(b.payment_terms ?? 30))
-    setLegalMention(b.legal_mention ?? '')
-    setTvaRate(String(b.tva_rate ?? 20))
+    const bs = companyData.billing_settings ?? {}
+    setIban(bs.bank_iban ?? '')
+    setBic(bs.bank_bic ?? '')
+    setBankName(bs.bank_name ?? '')
+    setInvoicePrefix(bs.invoice_prefix ?? '')
+    setPaymentTerms(String(bs.payment_terms ?? 30))
+    setLegalMention(bs.legal_mention ?? '')
+    setTvaRate(String(bs.tva_rate ?? 20))
   }
   const [showForm,   setShowForm]   = useState(false)
   const [editTarget, setEditTarget] = useState<Team | null>(null)
@@ -1170,18 +1211,201 @@ export default function SettingsPage() {
             TAB: AI & MCP
         ══════════════════════════════════════════════════ */}
         {activeTab === 'ai' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <SectionLabel label="AI_MODEL" />
-            {/* TODO: choix modèle Ollama, URL endpoint, activer/désactiver agents */}
-            <ComingSoon label="ai_model_config" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-            <SectionLabel label="MCP_TOOLS" />
-            {/* TODO: liste outils MCP connectés, status, logs */}
-            <ComingSoon label="mcp_tools" />
+            {settingsError && (
+              <div style={{
+                padding: '8px 14px', borderRadius: 4,
+                background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.2)',
+                fontSize: 11, color: 'var(--pink)',
+              }}>⚠ {settingsError}</div>
+            )}
 
-            <SectionLabel label="USAGE" />
-            {/* TODO: quota tokens, dernière utilisation, historique appels */}
-            <ComingSoon label="ai_usage" />
+            {/* Modèle Ollama */}
+            <section>
+              <SectionLabel label="AI_MODEL" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? <Skeleton h={100} /> : (
+                  <>
+                    <SettingsField
+                      label="Ollama endpoint"
+                      hint="URL de ton instance Ollama — local ou cloud"
+                    >
+                      <SettingsInput
+                        value={ollamaEndpoint}
+                        onChange={setOllamaEndpoint}
+                        placeholder="https://ollama.yourdomain.com"
+                      />
+                    </SettingsField>
+
+                    <SettingsField label="Model" hint="Modèle utilisé par le /cmd AI console">
+                      <select
+                        value={ollamaModel}
+                        onChange={e => setOllamaModel(e.target.value)}
+                        style={{
+                          width: '100%', background: 'var(--bg3)',
+                          border: '1px solid var(--border2)',
+                          color: 'var(--text)', padding: '8px 12px', borderRadius: 2,
+                          fontSize: 12, fontFamily: 'inherit',
+                        }}
+                      >
+                        {[
+                          'kimi-k2.5:cloud',
+                          'llama3.2:latest',
+                          'llama3.1:8b',
+                          'mistral:latest',
+                          'gemma2:9b',
+                          'qwen2.5:14b',
+                          'deepseek-r1:8b',
+                          'phi4:latest',
+                        ].map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </SettingsField>
+
+                    {/* Toggle agents */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 16px', borderRadius: 3,
+                      background: agentsEnabled ? 'rgba(0,255,136,0.04)' : 'var(--bg3)',
+                      border: `1px solid ${agentsEnabled ? 'rgba(0,255,136,0.2)' : 'var(--border)'}`,
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
+                          Agents
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                          Active les agents autonomes dans le /cmd (staffing prédictif, alertes, etc.)
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setAgentsEnabled(v => !v)}
+                        style={{
+                          width: 44, height: 24, borderRadius: 12, border: 'none',
+                          background: agentsEnabled ? 'var(--green)' : 'var(--border2)',
+                          cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{
+                          position: 'absolute', top: 3,
+                          left: agentsEnabled ? 23 : 3,
+                          width: 18, height: 18, borderRadius: '50%',
+                          background: '#000', transition: 'left 0.2s',
+                        }} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* MCP Tools */}
+            <section>
+              <SectionLabel label="MCP_TOOLS" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, overflow: 'hidden',
+              }}>
+                {/* Header */}
+                <div style={{
+                  padding: '12px 20px', borderBottom: '1px solid var(--border)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}>
+                  <div style={{ fontSize: 10, color: 'var(--text2)' }}>
+                    Connecteurs MCP disponibles — gèrent les outils accessibles par l'AI
+                  </div>
+                  <span style={{
+                    fontSize: 8, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
+                    background: 'rgba(255,209,102,0.1)', color: 'var(--gold)',
+                    border: '1px solid rgba(255,209,102,0.2)',
+                  }}>
+                    PLANNED
+                  </span>
+                </div>
+
+                {/* Liste des outils planifiés */}
+                {[
+                  { icon: '🗄', name: 'Supabase MCP',    desc: 'Read/write company data via natural language',       status: 'active',   color: 'var(--green)' },
+                  { icon: '📅', name: 'Calendar MCP',    desc: 'Sync leave requests to Google Calendar',             status: 'planned',  color: 'var(--text2)' },
+                  { icon: '💬', name: 'Slack MCP',       desc: 'Notify managers on assignment & leave events',       status: 'planned',  color: 'var(--text2)' },
+                  { icon: '📊', name: 'Spreadsheet MCP', desc: 'Export CRA and profitability data to Google Sheets', status: 'planned',  color: 'var(--text2)' },
+                  { icon: '⚙',  name: 'Custom MCP',     desc: 'Connect your own MCP server via endpoint URL',       status: 'soon',     color: 'var(--cyan)' },
+                ].map((tool, i) => (
+                  <div key={tool.name} style={{
+                    padding: '14px 20px',
+                    borderBottom: i < 4 ? '1px solid var(--border)' : undefined,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                  }}>
+                    <div style={{ fontSize: 18, width: 28, textAlign: 'center', flexShrink: 0 }}>
+                      {tool.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
+                        {tool.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                        {tool.desc}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: 8, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
+                      fontWeight: 700, textTransform: 'uppercase',
+                      color: tool.color,
+                      border: `1px solid ${tool.color}40`,
+                      background: `${tool.color}10`,
+                    }}>
+                      {tool.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Usage */}
+            <section>
+              <SectionLabel label="USAGE" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 12,
+              }}>
+                <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
+                  // Historique des appels AI et consommation de tokens — coming soon
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  {[
+                    { label: 'Calls today',    value: '—', color: 'var(--cyan)' },
+                    { label: 'Tokens used',    value: '—', color: 'var(--green)' },
+                    { label: 'Last call',      value: '—', color: 'var(--text2)' },
+                  ].map(stat => (
+                    <div key={stat.label} style={{
+                      padding: '14px 16px', borderRadius: 3,
+                      background: 'var(--bg3)', border: '1px solid var(--border)',
+                    }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: stat.color, fontFamily: 'var(--font-mono)' }}>
+                        {stat.value}
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <SaveBar
+              dirty={aiDirty}
+              saving={settingsSaving}
+              onSave={handleSaveAI}
+              onReset={handleResetAI}
+            />
           </div>
         )}
 

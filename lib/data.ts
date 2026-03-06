@@ -174,12 +174,27 @@ export interface BillingSettings {
   legal_mention?:   string
 }
 
+export interface AISettings {
+  ollama_endpoint?:  string   // ex: https://ollama.yourdomain.com
+  ollama_model?:     string   // ex: kimi-k2.5:cloud
+  agents_enabled?:   boolean
+  mcp_tools?:        MCPTool[]
+}
+
+export interface MCPTool {
+  id:       string
+  name:     string
+  endpoint: string
+  enabled:  boolean
+}
+
 export interface CompanySettings {
   id:               string
   name:             string
   slug:             string | null
   mode:             'solo' | 'team'
   billing_settings: BillingSettings
+  ai_settings:      AISettings
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -865,17 +880,20 @@ export async function removeTeamMember(consultantId: string) {
 // ══════════════════════════════════════════════════════════════
 
 export function useCompanySettings(dep?: number) {
+  const { activeTenantId } = useActiveTenant()
   return useSupabase<CompanySettings>(async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('companies')
-      .select('id, name, slug, mode, billing_settings')
-      .single()
+      .select('id, name, slug, mode, billing_settings, ai_settings')
+    if (activeTenantId) q = q.eq('id', activeTenantId)
+    const { data, error } = await q.single()
     if (error) throw new Error(error.message)
     return {
       ...data,
       billing_settings: (data.billing_settings ?? {}) as BillingSettings,
+      ai_settings:      (data.ai_settings      ?? {}) as AISettings,
     } as CompanySettings
-  }, [dep])
+  }, [dep, activeTenantId])
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -885,9 +903,10 @@ export function useCompanySettings(dep?: number) {
 export async function updateCompanySettings(payload: {
   name?:             string
   billing_settings?: BillingSettings
+  companyId?:        string
 }) {
   const { data: { user } } = await supabase.auth.getUser()
-  const companyId = user?.app_metadata?.company_id
+  const companyId = payload.companyId ?? user?.app_metadata?.company_id
   if (!companyId) throw new Error('No company context')
 
   if (payload.billing_settings) {
@@ -905,4 +924,19 @@ export async function updateCompanySettings(payload: {
       .eq('id', companyId)
     if (error) throw new Error(error.message)
   }
+}
+
+export async function updateAISettings(payload: {
+  ai_settings: AISettings
+  companyId?:  string
+}) {
+  const { data: { user } } = await supabase.auth.getUser()
+  const companyId = payload.companyId ?? user?.app_metadata?.company_id
+  if (!companyId) throw new Error('No company context')
+
+  const { error } = await supabase.rpc('merge_ai_settings', {
+    p_company_id: companyId,
+    p_patch:      payload.ai_settings,
+  })
+  if (error) throw new Error(error.message)
 }
