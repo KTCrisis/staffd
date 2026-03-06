@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateHRSettings } from '@/lib/data'
+import { supabase }           from '@/lib/supabase'
 import type { HRSettings, PublicHoliday }        from '@/lib/data'
 import {
   SectionLabel, SettingsField, SaveBar, Skeleton, ToggleRow, ErrorBanner,
@@ -48,6 +49,60 @@ export function HRTab() {
 
   const [holidays,        setHolidays]        = useState<PublicHoliday[]>([])
   const [holidaysLoading, setHolidaysLoading] = useState(false)
+
+  // ── Types d'activité CRA ──────────────────────────────────
+  interface ActivityType { id: string; name: string }
+  const [activityTypes,    setActivityTypes]    = useState<ActivityType[]>([])
+  const [newActivityName,  setNewActivityName]  = useState('')
+  const [activityLoading,  setActivityLoading]  = useState(false)
+  const [activitySaving,   setActivitySaving]   = useState(false)
+  const [activityError,    setActivityError]    = useState<string | null>(null)
+
+  const companyId = activeTenantId ?? companyData?.id
+
+  const fetchActivityTypes = async () => {
+    if (!companyId) return
+    setActivityLoading(true)
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name')
+      .eq('company_id', companyId)
+      .eq('is_activity_type', true)
+      .neq('status', 'archived')
+      .order('name')
+    setActivityLoading(false)
+    if (!error) setActivityTypes(data ?? [])
+  }
+
+  useEffect(() => { fetchActivityTypes() }, [companyId])
+
+  const handleAddActivity = async () => {
+    const name = newActivityName.trim()
+    if (!name || !companyId) return
+    setActivitySaving(true); setActivityError(null)
+    const { error } = await supabase.from('projects').insert({
+      company_id:       companyId,
+      name,
+      is_internal:      true,
+      is_activity_type: true,
+      status:           'active',
+      start_date:       '2020-01-01',
+      end_date:         '2099-12-31',
+    })
+    if (error) { setActivityError(error.message) }
+    else { setNewActivityName(''); fetchActivityTypes() }
+    setActivitySaving(false)
+  }
+
+  const handleDeleteActivity = async (id: string) => {
+    setActivityError(null)
+    const { error } = await supabase
+      .from('projects')
+      .update({ status: 'archived' })
+      .eq('id', id)
+    if (error) setActivityError(error.message)
+    else fetchActivityTypes()
+  }
 
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
@@ -314,6 +369,123 @@ export function HRTab() {
       </section>
 
       <SaveBar dirty={dirty} saving={saving} onSave={handleSave} onReset={handleReset} />
+
+      {/* ── Types d'activité CRA ── */}
+      <section>
+        <SectionLabel label="CRA_ACTIVITY_TYPES" />
+        <div style={{
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 4, overflow: 'hidden',
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: '14px 20px', borderBottom: '1px solid var(--border)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
+                Types d'activité génériques
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                Sélectionnables dans les CRAs — non affichés dans la liste des projets clients
+              </div>
+            </div>
+            <span style={{
+              fontSize: 9, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
+              background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
+              border: '1px solid rgba(0,229,255,0.2)',
+            }}>
+              {activityTypes.length} types
+            </span>
+          </div>
+
+          {/* Liste */}
+          {activityLoading ? (
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Skeleton h={36} /><Skeleton h={36} /><Skeleton h={36} />
+            </div>
+          ) : activityTypes.length === 0 ? (
+            <div style={{ padding: '24px 20px', textAlign: 'center', fontSize: 11, color: 'var(--text2)' }}>
+              Aucun type d'activité défini
+            </div>
+          ) : (
+            <div>
+              {activityTypes.map((a, i) => (
+                <div key={a.id} style={{
+                  padding: '10px 20px',
+                  borderBottom: i < activityTypes.length - 1 ? '1px solid var(--border)' : undefined,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{
+                      fontSize: 9, color: 'var(--cyan)', fontFamily: 'var(--font-mono)',
+                      opacity: 0.5,
+                    }}>
+                      ◈
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 500 }}>
+                      {a.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteActivity(a.id)}
+                    style={{
+                      fontSize: 9, padding: '3px 10px', borderRadius: 2,
+                      background: 'none', border: '1px solid rgba(255,45,107,0.2)',
+                      color: 'var(--pink)', cursor: 'pointer', fontFamily: 'inherit',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    Archiver
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Ajouter */}
+          <div style={{
+            padding: '14px 20px', borderTop: '1px solid var(--border)',
+            display: 'flex', gap: 8, alignItems: 'center',
+          }}>
+            <input
+              value={newActivityName}
+              onChange={e => setNewActivityName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddActivity()}
+              placeholder="Intercontrat, Formation, Avant-vente…"
+              style={{
+                flex: 1, background: 'var(--bg3)',
+                border: '1px solid var(--border2)',
+                color: 'var(--text)', padding: '7px 12px', borderRadius: 2,
+                fontSize: 12, fontFamily: 'inherit',
+              }}
+            />
+            <button
+              onClick={handleAddActivity}
+              disabled={!newActivityName.trim() || activitySaving}
+              style={{
+                fontSize: 11, padding: '7px 16px', borderRadius: 2,
+                background: newActivityName.trim() ? 'var(--cyan)' : 'var(--bg3)',
+                color: newActivityName.trim() ? '#000' : 'var(--text2)',
+                border: 'none', cursor: newActivityName.trim() ? 'pointer' : 'default',
+                fontFamily: 'inherit', fontWeight: 700,
+                transition: 'background 0.15s',
+              }}
+            >
+              {activitySaving ? '…' : '+ Ajouter'}
+            </button>
+          </div>
+
+          {activityError && (
+            <div style={{
+              padding: '8px 20px', borderTop: '1px solid var(--border)',
+              fontSize: 11, color: 'var(--pink)',
+            }}>
+              ⚠ {activityError}
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

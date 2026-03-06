@@ -266,6 +266,7 @@ function toProject(row: Record<string, unknown>): Project {
     tjmVendu:      row.tjm_vendu as number | undefined,
     joursVendus:   row.jours_vendus as number | undefined,
     isInternal:    (row.is_internal as boolean) ?? false,
+    isActivityType: (row.is_activity_type as boolean) ?? false,
     companyId:     row.company_id as string | undefined,
     team:          (row.team as any[]) ?? [],
   }
@@ -530,6 +531,7 @@ export function useInternalProjectTypes() {
       .from('projects')
       .select('id, name')
       .eq('is_internal', true)
+      .eq('is_activity_type', true) 
       .neq('status', 'archived')
       .order('name')
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
