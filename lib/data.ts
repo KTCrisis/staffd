@@ -363,6 +363,7 @@ export function useProjects(dep?: number, includeArchived = false) {
     let q = supabase
       .from('projects')
       .select(`*, assignments ( consultant_id, consultants ( id, name, initials, avatar_color ) )`)
+      .eq('is_activity_type', false)
       .order('end_date')
     if (!includeArchived) q = q.neq('status', 'archived')
     if (activeTenantId)   q = q.eq('company_id', activeTenantId)
