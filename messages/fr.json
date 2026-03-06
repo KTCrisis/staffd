@@ -29,29 +29,8 @@
   "dashboard": {
     "title": "Dashboard",
     "breadcrumb": "// overview",
-    "daysShort": [
-      "Lu",
-      "Ma",
-      "Me",
-      "Je",
-      "Ve",
-      "Sa",
-      "Di"
-    ],
-    "months": [
-      "Jan",
-      "Fév",
-      "Mar",
-      "Avr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Aoû",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Déc"
-    ],
+    "daysShort": ["Lu","Ma","Me","Je","Ve","Sa","Di"],
+    "months": ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"],
     "calToday": "↩ aujourd'hui",
     "calUpcoming": "À venir",
     "calNoEvent": "// aucun événement à venir",
@@ -148,7 +127,10 @@
     },
     "toValidate": "à valider",
     "requests": "Demandes",
-    "soldes": "Soldes congés",
+    "soldes": {
+      "title": "Soldes congés",
+      "freelanceNote": "Pas de CP ni RTT — contrat freelance"
+    },
     "noRequests": "// aucune demande",
     "approve": "✓ Valider",
     "refuse": "✗",
@@ -210,9 +192,7 @@
     "notFound": "Client introuvable.",
     "search": "Rechercher un client...",
     "confirmDelete": "Supprimer définitivement le client \"{name}\" ? Les projets liés ne seront pas supprimés.",
-    "filters": {
-      "all": "Tous"
-    },
+    "filters": { "all": "Tous" },
     "stats": {
       "total": "Total clients",
       "sectors": "Secteurs",
@@ -225,10 +205,7 @@
       "projects": "Projets",
       "actions": "Actions"
     },
-    "actions": {
-      "edit": "Modifier",
-      "delete": "Supprimer"
-    },
+    "actions": { "edit": "Modifier", "delete": "Supprimer" },
     "detail": {
       "info": "Informations client",
       "sector": "Secteur",
@@ -278,11 +255,7 @@
       "submitted": "Soumis",
       "approved": "Approuvés"
     },
-    "table": {
-      "consultant": "Consultant",
-      "total": "Total",
-      "actions": "Actions"
-    },
+    "table": { "consultant": "Consultant", "total": "Total", "actions": "Actions" },
     "actions": {
       "submit": "Soumettre",
       "submitTitle": "Soumettre toutes les saisies de la semaine",
@@ -336,11 +309,7 @@
       "status": "Statut",
       "actions": "Actions"
     },
-    "actions": {
-      "edit": "Modifier",
-      "archive": "Archiver",
-      "delete": "Supprimer"
-    },
+    "actions": { "edit": "Modifier", "archive": "Archiver", "delete": "Supprimer" },
     "deadline": {
       "overdue": "En retard",
       "today": "Aujourd'hui",
@@ -375,7 +344,7 @@
       "clientNotFound": "Client absent de la liste ?",
       "createClient": "Le créer ici",
       "name": "Nom du projet",
-      "isInternal": "Projet interne (NexDigital)",
+      "isInternal": "Projet interne",
       "clientName": "Nom du client",
       "reference": "Référence / N° contrat",
       "description": "Description",
@@ -432,15 +401,7 @@
       "Sat": "Sam",
       "Sun": "Dim"
     },
-    "daysShort": [
-      "L",
-      "M",
-      "M",
-      "J",
-      "V",
-      "S",
-      "D"
-    ],
+    "daysShort": ["L","M","M","J","V","S","D"],
     "noData": "// aucune donnée",
     "consultant": "Consultant"
   },
@@ -459,29 +420,8 @@
       "free": "Libre"
     },
     "consultant": "Consultant",
-    "months": [
-      "Janvier",
-      "Février",
-      "Mars",
-      "Avril",
-      "Mai",
-      "Juin",
-      "Juillet",
-      "Août",
-      "Septembre",
-      "Octobre",
-      "Novembre",
-      "Décembre"
-    ],
-    "days": [
-      "L",
-      "M",
-      "M",
-      "J",
-      "V",
-      "S",
-      "D"
-    ]
+    "months": ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+    "days": ["L","M","M","J","V","S","D"]
   },
   "common": {
     "day": "jour",
@@ -596,13 +536,8 @@
       "employee": "👤 Salarié",
       "freelance": "🔗 Freelance"
     },
-    "costLabels": {
-      "charged": "chargé",
-      "billed": "facturé"
-    },
-    "errors": {
-      "nameRequired": "Le nom et le rôle sont obligatoires"
-    },
+    "costLabels": { "charged": "chargé", "billed": "facturé" },
+    "errors": { "nameRequired": "Le nom et le rôle sont obligatoires" },
     "actions": {
       "create": "✓ Créer le consultant",
       "save": "✓ Enregistrer",

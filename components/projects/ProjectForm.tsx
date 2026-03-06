@@ -8,10 +8,8 @@
 
 import { useState, useEffect }          from 'react'
 import { useTranslations }              from 'next-intl'
-import { createProject, updateProject, useClients } from '@/lib/data'
+import { createProject, updateProject, useClients, useCompanySettings } from '@/lib/data'
 import type { Project }                 from '@/types'
-
-const COMPANY_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
 const STATUS_OPTIONS = ['draft', 'active', 'on_hold', 'completed'] as const
 
@@ -27,6 +25,10 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
   // Charger la liste des clients
   const { data: clients } = useClients()
+
+  // Nom dynamique de la company (pour badge "projet interne")
+  const { data: companySettings } = useCompanySettings()
+  const companyName = companySettings?.name ?? '…'
 
   // ── State formulaire ──────────────────────────────────────
   const [name,        setName]        = useState(project?.name        ?? '')
@@ -79,7 +81,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
     try {
       const payload = {
         name:         name.trim(),
-        client_name:  isInternal ? 'NexDigital' : (selectedClient?.name ?? ''),
+        client_name:  isInternal ? companyName : (selectedClient?.name ?? ''),
         client_id:    isInternal ? undefined : clientId || undefined,
         is_internal:  isInternal,
         reference:    reference.trim() || undefined,
@@ -90,7 +92,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         jours_vendus: joursVendus ? parseInt(joursVendus)   : undefined,
         budget_total: budgetTotal ? parseFloat(budgetTotal) : undefined,
         status,
-        company_id:   COMPANY_ID,
+        company_id:   companySettings?.id ?? '',
       }
 
       if (mode === 'edit' && project) {
@@ -148,7 +150,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
           />
           <span style={{ color: 'var(--text)' }}>{t('form.isInternal')}</span>
         </label>
-        {isInternal && <span className="tag-internal">NexDigital</span>}
+        {isInternal && <span className="tag-internal">{companyName}</span>}
       </div>
 
       {/* Select client */}

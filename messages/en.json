@@ -148,7 +148,10 @@
     },
     "toValidate": "to review",
     "requests": "Requests",
-    "soldes": "Leave balances",
+    "soldes": {
+      "title": "Leave balances",
+      "freelanceNote": "No CP/RTT — freelance contract"
+    },
     "noRequests": "// no requests",
     "approve": "✓ Approve",
     "refuse": "✗",
@@ -375,7 +378,10 @@
       "sectionFinancial": "Financial",
       "financialNote": "Visible to admins only.",
       "name": "Project name",
-      "isInternal": "Internal project (NexDigital)",
+      "isInternal": "Internal project",
+      "selectClient": "Select a client",
+      "clientNotFound": "Client not in the list?",
+      "createClient": "Create it here",
       "clientName": "Client name",
       "reference": "Reference / contract no.",
       "description": "Description",
