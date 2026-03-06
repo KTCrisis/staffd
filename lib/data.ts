@@ -188,6 +188,22 @@ export interface MCPTool {
   enabled:  boolean
 }
 
+export interface PublicHoliday {
+  date:        string   // 'YYYY-MM-DD'
+  localName:   string
+  name:        string
+  countryCode: string
+}
+
+export interface HRSettings {
+  country_code:             string   // 'FR' | 'BE' | 'CH' | 'LU' | 'DE'
+  default_cp:               number   // jours CP nouveaux consultants (défaut 25)
+  default_rtt:              number   // jours RTT nouveaux consultants (défaut 10)
+  working_days_per_year:    number   // jours travaillés/an (défaut 218)
+  cra_submission_deadline:  number   // jour du mois limite soumission CRA (défaut 5)
+  leave_auto_approve:       boolean  // auto-approve les congés sans manager (défaut false)
+}
+
 export interface CompanySettings {
   id:               string
   name:             string
@@ -195,6 +211,7 @@ export interface CompanySettings {
   mode:             'solo' | 'team'
   billing_settings: BillingSettings
   ai_settings:      AISettings
+  hr_settings:      HRSettings
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -884,7 +901,7 @@ export function useCompanySettings(dep?: number) {
   return useSupabase<CompanySettings>(async () => {
     let q = supabase
       .from('companies')
-      .select('id, name, slug, mode, billing_settings, ai_settings')
+      .select('id, name, slug, mode, billing_settings, ai_settings, hr_settings')
     if (activeTenantId) q = q.eq('id', activeTenantId)
     const { data, error } = await q.single()
     if (error) throw new Error(error.message)
@@ -892,6 +909,14 @@ export function useCompanySettings(dep?: number) {
       ...data,
       billing_settings: (data.billing_settings ?? {}) as BillingSettings,
       ai_settings:      (data.ai_settings      ?? {}) as AISettings,
+      hr_settings:      (data.hr_settings       ?? {
+        country_code:            'FR',
+        default_cp:              25,
+        default_rtt:             10,
+        working_days_per_year:   218,
+        cra_submission_deadline: 5,
+        leave_auto_approve:      false,
+      }) as HRSettings,
     } as CompanySettings
   }, [dep, activeTenantId])
 }
@@ -937,6 +962,21 @@ export async function updateAISettings(payload: {
   const { error } = await supabase.rpc('merge_ai_settings', {
     p_company_id: companyId,
     p_patch:      payload.ai_settings,
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateHRSettings(payload: {
+  hr_settings: Partial<HRSettings>
+  companyId?:  string
+}) {
+  const { data: { user } } = await supabase.auth.getUser()
+  const companyId = payload.companyId ?? user?.app_metadata?.company_id
+  if (!companyId) throw new Error('No company context')
+
+  const { error } = await supabase.rpc('merge_hr_settings', {
+    p_company_id: companyId,
+    p_patch:      payload.hr_settings,
   })
   if (error) throw new Error(error.message)
 }
