@@ -23,7 +23,7 @@ export default async function DashboardPage({ params }: Props) {
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   if (!role)                                        redirect(p('/login'))
-  if (role === 'consultant')                        redirect(p('/dashboard/consultant'))
+  if (role === 'consultant'|| role === 'freelance')                        redirect(p('/dashboard/consultant'))
   if (role === 'manager')                           redirect(p('/dashboard/manager'))
   if (role === 'admin' || role === 'super_admin')   redirect(p('/dashboard/admin'))
 
