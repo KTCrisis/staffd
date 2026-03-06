@@ -11,8 +11,9 @@ import {
   useTeams, useConsultants,
   createTeam, updateTeam, deleteTeam,
   addTeamMember, removeTeamMember,
+  useCompanySettings, updateCompanySettings,
 } from '@/lib/data'
-import type { Team, TeamMember } from '@/lib/data'
+import type { Team, TeamMember, CompanySettings, BillingSettings } from '@/lib/data'
 
 // ══════════════════════════════════════════════════════════════
 // SUB-COMPONENTS
@@ -40,6 +41,105 @@ function ComingSoon({ label }: { label: string }) {
       <div style={{ fontSize: 20, marginBottom: 12, opacity: 0.4 }}>⚙</div>
       <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
         // {label} — coming soon
+      </div>
+    </div>
+  )
+}
+
+// ── Form helpers ──────────────────────────────────────────────
+function SettingsField({
+  label, hint, children,
+}: {
+  label: string; hint?: string; children: React.ReactNode
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{
+        fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
+        color: 'var(--text2)',
+      }}>
+        {label}
+      </label>
+      {children}
+      {hint && (
+        <div style={{ fontSize: 9, color: 'var(--text2)', opacity: 0.7 }}>{hint}</div>
+      )}
+    </div>
+  )
+}
+
+function SettingsInput({
+  value, onChange, placeholder, type = 'text', disabled,
+}: {
+  value: string; onChange: (v: string) => void
+  placeholder?: string; type?: string; disabled?: boolean
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      disabled={disabled}
+      style={{
+        width: '100%', background: 'var(--bg3)',
+        border: '1px solid var(--border2)',
+        color: disabled ? 'var(--text2)' : 'var(--text)',
+        padding: '8px 12px', borderRadius: 2,
+        fontSize: 12, fontFamily: 'inherit',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    />
+  )
+}
+
+function SettingsTextarea({
+  value, onChange, placeholder, rows = 3,
+}: {
+  value: string; onChange: (v: string) => void
+  placeholder?: string; rows?: number
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      style={{
+        width: '100%', background: 'var(--bg3)',
+        border: '1px solid var(--border2)',
+        color: 'var(--text)', padding: '8px 12px', borderRadius: 2,
+        fontSize: 12, fontFamily: 'inherit', resize: 'vertical',
+      }}
+    />
+  )
+}
+
+function SaveBar({
+  dirty, saving, onSave, onReset,
+}: {
+  dirty: boolean; saving: boolean; onSave: () => void; onReset: () => void
+}) {
+  if (!dirty && !saving) return null
+  return (
+    <div style={{
+      position: 'sticky', bottom: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '12px 20px',
+      background: 'var(--bg2)', border: '1px solid var(--border)',
+      borderRadius: 4, marginTop: 8,
+      boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
+    }}>
+      <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
+        // unsaved changes
+      </span>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn btn-ghost btn-sm" onClick={onReset} disabled={saving}>
+          Reset
+        </button>
+        <button className="btn btn-primary btn-sm" onClick={onSave} disabled={saving}>
+          {saving ? '...' : '✓ Save changes'}
+        </button>
       </div>
     </div>
   )
@@ -487,6 +587,128 @@ export default function SettingsPage() {
 
   const [activeTab,  setActiveTab]  = useState<Tab>('company')
   const [refresh,    setRefresh]    = useState(0)
+  const [settingsRefresh, setSettingsRefresh] = useState(0)
+
+  // ── Company settings data ──────────────────────────────────
+  const { data: companyData, loading: lS } = useCompanySettings(settingsRefresh)
+
+  // Company tab state
+  const [companyName,    setCompanyName]    = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
+  const [companySiret,   setCompanySiret]   = useState('')
+  const [companyTva,     setCompanyTva]     = useState('')
+
+  // Billing tab state
+  const [iban,          setIban]          = useState('')
+  const [bic,           setBic]           = useState('')
+  const [bankName,      setBankName]      = useState('')
+  const [invoicePrefix, setInvoicePrefix] = useState('')
+  const [paymentTerms,  setPaymentTerms]  = useState('')
+  const [legalMention,  setLegalMention]  = useState('')
+  const [tvaRate,       setTvaRate]       = useState('')
+
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsError,  setSettingsError]  = useState<string | null>(null)
+
+  // Sync state when data loads
+  useEffect(() => {
+    if (!companyData) return
+    const b = companyData.billing_settings ?? {}
+    setCompanyName(companyData.name ?? '')
+    setCompanyAddress(b.address ?? '')
+    setCompanySiret(b.siret ?? '')
+    setCompanyTva(b.tva_number ?? '')
+    setIban(b.bank_iban ?? '')
+    setBic(b.bank_bic ?? '')
+    setBankName(b.bank_name ?? '')
+    setInvoicePrefix(b.invoice_prefix ?? '')
+    setPaymentTerms(String(b.payment_terms ?? 30))
+    setLegalMention(b.legal_mention ?? '')
+    setTvaRate(String(b.tva_rate ?? 20))
+  }, [companyData])
+
+  // Dirty detection
+  const b = companyData?.billing_settings ?? {}
+  const companyDirty = companyData ? (
+    companyName    !== (companyData.name ?? '') ||
+    companyAddress !== (b.address    ?? '') ||
+    companySiret   !== (b.siret      ?? '') ||
+    companyTva     !== (b.tva_number ?? '')
+  ) : false
+
+  const billingDirty = companyData ? (
+    iban          !== (b.bank_iban      ?? '') ||
+    bic           !== (b.bank_bic       ?? '') ||
+    bankName      !== (b.bank_name      ?? '') ||
+    invoicePrefix !== (b.invoice_prefix ?? '') ||
+    paymentTerms  !== String(b.payment_terms ?? 30) ||
+    legalMention  !== (b.legal_mention  ?? '') ||
+    tvaRate       !== String(b.tva_rate ?? 20)
+  ) : false
+
+  const handleSaveCompany = async () => {
+    setSettingsSaving(true)
+    setSettingsError(null)
+    try {
+      await updateCompanySettings({
+        name: companyName,
+        billing_settings: {
+          address:    companyAddress,
+          siret:      companySiret,
+          tva_number: companyTva,
+        },
+      })
+      setSettingsRefresh(r => r + 1)
+    } catch (e: any) {
+      setSettingsError(e.message)
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const handleSaveBilling = async () => {
+    setSettingsSaving(true)
+    setSettingsError(null)
+    try {
+      await updateCompanySettings({
+        billing_settings: {
+          bank_iban:      iban,
+          bank_bic:       bic,
+          bank_name:      bankName,
+          invoice_prefix: invoicePrefix,
+          payment_terms:  Number(paymentTerms),
+          legal_mention:  legalMention,
+          tva_rate:       Number(tvaRate),
+        },
+      })
+      setSettingsRefresh(r => r + 1)
+    } catch (e: any) {
+      setSettingsError(e.message)
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const handleResetCompany = () => {
+    if (!companyData) return
+    const b = companyData.billing_settings ?? {}
+    setCompanyName(companyData.name ?? '')
+    setCompanyAddress(b.address ?? '')
+    setCompanySiret(b.siret ?? '')
+    setCompanyTva(b.tva_number ?? '')
+  }
+
+  const handleResetBilling = () => {
+    if (!companyData) return
+    const b = companyData.billing_settings ?? {}
+    setIban(b.bank_iban ?? '')
+    setBic(b.bank_bic ?? '')
+    setBankName(b.bank_name ?? '')
+    setInvoicePrefix(b.invoice_prefix ?? '')
+    setPaymentTerms(String(b.payment_terms ?? 30))
+    setLegalMention(b.legal_mention ?? '')
+    setTvaRate(String(b.tva_rate ?? 20))
+  }
   const [showForm,   setShowForm]   = useState(false)
   const [editTarget, setEditTarget] = useState<Team | null>(null)
   const [confirmDel, setConfirmDel] = useState<Team | null>(null)
@@ -596,14 +818,95 @@ export default function SettingsPage() {
             TAB: COMPANY
         ══════════════════════════════════════════════════ */}
         {activeTab === 'company' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <SectionLabel label="COMPANY_IDENTITY" />
-            {/* TODO: nom société, adresse, logo */}
-            <ComingSoon label="company_identity" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-            <SectionLabel label="LEGAL_INFO" />
-            {/* TODO: SIRET, N° TVA, forme juridique */}
-            <ComingSoon label="legal_info" />
+            {settingsError && (
+              <div style={{
+                padding: '8px 14px', borderRadius: 4,
+                background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.2)',
+                fontSize: 11, color: 'var(--pink)',
+              }}>
+                ⚠ {settingsError}
+              </div>
+            )}
+
+            {/* Identité */}
+            <section>
+              <SectionLabel label="COMPANY_IDENTITY" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? (
+                  <Skeleton h={120} />
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <SettingsField label="Company name *">
+                        <SettingsInput
+                          value={companyName}
+                          onChange={setCompanyName}
+                          placeholder="NexDigital"
+                        />
+                      </SettingsField>
+                      <SettingsField label="Slug" hint="Used in URLs — cannot be changed">
+                        <SettingsInput
+                          value={companyData?.slug ?? ''}
+                          onChange={() => {}}
+                          disabled
+                        />
+                      </SettingsField>
+                    </div>
+                    <SettingsField label="Address" hint="Appears on invoices">
+                      <SettingsInput
+                        value={companyAddress}
+                        onChange={setCompanyAddress}
+                        placeholder="12 rue de la Paix, 75001 Paris"
+                      />
+                    </SettingsField>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Infos légales */}
+            <section>
+              <SectionLabel label="LEGAL_INFO" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? (
+                  <Skeleton h={80} />
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <SettingsField label="SIRET" hint="14 chiffres">
+                      <SettingsInput
+                        value={companySiret}
+                        onChange={setCompanySiret}
+                        placeholder="12345678901234"
+                      />
+                    </SettingsField>
+                    <SettingsField label="N° TVA intracommunautaire">
+                      <SettingsInput
+                        value={companyTva}
+                        onChange={setCompanyTva}
+                        placeholder="FR12345678901"
+                      />
+                    </SettingsField>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <SaveBar
+              dirty={companyDirty}
+              saving={settingsSaving}
+              onSave={handleSaveCompany}
+              onReset={handleResetCompany}
+            />
           </div>
         )}
 
@@ -734,18 +1037,132 @@ export default function SettingsPage() {
             TAB: BILLING
         ══════════════════════════════════════════════════ */}
         {activeTab === 'billing' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <SectionLabel label="BANK_DETAILS" />
-            {/* TODO: IBAN, BIC, nom banque */}
-            <ComingSoon label="bank_details" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-            <SectionLabel label="INVOICE_SETTINGS" />
-            {/* TODO: préfixe, compteur, délai paiement, pied de facture */}
-            <ComingSoon label="invoice_settings" />
+            {settingsError && (
+              <div style={{
+                padding: '8px 14px', borderRadius: 4,
+                background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.2)',
+                fontSize: 11, color: 'var(--pink)',
+              }}>
+                ⚠ {settingsError}
+              </div>
+            )}
 
-            <SectionLabel label="TAX" />
-            {/* TODO: taux TVA, TVA non applicable */}
-            <ComingSoon label="tax_settings" />
+            {/* Coordonnées bancaires */}
+            <section>
+              <SectionLabel label="BANK_DETAILS" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? <Skeleton h={120} /> : (
+                  <>
+                    <SettingsField label="IBAN">
+                      <SettingsInput
+                        value={iban}
+                        onChange={setIban}
+                        placeholder="FR76 1234 5678 9012 3456 7890 123"
+                      />
+                    </SettingsField>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <SettingsField label="BIC / SWIFT">
+                        <SettingsInput
+                          value={bic}
+                          onChange={setBic}
+                          placeholder="BNPAFRPPXXX"
+                        />
+                      </SettingsField>
+                      <SettingsField label="Bank name">
+                        <SettingsInput
+                          value={bankName}
+                          onChange={setBankName}
+                          placeholder="BNP Paribas"
+                        />
+                      </SettingsField>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Paramètres factures */}
+            <section>
+              <SectionLabel label="INVOICE_SETTINGS" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? <Skeleton h={120} /> : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                      <SettingsField label="Invoice prefix" hint="e.g. NEX-2026-">
+                        <SettingsInput
+                          value={invoicePrefix}
+                          onChange={setInvoicePrefix}
+                          placeholder="NEX-2026-"
+                        />
+                      </SettingsField>
+                      <SettingsField label="Invoice counter" hint="Read-only — auto-incremented">
+                        <SettingsInput
+                          value={String(companyData?.billing_settings?.invoice_counter ?? 0)}
+                          onChange={() => {}}
+                          disabled
+                        />
+                      </SettingsField>
+                      <SettingsField label="Payment terms (days)">
+                        <SettingsInput
+                          value={paymentTerms}
+                          onChange={setPaymentTerms}
+                          type="number"
+                          placeholder="30"
+                        />
+                      </SettingsField>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* TVA + mentions légales */}
+            <section>
+              <SectionLabel label="TAX_AND_LEGAL" />
+              <div style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 4, padding: '20px 24px',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}>
+                {lS ? <Skeleton h={120} /> : (
+                  <>
+                    <SettingsField label="TVA rate (%)" hint="Set to 0 for auto-entrepreneur (non assujetti)">
+                      <SettingsInput
+                        value={tvaRate}
+                        onChange={setTvaRate}
+                        type="number"
+                        placeholder="20"
+                      />
+                    </SettingsField>
+                    <SettingsField label="Legal mention" hint="Appears at the bottom of every invoice">
+                      <SettingsTextarea
+                        value={legalMention}
+                        onChange={setLegalMention}
+                        placeholder="Auto-entrepreneur — dispensé d'immatriculation au RCS..."
+                        rows={3}
+                      />
+                    </SettingsField>
+                  </>
+                )}
+              </div>
+            </section>
+
+            <SaveBar
+              dirty={billingDirty}
+              saving={settingsSaving}
+              onSave={handleSaveBilling}
+              onReset={handleResetBilling}
+            />
           </div>
         )}
 

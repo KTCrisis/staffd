@@ -160,6 +160,28 @@ export interface TeamInput {
   manager_id?:   string | null
 }
 
+export interface BillingSettings {
+  address?:         string
+  siret?:           string
+  tva_number?:      string
+  tva_rate?:        number
+  bank_iban?:       string
+  bank_bic?:        string
+  bank_name?:       string
+  invoice_prefix?:  string
+  invoice_counter?: number
+  payment_terms?:   number
+  legal_mention?:   string
+}
+
+export interface CompanySettings {
+  id:               string
+  name:             string
+  slug:             string | null
+  mode:             'solo' | 'team'
+  billing_settings: BillingSettings
+}
+
 // ══════════════════════════════════════════════════════════════
 // MAPPERS
 // ══════════════════════════════════════════════════════════════
@@ -836,4 +858,51 @@ export async function removeTeamMember(consultantId: string) {
     .delete()
     .eq('consultant_id', consultantId)
   if (error) throw new Error(error.message)
+}
+
+// ══════════════════════════════════════════════════════════════
+// QUERIES — COMPANY SETTINGS
+// ══════════════════════════════════════════════════════════════
+
+export function useCompanySettings(dep?: number) {
+  return useSupabase<CompanySettings>(async () => {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('id, name, slug, mode, billing_settings')
+      .single()
+    if (error) throw new Error(error.message)
+    return {
+      ...data,
+      billing_settings: (data.billing_settings ?? {}) as BillingSettings,
+    } as CompanySettings
+  }, [dep])
+}
+
+// ══════════════════════════════════════════════════════════════
+// MUTATIONS — COMPANY SETTINGS
+// ══════════════════════════════════════════════════════════════
+
+export async function updateCompanySettings(payload: {
+  name?:             string
+  billing_settings?: BillingSettings
+}) {
+  const { data: { user } } = await supabase.auth.getUser()
+  const companyId = user?.app_metadata?.company_id
+  if (!companyId) throw new Error('No company context')
+
+  if (payload.billing_settings) {
+    const { error } = await supabase.rpc('merge_billing_settings', {
+      p_company_id: companyId,
+      p_patch:      payload.billing_settings,
+    })
+    if (error) throw new Error(error.message)
+  }
+
+  if (payload.name) {
+    const { error } = await supabase
+      .from('companies')
+      .update({ name: payload.name })
+      .eq('id', companyId)
+    if (error) throw new Error(error.message)
+  }
 }
