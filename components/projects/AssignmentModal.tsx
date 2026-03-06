@@ -238,48 +238,80 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             )}
           </label>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
-            {/* Input jours — principal */}
-            <div style={{ position: 'relative' }}>
-              <input
-                type="number"
-                min={1}
-                max={missionDays || 999}
-                value={jours}
-                onChange={e => handleJours(e.target.value)}
-                placeholder={missionDays > 0 ? `Max ${missionDays}` : 'Jours'}
-                style={{ ...inputStyle, paddingRight: 36 }}
-              />
-              <span style={{
-                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                fontSize: 10, color: 'var(--text2)', letterSpacing: 1, pointerEvents: 'none',
-              }}>
-                J
-              </span>
+          {/* Style global pour masquer les flèches natives des inputs number */}
+          <style>{`
+            .no-spin::-webkit-inner-spin-button,
+            .no-spin::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+            .no-spin { -moz-appearance: textfield; }
+          `}</style>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 8 }}>
+            {/* Input jours — principal avec boutons +/- */}
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 2 }}>
+              <button
+                type="button"
+                onClick={() => handleJours(String(Math.max(1, (parseInt(jours) || 0) - 1)))}
+                style={{
+                  width: 32, height: '100%', flexShrink: 0,
+                  background: 'none', border: 'none', borderRight: '1px solid var(--border)',
+                  color: 'var(--text2)', cursor: 'pointer', fontSize: 14, lineHeight: 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >−</button>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <input
+                  className="no-spin"
+                  type="number"
+                  min={1}
+                  max={missionDays || 999}
+                  value={jours}
+                  onChange={e => handleJours(e.target.value)}
+                  placeholder={missionDays > 0 ? `/ ${missionDays}` : '—'}
+                  style={{
+                    width: '100%', background: 'none', border: 'none', outline: 'none',
+                    color: 'var(--text)', padding: '8px 28px 8px 10px',
+                    fontSize: 12, fontFamily: 'var(--font-mono)', textAlign: 'center' as const,
+                  }}
+                />
+                <span style={{
+                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                  fontSize: 9, color: 'var(--text2)', letterSpacing: 1, pointerEvents: 'none',
+                }}>J</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleJours(String(Math.min(missionDays || 999, (parseInt(jours) || 0) + 1)))}
+                style={{
+                  width: 32, height: '100%', flexShrink: 0,
+                  background: 'none', border: 'none', borderLeft: '1px solid var(--border)',
+                  color: 'var(--text2)', cursor: 'pointer', fontSize: 14, lineHeight: 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >+</button>
             </div>
 
             {/* Input % — dérivé mais éditable */}
-            <div style={{ position: 'relative' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              background: 'var(--bg3)', border: `1px solid ${allocColor}40`, borderRadius: 2,
+            }}>
               <input
+                className="no-spin"
                 type="number"
                 min={1} max={100}
                 value={allocation}
                 onChange={e => handleAllocation(e.target.value)}
                 style={{
-                  ...inputStyle,
-                  paddingRight: 28,
-                  color: allocColor,
-                  fontWeight: 700,
-                  fontFamily: 'var(--font-mono)',
-                  textAlign: 'right' as const,
+                  flex: 1, background: 'none', border: 'none', outline: 'none',
+                  color: allocColor, padding: '8px 4px 8px 12px',
+                  fontSize: 14, fontWeight: 700,
+                  fontFamily: 'var(--font-mono)', textAlign: 'center' as const,
                 }}
               />
               <span style={{
-                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                fontSize: 10, color: allocColor, pointerEvents: 'none', fontWeight: 700,
-              }}>
-                %
-              </span>
+                paddingRight: 10, fontSize: 12,
+                color: allocColor, fontWeight: 700, pointerEvents: 'none',
+              }}>%</span>
             </div>
           </div>
 

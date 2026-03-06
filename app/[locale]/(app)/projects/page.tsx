@@ -25,6 +25,20 @@ function daysUntil(dateStr?: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+function countWorkingDays(start?: string, end?: string): number {
+  if (!start || !end) return 0
+  const s = new Date(start), e = new Date(end)
+  if (e < s) return 0
+  let count = 0
+  const cur = new Date(s)
+  while (cur <= e) {
+    const d = cur.getDay()
+    if (d !== 0 && d !== 6) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
 function DeadlineChip({ date, t }: { date?: string; t: (k: string) => string }) {
   if (!date) return <span style={{ color: 'var(--text2)', fontSize: 11 }}>—</span>
   const days  = daysUntil(date)
@@ -173,11 +187,18 @@ function ProjectTeam({
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{a.name}</div>
             <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 1 }}>{a.role}</div>
           </div>
-          <div style={{
-            fontSize: 11, fontWeight: 700,
-            color: a.allocation === 100 ? 'var(--green)' : 'var(--gold)',
-          }}>
-            {a.allocation}%
+          <div style={{ textAlign: 'right' as const }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700,
+              color: a.allocation === 100 ? 'var(--green)' : 'var(--gold)',
+            }}>
+              {a.allocation}%
+            </div>
+            {a.startDate && a.endDate && (
+              <div style={{ fontSize: 9, color: 'var(--text2)', marginTop: 1, fontFamily: 'var(--font-mono)' }}>
+                {Math.round(a.allocation / 100 * countWorkingDays(a.startDate, a.endDate))} j
+              </div>
+            )}
           </div>
           <button
             className="btn btn-ghost btn-sm"
