@@ -1,518 +1,368 @@
 'use client'
 
-import { useState }          from 'react'
-import { useTranslations }   from 'next-intl'
-import { useAuthContext }    from '@/components/layout/AuthProvider'
-import { Topbar }            from '@/components/layout/Topbar'
-import { Panel, StatRow }    from '@/components/ui'
-import { Avatar }            from '@/components/ui/Avatar'
-import { Badge }             from '@/components/ui/Badge'
-import { ProgressBar }       from '@/components/ui/ProgressBar'
-import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
-import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
-import { useConsultants, deleteConsultant } from '@/lib/data'
-import type { ConsultantStatus, Consultant } from '@/types'
+import { useMemo }            from 'react'
+import { useTranslations }    from 'next-intl'
+import { useAuthContext }     from '@/components/layout/AuthProvider'
+import { Topbar }             from '@/components/layout/Topbar'
+import { Panel }              from '@/components/ui/Panel'
+import { Avatar }             from '@/components/ui/Avatar'
+import {
+  useConsultants,
+  useConsultantProjectsMap,
+  useLeaveRequests,
+  useTimesheets,
+} from '@/lib/data'
 
-function Skeleton({ h = 80 }: { h?: number }) {
-  return <div style={{ height: h, background: 'var(--bg3)', borderRadius: 4 }} />
+// ── helpers ──────────────────────────────────────────────────
+function getMondayOf(d: Date) {
+  const n = new Date(d)
+  const dow = n.getDay()
+  n.setDate(n.getDate() - (dow === 0 ? 6 : dow - 1))
+  n.setHours(0, 0, 0, 0)
+  return n
+}
+function toISO(d: Date) { return d.toISOString().slice(0, 10) }
+
+// ── Pill statut ───────────────────────────────────────────────
+function StatusPill({ status }: { status: string }) {
+  const cfg: Record<string, { bg: string; color: string; label: string }> = {
+    assigned:  { bg: 'rgba(0,255,136,.12)',    color: 'var(--green)', label: 'En mission'   },
+    available: { bg: 'rgba(0,229,255,.12)',    color: 'var(--cyan)',  label: 'Disponible'   },
+    partial:   { bg: 'rgba(255,209,102,.12)',  color: 'var(--gold)',  label: 'Partiel'      },
+    leave:     { bg: 'rgba(232,0,74,.12)',     color: 'var(--pink)',  label: 'En congé'     },
+  }
+  const c = cfg[status] ?? { bg: 'rgba(100,100,100,.15)', color: 'var(--text3)', label: status }
+  return (
+    <span style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+      padding: '2px 8px', borderRadius: 4, ...c,
+    }}>
+      {c.label}
+    </span>
+  )
 }
 
-// ══════════════════════════════════════════════════════════════
-// VUE SIMPLIFIÉE — consultant / freelance (lecture seule, soi-même)
-// ══════════════════════════════════════════════════════════════
-function MyProfileView({ consultant }: { consultant: Consultant }) {
-  const tCommon = useTranslations('common')
-
-  const rows = [
-    { label: 'Statut',           value: <Badge variant={consultant.status} /> },
-    { label: 'Mission courante', value: consultant.currentProject ?? '—' },
-    { label: 'Disponible',       value: consultant.availableFrom
-        ? new Date(consultant.availableFrom).toLocaleDateString('fr-FR')
-        : 'Maintenant' },
-    { label: 'Taux occupation',  value: `${consultant.occupancyRate}%` },
-    ...(consultant.contractType !== 'freelance'
-      ? [
-          { label: 'CP restants',  value: `${consultant.leaveDaysLeft} ${tCommon('days')}` },
-          ...(consultant.rttLeft != null
-            ? [{ label: 'RTT restants', value: `${consultant.rttLeft} ${tCommon('days')}` }]
-            : []),
-        ]
-      : []),
-  ]
-
+// ── KPI card ──────────────────────────────────────────────────
+function KpiCard({ label, value, color, sub }: {
+  label: string; value: string | number; color: string; sub?: string
+}) {
   return (
-    <>
-      <Topbar title="Mon profil" breadcrumb="// my profile" />
-      <div className="app-content">
-        <Panel>
-          {/* En-tête */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-            <Avatar initials={consultant.initials} color={consultant.avatarColor} size="lg" />
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>{consultant.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 3 }}>{consultant.role}</div>
-              {consultant.email && (
-                <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2 }}>{consultant.email}</div>
-              )}
-              {consultant.contractType === 'freelance' && (
-                <span style={{
-                  display: 'inline-block', marginTop: 6,
-                  fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-                  background: 'rgba(255,209,102,.15)', color: 'var(--gold)',
-                  padding: '2px 7px', borderRadius: 3,
-                }}>
-                  Freelance
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Infos */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {rows.map(row => (
-              <div key={row.label} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '11px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
-              }}>
-                <span style={{ color: 'var(--text2)' }}>{row.label}</span>
-                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Barre occupation */}
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
-              Taux d'occupation
-            </div>
-            <ProgressBar value={consultant.occupancyRate} style={{ height: 6 }} />
-          </div>
-
-          {/* Stack */}
-          {consultant.stack && consultant.stack.length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
-                Stack
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {consultant.stack.map(s => (
-                  <span key={s} style={{
-                    fontSize: 9, letterSpacing: 1, textTransform: 'uppercase',
-                    padding: '2px 8px', borderRadius: 2,
-                    background: 'var(--bg3)', border: '1px solid var(--border)',
-                    color: 'var(--text2)',
-                  }}>
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </Panel>
+    <div style={{
+      background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8,
+      padding: '16px 20px',
+    }}>
+      <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 }}>
+        {label}
       </div>
-    </>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color }}>
+        {value}
+      </div>
+      {sub && <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 4 }}>{sub}</div>}
+    </div>
   )
 }
 
 // ══════════════════════════════════════════════════════════════
-// PAGE PRINCIPALE
+// PAGE
 // ══════════════════════════════════════════════════════════════
-export default function ConsultantsPage() {
-  const t       = useTranslations('consultants')
-  const tCommon = useTranslations('common')
-  const { user } = useAuthContext()
+export default function DashboardConsultantPage() {
+  const { user }    = useAuthContext()
+  const isFreelance = user?.role === 'freelance'
 
-  const [filter,        setFilter]        = useState<ConsultantStatus | 'all'>('all')
-  const [search,        setSearch]        = useState('')
-  const [selected,      setSelected]      = useState<Consultant | null>(null)
-  const [showForm,      setShowForm]      = useState(false)
-  const [editTarget,    setEditTarget]    = useState<Consultant | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting,      setDeleting]      = useState(false)
-  const [refresh,       setRefresh]       = useState(0)
+  const monday = getMondayOf(new Date())
 
-  const [inviteLoading, setInviteLoading] = useState(false)
-  const [inviteStatus,  setInviteStatus]  = useState<'idle' | 'sent' | 'already' | 'error'>('idle')
+  const { data: allConsultants } = useConsultants()
+  const { data: projectsMap }    = useConsultantProjectsMap()
+  const { data: leaves }         = useLeaveRequests()
+  const { data: timesheets }     = useTimesheets(monday)
 
-  const { data: consultants, loading } = useConsultants(refresh)
+  // ── Trouver le consultant lié à cet user ──────────────────
+  // IMPORTANT : user.id = auth.uid ≠ consultant.id
+  // Il faut retrouver le consultant dont user_id = auth.uid
+  const me = useMemo(
+    () => (allConsultants ?? []).find(c => c.user_id=== user?.id),
+    [allConsultants, user?.id]
+  )
 
-  const role      = user?.role
-  const isAdmin   = role === 'admin' || role === 'super_admin'
-  const isManager = role === 'manager'
-  const canCreate = isAdmin || isManager
+  // ── Projets du consultant (via consultant.id, pas user.id) ─
+  const myProjects = useMemo(
+    () => (me ? (projectsMap?.[me.id] ?? []) : []),
+    [me, projectsMap]
+  )
 
-  // ── Vue simplifiée pour consultant / freelance ────────────
-  const isConsultantRole = role === 'consultant' || role === 'freelance'
-  if (isConsultantRole) {
-    if (loading) {
-      return (
-        <>
-          <Topbar title="Mon profil" breadcrumb="// my profile" />
-          <div className="app-content"><Skeleton h={300} /></div>
-        </>
-      )
+  // ── Congés du consultant ──────────────────────────────────
+  const myLeaves = useMemo(
+    () => (leaves ?? []).filter(l => l.consultantId === me?.id),
+    [leaves, me?.id]
+  )
+  const pendingLeaves  = myLeaves.filter(l => l.status === 'pending')
+  const approvedLeaves = myLeaves.filter(l => l.status === 'approved')
+
+  // ── CRA semaine courante ──────────────────────────────────
+  const weekDays    = useMemo(() => {
+    const days = []
+    const mon = new Date(monday)
+    for (let i = 0; i < 5; i++) {
+      days.push(new Date(mon.getTime() + i * 86400000))
     }
-    // RLS ne retourne que leur propre enregistrement
-    const me = (consultants ?? []).find(c => c.user_id === user?.id) ?? (consultants ?? [])[0]
-    if (!me) {
-      return (
-        <>
-          <Topbar title="Mon profil" breadcrumb="// my profile" />
-          <div className="app-content">
-            <Panel>
-              <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
-                // profil non trouvé — contactez votre administrateur
-              </div>
-            </Panel>
+    return days
+  }, [monday])
+
+  const myTimesheets = useMemo(
+    () => (timesheets ?? []).filter(ts => ts.consultantId === me?.id),
+    [timesheets, me?.id]
+  )
+  const weekTotal = myTimesheets.reduce((s, ts) => s + (ts.value ?? 0), 0)
+  const hasDraft  = myTimesheets.some(ts => ts.status === 'draft' && (ts.value ?? 0) > 0)
+
+  const loading = !allConsultants || !projectsMap
+
+  if (loading) {
+    return (
+      <>
+        <Topbar title="Dashboard" breadcrumb="// my space" />
+        <div className="app-content">
+          <div style={{ color: 'var(--text3)', fontSize: 12, fontFamily: 'var(--font-mono)', padding: 32 }}>
+            // loading…
           </div>
-        </>
-      )
-    }
-    return <MyProfileView consultant={me} />
+        </div>
+      </>
+    )
   }
 
-  // ── Vue admin / manager ───────────────────────────────────
-  const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
-    { label: t('filters.all'),       value: 'all' },
-    { label: t('filters.assigned'),  value: 'assigned' },
-    { label: t('filters.available'), value: 'available' },
-    { label: t('filters.leave'),     value: 'leave' },
-    { label: t('filters.partial'),   value: 'partial' },
-  ]
-
-  const all = consultants ?? []
-
-  const visible = all.filter(c => {
-    const matchFilter = filter === 'all' || c.status === filter
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase())
-                     || c.role.toLowerCase().includes(search.toLowerCase())
-    return matchFilter && matchSearch
-  })
-
-  const stats = [
-    { value: all.filter(c => c.status === 'assigned').length,  label: t('filters.assigned'),  color: 'var(--cyan)' },
-    { value: all.filter(c => c.status === 'available').length, label: t('filters.available'), color: 'var(--green)' },
-    { value: all.filter(c => c.status === 'leave').length,     label: t('filters.leave'),     color: 'var(--gold)' },
-    { value: all.filter(c => c.status === 'partial').length,   label: t('filters.partial'),   color: 'var(--purple)' },
-  ]
-
-  const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
-
-  const handleSaved = () => setRefresh(r => r + 1)
-
-  const handleDelete = async () => {
-    if (!selected) return
-    setDeleting(true)
-    try {
-      await deleteConsultant(selected.id)
-      setSelected(null)
-      setConfirmDelete(false)
-      setRefresh(r => r + 1)
-    } catch (e: any) {
-      alert(e.message)
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const handleInvite = async () => {
-    if (!selected?.email) return
-    setInviteLoading(true)
-    setInviteStatus('idle')
-    try {
-      const res = await fetch('/api/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultantId: selected.id,
-          email:        selected.email,
-          companyId:    user?.companyId,
-        }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error)
-      setInviteStatus(json.alreadyExisted ? 'already' : 'sent')
-      setRefresh(r => r + 1)
-    } catch {
-      setInviteStatus('error')
-    } finally {
-      setInviteLoading(false)
-    }
-  }
-
-  const closeDrawer = () => {
-    setSelected(null)
-    setConfirmDelete(false)
-    setInviteStatus('idle')
+  // Pas encore lié à un consultant record
+  if (!me) {
+    return (
+      <>
+        <Topbar title="Dashboard" breadcrumb="// my space" />
+        <div className="app-content">
+          <Panel>
+            <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+              <div style={{ fontSize: 24, marginBottom: 12 }}>◈</div>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>// compte non lié</div>
+              <div style={{ fontSize: 11 }}>
+                Ton compte n'est pas encore associé à un profil consultant.
+                Contacte ton administrateur.
+              </div>
+            </div>
+          </Panel>
+        </div>
+      </>
+    )
   }
 
   return (
     <>
-      <Topbar
-        title={t('title')}
-        breadcrumb={t('breadcrumb')}
-        ctaLabel={canCreate ? t('cta') : undefined}
-        onCta={canCreate ? () => setShowForm(true) : undefined}
-      />
+      <Topbar title="Dashboard" breadcrumb="// my space" />
 
       <div className="app-content">
 
-        <StatRow stats={stats} />
-
-        {/* Filtres + recherche */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          {FILTERS.map(f => (
-            <button
-              key={f.value}
-              className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setFilter(f.value)}
-            >
-              {f.label}
-            </button>
-          ))}
-          <input
-            className="search-input"
-            style={{ marginLeft: 'auto' }}
-            placeholder={t('table.name') + '...'}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-
-        <Panel title={countLabel} noPadding>
-          {loading
-            ? <div style={{ padding: 18 }}><Skeleton h={200} /></div>
-            : visible.length > 0
-              ? <ConsultantTable
-                  consultants={visible}
-                  onSelect={c => { setSelected(c); setInviteStatus('idle') }}
-                />
-              : <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                  {t('noResults')}
-                </div>
-          }
-        </Panel>
-
-        {/* ── Overlay + Drawer ── */}
-        {selected && (
-          <>
-            <div
-              onClick={closeDrawer}
-              style={{
-                position: 'fixed', inset: 0,
-                background: 'rgba(0,0,0,0.25)',
-                zIndex: 199,
-              }}
-            />
-
-            <div style={{
-              position: 'fixed', top: 0, right: 0, bottom: 0, width: 360,
-              background: 'var(--bg2)', borderLeft: '1px solid var(--border)',
-              zIndex: 200, padding: 28, overflowY: 'auto',
-              boxShadow: '-4px 0 20px var(--shadow)',
-            }}>
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-                <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-                  {t('drawer.label')}
+        {/* ── En-tête profil ──────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 16,
+          padding: '20px 24px',
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 8, marginBottom: 20,
+        }}>
+          <Avatar initials={me.initials} color={me.avatarColor} size="lg" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text1)' }}>{me.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+              {me.role}
+              {isFreelance && (
+                <span style={{
+                  marginLeft: 8, fontSize: 9, fontWeight: 700,
+                  background: 'rgba(255,209,102,.15)', color: 'var(--gold)',
+                  padding: '1px 6px', borderRadius: 3, letterSpacing: 1,
+                }}>
+                  FREELANCE
                 </span>
-                <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>
-                  {t('drawer.close')}
-                </button>
-              </div>
-
-              {/* Avatar + nom */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
-                <Avatar initials={selected.initials} color={selected.avatarColor} size="md" />
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
-                    {selected.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text2)' }}>{selected.role}</div>
-                  {selected.email && (
-                    <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Données */}
-              {[
-                { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
-                { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
-                { label: t('drawer.available'), value: selected.availableFrom
-                    ? new Date(selected.availableFrom).toLocaleDateString('fr-FR')
-                    : t('now') },
-                { label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` },
-                ...(selected.rttLeft != null
-                  ? [{ label: 'RTT restants', value: `${selected.rttLeft} ${tCommon('days')}` }]
-                  : []),
-                ...(isAdmin && selected.tjm
-                  ? [{ label: 'TJM', value: `${selected.tjm} €/j` }]
-                  : []),
-              ].map(row => (
-                <div key={row.label} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 12,
-                }}>
-                  <span style={{ color: 'var(--text2)' }}>{row.label}</span>
-                  <span style={{ color: 'var(--text)', fontWeight: 600 }}>{row.value}</span>
-                </div>
-              ))}
-
-              {/* Stack */}
-              {selected.stack && selected.stack.length > 0 && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
-                    Stack
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {selected.stack.map(s => (
-                      <span key={s} style={{
-                        fontSize: 9, letterSpacing: 1, textTransform: 'uppercase',
-                        padding: '2px 8px', borderRadius: 2,
-                        background: 'var(--bg3)', border: '1px solid var(--border)',
-                        color: 'var(--text2)',
-                      }}>
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Taux d'occupation */}
-              <div style={{ marginTop: 20 }}>
-                <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 8 }}>
-                  {t('drawer.rateLabel')}
-                </div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
-                  {selected.occupancyRate}%
-                </div>
-                <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
-              </div>
-
-              {/* Accès compte — admin uniquement */}
-              {isAdmin && (
-                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 12 }}>
-                    // account access
-                  </div>
-
-                  {selected.user_id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 16, color: 'var(--green)' }}>●</span>
-                      <div>
-                        <div style={{ fontSize: 11, color: 'var(--text)', fontWeight: 600 }}>Compte lié</div>
-                        <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{selected.email}</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                        <span style={{ fontSize: 16, color: 'var(--text2)' }}>○</span>
-                        <div>
-                          <div style={{ fontSize: 11, color: 'var(--text2)' }}>Aucun compte</div>
-                          <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                            {selected.email
-                              ? selected.email
-                              : <span style={{ color: 'var(--pink)' }}>Email manquant</span>
-                            }
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        className="btn btn-ghost"
-                        style={{
-                          width: '100%',
-                          borderColor: 'var(--cyan)',
-                          color: 'var(--cyan)',
-                          opacity: (!selected.email || inviteLoading) ? 0.5 : 1,
-                        }}
-                        onClick={handleInvite}
-                        disabled={!selected.email || inviteLoading}
-                        title={!selected.email ? 'Ajoutez un email à ce consultant' : ''}
-                      >
-                        {inviteLoading ? '⏳ Envoi...' : '✉ Envoyer une invitation'}
-                      </button>
-
-                      {inviteStatus === 'sent'    && <p style={{ fontSize: 11, color: 'var(--green)',  marginTop: 8 }}>✓ Invitation envoyée à {selected.email}</p>}
-                      {inviteStatus === 'already' && <p style={{ fontSize: 11, color: 'var(--gold)',   marginTop: 8 }}>⚠ Compte existant — rôle mis à jour</p>}
-                      {inviteStatus === 'error'   && <p style={{ fontSize: 11, color: 'var(--pink)',   marginTop: 8 }}>✗ Erreur — vérifiez l'adresse email</p>}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Actions Edit / Delete */}
-              {canCreate && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-                  <button
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                    onClick={() => { setEditTarget(selected); setSelected(null) }}
-                  >
-                    {t('drawer.edit')}
-                  </button>
-                  {isAdmin && (
-                    <button
-                      className="btn btn-ghost"
-                      style={{ flex: 1, color: 'var(--pink)' }}
-                      onClick={() => setConfirmDelete(true)}
-                    >
-                      ✕ Supprimer
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Confirmation delete */}
-              {confirmDelete && (
-                <div style={{
-                  marginTop: 20, padding: '14px 16px',
-                  background: 'rgba(255,45,107,0.08)',
-                  border: '1px solid rgba(255,45,107,0.25)',
-                  borderRadius: 4,
-                }}>
-                  <div style={{ fontSize: 11, color: 'var(--text)', marginBottom: 12 }}>
-                    Supprimer <strong>{selected.name}</strong> définitivement ?
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      style={{ flex: 1 }}
-                      onClick={handleDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? '...' : '✕ Confirmer'}
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      style={{ flex: 1 }}
-                      onClick={() => setConfirmDelete(false)}
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
               )}
             </div>
-          </>
-        )}
+          </div>
+          <StatusPill status={me.status ?? 'available'} />
+        </div>
 
-        {/* Formulaires */}
-        {showForm && (
-          <ConsultantForm
-            onClose={() => setShowForm(false)}
-            onSaved={handleSaved}
+        {/* ── KPIs ────────────────────────────────────────── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${isFreelance ? 3 : 4}, 1fr)`,
+          gap: 12, marginBottom: 24,
+        }}>
+          <KpiCard
+            label="Missions actives"
+            value={myProjects.length}
+            color="var(--cyan)"
+            sub={myProjects.length === 0 ? 'Aucune mission en cours' : myProjects.map(p => p.name).join(', ')}
           />
-        )}
-        {editTarget && (
-          <ConsultantForm
-            consultant={editTarget}
-            onClose={() => setEditTarget(null)}
-            onSaved={handleSaved}
+          <KpiCard
+            label="Taux d'occupation"
+            value={`${me.occupancyRate ?? 0}%`}
+            color={
+              (me.occupancyRate ?? 0) >= 80 ? 'var(--green)' :
+              (me.occupancyRate ?? 0) > 0   ? 'var(--gold)'  : 'var(--text3)'
+            }
           />
+          <KpiCard
+            label="CRA semaine"
+            value={weekTotal > 0 ? `${weekTotal}j` : '—'}
+            color={weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text3)'}
+            sub={hasDraft ? '⚠ brouillon non soumis' : weekTotal >= 5 ? '✓ semaine complète' : undefined}
+          />
+          {!isFreelance && (
+            <KpiCard
+              label="Congés restants"
+              value={me.leaveDaysLeft ?? 0}
+              color="var(--text1)"
+              sub={`RTT : ${me.rttLeft ?? 0}j`}
+            />
+          )}
+        </div>
+
+        {/* ── Missions ────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+
+          <Panel>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
+              ◧ Mes missions
+            </div>
+
+            {myProjects.length === 0 ? (
+              <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', padding: '24px 0', textAlign: 'center' }}>
+                // aucune mission active
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {myProjects.map(project => (
+                  <div key={project.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    background: 'var(--bg3)', borderRadius: 6,
+                    border: '1px solid var(--border)',
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>
+                        {project.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>
+                        projet actif
+                      </div>
+                    </div>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: 'var(--green)',
+                    }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          {/* ── CRA semaine ───────────────────────────────── */}
+          <Panel>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
+              ⏱ CRA — semaine courante
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              {weekDays.map(d => {
+                const iso = toISO(d)
+                const ts  = myTimesheets.find(t => t.date === iso)
+                const isToday = iso === toISO(new Date())
+                return (
+                  <div key={iso} style={{ flex: 1, textAlign: 'center' }}>
+                    <div style={{ fontSize: 9, color: isToday ? 'var(--cyan)' : 'var(--text3)', marginBottom: 4 }}>
+                      {d.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 2)}
+                    </div>
+                    <div style={{
+                      height: 40, borderRadius: 6,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700,
+                      border: `1px solid ${isToday ? 'var(--cyan)' : 'var(--border)'}`,
+                      background: ts?.value === 1 ? 'rgba(0,255,136,.12)'
+                               : ts?.value === 0.5 ? 'rgba(255,209,102,.12)'
+                               : 'var(--bg3)',
+                      color: ts?.value === 1 ? 'var(--green)'
+                           : ts?.value === 0.5 ? 'var(--gold)'
+                           : 'var(--text3)',
+                    }}>
+                      {ts?.value === 1 ? '1' : ts?.value === 0.5 ? '½' : '—'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ fontSize: 10, color: 'var(--text3)', textAlign: 'right' }}>
+              Total : <span style={{ color: 'var(--text1)', fontWeight: 700 }}>{weekTotal}j</span>
+              {hasDraft && (
+                <span style={{ marginLeft: 8, color: 'var(--gold)' }}>⚠ à soumettre</span>
+              )}
+            </div>
+          </Panel>
+        </div>
+
+        {/* ── Congés (salarié uniquement) ─────────────────── */}
+        {!isFreelance && (
+          <Panel>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 16 }}>
+              ◷ Mes congés
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+              {[
+                { label: 'CP restants',  value: me.leaveDaysLeft ?? 0, color: 'var(--green)', total: me.leaveDaysTotal ?? 25 },
+                { label: 'RTT restants', value: me.rttLeft ?? 0,        color: 'var(--cyan)',  total: me.rttTotal ?? 10 },
+                { label: 'En attente',   value: pendingLeaves.length,    color: 'var(--gold)',  total: null },
+              ].map(({ label, value, color, total }) => (
+                <div key={label} style={{
+                  padding: '12px 16px', borderRadius: 6,
+                  background: 'var(--bg3)', border: '1px solid var(--border)',
+                }}>
+                  <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color }}>
+                    {value}{total !== null ? <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 400 }}>/{total}</span> : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Dernières demandes */}
+            {myLeaves.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {myLeaves.slice(0, 4).map(l => (
+                  <div key={l.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 12px', borderRadius: 5,
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    fontSize: 11,
+                  }}>
+                    <div style={{ color: 'var(--text1)' }}>
+                      {l.type} · {l.startDate} → {l.endDate}
+                    </div>
+                    <div style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+                      padding: '2px 6px', borderRadius: 3,
+                      background: l.status === 'approved' ? 'rgba(0,255,136,.12)'
+                                : l.status === 'pending'  ? 'rgba(255,209,102,.12)'
+                                : 'rgba(232,0,74,.12)',
+                      color: l.status === 'approved' ? 'var(--green)'
+                           : l.status === 'pending'  ? 'var(--gold)'
+                           : 'var(--pink)',
+                    }}>
+                      {l.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {myLeaves.length === 0 && (
+              <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '16px 0' }}>
+                // aucune demande de congé
+              </div>
+            )}
+          </Panel>
         )}
 
       </div>
