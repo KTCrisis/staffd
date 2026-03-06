@@ -158,6 +158,46 @@
       "RTT": "Flex days",
       "Sans solde": "Unpaid leave",
       "Absence autorisée": "Auth. absence"
+    },
+    "form": {
+      "title":             "// new time-off request",
+      "close":             "✕ Close",
+      "loadingProfile":    "// loading profile...",
+      "freelanceBadge":    "🔗 Freelance — Paid leave & flex days not available",
+      "typeLabel":         "Type",
+      "motifLabel":        "Reason *",
+      "motifPlaceholder":  "— Select a reason —",
+      "startDate":         "Start date",
+      "endDate":           "End date",
+      "endDateAuto":       "End date (auto)",
+      "legalDuration":     "Legal duration",
+      "workingDays":       "Working days",
+      "submit":            "✓ Submit request",
+      "cancel":            "Cancel"
+    },
+    "errors": {
+      "startDate":          "Please select a start date",
+      "endDate":            "Please select an end date",
+      "motif":              "Please select a reason",
+      "dateOrder":          "End date must be after start date",
+      "noDays":             "No working days in selected range",
+      "noProfile":          "No consultant profile linked to your account",
+      "freelanceRestriction": "Paid leave and flex days are not available for freelance consultants",
+      "notEnoughCP":        "Not enough paid leave days ({remaining} remaining)",
+      "notEnoughRTT":       "Not enough flex days ({remaining} remaining)"
+    },
+    "motifs": {
+      "mariage_salarie":   "Marriage / Civil union",
+      "mariage_enfant":    "Child's wedding",
+      "naissance":         "Birth / Adoption",
+      "deces_conjoint":    "Death of spouse / partner",
+      "deces_enfant":      "Death of child",
+      "deces_pere_mere":   "Death of parent",
+      "deces_ascendant":   "Death of other ascendant",
+      "deces_frere_soeur": "Death of sibling",
+      "deces_beau_parent": "Death of parent-in-law",
+      "paternite":         "Paternity leave",
+      "paternite_gemeaux": "Paternity — twins"
     }
   },
   "clients": {
