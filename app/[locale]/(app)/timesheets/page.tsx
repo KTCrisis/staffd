@@ -330,7 +330,7 @@ export default function TimesheetsPage() {
 
   const consultantsSafe   = consultants ?? []
   const consultantsLoaded = Array.isArray(consultants)
-  const projectsLoaded    = typeof projectsMap !== 'undefined'
+  const projectsLoaded    = projectsMap != null  // null ET undefined 2192 false
 
   // ── Pays par défaut de la company ────────────────────────
   const companyCountry = useMemo(
@@ -506,7 +506,8 @@ export default function TimesheetsPage() {
     })
   }, [lookup])
 
-  const consultantDataReady = !isConsultant || (!!currentUserId && consultantsLoaded && projectsLoaded)
+  const internalTypesLoaded  = internalTypes != null
+  const consultantDataReady = !loading && consultantsLoaded && projectsLoaded && internalTypesLoaded && (!isConsultant || !!currentUserId)
 
   // ── Render ───────────────────────────────────────────────
   return (
@@ -664,7 +665,7 @@ export default function TimesheetsPage() {
         )}
 
         {/* Grille */}
-        {!loading && consultantDataReady && (
+        {consultantDataReady && (
           <Panel>
             <div style={{ overflowX: 'auto' }}>
               <table className="ts-table">
@@ -829,7 +830,7 @@ export default function TimesheetsPage() {
                                     canEditEntry={canEditCell}
                                     x={popup!.x}
                                     y={popup!.y}
-                                    onSave={(val, proj) => handleSave(c.id, dateStr, val, proj)}
+                                    onSave={(val, proj) => { if (proj) handleSave(c.id, dateStr, val, proj) }}
                                     onClose={() => setPopup(null)}
                                   />
                                 </div>

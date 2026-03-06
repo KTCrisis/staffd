@@ -74,7 +74,6 @@ export interface ConsultantInput {
   avatar_color:         string
   stack:                string[]
   status:               string
-  country_code?:        string
   contract_type:        ContractType
   salaire_annuel_brut?: number
   charges_pct?:         number
@@ -246,7 +245,6 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     chargesPct:          row.charges_pct as number | undefined,
     joursTravailles:     row.jours_travailles as number | undefined,
     teamId:              row.team_id as string | undefined,
-    country_code:        row.country_code as string | null ?? null,
   }
 }
 
@@ -778,7 +776,7 @@ export async function refuseLeave(id: string) {
 
 export async function upsertTimesheet(params: {
   consultantId: string
-  projectId:    string
+  projectId:    string | null
   date:         string
   value:        number
 }): Promise<Timesheet> {
@@ -983,21 +981,20 @@ export async function updateHRSettings(payload: {
   if (error) throw new Error(error.message)
 }
 // ══════════════════════════════════════════════════════════════
-// LEAVE OVERLAYS — pour la grille timesheet
+// TYPES — LEAVE OVERLAY (timesheets)
 // ══════════════════════════════════════════════════════════════
 
 export interface LeaveOverlay {
   consultantId: string
-  date:         string   // YYYY-MM-DD
+  date:         string
   type:         string   // 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
   leaveId:      string
 }
 
-/**
- * Charge tous les congés approved qui chevauchent la semaine affichée,
- * et les explose en entrées par jour (weekends exclus).
- * weekStart / weekEnd : YYYY-MM-DD (lundi et vendredi de la semaine)
- */
+// ══════════════════════════════════════════════════════════════
+// HOOK — APPROVED LEAVES FOR WEEK (timesheets overlay)
+// ══════════════════════════════════════════════════════════════
+
 export function useApprovedLeavesForWeek(weekStart: string, weekEnd: string) {
   const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
@@ -1005,35 +1002,27 @@ export function useApprovedLeavesForWeek(weekStart: string, weekEnd: string) {
       .from('leave_requests')
       .select('id, consultant_id, type, start_date, end_date')
       .eq('status', 'approved')
-      .lte('start_date', weekEnd)   // congé commence avant ou pendant la semaine
-      .gte('end_date', weekStart)   // congé finit après ou pendant la semaine
+      .lte('start_date', weekEnd)
+      .gte('end_date', weekStart)
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
-
     const { data, error } = await q
     if (error) throw new Error(error.message)
 
-    // Expand chaque congé en une entrée par jour ouvré dans la fenêtre
+    // Expand each leave into individual day entries
     const overlays: LeaveOverlay[] = []
-    for (const leave of (data ?? [])) {
-      const start  = new Date(leave.start_date)
-      const end    = new Date(leave.end_date)
-      const wStart = new Date(weekStart)
-      const wEnd   = new Date(weekEnd)
-      const from   = start < wStart ? wStart : start
-      const to     = end   > wEnd   ? wEnd   : end
-
-      const d = new Date(from)
-      while (d <= to) {
-        const dow = d.getDay()
-        if (dow !== 0 && dow !== 6) {   // exclure samedi et dimanche
+    for (const row of data ?? []) {
+      const start = new Date(row.start_date as string)
+      const end   = new Date(row.end_date   as string)
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().slice(0, 10)
+        if (dateStr >= weekStart && dateStr <= weekEnd) {
           overlays.push({
-            consultantId: leave.consultant_id,
-            date:         d.toISOString().slice(0, 10),
-            type:         leave.type,
-            leaveId:      leave.id,
+            consultantId: row.consultant_id as string,
+            date:         dateStr,
+            type:         row.type          as string,
+            leaveId:      row.id            as string,
           })
         }
-        d.setDate(d.getDate() + 1)
       }
     }
     return overlays
