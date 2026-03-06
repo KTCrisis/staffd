@@ -158,6 +158,46 @@
       "RTT": "RTT",
       "Sans solde": "Sans solde",
       "Absence autorisée": "Absence autorisée"
+    },
+    "form": {
+      "title":             "// nouvelle demande de congé",
+      "close":             "✕ Fermer",
+      "loadingProfile":    "// chargement profil...",
+      "freelanceBadge":    "🔗 Freelance — CP et RTT non disponibles",
+      "typeLabel":         "Type",
+      "motifLabel":        "Motif *",
+      "motifPlaceholder":  "— Sélectionner un motif —",
+      "startDate":         "Date de début",
+      "endDate":           "Date de fin",
+      "endDateAuto":       "Date de fin (auto)",
+      "legalDuration":     "Durée légale",
+      "workingDays":       "Jours ouvrés",
+      "submit":            "✓ Soumettre la demande",
+      "cancel":            "Annuler"
+    },
+    "errors": {
+      "startDate":          "Veuillez sélectionner une date de début",
+      "endDate":            "Veuillez sélectionner une date de fin",
+      "motif":              "Veuillez sélectionner un motif",
+      "dateOrder":          "La date de fin doit être après la date de début",
+      "noDays":             "Aucun jour ouvré dans la période sélectionnée",
+      "noProfile":          "Aucun profil consultant lié à ce compte",
+      "freelanceRestriction": "CP et RTT non disponibles pour les freelances",
+      "notEnoughCP":        "Solde CP insuffisant ({remaining} jours restants)",
+      "notEnoughRTT":       "Solde RTT insuffisant ({remaining} jours restants)"
+    },
+    "motifs": {
+      "mariage_salarie":   "Mariage / Pacs salarié",
+      "mariage_enfant":    "Mariage d'un enfant",
+      "naissance":         "Naissance / Adoption",
+      "deces_conjoint":    "Décès conjoint / partenaire",
+      "deces_enfant":      "Décès d'un enfant",
+      "deces_pere_mere":   "Décès père / mère",
+      "deces_ascendant":   "Décès autre ascendant",
+      "deces_frere_soeur": "Décès frère / sœur",
+      "deces_beau_parent": "Décès beau-père / belle-mère",
+      "paternite":         "Congé paternité",
+      "paternite_gemeaux": "Paternité gémellaire"
     }
   },
   "clients": {

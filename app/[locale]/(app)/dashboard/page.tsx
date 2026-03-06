@@ -1,26 +1,31 @@
-'use client'
+import { redirect }           from 'next/navigation'
+import { createServerClient } from '@supabase/ssr'
+import { cookies }            from 'next/headers'
 
-import { useEffect }  from 'react'
-import { useAuth }    from '@/lib/auth'
-import { useRouter }  from '@/lib/navigation'
+interface Props {
+  params: Promise<{ locale: string }>
+}
 
-export default function DashboardPage() {
-  const { user } = useAuth()
-  const router   = useRouter()
+export default async function DashboardPage({ params }: Props) {
+  const { locale }    = await params
+  const cookieStore   = await cookies()
 
-  useEffect(() => {
-    if (!user?.role) return
-    if (user.role === 'consultant')                                router.replace('/dashboard/consultant' as never)
-    else if (user.role === 'manager')                              router.replace('/dashboard/manager'    as never)
-    else if (user.role === 'admin' || user.role === 'super_admin') router.replace('/dashboard/admin'      as never)
-  }, [user?.role])
-
-  // Skeleton pendant le redirect
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-      <div style={{ color: 'var(--text2)', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
-        // loading…
-      </div>
-    </div>
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
   )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const role = user?.app_metadata?.user_role
+
+  // Préfixe de locale — 'en' est la locale par défaut, pas de préfixe
+  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
+
+  if (!role)                                        redirect(p('/login'))
+  if (role === 'consultant')                        redirect(p('/dashboard/consultant'))
+  if (role === 'manager')                           redirect(p('/dashboard/manager'))
+  if (role === 'admin' || role === 'super_admin')   redirect(p('/dashboard/admin'))
+
+  redirect(p('/login'))
 }

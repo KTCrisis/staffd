@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect }  from 'react'
+import { useTranslations }      from 'next-intl'
 import { useAuthContext }        from '@/components/layout/AuthProvider'
 import { createLeaveRequest }    from '@/lib/data'
 import { ABSENCE_MOTIFS }        from '@/types'
@@ -29,27 +30,14 @@ function countWorkingDays(start: string, end: string): number {
   return count
 }
 
-// Types disponibles selon contract_type
-function getAvailableTypes(contractType: ContractType | null): { value: LeaveType; label: string }[] {
-  const all: { value: LeaveType; label: string }[] = [
-    { value: 'CP',                label: 'Paid leave'    },
-    { value: 'RTT',               label: 'RTT'           },
-    { value: 'Sans solde',        label: 'Unpaid leave'  },
-    { value: 'Absence autorisée', label: 'Auth. absence' },
-  ]
-  // Freelance : pas de CP ni RTT — uniquement sans solde et absences autorisées
-  if (contractType === 'freelance') {
-    return all.filter(t => t.value === 'Sans solde' || t.value === 'Absence autorisée')
-  }
-  return all
-}
-
 export function LeaveRequestForm({ onClose, onSaved }: Props) {
+  const t       = useTranslations('conges')
+  const tCommon = useTranslations('common')
   const { user } = useAuthContext()
 
-  const [loading,       setLoading]       = useState(false)
-  const [error,         setError]         = useState<string | null>(null)
-  const [contractType,  setContractType]  = useState<ContractType | null>(null)
+  const [loading,        setLoading]        = useState(false)
+  const [error,          setError]          = useState<string | null>(null)
+  const [contractType,   setContractType]   = useState<ContractType | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
 
   const [form, setForm] = useState({
@@ -59,7 +47,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
     end_date:   '',
   })
 
-  // ── Fetch contract_type du consultant connecté ───────────────────────────
+  // ── Fetch contract_type du consultant connecté ──────────────────────────
   useEffect(() => {
     if (!user?.id) return
     const fetchProfile = async () => {
@@ -83,10 +71,20 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
     fetchProfile()
   }, [user?.id])
 
-  const availableTypes = getAvailableTypes(contractType)
-  const isAbsence      = form.type === 'Absence autorisée'
-  const isFreelance    = contractType === 'freelance'
-  const selectedMotif  = ABSENCE_MOTIFS.find(m => m.value === form.motif)
+  // ── Types disponibles selon contract_type — labels via i18n ────────────
+  const allTypes: { value: LeaveType; label: string }[] = [
+    { value: 'CP',                label: t('types.CP')                },
+    { value: 'RTT',               label: t('types.RTT')               },
+    { value: 'Sans solde',        label: t('types.Sans solde')        },
+    { value: 'Absence autorisée', label: t('types.Absence autorisée') },
+  ]
+  const availableTypes = contractType === 'freelance'
+    ? allTypes.filter(ty => ty.value === 'Sans solde' || ty.value === 'Absence autorisée')
+    : allTypes
+
+  const isAbsence   = form.type === 'Absence autorisée'
+  const isFreelance = contractType === 'freelance'
+  const selectedMotif = ABSENCE_MOTIFS.find(m => m.value === form.motif)
 
   const days = isAbsence
     ? (selectedMotif?.days ?? 0)
@@ -112,11 +110,11 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
   }
 
   const handleSubmit = async () => {
-    if (!form.start_date)                                { setError('Please select a start date'); return }
-    if (!isAbsence && !form.end_date)                    { setError('Please select an end date'); return }
-    if (isAbsence && !form.motif)                        { setError('Please select a reason'); return }
-    if (!isAbsence && form.end_date < form.start_date)   { setError('End date must be after start date'); return }
-    if (days === 0)                                      { setError('No working days in selected range'); return }
+    if (!form.start_date)                              { setError(t('errors.startDate'));  return }
+    if (!isAbsence && !form.end_date)                  { setError(t('errors.endDate'));    return }
+    if (isAbsence && !form.motif)                      { setError(t('errors.motif'));      return }
+    if (!isAbsence && form.end_date < form.start_date) { setError(t('errors.dateOrder')); return }
+    if (days === 0)                                    { setError(t('errors.noDays'));     return }
 
     setLoading(true)
     setError(null)
@@ -129,24 +127,23 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
         .single()
 
       if (cErr || !consultant) {
-        setError('No consultant profile linked to your account')
+        setError(t('errors.noProfile'))
         return
       }
 
-      // Garde — freelance ne peut pas poser CP/RTT
       if (consultant.contract_type === 'freelance' && (form.type === 'CP' || form.type === 'RTT')) {
-        setError('CP and RTT are not available for freelance consultants')
+        setError(t('errors.freelanceRestriction'))
         return
       }
 
       if (form.type === 'CP') {
         const remaining = consultant.leave_days_total - consultant.leave_days_taken
-        if (days > remaining) { setError(`Not enough CP days left (${remaining} remaining)`); return }
+        if (days > remaining) { setError(t('errors.notEnoughCP', { remaining })); return }
       }
 
       if (form.type === 'RTT') {
         const rttLeft = (consultant.rtt_total ?? 0) - (consultant.rtt_taken ?? 0)
-        if (days > rttLeft) { setError(`Not enough RTT days left (${rttLeft} remaining)`); return }
+        if (days > rttLeft) { setError(t('errors.notEnoughRTT', { remaining: rttLeft })); return }
       }
 
       await createLeaveRequest({
@@ -170,7 +167,10 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 199 }} />
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 199 }}
+      />
 
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0, width: 400,
@@ -178,16 +178,20 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
         zIndex: 200, padding: 28, overflowY: 'auto',
         boxShadow: '-4px 0 20px var(--shadow)',
       }}>
+
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
           <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-            // new time-off request
+            {t('form.title')}
           </span>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕ Close</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+            {t('form.close')}
+          </button>
         </div>
 
         {loadingProfile ? (
           <div style={{ color: 'var(--text2)', fontSize: 11, padding: '20px 0' }}>
-            // chargement profil...
+            {t('form.loadingProfile')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -199,12 +203,12 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
                 background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.2)',
                 fontSize: 10, color: 'var(--cyan)', letterSpacing: 1,
               }}>
-                🔗 Freelance — CP et RTT non disponibles
+                {t('form.freelanceBadge')}
               </div>
             )}
 
             {/* Type */}
-            <Field label="Type">
+            <Field label={t('form.typeLabel')}>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {availableTypes.map(({ value, label }) => (
                   <button
@@ -220,17 +224,17 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
 
             {/* Motif — Absence autorisée uniquement */}
             {isAbsence && (
-              <Field label="Reason *">
+              <Field label={t('form.motifLabel')}>
                 <select
                   className="search-input"
                   style={{ width: '100%' }}
                   value={form.motif}
                   onChange={e => set('motif', e.target.value)}
                 >
-                  <option value="">— Select a reason —</option>
+                  <option value="">{t('form.motifPlaceholder')}</option>
                   {ABSENCE_MOTIFS.map(m => (
                     <option key={m.value} value={m.value}>
-                      {m.label} ({m.days}j)
+                      {t(`motifs.${m.value}`)} ({m.days} {tCommon('days')})
                     </option>
                   ))}
                 </select>
@@ -239,7 +243,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
 
             {/* Dates */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <Field label="Start date" style={{ flex: 1 }}>
+              <Field label={t('form.startDate')} style={{ flex: 1 }}>
                 <input
                   type="date" className="search-input" style={{ width: '100%' }}
                   value={form.start_date}
@@ -248,7 +252,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
               </Field>
 
               {!isAbsence ? (
-                <Field label="End date" style={{ flex: 1 }}>
+                <Field label={t('form.endDate')} style={{ flex: 1 }}>
                   <input
                     type="date" className="search-input" style={{ width: '100%' }}
                     value={form.end_date} min={form.start_date}
@@ -256,7 +260,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
                   />
                 </Field>
               ) : computedEndDate ? (
-                <Field label="End date (auto)" style={{ flex: 1 }}>
+                <Field label={t('form.endDateAuto')} style={{ flex: 1 }}>
                   <div className="search-input" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
                     {computedEndDate}
                   </div>
@@ -271,12 +275,15 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               }}>
                 <span style={{ fontSize: 11, color: 'var(--text2)' }}>
-                  {isAbsence ? 'Legal duration' : 'Working days'}
+                  {isAbsence ? t('form.legalDuration') : t('form.workingDays')}
                 </span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--cyan)' }}>{days}j</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--cyan)' }}>
+                  {days} {tCommon('days')}
+                </span>
               </div>
             )}
 
+            {/* Erreur */}
             {error && (
               <div style={{
                 fontSize: 11, color: 'var(--pink)',
@@ -286,15 +293,18 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
               </div>
             )}
 
+            {/* Actions */}
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button
                 className="btn btn-primary" style={{ flex: 1 }}
                 onClick={handleSubmit}
                 disabled={loading || days === 0}
               >
-                {loading ? '...' : '✓ Submit request'}
+                {loading ? '...' : t('form.submit')}
               </button>
-              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button className="btn btn-ghost" onClick={onClose}>
+                {t('form.cancel')}
+              </button>
             </div>
 
           </div>
@@ -309,7 +319,10 @@ function Field({ label, children, style }: {
 }) {
   return (
     <div style={style}>
-      <div style={{ fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text2)', marginBottom: 6 }}>
+      <div style={{
+        fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
+        color: 'var(--text2)', marginBottom: 6,
+      }}>
         {label}
       </div>
       {children}

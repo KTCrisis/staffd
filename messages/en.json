@@ -155,7 +155,7 @@
     "cpLeft": "days left",
     "types": {
       "CP": "Paid leave",
-      "RTT": "RTT",
+      "RTT": "Flex days",
       "Sans solde": "Unpaid leave",
       "Absence autorisée": "Auth. absence"
     }
