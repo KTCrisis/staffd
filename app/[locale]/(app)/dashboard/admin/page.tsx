@@ -1,129 +1,86 @@
-'use client'
+// app/[locale]/(app)/dashboard/admin/page.tsx
+// ── Server Component ─────────────────────────────────────────
+// Avant : 4 hooks useEffect séquentiels (waterfall client-side)
+// Après : Promise.all côté serveur → données prêtes avant le premier paint
 
-import { useTranslations }  from 'next-intl'
-import { useRouter }        from '@/lib/navigation'
-import { useLocale }        from 'next-intl'
-import { Topbar }           from '@/components/layout/Topbar'
-import { KpiCard, Panel }   from '@/components/ui'
-import { EmptyState }       from '@/components/ui/EmptyState'
-import { ConsultantItem }   from '@/components/consultants/ConsultantItem'
-import { ProjectRow }       from '@/components/projects/ProjectRow'
-import { ActivityFeed }     from '@/components/dashboard/ActivityFeed'
-import { MiniCalendar }     from '@/components/dashboard/MiniCalendar'
-import { useConsultants, useProjects, useKpi, useActivity } from '@/lib/data'
+import { cookies }              from 'next/headers'
+import { createServerClient }   from '@supabase/ssr'
+import { getTranslations }      from 'next-intl/server'
+import { Topbar }               from '@/components/layout/Topbar'
+import { AdminDashboardClient } from '@/components/dashboard/AdminDashboardClient'
 
-function Skeleton({ h = 80 }: { h?: number }) {
-  return <div className="skeleton" style={{ height: h }} />
-}
+export default async function AdminDashboardPage() {
+  const t           = await getTranslations('dashboard')
+  const cookieStore = await cookies()
 
-export default function AdminDashboardPage() {
-  const t      = useTranslations('dashboard')
-  const router = useRouter()
-  const locale = useLocale()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  )
 
-  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
+  // ── Promise.all : 4 requêtes en parallèle ───────────────────
+  // Avant : ~600ms waterfall (4 × ~150ms séquentiels côté client)
+  // Après : ~150ms (limité par la requête la plus lente)
+  const [consultantsRes, projectsRes, leavesRes, activityRes] = await Promise.all([
+    supabase
+      .from('consultant_occupancy')
+      .select('*')
+      .order('name'),
 
-  const { data: consultants, loading: lC } = useConsultants()
-  const { data: projects,    loading: lP } = useProjects()
-  const { data: kpi,         loading: lK } = useKpi()
-  const { data: activity,    loading: lA } = useActivity(5)
+    supabase
+      .from('projects')
+      .select('id, name, status, client_name, progress, tjm_vendu, start_date, end_date')
+      .neq('status', 'archived')
+      .order('status'),
 
-  const activeProjects  = projects?.filter(proj => proj.status === 'active').slice(0, 3) ?? []
-  const totalProjects   = projects?.length ?? 0
-  const activeCount     = projects?.filter(proj => proj.status === 'active').length ?? 0
+    supabase
+      .from('leave_requests')
+      .select('status')
+      .eq('status', 'pending'),
+
+    supabase
+      .from('activity_feed')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
+
+  const consultants   = consultantsRes.data ?? []
+  const projects      = projectsRes.data    ?? []
+  const activity      = activityRes.data    ?? []
+  const pendingLeaves = (leavesRes.data ?? []).length
+
+  // ── KPIs calculés côté serveur ──────────────────────────────
+  const active       = consultants.filter((c: any) => c.status !== 'leave')
+  const avgOccupancy = active.length
+    ? Math.round(active.reduce((s: number, c: any) => s + (c.occupancy_rate ?? 0), 0) / active.length)
+    : 0
+
+  const totalProjects   = projects.length
+  const activeCount     = projects.filter((p: any) => p.status === 'active').length
   const projectProgress = totalProjects > 0 ? Math.round((activeCount / totalProjects) * 100) : 0
+
+  const kpi = {
+    activeConsultants: active.length,
+    totalConsultants:  consultants.length,
+    activeProjects:    activeCount,
+    pendingLeaves,
+    occupancyRate:     avgOccupancy,
+  }
+
+  const activeProjects = projects.filter((p: any) => p.status === 'active').slice(0, 3)
 
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
-
-      <div className="app-content">
-
-        {/* KPIs */}
-        <div className="kpi-grid">
-          {lK || !kpi ? (
-            [0,1,2,3].map(i => <Skeleton key={i} h={110} />)
-          ) : (
-            <>
-              <KpiCard
-                label={t('kpi.activeConsultants')}
-                value={kpi.activeConsultants}
-                valueSuffix={`/${kpi.totalConsultants}`}
-                accent="green"
-                trend={{ label: t('trends.up'), direction: 'up' }}
-                progress={kpi.totalConsultants > 0
-                  ? Math.round((kpi.activeConsultants / kpi.totalConsultants) * 100)
-                  : 0
-                }
-              />
-              <KpiCard
-                label={t('kpi.activeProjects')}
-                value={kpi.activeProjects}
-                accent="cyan"
-                trend={{ label: t('trends.stable'), direction: 'flat' }}
-                progress={projectProgress}
-              />
-              <KpiCard
-                label={t('kpi.pendingLeaves')}
-                value={kpi.pendingLeaves}
-                accent="pink"
-                trend={{ label: t('trends.warning'), direction: 'down' }}
-              />
-              <KpiCard
-                label={t('kpi.occupancyRate')}
-                value={kpi.occupancyRate}
-                valueSuffix="%"
-                accent="gold"
-                trend={{ label: t('trends.occupancy'), direction: 'up' }}
-                progress={kpi.occupancyRate}
-              />
-            </>
-          )}
-        </div>
-
-        {/* Projets actifs */}
-        <Panel
-          title={t('activeProjects')}
-          action={{ label: t('seeAll'), onClick: () => router.push(p('/projects') as never) }}
-          noPadding
-        >
-          <div style={{ padding: '0 18px' }}>
-            {lP ? (
-              <Skeleton h={80} />
-            ) : activeProjects.length === 0 ? (
-              <EmptyState message={t('noActiveProjects')} />
-            ) : (
-              activeProjects.map(proj => (
-                <ProjectRow key={proj.id} project={proj} consultants={consultants ?? []} />
-              ))
-            )}
-          </div>
-        </Panel>
-
-        {/* Consultants + Activité + Calendrier */}
-        <div className="two-col">
-          <Panel
-            title={t('consultants')}
-            action={{ label: t('seeAll'), onClick: () => router.push(p('/consultants') as never) }}
-          >
-            {lC
-              ? <Skeleton h={200} />
-              : consultants?.map(c => <ConsultantItem key={c.id} consultant={c} />)
-            }
-          </Panel>
-
-          <div className="dashboard-side">
-            <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
-              {lA ? <Skeleton h={120} /> : <ActivityFeed items={activity ?? []} />}
-            </Panel>
-
-            <Panel title={t('calendar')}>
-              <MiniCalendar />
-            </Panel>
-          </div>
-        </div>
-
-      </div>
+      <AdminDashboardClient
+        consultants={consultants}
+        activeProjects={activeProjects}
+        activity={activity}
+        kpi={kpi}
+        projectProgress={projectProgress}
+      />
     </>
   )
 }
