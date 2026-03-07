@@ -1,9 +1,4 @@
 // components/dashboard/AdminDashboardClient.tsx
-// ── Client Component ─────────────────────────────────────────
-// Miroir exact de l'ancienne page — même UI, même structure.
-// Différence : plus de fetch, plus de loading states, tout arrive en props.
-// 'use client' uniquement pour router.push et les interactions (drawers, etc.)
-
 'use client'
 
 import { useTranslations } from 'next-intl'
@@ -16,8 +11,6 @@ import { ProjectRow }      from '@/components/projects/ProjectRow'
 import { ActivityFeed }    from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }    from '@/components/dashboard/MiniCalendar'
 
-// ── Types ────────────────────────────────────────────────────
-
 interface KpiData {
   activeConsultants: number
   totalConsultants:  number
@@ -27,21 +20,24 @@ interface KpiData {
 }
 
 interface Props {
-  consultants:     any[]
-  activeProjects:  any[]
-  activity:        any[]
-  kpi:             KpiData
-  projectProgress: number
+  consultants?:     any[]
+  activeProjects?:  any[]
+  activity?:        any[]
+  kpi?:             KpiData
+  projectProgress?: number
 }
 
-// ── Composant ────────────────────────────────────────────────
+const DEFAULT_KPI: KpiData = {
+  activeConsultants: 0, totalConsultants: 0,
+  activeProjects: 0,    pendingLeaves: 0,    occupancyRate: 0,
+}
 
 export function AdminDashboardClient({
-  consultants,
-  activeProjects,
-  activity,
-  kpi,
-  projectProgress,
+  consultants     = [],
+  activeProjects  = [],
+  activity        = [],
+  kpi             = DEFAULT_KPI,
+  projectProgress = 0,
 }: Props) {
   const t      = useTranslations('dashboard')
   const router = useRouter()
@@ -52,7 +48,7 @@ export function AdminDashboardClient({
   return (
     <div className="app-content">
 
-      {/* ── KPIs ── */}
+      {/* KPIs */}
       <div className="kpi-grid">
         <KpiCard
           label={t('kpi.activeConsultants')}
@@ -87,7 +83,7 @@ export function AdminDashboardClient({
         />
       </div>
 
-      {/* ── Projets actifs ── */}
+      {/* Projets actifs */}
       <Panel
         title={t('activeProjects')}
         action={{ label: t('seeAll'), onClick: () => router.push(p('/projects') as never) }}
@@ -104,7 +100,7 @@ export function AdminDashboardClient({
         </div>
       </Panel>
 
-      {/* ── Consultants + Activité + Calendrier ── */}
+      {/* Consultants + Activité + Calendrier */}
       <div className="two-col">
         <Panel
           title={t('consultants')}
@@ -120,7 +116,6 @@ export function AdminDashboardClient({
           <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
             <ActivityFeed items={activity} />
           </Panel>
-
           <Panel title={t('calendar')}>
             <MiniCalendar />
           </Panel>
