@@ -7,7 +7,17 @@ import { useAuthContext }  from '@/components/layout/AuthProvider'
 import { signOut }         from '@/lib/auth'
 import { useRouter }       from '@/lib/navigation'
 import { useEffect, useState } from 'react'
+import type React from 'react'
 import { supabase }        from '@/lib/supabase'
+
+// ── Type item nav ────────────────────────────────────────────
+type NavItem = {
+  label: string
+  icon:  string
+  href:  string
+  badge?: number | React.ReactNode
+  glow?: boolean
+}
 
 // ── Couleur accent par groupe ────────────────────────────────
 const GROUP_COLORS: Record<string, string> = {
@@ -144,9 +154,9 @@ export function Sidebar() {
     ...(isSuperAdmin || isAdmin ? [{
       group: 'Agents', key: 'agents',
       items: [{
-        label: 'Agentic AI', icon: '⚡', href: p('/ai'),
-        badge: <span style={{ color: 'var(--pink)', fontSize: 8 }}>BETA</span>,
-      }],
+        label: 'Agentic AI', icon: '◬', href: p('/ai'),
+        glow: true,
+      } as NavItem],
     }] : []),
   ]
 
@@ -220,7 +230,10 @@ export function Sidebar() {
                   </span>
                   {!collapsed && (
                     <>
-                      {item.label}
+                      {item.glow
+                        ? <span className="nav-label-glow">{item.label}</span>
+                        : item.label
+                      }
                       {item.badge && <span className="nav-badge">{item.badge}</span>}
                     </>
                   )}
@@ -302,6 +315,18 @@ export function Sidebar() {
           )}
         </div>
       </div>
+      <style>{`
+        @keyframes shimmer-ai {
+          0%,100% { color: var(--text2); text-shadow: none; }
+          40%     { color: var(--cyan);  text-shadow: 0 0 8px rgba(0,229,255,0.55); }
+          70%     { color: var(--pink);  text-shadow: 0 0 8px rgba(255,45,107,0.45); }
+        }
+        .nav-label-glow {
+          animation: shimmer-ai 3s ease-in-out infinite;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+        }
+      `}</style>
     </aside>
   )
 }
