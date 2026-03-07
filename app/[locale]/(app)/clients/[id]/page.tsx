@@ -1,37 +1,41 @@
 // app/[locale]/(app)/clients/[id]/page.tsx
-// ── Server Component ─────────────────────────────────────────
 
-import { cookies }              from 'next/headers'
-import { createServerClient }   from '@supabase/ssr'
-import { getTranslations }      from 'next-intl/server'
-import { notFound }             from 'next/navigation'
-import { Topbar }               from '@/components/layout/Topbar'
-import { ClientDetailClient }   from '@/components/clients/ClientDetailClient'
+import { cookies }            from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+import { getTranslations }    from 'next-intl/server'
+import { notFound }           from 'next/navigation'
+import { Topbar }             from '@/components/layout/Topbar'
+import { ClientDetailClient } from '@/components/clients/ClientDetailClient'
 
 interface Props {
-  params: Promise<{ id: string }>   // ← Next.js 15 : params est une Promise
+  params:       Promise<{ id: string }>
+  searchParams: Promise<{ tenant?: string }>
 }
 
-export default async function ClientDetailPage({ params }: Props) {
-  const { id }      = await params  // ← await obligatoire
+export default async function ClientDetailPage({ params, searchParams }: Props) {
+  const [{ id }, { tenant }] = await Promise.all([params, searchParams])
   const t           = await getTranslations('clients')
   const cookieStore = await cookies()
 
-  const supabase = createServerClient(
+  const { data: { user } } = await createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  ).auth.getUser()
+
+  const isSA = user?.app_metadata?.is_super_admin === true
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    isSA
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
+      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
   const [clientRes, projectsRes] = await Promise.all([
-    supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
-      .single(),
-
-    supabase
-      .from('projects')
+    supabase.from('clients').select('*').eq('id', id).single(),
+    supabase.from('projects')
       .select('id, name, status, end_date, budget_total')
       .eq('client_id', id)
       .order('end_date', { ascending: false }),
@@ -62,10 +66,7 @@ export default async function ClientDetailPage({ params }: Props) {
 
   return (
     <>
-      <Topbar
-        title={client.name}
-        breadcrumb={`${t('breadcrumb')} / ${client.name}`}
-      />
+      <Topbar title={client.name} breadcrumb={`${t('breadcrumb')} / ${client.name}`} />
       <ClientDetailClient client={client} projects={projects} />
     </>
   )

@@ -1,153 +1,83 @@
-'use client'
+// app/[locale]/(app)/leaves/page.tsx
 
-import { useState }         from 'react'
-import { useTranslations }  from 'next-intl'
-import { useAuthContext }   from '@/components/layout/AuthProvider'
-import { isAdmin, canEdit } from '@/lib/auth'
-import { Topbar }           from '@/components/layout/Topbar'
-import { Panel, StatRow }   from '@/components/ui'
-import { EmptyState }       from '@/components/ui/EmptyState'
-import { LeaveRequestCard } from '@/components/leaves/LeaveRequestCard'
-import { LeaveSolde }       from '@/components/leaves/LeaveSolde'
-import { LeaveRequestForm } from '@/components/leaves/LeaveRequestForm'
-import { useLeaveRequests, useConsultants, approveLeave, refuseLeave } from '@/lib/data'
-import { toast }            from '@/lib/toast'
-import type { LeaveRequest, LeaveStatus } from '@/types'
+import { cookies }            from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+import { getTranslations }    from 'next-intl/server'
+import { Topbar }             from '@/components/layout/Topbar'
+import { LeavesClient }       from '@/components/leaves/LeavesClient'
 
-function Skeleton({ h = 80 }: { h?: number }) {
-  return <div className="skeleton" style={{ height: h }} />
+interface Props {
+  searchParams: Promise<{ tenant?: string }>
 }
 
-export default function LeavesPage() {
-  const t        = useTranslations('conges')
-  const { user } = useAuthContext()
+export default async function LeavesPage({ searchParams }: Props) {
+  const { tenant }  = await searchParams
+  const t           = await getTranslations('conges')
+  const cookieStore = await cookies()
 
-  const adminAccess = isAdmin(user?.role)
-  const editAccess  = canEdit(user?.role)
-  const canRequest  = !!user
+  const { data: { user } } = await createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  ).auth.getUser()
 
-  const [filter,   setFilter]   = useState<LeaveStatus | 'all'>(editAccess ? 'pending' : 'all')
-  const [showForm, setShowForm] = useState(false)
-  const [refresh,  setRefresh]  = useState(0)
+  const role      = user?.app_metadata?.user_role as string | undefined
+  const userId    = user?.id
+  const companyId = user?.app_metadata?.company_id as string | undefined
+  const isSA      = user?.app_metadata?.is_super_admin === true
 
-  const { data: requests,    loading: lreq  } = useLeaveRequests(refresh)
-  const { data: consultants, loading: lcons } = useConsultants(refresh)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    isSA
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
+      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  )
 
-  const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
-    { label: t('filters.all'),      value: 'all'      },
-    { label: t('filters.pending'),  value: 'pending'  },
-    { label: t('filters.approved'), value: 'approved' },
-    { label: t('filters.refused'),  value: 'refused'  },
-  ]
+  let requestsQ    = supabase
+    .from('leave_requests')
+    .select('*, consultants(name, avatar_color, initials)')
+    .order('start_date', { ascending: false })
+    .limit(50)
 
-  const all = (requests ?? []) as LeaveRequest[]
+  let consultantsQ = supabase
+    .from('consultant_occupancy')
+    .select('id, name, initials, avatar_color, leave_days_left, rtt_left, user_id')
+    .order('name')
 
-  const scoped    = editAccess ? all : all.filter(r => r.consultantId === user?.id)
-  const visible   = scoped.filter(r => filter === 'all' || r.status === filter)
-  const pending   = scoped.filter(r => r.status === 'pending').length
-  const approved  = scoped.filter(r => r.status === 'approved').length
-  const refused   = scoped.filter(r => r.status === 'refused').length
-  const totalDays = scoped.reduce((s, r) => s + (r.days ?? 0), 0)
-
-  const stats = [
-    { value: pending,   label: t('stats.pending'),   color: 'var(--gold)'  },
-    { value: approved,  label: t('stats.approved'),  color: 'var(--green)' },
-    { value: refused,   label: t('stats.refused'),   color: 'var(--pink)'  },
-    { value: totalDays, label: t('stats.totalDays'), color: 'var(--text2)' },
-  ]
-
-  const handleApprove = async (id: string) => {
-    try   { await approveLeave(id); setRefresh(r => r + 1) }
-    catch (e) { toast.error(e) }
+  if (tenant) {
+    requestsQ    = requestsQ.eq('company_id', tenant)
+    consultantsQ = consultantsQ.eq('company_id', tenant)
   }
-  const handleRefuse = async (id: string) => {
-    try   { await refuseLeave(id); setRefresh(r => r + 1) }
-    catch (e) { toast.error(e) }
-  }
-  const handleSaved = () => setRefresh(r => r + 1)
+
+  const [requestsRes, consultantsRes] = await Promise.all([requestsQ, consultantsQ])
+
+  const requests = (requestsRes.data ?? []).map((r: any) => ({
+    id:            r.id,
+    consultantId:  r.consultant_id,
+    consultantName: r.consultants?.name ?? null,
+    avatarColor:   r.consultants?.avatar_color ?? 'green',
+    initials:      r.consultants?.initials ?? '??',
+    type:          r.type,
+    status:        r.status,
+    startDate:     r.start_date,
+    endDate:       r.end_date,
+    days:          r.days ?? null,
+    note:          r.note ?? null,
+  }))
+
+  const consultants = consultantsRes.data ?? []
 
   return (
     <>
-      <Topbar
-        title={t('title')}
-        breadcrumb={t('breadcrumb')}
-        ctaLabel={canRequest ? t('cta') : undefined}
-        onCta={canRequest ? () => setShowForm(true) : undefined}
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <LeavesClient
+        requests={requests}
+        consultants={consultants}
+        userRole={role}
+        userId={userId}
+        companyId={companyId}
       />
-
-      <div className="app-content">
-
-        <StatRow stats={stats} />
-
-        <div className="sort-bar">
-          {FILTERS.map(f => (
-            <button
-              key={f.value}
-              className={`btn ${filter === f.value ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setFilter(f.value)}
-            >
-              {f.label}
-              {f.value === 'pending' && pending > 0 && (
-                <span className="btn-badge">{pending}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="two-col">
-
-          <Panel
-            title={t('requests')}
-            action={editAccess && pending > 0
-              ? { label: `⚠ ${pending} ${t('toValidate')}`, onClick: () => setFilter('pending') }
-              : undefined
-            }
-          >
-            {lreq ? (
-              <Skeleton h={200} />
-            ) : visible.length === 0 ? (
-              <EmptyState message={t('noRequests')} />
-            ) : (
-              <>
-                {visible.map(r => (
-                  <LeaveRequestCard
-                    key={r.id}
-                    request={r}
-                    onApprove={editAccess ? handleApprove : undefined}
-                    onRefuse={editAccess  ? handleRefuse  : undefined}
-                  />
-                ))}
-                {visible.length >= 20 && (
-                  <div className="pagination-hint">
-                    {t('paginationHint', { count: visible.length })}
-                  </div>
-                )}
-              </>
-            )}
-          </Panel>
-
-          <Panel title={t('soldes.title')}>
-            {lcons ? (
-              <Skeleton h={200} />
-            ) : (
-              <LeaveSolde
-                consultants={consultants ?? []}
-                currentUserId={user?.id}
-                isConsultant={!editAccess}
-              />
-            )}
-          </Panel>
-
-        </div>
-
-      </div>
-
-      {showForm && (
-        <LeaveRequestForm
-          onClose={() => setShowForm(false)}
-          onSaved={handleSaved}
-        />
-      )}
     </>
   )
 }
