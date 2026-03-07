@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo }             from 'react'
+import { useTranslations }               from 'next-intl'
 
 import { Topbar }                        from '@/components/layout/Topbar'
 import { Panel }                         from '@/components/ui/Panel'
@@ -14,7 +15,7 @@ import { ProgressBar }                   from '@/components/ui/ProgressBar'
 import { useAuthContext }                from '@/components/layout/AuthProvider'
 import { canViewFinancials }             from '@/lib/auth'
 import { useConsultantProfitability }    from '@/lib/data'
-import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert, pluralFr } from '@/lib/utils'
+import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert } from '@/lib/utils'
 import type { AvatarColor }             from '@/types'
 
 // ── Composants locaux ─────────────────────────────────────────
@@ -23,31 +24,28 @@ function Skeleton({ h = 80 }: { h?: number }) {
   return <div className="skeleton" style={{ height: h }} />
 }
 
-/** Badge de pourcentage de marge colorisé */
 function MargeBadge({ pct }: { pct: number }) {
   const color = getMargeColor(pct)
   return (
-    <span className="marge-badge" style={{
-      background: `${color}22`,
-      border: `1px solid ${color}55`,
-      color,
-    }}>
+    <span className="marge-badge" style={{ background: `${color}22`, border: `1px solid ${color}55`, color }}>
       {pct}%
     </span>
   )
 }
 
-/** Badge type de contrat */
-function ContractBadge({ type }: { type: 'employee' | 'freelance' }) {
+function ContractBadge({ type, tCons }: { type: 'employee' | 'freelance'; tCons: any }) {
   return (
     <span className={`contract-badge contract-badge-${type}`}>
-      {type === 'freelance' ? 'Freelance' : 'Salarié'}
+      {tCons(type === 'freelance' ? 'contractType.freelance' : 'contractType.employee')}
     </span>
   )
 }
 
-/** Écart TJM cible vs coût réel */
-function CibleGap({ tjmCible, tjmCout }: { tjmCible: number | null; tjmCout: number | null }) {
+function CibleGap({ tjmCible, tjmCout, t }: {
+  tjmCible: number | null
+  tjmCout:  number | null
+  t:        any
+}) {
   if (!tjmCible || !tjmCout) return <span style={{ color: 'var(--text2)', fontSize: 10 }}>—</span>
   const gap    = tjmCible - tjmCout
   const gapPct = Math.round(gap / tjmCible * 100)
@@ -56,7 +54,7 @@ function CibleGap({ tjmCible, tjmCout }: { tjmCible: number | null; tjmCout: num
   return (
     <div className="cible-gap">
       <span className="cible-gap-pct" style={{ color }}>{sign}{gapPct}%</span>
-      <span className="cible-gap-detail">cible {tjmCible}€ · coût {tjmCout}€</span>
+      <span className="cible-gap-detail">{t('cibleGap', { cible: tjmCible, cout: tjmCout })}</span>
     </div>
   )
 }
@@ -64,15 +62,10 @@ function CibleGap({ tjmCible, tjmCout }: { tjmCible: number | null; tjmCout: num
 // ── Types ─────────────────────────────────────────────────────
 type SortKey = 'ca_genere' | 'marge_brute' | 'occupancy_rate' | 'marge_pct'
 
-const SORTS: { label: string; key: SortKey }[] = [
-  { label: 'CA',         key: 'ca_genere'      },
-  { label: 'Marge',      key: 'marge_brute'    },
-  { label: 'Marge %',    key: 'marge_pct'      },
-  { label: 'Occupation', key: 'occupancy_rate' },
-]
-
 // ── Page ──────────────────────────────────────────────────────
 export default function ProfitabilityPage() {
+  const t       = useTranslations('profitability')
+  const tCons   = useTranslations('consultants')
   const { user }        = useAuthContext()
   const financialAccess = canViewFinancials(user?.role)
   const [sort, setSort] = useState<SortKey>('ca_genere')
@@ -80,15 +73,21 @@ export default function ProfitabilityPage() {
   const { data: consultants, loading, error } = useConsultantProfitability()
 
   if (!financialAccess) {
-    return <EmptyState message="// accès restreint — admin uniquement" />
+    return <EmptyState message={t('restricted')} />
   }
+
+  const SORTS: { label: string; key: SortKey }[] = [
+    { label: t('sort.ca'),        key: 'ca_genere'      },
+    { label: t('sort.marge'),     key: 'marge_brute'    },
+    { label: t('sort.margePct'),  key: 'marge_pct'      },
+    { label: t('sort.occupation'),key: 'occupancy_rate' },
+  ]
 
   const sorted = useMemo(() =>
     [...(consultants ?? [])].sort((a, b) => ((b as any)[sort] ?? 0) - ((a as any)[sort] ?? 0)),
     [consultants, sort]
   )
 
-  // ── KPIs ──────────────────────────────────────────────────
   const totalCA    = sorted.reduce((s, c: any) => s + (c.ca_genere    ?? 0), 0)
   const totalMarge = sorted.reduce((s, c: any) => s + (c.marge_brute  ?? 0), 0)
   const avgOcc     = sorted.length
@@ -100,33 +99,30 @@ export default function ProfitabilityPage() {
 
   const alertCible = sorted.filter((c: any) => isCibleAlert(c.tjm_cible, c.tjm_cout)).length
 
-  // ── Render ────────────────────────────────────────────────
   return (
     <>
-      <Topbar title="Rentabilité" breadcrumb="// vue par consultant — admin only" />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
 
-        <AdminBadge label="🔒 Données confidentielles — Admin uniquement" />
+        <AdminBadge label={t('adminBadge')} />
 
-        {/* Alerte TJM cibles insuffisants */}
         {!loading && alertCible > 0 && (
           <div className="alert-warning">
-            ⚠ {alertCible} {pluralFr(alertCible, 'consultant')} avec un TJM cible insuffisant (&lt;10% de marge sur coût)
+            {t('alertCible', { count: alertCible })}
           </div>
         )}
 
-        {/* KPIs */}
         <div className="kpi-grid">
           {loading
             ? [0,1,2,3].map(i => <Skeleton key={i} h={100} />)
             : (
               <>
-                <KpiCard label="CA total équipe"   value={fmt(totalCA)}    accent="cyan"  />
-                <KpiCard label="Marge brute"        value={fmt(totalMarge)} accent="green" />
-                <KpiCard label="Taux occup. moyen"  value={`${avgOcc}%`}   accent="gold"  />
+                <KpiCard label={t('kpi.totalCA')}    value={fmt(totalCA)}    accent="cyan"  />
+                <KpiCard label={t('kpi.totalMarge')} value={fmt(totalMarge)} accent="green" />
+                <KpiCard label={t('kpi.avgOcc')}     value={`${avgOcc}%`}   accent="gold"  />
                 <KpiCard
-                  label="Marge moyenne"
+                  label={t('kpi.avgMarge')}
                   value={`${avgMarge}%`}
                   accent={avgMarge >= 20 ? 'green' : avgMarge >= 10 ? 'gold' : 'pink'}
                 />
@@ -135,9 +131,8 @@ export default function ProfitabilityPage() {
           }
         </div>
 
-        {/* Tri */}
         <div className="sort-bar">
-          <span className="label-meta">Trier par</span>
+          <span className="label-meta">{t('sort.label')}</span>
           {SORTS.map(s => (
             <button
               key={s.key}
@@ -149,34 +144,30 @@ export default function ProfitabilityPage() {
           ))}
         </div>
 
-        {/* Tableau */}
         <Panel
-          title={loading ? '…' : `${sorted.length} ${pluralFr(sorted.length, 'consultant')}`}
+          title={loading ? '…' : t('table.countLabel', { count: sorted.length })}
           noPadding
         >
           {loading ? (
             <div style={{ padding: 18 }}><Skeleton h={200} /></div>
           ) : error ? (
-            <EmptyState message={`// erreur chargement — ${error}`} />
+            <EmptyState message={t('table.errorLoading', { error })} />
           ) : sorted.length === 0 ? (
-            <EmptyState
-              message="// aucune donnée"
-              sub="Renseignez les TJM consultants et projets actifs"
-            />
+            <EmptyState message={t('table.noData')} sub={t('table.noDataSub')} />
           ) : (
             <>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Consultant</th>
-                      <th style={{ textAlign: 'right' }}>Coût réel</th>
-                      <th style={{ textAlign: 'right' }}>Cible vs coût</th>
-                      <th style={{ textAlign: 'right' }}>Jours générés</th>
-                      <th>Occupation</th>
-                      <th style={{ textAlign: 'right' }}>CA généré</th>
-                      <th style={{ textAlign: 'right' }}>Marge brute</th>
-                      <th>Marge %</th>
+                      <th>{t('table.consultant')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.coutReel')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.cibleVsCout')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.jours')}</th>
+                      <th>{t('table.occupation')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.ca')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.margeGross')}</th>
+                      <th>{t('table.margePct')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -189,7 +180,6 @@ export default function ProfitabilityPage() {
                       return (
                         <tr key={c.consultant_id}>
 
-                          {/* Consultant */}
                           <td>
                             <div className="consultant-cell">
                               <span className="consultant-cell-rank">#{i + 1}</span>
@@ -202,19 +192,21 @@ export default function ProfitabilityPage() {
                                 <div className="td-primary">{c.name}</div>
                                 <div className="consultant-cell-meta">
                                   <span style={{ fontSize: 9, color: 'var(--text2)' }}>{c.role}</span>
-                                  <ContractBadge type={c.contract_type ?? 'employee'} />
+                                  <ContractBadge type={c.contract_type ?? 'employee'} tCons={tCons} />
                                 </div>
                               </div>
                             </div>
                           </td>
 
-                          {/* TJM coût réel */}
                           <td style={{ textAlign: 'right' }}>
                             {c.tjm_cout != null ? (
                               <div className="tjm-cell">
                                 <span className="tjm-cell-value">{fmtTjm(c.tjm_cout)}</span>
                                 <span className="tjm-cell-label">
-                                  {c.contract_type === 'employee' ? 'chargé' : 'facturé'}
+                                  {c.contract_type === 'employee'
+                                    ? t('table.charged')
+                                    : t('table.billed')
+                                  }
                                 </span>
                               </div>
                             ) : (
@@ -222,17 +214,14 @@ export default function ProfitabilityPage() {
                             )}
                           </td>
 
-                          {/* Cible vs coût */}
                           <td style={{ textAlign: 'right' }}>
-                            <CibleGap tjmCible={c.tjm_cible} tjmCout={c.tjm_cout} />
+                            <CibleGap tjmCible={c.tjm_cible} tjmCout={c.tjm_cout} t={t} />
                           </td>
 
-                          {/* Jours */}
                           <td style={{ textAlign: 'right', color: 'var(--text2)' }}>
                             {c.jours_generes != null ? `${c.jours_generes}j` : '—'}
                           </td>
 
-                          {/* Occupation */}
                           <td style={{ minWidth: 140 }}>
                             <div className="occ-cell">
                               <span className="occ-cell-pct" style={{ color: oColor }}>{occ}%</span>
@@ -240,17 +229,14 @@ export default function ProfitabilityPage() {
                             </div>
                           </td>
 
-                          {/* CA */}
                           <td style={{ textAlign: 'right', fontWeight: 700 }}>
                             {c.ca_genere ? fmt(c.ca_genere) : '—'}
                           </td>
 
-                          {/* Marge brute */}
                           <td style={{ textAlign: 'right', fontWeight: 700, color: mColor }}>
                             {c.marge_brute ? fmt(c.marge_brute) : '—'}
                           </td>
 
-                          {/* Marge % */}
                           <td style={{ minWidth: 140 }}>
                             {c.marge_pct != null ? (
                               <div className="occ-cell">
@@ -269,7 +255,7 @@ export default function ProfitabilityPage() {
                 </table>
               </div>
 
-              <MargeLegend note="Coût réel = salaire chargé / 218j (salarié) · tarif facturé (freelance)" />
+              <MargeLegend note={t('legend.costNote')} />
             </>
           )}
         </Panel>

@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
             {lP ? (
               <Skeleton h={80} />
             ) : activeProjects.length === 0 ? (
-              <EmptyState message="// aucun projet actif" />
+              <EmptyState message={t('noActiveProjects')} />
             ) : (
               activeProjects.map(proj => (
                 <ProjectRow key={proj.id} project={proj} consultants={consultants ?? []} />

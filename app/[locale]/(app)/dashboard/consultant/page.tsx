@@ -14,22 +14,14 @@ import {
   useLeaveRequests,
   useTimesheets,
 } from '@/lib/data'
-import { getMondayOf, toISO} from '@/lib/utils'
-// ── Helpers date ──────────────────────────────────────────────
-
+import { getMondayOf, toISO } from '@/lib/utils'
 
 // ── Pill statut consultant ────────────────────────────────────
 
-const STATUS_CFG: Record<string, { cls: string; label: string }> = {
-  assigned:  { cls: 'cons-status cons-status--assigned',  label: 'En mission'  },
-  available: { cls: 'cons-status cons-status--available', label: 'Disponible'  },
-  partial:   { cls: 'cons-status cons-status--partial',   label: 'Partiel'     },
-  leave:     { cls: 'cons-status cons-status--leave',     label: 'En congé'    },
-}
-
-function StatusPill({ status }: { status: string }) {
-  const cfg = STATUS_CFG[status] ?? { cls: 'cons-status cons-status--default', label: status }
-  return <span className={cfg.cls}>{cfg.label}</span>
+function StatusPill({ status, t }: { status: string; t: any }) {
+  const key = ['assigned','available','partial','leave'].includes(status) ? status : null
+  const label = key ? t(`statuses.${key}`) : status
+  return <span className={`cons-status cons-status--${key ?? 'default'}`}>{label}</span>
 }
 
 // ── Badge statut congé ────────────────────────────────────────
@@ -51,16 +43,16 @@ function CraCell({ d, ts, isToday }: {
   const val = ts?.value
   const cls = [
     'cra-cell',
-    isToday             ? 'cra-cell--today'   : '',
-    val === 1           ? 'cra-cell--full'     : '',
-    val === 0.5         ? 'cra-cell--half'     : '',
-    !val                ? 'cra-cell--empty'    : '',
+    isToday     ? 'cra-cell--today' : '',
+    val === 1   ? 'cra-cell--full'  : '',
+    val === 0.5 ? 'cra-cell--half'  : '',
+    !val        ? 'cra-cell--empty' : '',
   ].join(' ')
 
   return (
     <div className="cra-day">
       <div className={`cra-dow ${isToday ? 'cra-dow--today' : ''}`}>
-        {d.toLocaleDateString('fr-FR', { weekday: 'short' }).slice(0, 2)}
+        {d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2)}
       </div>
       <div className={cls}>
         {val === 1 ? '1' : val === 0.5 ? '½' : '—'}
@@ -74,6 +66,7 @@ function CraCell({ d, ts, isToday }: {
 // ══════════════════════════════════════════════════════════════
 
 export default function DashboardConsultantPage() {
+  const t           = useTranslations('dashboardConsultant')
   const { user }    = useAuthContext()
   const isFreelance = user?.role === 'freelance'
   const monday      = getMondayOf(new Date())
@@ -83,7 +76,6 @@ export default function DashboardConsultantPage() {
   const { data: leaves }         = useLeaveRequests()
   const { data: timesheets }     = useTimesheets(monday)
 
-  // Consultant lié à ce user
   const me = useMemo(
     () => (allConsultants ?? []).find(c => c.user_id === user?.id),
     [allConsultants, user?.id]
@@ -101,11 +93,10 @@ export default function DashboardConsultantPage() {
 
   const pendingLeaves = myLeaves.filter(l => l.status === 'pending')
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 5 }, (_, i) =>
-      new Date(monday.getTime() + i * 86400000)
-    )
-  }, [monday])
+  const weekDays = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => new Date(monday.getTime() + i * 86400000)),
+    [monday]
+  )
 
   const myTimesheets = useMemo(
     () => (timesheets ?? []).filter(ts => ts.consultantId === me?.id),
@@ -114,16 +105,15 @@ export default function DashboardConsultantPage() {
 
   const weekTotal = myTimesheets.reduce((s, ts) => s + (ts.value ?? 0), 0)
   const hasDraft  = myTimesheets.some(ts => ts.status === 'draft' && (ts.value ?? 0) > 0)
-
-  const loading = !allConsultants || !projectsMap
+  const loading   = !allConsultants || !projectsMap
 
   // ── Loading ───────────────────────────────────────────────
   if (loading) {
     return (
       <>
-        <Topbar title="Dashboard" breadcrumb="// my space" />
+        <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
         <div className="app-content">
-          <EmptyState message="// loading…" />
+          <EmptyState message={t('loading')} />
         </div>
       </>
     )
@@ -133,16 +123,13 @@ export default function DashboardConsultantPage() {
   if (!me) {
     return (
       <>
-        <Topbar title="Dashboard" breadcrumb="// my space" />
+        <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
         <div className="app-content">
           <Panel>
             <div className="cons-unlinked">
               <div className="cons-unlinked-icon">◈</div>
-              <div className="cons-unlinked-title">// compte non lié</div>
-              <div className="cons-unlinked-msg">
-                Ton compte n'est pas encore associé à un profil consultant.
-                Contacte ton administrateur.
-              </div>
+              <div className="cons-unlinked-title">{t('unlinked.title')}</div>
+              <div className="cons-unlinked-msg">{t('unlinked.msg')}</div>
             </div>
           </Panel>
         </div>
@@ -150,14 +137,12 @@ export default function DashboardConsultantPage() {
     )
   }
 
-  // ── KPI couleurs ─────────────────────────────────────────
-  const occRate = me.occupancyRate ?? 0
+  const occRate   = me.occupancyRate ?? 0
   const occAccent = occRate >= 80 ? 'green' : occRate > 0 ? 'gold' : undefined
 
-  // ── Render ────────────────────────────────────────────────
   return (
     <>
-      <Topbar title="Dashboard" breadcrumb="// my space" />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
 
@@ -171,40 +156,40 @@ export default function DashboardConsultantPage() {
               {isFreelance && <span className="cons-freelance-badge">FREELANCE</span>}
             </div>
           </div>
-          <StatusPill status={me.status ?? 'available'} />
+          <StatusPill status={me.status ?? 'available'} t={t} />
         </div>
 
-        {/* KPIs — gridTemplateColumns dynamique (isFreelance) → inline */}
+        {/* KPIs */}
         <div
           className="kpi-grid"
           style={{ gridTemplateColumns: `repeat(${isFreelance ? 3 : 4}, 1fr)`, marginBottom: 24 }}
         >
           <KpiCard
-            label="Missions actives"
+            label={t('kpi.missions')}
             value={myProjects.length}
             accent="cyan"
             sub={myProjects.length === 0
-              ? 'Aucune mission en cours'
+              ? t('kpi.noMission')
               : myProjects.map(p => p.name).join(', ')
             }
           />
           <KpiCard
-            label="Taux d'occupation"
+            label={t('kpi.occupancy')}
             value={`${occRate}%`}
             accent={occAccent ?? 'cyan'}
           />
           <KpiCard
-            label="CRA semaine"
+            label={t('kpi.cra')}
             value={weekTotal > 0 ? `${weekTotal}j` : '—'}
             accent={weekTotal >= 5 ? 'green' : weekTotal > 0 ? 'gold' : 'cyan'}
-            sub={hasDraft ? '⚠ brouillon non soumis' : weekTotal >= 5 ? '✓ semaine complète' : undefined}
+            sub={hasDraft ? t('kpi.draftWarn') : weekTotal >= 5 ? t('kpi.weekDone') : undefined}
           />
           {!isFreelance && (
             <KpiCard
-              label="Congés restants"
+              label={t('kpi.leaves')}
               value={me.leaveDaysLeft ?? 0}
               accent="cyan"
-              sub={`RTT : ${me.rttLeft ?? 0}j`}
+              sub={t('kpi.rttLeft', { count: me.rttLeft ?? 0 })}
             />
           )}
         </div>
@@ -212,18 +197,17 @@ export default function DashboardConsultantPage() {
         {/* Missions + CRA */}
         <div className="two-col" style={{ marginBottom: 16 }}>
 
-          {/* Missions */}
           <Panel>
-            <div className="panel-section-label">◧ Mes missions</div>
+            <div className="panel-section-label">{t('missions.label')}</div>
             {myProjects.length === 0 ? (
-              <EmptyState message="// aucune mission active" />
+              <EmptyState message={t('missions.empty')} />
             ) : (
               <div className="mission-list">
                 {myProjects.map(project => (
                   <div key={project.id} className="mission-item">
                     <div>
                       <div className="mission-name">{project.name}</div>
-                      <div className="mission-meta">projet actif</div>
+                      <div className="mission-meta">{t('missions.active')}</div>
                     </div>
                     <span className="mission-dot" />
                   </div>
@@ -232,9 +216,8 @@ export default function DashboardConsultantPage() {
             )}
           </Panel>
 
-          {/* CRA semaine */}
           <Panel>
-            <div className="panel-section-label">⏱ CRA — semaine courante</div>
+            <div className="panel-section-label">{t('cra.label')}</div>
             <div className="cra-week">
               {weekDays.map(d => {
                 const iso = toISO(d)
@@ -242,15 +225,15 @@ export default function DashboardConsultantPage() {
                   <CraCell
                     key={iso}
                     d={d}
-                    ts={myTimesheets.find(t => t.date === iso)}
+                    ts={myTimesheets.find(ts => ts.date === iso)}
                     isToday={iso === toISO(new Date())}
                   />
                 )
               })}
             </div>
             <div className="cra-footer">
-              Total : <span className="cra-total">{weekTotal}j</span>
-              {hasDraft && <span className="cra-draft-warn">⚠ à soumettre</span>}
+              {t('cra.total')} <span className="cra-total">{weekTotal}j</span>
+              {hasDraft && <span className="cra-draft-warn">{t('cra.draft')}</span>}
             </div>
           </Panel>
         </div>
@@ -258,13 +241,13 @@ export default function DashboardConsultantPage() {
         {/* Congés — salariés uniquement */}
         {!isFreelance && (
           <Panel>
-            <div className="panel-section-label">◷ Mes congés</div>
+            <div className="panel-section-label">{t('leaves.label')}</div>
 
             <div className="leave-counters">
               {[
-                { label: 'CP restants',  value: me.leaveDaysLeft ?? 0, total: me.leaveDaysTotal ?? 25, color: 'var(--green)' },
-                { label: 'RTT restants', value: me.rttLeft ?? 0,        total: me.rttTotal ?? 10,       color: 'var(--cyan)'  },
-                { label: 'En attente',   value: pendingLeaves.length,    total: null,                    color: 'var(--gold)'  },
+                { label: t('leaves.cp'),      value: me.leaveDaysLeft ?? 0, total: me.leaveDaysTotal ?? 25, color: 'var(--green)' },
+                { label: t('leaves.rtt'),     value: me.rttLeft ?? 0,       total: me.rttTotal ?? 10,       color: 'var(--cyan)'  },
+                { label: t('leaves.pending'), value: pendingLeaves.length,  total: null,                    color: 'var(--gold)'  },
               ].map(({ label, value, total, color }) => (
                 <div key={label} className="leave-counter">
                   <div className="leave-counter-label">{label}</div>
@@ -277,7 +260,7 @@ export default function DashboardConsultantPage() {
             </div>
 
             {myLeaves.length === 0 ? (
-              <EmptyState message="// aucune demande de congé" />
+              <EmptyState message={t('leaves.empty')} />
             ) : (
               <div className="leave-list">
                 {myLeaves.slice(0, 4).map(l => (

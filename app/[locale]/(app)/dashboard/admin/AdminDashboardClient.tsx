@@ -61,7 +61,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
 
       <div className="app-content">
 
-        {/* KPIs — données déjà là, pas de skeleton */}
+        {/* KPIs */}
         <div className="kpi-grid">
           <KpiCard
             label={t('kpi.activeConsultants')}
@@ -105,7 +105,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
         >
           <div style={{ padding: '0 18px' }}>
             {activeProjects.length === 0 ? (
-              <EmptyState message="// aucun projet actif" />
+              <EmptyState message={t('noActiveProjects')} />
             ) : (
               activeProjects.map(proj => (
                 <ProjectRow key={proj.id} project={proj} consultants={consultants} />

@@ -8,18 +8,14 @@ import { ConsultantItem }   from '@/components/consultants/ConsultantItem'
 import { ActivityFeed }     from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }     from '@/components/dashboard/MiniCalendar'
 import { useConsultants, useLeaveRequests, useTimesheets, useActivity } from '@/lib/data'
-import { pluralFr }         from '@/lib/utils'
-import { getMondayOf} from '@/lib/utils'
-
-
+import { getMondayOf }      from '@/lib/utils'
 
 function Skeleton({ h = 80 }: { h?: number }) {
   return <div className="skeleton" style={{ height: h }} />
 }
 
-// ── Page ──────────────────────────────────────────────────────
-
 export default function ManagerDashboardPage() {
+  const t      = useTranslations('dashboardManager')
   const monday = getMondayOf(new Date())
 
   const { data: consultants, loading: lC } = useConsultants()
@@ -29,7 +25,6 @@ export default function ManagerDashboardPage() {
 
   const list = consultants ?? []
 
-  // ── KPIs ─────────────────────────────────────────────────
   const available    = list.filter(c => c.status === 'available').length
   const assigned     = list.filter(c => c.status === 'assigned').length
   const pendingLeave = (leaveReqs ?? []).filter(l => l.status === 'pending')
@@ -40,33 +35,31 @@ export default function ManagerDashboardPage() {
 
   return (
     <>
-      <Topbar title="Vue équipe" breadcrumb="Dashboard" />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
 
-        {/* KPIs */}
         <div className="kpi-grid">
           <KpiCard
-            label="Disponibles"
+            label={t('kpi.available')}
             value={available}
             valueSuffix={`/${list.length}`}
             accent="green"
             progress={list.length ? Math.round((available / list.length) * 100) : 0}
           />
           <KpiCard
-            label="En mission"
+            label={t('kpi.assigned')}
             value={assigned}
             accent="cyan"
             progress={list.length ? Math.round((assigned / list.length) * 100) : 0}
           />
-          <KpiCard label="Congés en attente" value={pendingLeave.length} accent="pink" />
-          <KpiCard label="Taux d'occupation" value={avgOcc} valueSuffix="%" accent="gold" progress={avgOcc} />
+          <KpiCard label={t('kpi.pendingLeave')} value={pendingLeave.length} accent="pink" />
+          <KpiCard label={t('kpi.occupancy')} value={avgOcc} valueSuffix="%" accent="gold" progress={avgOcc} />
         </div>
 
         <div className="two-col">
 
-          {/* Équipe */}
-          <Panel title="Mon équipe">
+          <Panel title={t('team')}>
             {lC
               ? <Skeleton h={200} />
               : list.map(c => <ConsultantItem key={c.id} consultant={c} />)
@@ -75,21 +68,19 @@ export default function ManagerDashboardPage() {
 
           <div className="dashboard-side">
 
-            {/* CRA à valider */}
-            <Panel title="CRA à valider">
+            <Panel title={t('cra.title')}>
               {pendingCra === 0 ? (
-                <EmptyState message="✓ Aucun CRA en attente" />
+                <EmptyState message={t('cra.empty')} />
               ) : (
                 <p className="manager-pending-cra">
-                  {pendingCra} {pluralFr(pendingCra, 'entrée')} à approuver cette semaine
+                  {t('cra.pending', { count: pendingCra })}
                 </p>
               )}
             </Panel>
 
-            {/* Demandes de congés */}
-            <Panel title="Demandes de congés">
+            <Panel title={t('leaves.title')}>
               {lL ? <Skeleton h={80} /> : pendingLeave.length === 0 ? (
-                <EmptyState message="✓ Aucune demande en attente" />
+                <EmptyState message={t('leaves.empty')} />
               ) : (
                 <div className="manager-leave-list">
                   {pendingLeave.slice(0, 4).map(l => (
@@ -105,12 +96,11 @@ export default function ManagerDashboardPage() {
               )}
             </Panel>
 
-            {/* Activité */}
-            <Panel title="Activité récente">
+            <Panel title={t('activity')}>
               {lA ? <Skeleton h={80} /> : <ActivityFeed items={activity ?? []} />}
             </Panel>
 
-            <Panel title="Calendrier">
+            <Panel title={t('calendar')}>
               <MiniCalendar />
             </Panel>
 

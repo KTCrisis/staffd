@@ -2,15 +2,14 @@
 
 // ══════════════════════════════════════════════════════════════
 // app/[locale]/(app)/settings/page.tsx
-// Orchestrateur : tabs + routing. Toute la logique est dans
-// les composants settings/XxxTab.tsx
 // ══════════════════════════════════════════════════════════════
 
-import { useState, useEffect } from 'react'
-import { useAuthContext }      from '@/components/layout/AuthProvider'
+import { useState, useEffect }   from 'react'
+import { useTranslations }       from 'next-intl'
+import { useAuthContext }        from '@/components/layout/AuthProvider'
 import { isAdmin, isSuperAdmin } from '@/lib/auth'
-import { useRouter }           from '@/lib/navigation'
-import { Topbar }              from '@/components/layout/Topbar'
+import { useRouter }             from '@/lib/navigation'
+import { Topbar }                from '@/components/layout/Topbar'
 
 import { CompanyTab }    from '@/components/settings/CompanyTab'
 import { TeamTab }       from '@/components/settings/TeamTab'
@@ -23,20 +22,23 @@ import { SuperAdminTab } from '@/components/settings/SuperAdminTab'
 
 type Tab = 'company' | 'team' | 'hr' | 'billing' | 'ai' | 'superadmin'
 
-const TABS: { id: Tab; label: string; icon: string; superOnly?: boolean }[] = [
-  { id: 'company',    label: 'Company',     icon: '🏢' },
-  { id: 'team',       label: 'Team',        icon: '◈'  },
-  { id: 'hr',         label: 'HR',          icon: '📅' },
-  { id: 'billing',    label: 'Billing',     icon: '🧾' },
-  { id: 'ai',         label: 'AI & MCP',    icon: '🤖' },
-  { id: 'superadmin', label: 'Super Admin', icon: '⬡',  superOnly: true },
-]
+const TAB_ICONS: Record<Tab, string> = {
+  company:    '🏢',
+  team:       '◈',
+  hr:         '📅',
+  billing:    '🧾',
+  ai:         '🤖',
+  superadmin: '⬡',
+}
+
+const TAB_IDS: Tab[] = ['company', 'team', 'hr', 'billing', 'ai', 'superadmin']
 
 // ══════════════════════════════════════════════════════════════
 // PAGE
 // ══════════════════════════════════════════════════════════════
 
 export default function SettingsPage() {
+  const t           = useTranslations('settings')
   const { user }    = useAuthContext()
   const router      = useRouter()
   const adminAccess = isAdmin(user?.role)
@@ -50,30 +52,28 @@ export default function SettingsPage() {
 
   if (!user || !adminAccess) return null
 
-  const visibleTabs = TABS.filter(tab => !tab.superOnly || superAccess)
-  const ctaLabel    = activeTab === 'team' ? '+ Nouvelle équipe' : undefined
+  const visibleTabs = TAB_IDS.filter(id => id !== 'superadmin' || superAccess)
+  const ctaLabel    = activeTab === 'team' ? t('ctaNewTeam') : undefined
 
   return (
     <>
-      <Topbar title="Settings" breadcrumb="// configuration" ctaLabel={ctaLabel} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} ctaLabel={ctaLabel} />
 
       <div className="app-content settings-layout">
 
-        {/* Tabs */}
         <div className="settings-tabs">
-          {visibleTabs.map(tab => (
+          {visibleTabs.map(id => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`settings-tab ${activeTab === tab.id ? 'settings-tab--active' : ''}`}
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`settings-tab ${activeTab === id ? 'settings-tab--active' : ''}`}
             >
-              <span>{tab.icon}</span>
-              {tab.label}
+              <span>{TAB_ICONS[id]}</span>
+              {t(`tabs.${id}`)}
             </button>
           ))}
         </div>
 
-        {/* Contenu par onglet */}
         {activeTab === 'company'    && <CompanyTab />}
         {activeTab === 'team'       && <TeamTab companyId={user.companyId ?? ''} />}
         {activeTab === 'hr'         && <HRTab />}

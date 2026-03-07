@@ -13,7 +13,7 @@ import { EmptyState }        from '@/components/ui/EmptyState'
 import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
 import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
 import { useConsultants, deleteConsultant } from '@/lib/data'
-import { toast } from '@/lib/toast'
+import { toast }             from '@/lib/toast'
 import type { ConsultantStatus, Consultant } from '@/types'
 
 function Skeleton({ h = 80 }: { h?: number }) {
@@ -115,11 +115,7 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
         {t('deleteConfirm.message', { name })}
       </div>
       <div className="cons-delete-actions">
-        <button
-          className="btn btn-sm cons-delete-btn"
-          onClick={onConfirm}
-          disabled={loading}
-        >
+        <button className="btn btn-sm cons-delete-btn" onClick={onConfirm} disabled={loading}>
           {loading ? '...' : t('deleteConfirm.confirm')}
         </button>
         <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={onCancel}>
@@ -182,8 +178,8 @@ export default function ConsultantsPage() {
 
   const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
 
-  const handleSaved   = () => setRefresh(r => r + 1)
-  const closeDrawer   = () => { setSelected(null); setConfirmDelete(false); setInviteStatus('idle') }
+  const handleSaved = () => setRefresh(r => r + 1)
+  const closeDrawer = () => { setSelected(null); setConfirmDelete(false); setInviteStatus('idle') }
 
   const handleDelete = async () => {
     if (!selected) return
@@ -202,7 +198,7 @@ export default function ConsultantsPage() {
     setInviteLoading(true)
     setInviteStatus('idle')
     try {
-      const res = await fetch('/api/invite', {
+      const res  = await fetch('/api/invite', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ consultantId: selected.id, email: selected.email, companyId: user?.companyId }),
@@ -215,12 +211,12 @@ export default function ConsultantsPage() {
     finally  { setInviteLoading(false) }
   }
 
-  // Lignes données consultant dans le drawer
+  // ── Drawer rows ─────────────────────────────────────────────
   const drawerRows = selected ? [
     { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
     { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
     { label: t('drawer.available'), value: selected.availableFrom
-        ? new Date(selected.availableFrom).toLocaleDateString('fr-FR')
+        ? new Date(selected.availableFrom).toLocaleDateString()
         : t('now') },
     ...(selected.contractType !== 'freelance'
       ? [{ label: t('drawer.leaveDays'), value: `${selected.leaveDaysLeft} ${tCommon('days')}` }]
@@ -228,12 +224,15 @@ export default function ConsultantsPage() {
     { label: t('drawer.occupancy'), value: `${selected.occupancyRate}%` },
     ...(financialAccess ? [
       ...(selected.tjmCoutReel != null
-        ? [{ label: t('drawer.tjmCout'), value: `${selected.tjmCoutReel} €/j · ${selected.contractType === 'freelance' ? 'facturé' : 'chargé'}` }]
+        ? [{ label: t('drawer.tjmCout'), value: t('drawer.tjmCoutValue', {
+              value: selected.tjmCoutReel,
+              label: t(selected.contractType === 'freelance' ? 'costLabels.billed' : 'costLabels.charged'),
+            }) }]
         : selected.tjm != null
         ? [{ label: t('drawer.tjmCout'), value: `${selected.tjm} €/j` }]
         : []),
       ...(selected.tjmCible != null
-        ? [{ label: t('drawer.tjmCible'), value: `${selected.tjmCible} €/j cible` }]
+        ? [{ label: t('drawer.tjmCible'), value: t('drawer.tjmCibleValue', { value: selected.tjmCible }) }]
         : []),
     ] : []),
   ] as { label: string; value: React.ReactNode }[] : []
@@ -251,7 +250,6 @@ export default function ConsultantsPage() {
 
         <StatRow stats={stats} />
 
-        {/* Filtres + search */}
         <div className="sort-bar" style={{ flexWrap: 'wrap' }}>
           {FILTERS.map(f => (
             <button
@@ -284,14 +282,12 @@ export default function ConsultantsPage() {
           )}
         </Panel>
 
-        {/* Overlay + Drawer */}
         {selected && (
           <>
             <div className="drawer-overlay" onClick={closeDrawer} />
 
             <div className="cons-drawer">
 
-              {/* Header */}
               <div className="cons-drawer-header">
                 <span className="label-meta">{t('drawer.label')}</span>
                 <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>
@@ -299,7 +295,6 @@ export default function ConsultantsPage() {
                 </button>
               </div>
 
-              {/* Avatar + nom */}
               <div className="cons-drawer-profile">
                 <Avatar initials={selected.initials} color={selected.avatarColor} size="md" />
                 <div>
@@ -308,13 +303,10 @@ export default function ConsultantsPage() {
                     <span className="cons-drawer-role">{selected.role}</span>
                     {selected.contractType && <ContractBadge type={selected.contractType} />}
                   </div>
-                  {selected.email && (
-                    <div className="cons-drawer-email">{selected.email}</div>
-                  )}
+                  {selected.email && <div className="cons-drawer-email">{selected.email}</div>}
                 </div>
               </div>
 
-              {/* Données */}
               {drawerRows.map(row => (
                 <div key={row.label} className="project-drawer-row">
                   <span className="project-drawer-row-label">{row.label}</span>
@@ -322,7 +314,6 @@ export default function ConsultantsPage() {
                 </div>
               ))}
 
-              {/* Stack */}
               {selected.stack && selected.stack.length > 0 && (
                 <div className="cons-section">
                   <div className="label-meta" style={{ marginBottom: 8 }}>Stack</div>
@@ -334,14 +325,12 @@ export default function ConsultantsPage() {
                 </div>
               )}
 
-              {/* Taux d'occupation */}
               <div className="cons-section">
                 <div className="label-meta" style={{ marginBottom: 8 }}>{t('drawer.rateLabel')}</div>
                 <div className="cons-occ-value">{selected.occupancyRate}%</div>
                 <ProgressBar value={selected.occupancyRate} style={{ height: 6 }} />
               </div>
 
-              {/* Accès compte */}
               {adminAccess && (
                 <AccountSection
                   selected={selected}
@@ -351,7 +340,6 @@ export default function ConsultantsPage() {
                 />
               )}
 
-              {/* Actions */}
               {editAccess && (
                 <div className="cons-drawer-actions">
                   <button
@@ -367,13 +355,12 @@ export default function ConsultantsPage() {
                       style={{ flex: 1, color: 'var(--pink)' }}
                       onClick={() => setConfirmDelete(true)}
                     >
-                      ✕ Supprimer
+                      {t('deleteBtn')}
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Confirmation delete */}
               {confirmDelete && (
                 <DeleteConfirm
                   name={selected.name}
@@ -387,7 +374,6 @@ export default function ConsultantsPage() {
           </>
         )}
 
-        {/* Formulaires */}
         {showForm && (
           <ConsultantForm onClose={() => setShowForm(false)} onSaved={handleSaved} />
         )}

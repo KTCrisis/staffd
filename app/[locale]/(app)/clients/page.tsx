@@ -9,6 +9,7 @@ import { EmptyState }      from '@/components/ui/EmptyState'
 import { ClientForm }      from '@/components/clients/ClientForm'
 import { useClients, deleteClient } from '@/lib/data'
 import { SECTORS }         from '@/components/clients/ClientForm'
+import { toast }           from '@/lib/toast'
 import type { Client }     from '@/types'
 
 type FilterValue = 'all' | typeof SECTORS[number]
@@ -38,16 +39,16 @@ export default function ClientsPage() {
     { value: (clients ?? []).filter(c => (c.activeProjects ?? 0) > 0).length, label: t('stats.active'),  color: 'var(--green)' },
   ]
 
-  function openCreate()                          { setEditClient(null); setFormOpen(true) }
-  function openEdit(c: Client, e: React.MouseEvent) { e.stopPropagation(); setEditClient(c); setFormOpen(true) }
+  function openCreate()                               { setEditClient(null); setFormOpen(true) }
+  function openEdit(c: Client, e: React.MouseEvent)  { e.stopPropagation(); setEditClient(c); setFormOpen(true) }
 
   async function handleDelete(c: Client, e: React.MouseEvent) {
     e.stopPropagation()
     if (!confirm(t('confirmDelete', { name: c.name }))) return
     setDeleting(true)
     try   { await deleteClient(c.id); setRefresh(r => r + 1) }
-    catch (err: any) { alert(err.message) }
-    finally { setDeleting(false) }
+    catch (err) { toast.error(err) }
+    finally     { setDeleting(false) }
   }
 
   return (
@@ -131,7 +132,7 @@ export default function ClientsPage() {
                               className="client-projects"
                               style={{ color: c.activeProjects > 0 ? 'var(--green)' : 'var(--text2)' }}
                             >
-                              {c.activeProjects} actif{c.activeProjects > 1 ? 's' : ''}
+                              {t('activeCount', { count: c.activeProjects })}
                             </span>
                           ) : <span className="td-empty">—</span>}
                         </td>

@@ -7,6 +7,7 @@ import { Panel, StatRow, Badge } from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ProjectForm }     from '@/components/projects/ProjectForm'
 import { AssignmentModal } from '@/components/projects/AssignmentModal'
+import { toast }           from '@/lib/toast'
 import {
   useProjects, useProjectAssignments,
   archiveProject, deleteProject, deleteAssignment,
@@ -33,7 +34,7 @@ function DeadlineChip({ date, t }: { date?: string; t: (k: string) => string }) 
   const label = days < 0 ? t('deadline.overdue') : days === 0 ? t('deadline.today') : `${days} ${t('deadline.daysLeft')}`
   return (
     <span className="deadline-chip" style={{ color, fontWeight: days <= 14 ? 700 : 400 }}>
-      {new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}
+      {new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: '2-digit' })}
       <span className="deadline-chip-label">({label})</span>
     </span>
   )
@@ -73,7 +74,7 @@ function TeamAvatars({ team }: {
   )
 }
 
-// ── ProjectTeam (section équipe dans le drawer) ───────────────
+// ── ProjectTeam ───────────────────────────────────────────────
 
 function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
   project:           Project
@@ -89,7 +90,7 @@ function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
     if (!confirm(t('confirmRemove'))) return
     setRemoving(id)
     try   { await deleteAssignment(id); onRefresh() }
-    catch (e: any) { alert(e.message) }
+    catch (e) { toast.error(e) }
     finally { setRemoving(null) }
   }
 
@@ -190,7 +191,7 @@ export default function ProjectsPage() {
     if (!confirm(t('confirmArchive', { name: p.name }))) return
     setArchiving(true)
     try   { await archiveProject(p.id); setSelected(null); setRefresh(r => r + 1) }
-    catch (e: any) { alert(e.message) }
+    catch (e) { toast.error(e) }
     finally { setArchiving(false) }
   }
 
@@ -198,7 +199,7 @@ export default function ProjectsPage() {
     if (!confirm(t('confirmDelete', { name: p.name }))) return
     setDeleting(true)
     try   { await deleteProject(p.id); setSelected(null); setRefresh(r => r + 1) }
-    catch (e: any) { alert(e.message) }
+    catch (e) { toast.error(e) }
     finally { setDeleting(false) }
   }
 
@@ -209,7 +210,6 @@ export default function ProjectsPage() {
       <div className="app-content">
         <StatRow stats={stats} />
 
-        {/* Filtres */}
         <div className="sort-bar" style={{ flexWrap: 'wrap' }}>
           {FILTERS.map(f => (
             <button
@@ -222,7 +222,6 @@ export default function ProjectsPage() {
           ))}
         </div>
 
-        {/* Loading */}
         {loading && (
           <Panel noPadding>
             <div className="skeleton-list">
@@ -231,10 +230,8 @@ export default function ProjectsPage() {
           </Panel>
         )}
 
-        {/* Erreur */}
         {error && <p className="ts-status-msg ts-status-msg--error">{t('error')}: {error}</p>}
 
-        {/* Table */}
         {!loading && !error && (
           <Panel noPadding>
             {visible.length === 0 ? (
@@ -325,11 +322,11 @@ export default function ProjectsPage() {
 
             {([
               { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
-              { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString('fr-FR') : '—' },
+              { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString() : '—' },
               { label: t('drawer.deadline'),  value: <DeadlineChip date={selected.endDate} t={t} /> },
-              ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                          : []),
-              ...(selected.joursVendus ? [{ label: t('drawer.jours'),  value: `${selected.joursVendus} j` }]                         : []),
-              ...(selected.budgetTotal ? [{ label: t('drawer.budget'), value: `${selected.budgetTotal.toLocaleString('fr-FR')} €` }] : []),
+              ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                   : []),
+              ...(selected.joursVendus ? [{ label: t('drawer.jours'),  value: `${selected.joursVendus} j` }]                  : []),
+              ...(selected.budgetTotal ? [{ label: t('drawer.budget'), value: `${selected.budgetTotal.toLocaleString()} €` }] : []),
             ] as { label: string; value: React.ReactNode }[]).map((row, i) => (
               <div key={i} className="project-drawer-row">
                 <span className="project-drawer-row-label">{row.label}</span>
@@ -370,7 +367,6 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* Modal assignment */}
         {assignOpen && selected && (
           <AssignmentModal
             project={selected}
@@ -383,7 +379,6 @@ export default function ProjectsPage() {
           />
         )}
 
-        {/* Formulaire */}
         {formOpen && (
           <ProjectForm
             project={editProject}

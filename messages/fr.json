@@ -19,7 +19,10 @@
     "finance": "Finance",
     "appelsOffres": "Appels d'offres",
     "financials": "Finances",
-    "profitability": "Rentabilité"
+    "profitability": "Rentabilité",
+    "invoices": "Factures",
+    "agenticAI": "IA agentique",
+    "logout": "Déconnexion"
   },
   "topbar": {
     "search": "Rechercher...",
@@ -71,7 +74,8 @@
     "seeAll": "voir tout →",
     "activity": "Activité récente",
     "calendar": "Calendrier",
-    "activeProjects": "Projets actifs"
+    "activeProjects": "Projets actifs",
+    "noActiveProjects": "// aucun projet actif"
   },
   "consultants": {
     "title": "Consultants",
@@ -110,7 +114,9 @@
       "contract": "Contrat",
       "tjmCout": "Coût journalier",
       "tjmCible": "TJM cible",
-      "salaire": "Salaire annuel"
+      "salaire": "Salaire annuel",
+      "tjmCoutValue": "{value} €/j · {label}",
+      "tjmCibleValue": "{value} €/j cible"
     },
     "statuses": {
       "assigned": "En mission",
@@ -218,7 +224,8 @@
       "deces_beau_parent": "Décès beau-père / belle-mère",
       "paternite": "Congé paternité",
       "paternite_gemeaux": "Paternité gémellaire"
-    }
+    },
+    "paginationHint": "// {count} résultats — filtrez par statut ou période pour affiner"
   },
   "clients": {
     "title": "Clients",
@@ -286,7 +293,8 @@
       "selectClient": "Sélectionner un client",
       "clientNotFound": "Client absent de la liste ?",
       "createClient": "Le créer ici"
-    }
+    },
+    "activeCount": "{count} actif(s)"
   },
   "timesheets": {
     "title": "Feuilles de temps",
@@ -578,14 +586,19 @@
       "margePct": "Marge %",
       "charged": "chargé",
       "billed": "facturé",
-      "noData": "// aucune donnée — renseignez les coûts consultants et projets actifs"
+      "noData": "// aucune donnée — renseignez les coûts consultants et projets actifs",
+      "errorLoading": "// erreur chargement — {error}",
+      "noDataSub": "Renseignez les TJM consultants et projets actifs",
+      "countLabel": "{count} consultant(s)"
     },
     "legend": {
       "good": "Marge ≥ 25% — Excellente",
       "watch": "Marge 15–25% — Correcte",
       "low": "Marge < 15% — À surveiller",
       "costNote": "Coût réel = salaire chargé / 218j (salarié) · tarif facturé (freelance)"
-    }
+    },
+    "restricted": "// accès restreint — admin uniquement",
+    "cibleGap": "cible {cible}€ · coût {cout}€"
   },
   "consultantForm": {
     "titleCreate": "// nouveau consultant",
@@ -704,5 +717,82 @@
       "analyze": "⚡ Analyser AO"
     },
     "mockNote": "// données simulées — sera branché sur Supabase + module IA (upload PDF AO, extraction profils, matching consultants)"
+  },
+  "dashboardConsultant": {
+    "title": "Dashboard",
+    "breadcrumb": "// mon espace",
+    "loading": "// chargement…",
+    "unlinked": {
+      "title": "// compte non lié",
+      "msg": "Ton compte n'est pas encore associé à un profil consultant. Contacte ton administrateur."
+    },
+    "statuses": {
+      "assigned": "En mission",
+      "available": "Disponible",
+      "partial": "Partiel",
+      "leave": "En congé"
+    },
+    "kpi": {
+      "missions": "Missions actives",
+      "occupancy": "Taux d'occupation",
+      "cra": "CRA semaine",
+      "leaves": "Congés restants",
+      "noMission": "Aucune mission en cours",
+      "draftWarn": "⚠ brouillon non soumis",
+      "weekDone": "✓ semaine complète",
+      "rttLeft": "RTT : {count}j"
+    },
+    "missions": {
+      "label": "◧ Mes missions",
+      "empty": "// aucune mission active",
+      "active": "projet actif"
+    },
+    "cra": {
+      "label": "⏱ CRA — semaine courante",
+      "total": "Total :",
+      "draft": "⚠ à soumettre"
+    },
+    "leaves": {
+      "label": "◷ Mes congés",
+      "cp": "CP restants",
+      "rtt": "RTT restants",
+      "pending": "En attente",
+      "empty": "// aucune demande de congé"
+    }
+  },
+  "dashboardManager": {
+    "title": "Vue équipe",
+    "breadcrumb": "Dashboard",
+    "kpi": {
+      "available": "Disponibles",
+      "assigned": "En mission",
+      "pendingLeave": "Congés en attente",
+      "occupancy": "Taux d'occupation"
+    },
+    "team": "Mon équipe",
+    "cra": {
+      "title": "CRA à valider",
+      "empty": "✓ Aucun CRA en attente",
+      "pending": "{count} entrée(s) à approuver cette semaine"
+    },
+    "leaves": {
+      "title": "Demandes de congés",
+      "empty": "✓ Aucune demande en attente"
+    },
+    "activity": "Activité récente",
+    "calendar": "Calendrier"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "breadcrumb": "// configuration",
+    "tabs": {
+      "company": "Entreprise",
+      "team": "Équipes",
+      "hr": "RH",
+      "billing": "Facturation",
+      "ai": "IA & MCP",
+      "superadmin": "Super Admin"
+    },
+    "ctaNewTeam": "+ Nouvelle équipe"
   }
 }

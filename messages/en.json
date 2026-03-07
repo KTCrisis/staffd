@@ -19,7 +19,10 @@
     "finance": "Finance",
     "appelsOffres": "Bids / RFPs",
     "financials": "Finances",
-    "profitability": "Profitability"
+    "profitability": "Profitability",
+    "invoices": "Invoices",
+    "agenticAI": "Agentic AI",
+    "logout": "Log out"
   },
   "topbar": {
     "search": "Search...",
@@ -71,7 +74,8 @@
     "seeAll": "see all →",
     "activity": "Recent activity",
     "calendar": "Calendar",
-    "activeProjects": "Active projects"
+    "activeProjects": "Active projects",
+    "noActiveProjects": "// no active projects"
   },
   "consultants": {
     "title": "Consultants",
@@ -110,7 +114,9 @@
       "contract": "Contract",
       "tjmCout": "Daily cost",
       "tjmCible": "Target rate",
-      "salaire": "Annual salary"
+      "salaire": "Annual salary",
+      "tjmCoutValue": "{value} €/d · {label}",
+      "tjmCibleValue": "{value} €/d target"
     },
     "statuses": {
       "assigned": "On assignment",
@@ -218,7 +224,8 @@
       "deces_beau_parent": "Death of parent-in-law",
       "paternite": "Paternity leave",
       "paternite_gemeaux": "Paternity — twins"
-    }
+    },
+    "paginationHint": "// {count} results — filter by status or period to narrow down"
   },
   "clients": {
     "title": "Clients",
@@ -286,7 +293,8 @@
       "contactPhone": "Phone",
       "notes": "Notes",
       "notesPlaceholder": "Context, history, specific notes about this client..."
-    }
+    },
+    "activeCount": "{count} active"
   },
   "timesheets": {
     "title": "Timesheets",
@@ -578,14 +586,19 @@
       "margePct": "Margin %",
       "charged": "charged",
       "billed": "billed",
-      "noData": "// no data — set consultant costs and active projects"
+      "noData": "// no data — set consultant costs and active projects",
+      "errorLoading": "// loading error — {error}",
+      "noDataSub": "Set consultant costs and active projects",
+      "countLabel": "{count} consultant(s)"
     },
     "legend": {
       "good": "Margin ≥ 25% — Excellent",
       "watch": "Margin 15–25% — Good",
       "low": "Margin < 15% — Watch",
       "costNote": "Actual cost = fully-loaded salary / 218d (employee) · billed rate (freelance)"
-    }
+    },
+    "restricted": "// restricted access — admins only",
+    "cibleGap": "target {cible}€ · cost {cout}€"
   },
   "consultantForm": {
     "titleCreate": "// new consultant",
@@ -704,5 +717,83 @@
       "analyze": "⚡ Analyze bid"
     },
     "mockNote": "// simulated data — will connect to Supabase + AI module (PDF upload, profile extraction, consultant matching)"
+  },
+  "dashboardConsultant": {
+    "title": "Dashboard",
+    "breadcrumb": "// my space",
+    "loading": "// loading…",
+    "unlinked": {
+      "title": "// account not linked",
+      "msg": "Your account is not yet associated with a consultant profile. Contact your administrator."
+    },
+    "statuses": {
+      "assigned": "On assignment",
+      "available": "Available",
+      "partial": "Partial",
+      "leave": "On leave"
+    },
+    "kpi": {
+      "missions": "Active assignments",
+      "occupancy": "Occupancy rate",
+      "cra": "Week timesheet",
+      "leaves": "Days left",
+      "noMission": "No active assignment",
+      "draftWarn": "⚠ draft not submitted",
+      "weekDone": "✓ full week",
+      "rttLeft": "RTT: {count}d"
+    },
+    "missions": {
+      "label": "◧ My assignments",
+      "empty": "// no active assignment",
+      "active": "active project"
+    },
+    "cra": {
+      "label": "⏱ CRA — current week",
+      "total": "Total:",
+      "draft": "⚠ to submit"
+    },
+    "leaves": {
+      "label": "◷ My time off",
+      "cp": "Days left",
+      "rtt": "RTT left",
+      "pending": "Pending",
+      "empty": "// no leave request"
+    }
+  },
+  "dashboardManager": {
+    "title": "Team view",
+    "breadcrumb": "Dashboard",
+    "kpi": {
+      "available": "Available",
+      "assigned": "On assignment",
+      "pendingLeave": "Pending time off",
+      "occupancy": "Occupancy rate"
+    },
+    "team": "My team",
+    "cra": {
+      "title": "Timesheets to approve",
+      "empty": "✓ No pending timesheets",
+      "pending": "{count} {entries} to approve this week",
+      "entries": "entry|entries"
+    },
+    "leaves": {
+      "title": "Leave requests",
+      "empty": "✓ No pending requests"
+    },
+    "activity": "Recent activity",
+    "calendar": "Calendar"
+  },
+  "settings": {
+    "title": "Settings",
+    "breadcrumb": "// configuration",
+    "tabs": {
+      "company": "Company",
+      "team": "Team",
+      "hr": "HR",
+      "billing": "Billing",
+      "ai": "AI & MCP",
+      "superadmin": "Super Admin"
+    },
+    "ctaNewTeam": "+ New team"
   }
 }

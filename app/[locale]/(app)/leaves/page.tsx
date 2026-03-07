@@ -11,6 +11,7 @@ import { LeaveRequestCard } from '@/components/leaves/LeaveRequestCard'
 import { LeaveSolde }       from '@/components/leaves/LeaveSolde'
 import { LeaveRequestForm } from '@/components/leaves/LeaveRequestForm'
 import { useLeaveRequests, useConsultants, approveLeave, refuseLeave } from '@/lib/data'
+import { toast }            from '@/lib/toast'
 import type { LeaveRequest, LeaveStatus } from '@/types'
 
 function Skeleton({ h = 80 }: { h?: number }) {
@@ -41,11 +42,11 @@ export default function LeavesPage() {
 
   const all = (requests ?? []) as LeaveRequest[]
 
-  const scoped   = editAccess ? all : all.filter(r => r.consultantId === user?.id)
-  const visible  = scoped.filter(r => filter === 'all' || r.status === filter)
-  const pending  = scoped.filter(r => r.status === 'pending').length
-  const approved = scoped.filter(r => r.status === 'approved').length
-  const refused  = scoped.filter(r => r.status === 'refused').length
+  const scoped    = editAccess ? all : all.filter(r => r.consultantId === user?.id)
+  const visible   = scoped.filter(r => filter === 'all' || r.status === filter)
+  const pending   = scoped.filter(r => r.status === 'pending').length
+  const approved  = scoped.filter(r => r.status === 'approved').length
+  const refused   = scoped.filter(r => r.status === 'refused').length
   const totalDays = scoped.reduce((s, r) => s + (r.days ?? 0), 0)
 
   const stats = [
@@ -55,9 +56,15 @@ export default function LeavesPage() {
     { value: totalDays, label: t('stats.totalDays'), color: 'var(--text2)' },
   ]
 
-  const handleApprove = async (id: string) => { await approveLeave(id); setRefresh(r => r + 1) }
-  const handleRefuse  = async (id: string) => { await refuseLeave(id);  setRefresh(r => r + 1) }
-  const handleSaved   = () => setRefresh(r => r + 1)
+  const handleApprove = async (id: string) => {
+    try   { await approveLeave(id); setRefresh(r => r + 1) }
+    catch (e) { toast.error(e) }
+  }
+  const handleRefuse = async (id: string) => {
+    try   { await refuseLeave(id); setRefresh(r => r + 1) }
+    catch (e) { toast.error(e) }
+  }
+  const handleSaved = () => setRefresh(r => r + 1)
 
   return (
     <>
@@ -72,7 +79,6 @@ export default function LeavesPage() {
 
         <StatRow stats={stats} />
 
-        {/* Filtres */}
         <div className="sort-bar">
           {FILTERS.map(f => (
             <button
@@ -90,7 +96,6 @@ export default function LeavesPage() {
 
         <div className="two-col">
 
-          {/* Liste des demandes */}
           <Panel
             title={t('requests')}
             action={editAccess && pending > 0
@@ -114,15 +119,14 @@ export default function LeavesPage() {
                 ))}
                 {visible.length >= 20 && (
                   <div className="pagination-hint">
-                    // {visible.length} résultats — filtrez par statut ou période pour affiner
+                    {t('paginationHint', { count: visible.length })}
                   </div>
                 )}
               </>
             )}
           </Panel>
 
-          {/* Soldes */}
-          <Panel title={t('soldes')}>
+          <Panel title={t('soldes.title')}>
             {lcons ? (
               <Skeleton h={200} />
             ) : (
