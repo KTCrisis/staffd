@@ -57,16 +57,14 @@ function dotColor(s: TSStatus) {
 // ══════════════════════════════════════════════════════════════
 
 function Pill({ status }: { status: TSStatus }) {
-  return (
-    <span className={`ts-pill ts-pill--${status}`}>{status}</span>
-  )
+  return <span className={`ts-pill ts-pill--${status}`}>{status}</span>
 }
 
 // ══════════════════════════════════════════════════════════════
 // LEAVE BADGE
 // ══════════════════════════════════════════════════════════════
 
-function LeaveBadge({ type }: { type: string }) {
+function LeaveBadge({ type, t }: { type: string; t: any }) {
   const short: Record<string, string> = {
     'CP': 'CP', 'RTT': 'RTT',
     'Sans solde': 'SLD', 'Absence autorisée': 'ABS',
@@ -74,7 +72,7 @@ function LeaveBadge({ type }: { type: string }) {
   return (
     <div className="ts-badge-wrap">
       <div className="ts-badge ts-badge--leave">{short[type] ?? type}</div>
-      <div className="ts-badge-sub">congé</div>
+      <div className="ts-badge-sub">{t('leave.badge')}</div>
     </div>
   )
 }
@@ -83,10 +81,10 @@ function LeaveBadge({ type }: { type: string }) {
 // HOLIDAY BADGE
 // ══════════════════════════════════════════════════════════════
 
-function HolidayBadge({ name }: { name: string }) {
+function HolidayBadge({ name, t }: { name: string; t: any }) {
   return (
     <div className="ts-badge-wrap">
-      <div className="ts-badge ts-badge--holiday">◈ férié</div>
+      <div className="ts-badge ts-badge--holiday">{t('holiday.badge')}</div>
       <div className="ts-badge-sub ts-badge-sub--holiday">{name}</div>
     </div>
   )
@@ -102,6 +100,7 @@ interface CellEditorProps {
   canEditEntry: boolean
   x:            number
   y:            number
+  t:            any
   onSave:       (value: number, projectId: string) => void
   onClose:      () => void
 }
@@ -112,7 +111,7 @@ const VALUES = [
   { label: '1', v: 1 },
 ]
 
-function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: CellEditorProps) {
+function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }: CellEditorProps) {
   const [val,  setVal]  = useState(entry?.value ?? 0)
   const [proj, setProj] = useState(entry?.projectId ?? projects[0]?.id ?? '')
 
@@ -125,7 +124,6 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  // Position dynamique — doit rester inline
   const safeX = Math.min(x, window.innerWidth  - 200)
   const safeY = Math.min(y, window.innerHeight - 210)
 
@@ -134,14 +132,13 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
       <div className="ts-popup" style={{ top: safeY, left: safeX }}>
         <Pill status={entry?.status ?? 'draft'} />
         <div className="ts-popup-readonly-id">{entry?.projectId ?? '—'}</div>
-        <button className="ts-popup-close" onClick={onClose}>Close</button>
+        <button className="ts-popup-close" onClick={onClose}>{t('popup.close')}</button>
       </div>
     )
   }
 
   return (
     <div className="ts-popup" style={{ top: safeY, left: safeX }}>
-      {/* Sélecteur valeur */}
       <div className="ts-popup-values">
         {VALUES.map(({ label, v }) => (
           <button
@@ -154,7 +151,6 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
         ))}
       </div>
 
-      {/* Sélecteur projet */}
       {projects.length > 0 && (
         <select
           value={proj}
@@ -168,13 +164,12 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
         </select>
       )}
 
-      {/* Actions */}
       <div className="ts-popup-actions">
         <button className="ts-popup-save" onClick={() => { onSave(val, proj); onClose() }}>
-          Save
+          {t('popup.save')}
         </button>
         <button className="ts-popup-cancel" onClick={onClose}>
-          Cancel
+          {t('popup.cancel')}
         </button>
       </div>
     </div>
@@ -185,16 +180,16 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
 // LÉGENDE
 // ══════════════════════════════════════════════════════════════
 
-function TimesheetLegend() {
+function TimesheetLegend({ t }: { t: any }) {
   return (
     <div className="ts-legend">
       <div className="ts-legend-item">
         <span className="ts-legend-swatch ts-legend-swatch--leave" />
-        Congé approuvé
+        {t('legend.leave')}
       </div>
       <div className="ts-legend-item">
         <span className="ts-legend-swatch ts-legend-swatch--holiday" />
-        Jour férié
+        {t('legend.holiday')}
       </div>
     </div>
   )
@@ -237,7 +232,6 @@ export default function TimesheetsPage() {
   const consultantsLoaded = Array.isArray(consultants)
   const projectsLoaded    = projectsMap != null
 
-  // ── Pays par défaut de la company ────────────────────────
   const companyCountry = useMemo(
     () => (companyData?.hr_settings as any)?.country_code ?? 'FR',
     [companyData]
@@ -421,7 +415,7 @@ export default function TimesheetsPage() {
         <div className="week-nav" style={{ marginBottom: 20 }}>
           <button className="btn btn-ghost" onClick={prevWeek}>← {t('prevWeek')}</button>
           <span className="week-label">
-            {t('weekOf')} {monday.toLocaleDateString(locale === 'fr' ? 'fr' : 'en', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {t('weekOf')} {monday.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           <button className="btn btn-ghost" onClick={nextWeek}>{t('nextWeek')} →</button>
           {!isThisWeek && (
@@ -431,14 +425,14 @@ export default function TimesheetsPage() {
           )}
         </div>
 
-        {loading && <p className="ts-status-msg">// loading…</p>}
+        {loading && <p className="ts-status-msg">{t('loading')}</p>}
         {error   && <p className="ts-status-msg ts-status-msg--error">{error}</p>}
 
-        <TimesheetLegend />
+        <TimesheetLegend t={t} />
 
         {!consultantDataReady && (
           <Panel>
-            <EmptyState message="// loading your profile & assignments…" />
+            <EmptyState message={t('loadingProfile')} />
           </Panel>
         )}
 
@@ -513,11 +507,19 @@ export default function TimesheetsPage() {
                           const canEditCell  = !cellLocked && (canEdit(role) || (isSelf && entryIsDraft))
                           const disabled     = (isConsultant && !isSelf) || cellLocked
 
+                          const leaveTitle   = t('leave.title', { type: leaveOverlay?.type ?? '' })
+
                           const cellBg = holiday
                             ? 'rgba(255,209,102,.08)'
                             : leaveOverlay
                             ? 'rgba(0,229,255,.06)'
                             : undefined
+
+                          const openPopup = (e: React.MouseEvent) => {
+                            if (isOpen) { setPopup(null); return }
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                            setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
+                          }
 
                           return (
                             <td
@@ -530,17 +532,13 @@ export default function TimesheetsPage() {
                                     className="ts-cell ts-cell--holiday"
                                     style={{ opacity: 0.85 }}
                                     title={holiday.localName}
-                                    onClick={e => {
-                                      if (isOpen) { setPopup(null); return }
-                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                                      setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
-                                    }}
+                                    onClick={openPopup}
                                   >
-                                    <HolidayBadge name={holiday.localName} />
+                                    <HolidayBadge name={holiday.localName} t={t} />
                                   </button>
                                 ) : (
                                   <div className="ts-cell ts-cell--holiday" title={holiday.localName} style={{ cursor: 'default' }}>
-                                    <HolidayBadge name={holiday.localName} />
+                                    <HolidayBadge name={holiday.localName} t={t} />
                                   </div>
                                 )
                               ) : leaveOverlay && !entry ? (
@@ -548,31 +546,22 @@ export default function TimesheetsPage() {
                                   <button
                                     className="ts-cell ts-cell--leave"
                                     style={{ opacity: 0.9 }}
-                                    title={`Congé ${leaveOverlay.type} approuvé`}
-                                    onClick={e => {
-                                      if (isOpen) { setPopup(null); return }
-                                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                                      setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
-                                    }}
+                                    title={leaveTitle}
+                                    onClick={openPopup}
                                   >
-                                    <LeaveBadge type={leaveOverlay.type} />
+                                    <LeaveBadge type={leaveOverlay.type} t={t} />
                                   </button>
                                 ) : (
-                                  <div className="ts-cell ts-cell--leave" title={`Congé ${leaveOverlay.type} approuvé`} style={{ cursor: 'default' }}>
-                                    <LeaveBadge type={leaveOverlay.type} />
+                                  <div className="ts-cell ts-cell--leave" title={leaveTitle} style={{ cursor: 'default' }}>
+                                    <LeaveBadge type={leaveOverlay.type} t={t} />
                                   </div>
                                 )
                               ) : (
                                 <button
                                   className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
                                   style={{ color: valueColor(entry?.value), opacity: disabled ? 0.4 : 1 }}
-                                  onClick={e => {
-                                    if (disabled) return
-                                    if (isOpen) { setPopup(null); return }
-                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                                    setPopup({ consultantId: c.id, date: dateStr, x: rect.left, y: rect.bottom + 6 })
-                                  }}
-                                  title={entry?.status ?? 'No entry'}
+                                  onClick={e => { if (disabled) return; openPopup(e) }}
+                                  title={entry?.status ?? t('cell.noEntry')}
                                   disabled={disabled}
                                 >
                                   {entry
@@ -590,6 +579,7 @@ export default function TimesheetsPage() {
                                     canEditEntry={canEditCell}
                                     x={popup!.x}
                                     y={popup!.y}
+                                    t={t}
                                     onSave={(val, proj) => { if (proj) handleSave(c.id, dateStr, val, proj) }}
                                     onClose={() => setPopup(null)}
                                   />
@@ -639,7 +629,7 @@ export default function TimesheetsPage() {
                   {visibleConsultants.length === 0 && (
                     <tr>
                       <td colSpan={days.length + 3}>
-                        <EmptyState message="// no consultants" />
+                        <EmptyState message={t('noConsultants')} />
                       </td>
                     </tr>
                   )}

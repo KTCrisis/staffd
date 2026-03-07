@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslations }              from 'next-intl'
 import { useAuthContext }               from '@/components/layout/AuthProvider'
 import { createConsultant, updateConsultant, useCompanySettings } from '@/lib/data'
 import type { Consultant }              from '@/types'
@@ -48,36 +49,33 @@ function calcTjmCoutReel(
 }
 
 export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
+  const t    = useTranslations('consultantForm')
   const { user } = useAuthContext()
   const { data: companyData } = useCompanySettings()
   const companyCountry = (companyData?.hr_settings as any)?.country_code ?? 'FR'
 
-  const isEdit   = !!consultant
+  const isEdit = !!consultant
 
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
-  const [countryCode, setCountryCode] = useState<string | null>(null) // null = hérite de la company
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [countryCode, setCountryCode] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    name:               '',
-    initials:           '',
-    email:              '',
-    role:               '',
-    avatar_color:       'green',
-    stack:              '',
-    status:             'available',
-    // Contrat
-    contract_type:      'employee' as ContractType,
-    // Employee
+    name:                '',
+    initials:            '',
+    email:               '',
+    role:                '',
+    avatar_color:        'green',
+    stack:               '',
+    status:              'available',
+    contract_type:       'employee' as ContractType,
     salaire_annuel_brut: '',
     charges_pct:         '42',
     jours_travailles:    '218',
-    // Freelance
-    tjm_facture:        '',
-    // Commun
-    tjm:                '',   // fallback legacy
-    tjm_cible:          '',
-    leave_days_total:   '25',
+    tjm_facture:         '',
+    tjm:                 '',
+    tjm_cible:           '',
+    leave_days_total:    '25',
   })
 
   useEffect(() => {
@@ -113,7 +111,6 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
     setForm(f => ({ ...f, name: v, initials }))
   }
 
-  // ── Coût journalier calculé en live ──────────────────────────────────────
   const tjmCoutReel = useMemo(() => calcTjmCoutReel(
     form.contract_type,
     form.salaire_annuel_brut ? parseFloat(form.salaire_annuel_brut) : null,
@@ -123,7 +120,6 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
     form.tjm ? parseFloat(form.tjm) : null,
   ), [form.contract_type, form.salaire_annuel_brut, form.charges_pct, form.jours_travailles, form.tjm_facture, form.tjm])
 
-  // ── Écart tjm_cible vs coût réel ─────────────────────────────────────────
   const margeCible = useMemo(() => {
     if (!form.tjm_cible || !tjmCoutReel) return null
     const cible = parseFloat(form.tjm_cible)
@@ -134,30 +130,26 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
   const isFreelance = form.contract_type === 'freelance'
 
   const handleSubmit = async () => {
-    if (!form.name || !form.role) { setError('Name and role are required'); return }
+    if (!form.name || !form.role) { setError(t('errors.nameRequired')); return }
     setLoading(true)
     setError(null)
     try {
       const payload = {
-        name:               form.name.trim(),
-        initials:           form.initials.trim(),
-        email:              form.email.trim() || undefined,
-        role:               form.role.trim(),
-        avatar_color:       form.avatar_color,
-        stack:              form.stack ? form.stack.split(',').map(s => s.trim()).filter(Boolean) : [],
-        status:             form.status as any,
-        contract_type:      form.contract_type,
-        // Employee
+        name:                form.name.trim(),
+        initials:            form.initials.trim(),
+        email:               form.email.trim() || undefined,
+        role:                form.role.trim(),
+        avatar_color:        form.avatar_color,
+        stack:               form.stack ? form.stack.split(',').map(s => s.trim()).filter(Boolean) : [],
+        status:              form.status as any,
+        contract_type:       form.contract_type,
         salaire_annuel_brut: isEmployee && form.salaire_annuel_brut ? parseFloat(form.salaire_annuel_brut) : undefined,
         charges_pct:         isEmployee ? parseFloat(form.charges_pct) || 42 : undefined,
         jours_travailles:    isEmployee ? parseInt(form.jours_travailles) || 218 : undefined,
-        // Freelance
         tjm_facture:         isFreelance && form.tjm_facture ? parseFloat(form.tjm_facture) : undefined,
-        // Commun
         tjm:                 form.tjm ? parseFloat(form.tjm) : undefined,
         tjm_cible:           form.tjm_cible ? parseFloat(form.tjm_cible) : undefined,
         leave_days_total:    parseInt(form.leave_days_total) || 25,
-        // Pays — null = hérite du pays de la company (hr_settings)
         country_code:        countryCode ?? undefined,
       }
 
@@ -189,27 +181,27 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
           <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-            {isEdit ? '// edit consultant' : '// new consultant'}
+            {isEdit ? t('titleEdit') : t('titleCreate')}
           </span>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>✕ Close</button>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('close')}</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* ── Identité ─────────────────────────────────────────────── */}
-          <SectionLabel>Identité</SectionLabel>
+          <SectionLabel>{t('sections.identity')}</SectionLabel>
 
-          <Field label="Name *">
+          <Field label={t('fields.name')}>
             <input className="search-input" style={{ width: '100%' }} placeholder="Alice Martin"
               value={form.name} onChange={e => handleName(e.target.value)} />
           </Field>
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <Field label="Initials" style={{ flex: 1 }}>
+            <Field label={t('fields.initials')} style={{ flex: 1 }}>
               <input className="search-input" style={{ width: '100%' }} placeholder="AM" maxLength={3}
                 value={form.initials} onChange={e => set('initials', e.target.value.toUpperCase())} />
             </Field>
-            <Field label="Color" style={{ flex: 2 }}>
+            <Field label={t('fields.color')} style={{ flex: 2 }}>
               <div style={{ display: 'flex', gap: 6, paddingTop: 4 }}>
                 {COLORS.map(c => (
                   <button key={c} onClick={() => set('avatar_color', c)} style={{
@@ -223,17 +215,17 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
             </Field>
           </div>
 
-          <Field label="Role *">
+          <Field label={t('fields.role')}>
             <input className="search-input" style={{ width: '100%' }} placeholder="Data Engineer"
               value={form.role} onChange={e => set('role', e.target.value)} />
           </Field>
 
-          <Field label="Email">
+          <Field label={t('fields.email')}>
             <input className="search-input" style={{ width: '100%' }} placeholder="alice@company.com" type="email"
               value={form.email} onChange={e => set('email', e.target.value)} />
           </Field>
 
-          <Field label="Pays (jours fériés)">
+          <Field label={t('fields.country')}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <select
                 className="search-input"
@@ -241,7 +233,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
                 value={countryCode ?? ''}
                 onChange={e => setCountryCode(e.target.value || null)}
               >
-                <option value="">— Hérite de la company ({companyCountry})</option>
+                <option value="">{t('fields.countryInherit', { country: companyCountry })}</option>
                 {COUNTRIES.map(c => (
                   <option key={c.code} value={c.code}>{c.code} · {c.label}</option>
                 ))}
@@ -250,26 +242,25 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => setCountryCode(null)}
-                  title="Réinitialiser au pays de la company"
                   style={{ fontSize: 10, color: 'var(--text3)', flexShrink: 0 }}
                 >
-                  reset
+                  {t('actions.reset')}
                 </button>
               )}
             </div>
             {!countryCode && (
               <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 4, letterSpacing: 0.5 }}>
-                Utilise le pays par défaut de la company : <strong style={{ color: 'var(--text2)' }}>{companyCountry}</strong>
+                {t('fields.countryHint')} <strong style={{ color: 'var(--text2)' }}>{companyCountry}</strong>
               </div>
             )}
           </Field>
 
-          <Field label="Stack (virgule-séparée)">
+          <Field label={t('fields.stack')}>
             <input className="search-input" style={{ width: '100%' }} placeholder="Python, Kafka, Spark"
               value={form.stack} onChange={e => set('stack', e.target.value)} />
           </Field>
 
-          <Field label="Status">
+          <Field label={t('fields.status')}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {STATUSES.map(s => (
                 <button key={s} className={`btn btn-sm ${form.status === s ? 'btn-primary' : 'btn-ghost'}`}
@@ -279,33 +270,32 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
           </Field>
 
           {/* ── Contrat ──────────────────────────────────────────────── */}
-          <SectionLabel>Contrat</SectionLabel>
+          <SectionLabel>{t('sections.contract')}</SectionLabel>
 
-          <Field label="Type de contrat">
+          <Field label={t('fields.contractType')}>
             <div style={{ display: 'flex', gap: 6 }}>
-              {(['employee', 'freelance'] as ContractType[]).map(t => (
-                <button key={t} className={`btn btn-sm ${form.contract_type === t ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => set('contract_type', t)}>
-                  {t === 'employee' ? '👤 Salarié' : '🔗 Freelance'}
+              {(['employee', 'freelance'] as ContractType[]).map(ct => (
+                <button key={ct} className={`btn btn-sm ${form.contract_type === ct ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => set('contract_type', ct)}>
+                  {t(`contractTypes.${ct}`)}
                 </button>
               ))}
             </div>
           </Field>
 
-          {/* Employee — coût basé sur salaire */}
           {isEmployee && (
             <>
-              <Field label="Salaire brut annuel (€)">
+              <Field label={t('fields.salaire')}>
                 <input className="search-input" style={{ width: '100%' }} placeholder="55 000" type="number"
                   value={form.salaire_annuel_brut} onChange={e => set('salaire_annuel_brut', e.target.value)} />
               </Field>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <Field label="Charges patronales (%)" style={{ flex: 1 }}>
+                <Field label={t('fields.chargesPct')} style={{ flex: 1 }}>
                   <input className="search-input" style={{ width: '100%' }} type="number" step="0.5"
                     value={form.charges_pct} onChange={e => set('charges_pct', e.target.value)} />
                 </Field>
-                <Field label="Jours travaillés / an" style={{ flex: 1 }}>
+                <Field label={t('fields.joursTravailles')} style={{ flex: 1 }}>
                   <input className="search-input" style={{ width: '100%' }} type="number"
                     value={form.jours_travailles} onChange={e => set('jours_travailles', e.target.value)} />
                 </Field>
@@ -313,15 +303,13 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
             </>
           )}
 
-          {/* Freelance — TJM facturé */}
           {isFreelance && (
-            <Field label="TJM facturé (€/j)">
+            <Field label={t('fields.tjmFacture')}>
               <input className="search-input" style={{ width: '100%' }} placeholder="650" type="number"
                 value={form.tjm_facture} onChange={e => set('tjm_facture', e.target.value)} />
             </Field>
           )}
 
-          {/* Coût journalier calculé — lecture seule */}
           {tjmCoutReel !== null && (
             <div style={{
               padding: '10px 14px', borderRadius: 6,
@@ -329,7 +317,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span style={{ fontSize: 10, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Coût journalier réel
+                {t('fields.tjmCoutReel')}
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--cyan)' }}>
                 {tjmCoutReel} €/j
@@ -337,15 +325,14 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
             </div>
           )}
 
-          {/* ── Objectif commercial ──────────────────────────────────── */}
-          <SectionLabel>Objectif</SectionLabel>
+          {/* ── Objectif ─────────────────────────────────────────────── */}
+          <SectionLabel>{t('sections.objective')}</SectionLabel>
 
-          <Field label="TJM cible (€/j)">
+          <Field label={t('fields.tjmCible')}>
             <input className="search-input" style={{ width: '100%' }} placeholder="750" type="number"
               value={form.tjm_cible} onChange={e => set('tjm_cible', e.target.value)} />
           </Field>
 
-          {/* Indicateur marge cible */}
           {margeCible !== null && (
             <div style={{
               padding: '8px 14px', borderRadius: 6,
@@ -356,7 +343,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span style={{ fontSize: 10, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Marge cible
+                {t('fields.margeCible')}
               </span>
               <span style={{
                 fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
@@ -367,8 +354,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
             </div>
           )}
 
-          {/* Fallback TJM legacy */}
-          <Field label="TJM (legacy / fallback €/j)" >
+          <Field label={t('fields.tjmLegacy')}>
             <input className="search-input" style={{ width: '100%', opacity: 0.6 }} placeholder="optionnel" type="number"
               value={form.tjm} onChange={e => set('tjm', e.target.value)} />
           </Field>
@@ -376,8 +362,8 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
           {/* ── Congés — masqués pour freelance ─────────────────────── */}
           {isEmployee && (
             <>
-              <SectionLabel>Congés</SectionLabel>
-              <Field label="Jours CP / an">
+              <SectionLabel>{t('sections.leave')}</SectionLabel>
+              <Field label={t('fields.leaveDays')}>
                 <input className="search-input" style={{ width: '100%' }} type="number"
                   value={form.leave_days_total} onChange={e => set('leave_days_total', e.target.value)} />
               </Field>
@@ -393,9 +379,9 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={loading}>
-              {loading ? '...' : isEdit ? '✓ Save changes' : '✓ Create consultant'}
+              {loading ? '...' : isEdit ? t('actions.save') : t('actions.create')}
             </button>
-            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-ghost" onClick={onClose}>{t('actions.cancel')}</button>
           </div>
 
         </div>

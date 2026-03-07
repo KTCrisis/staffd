@@ -13,6 +13,7 @@ interface ConsultantTableProps {
 }
 
 function ContractBadge({ type }: { type: 'employee' | 'freelance' }) {
+  const t = useTranslations('consultants')
   const isFreelance = type === 'freelance'
   return (
     <span style={{
@@ -22,7 +23,7 @@ function ContractBadge({ type }: { type: 'employee' | 'freelance' }) {
       border:     isFreelance ? '1px solid rgba(0,229,255,0.3)' : '1px solid var(--border)',
       color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
     }}>
-      {isFreelance ? 'Freelance' : 'Salarié'}
+      {isFreelance ? t('contractType.freelance') : t('contractType.employee')}
     </span>
   )
 }

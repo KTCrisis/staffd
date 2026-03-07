@@ -75,7 +75,8 @@
     "activity": "Recent activity",
     "calendar": "Calendar",
     "activeProjects": "Active projects",
-    "noActiveProjects": "// no active projects"
+    "noActiveProjects": "// no active projects",
+    "calEvent": "Event"
   },
   "consultants": {
     "title": "Consultants",
@@ -326,7 +327,27 @@
       "full": "Full day",
       "draft": "Draft",
       "submitted": "Submitted",
-      "approved": "Approved"
+      "approved": "Approved",
+      "leave": "Approved leave",
+      "holiday": "Public holiday"
+    },
+    "loading": "// loading…",
+    "loadingProfile": "// loading your profile & assignments…",
+    "noConsultants": "// no consultants",
+    "leave": {
+      "badge": "leave",
+      "title": "Approved {type} leave"
+    },
+    "holiday": {
+      "badge": "◈ holiday"
+    },
+    "cell": {
+      "noEntry": "No entry"
+    },
+    "popup": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close"
     }
   },
   "projects": {
@@ -488,7 +509,11 @@
       "leave": "On leave",
       "partial": "Partial",
       "weekend": "Weekend",
-      "free": "Free"
+      "free": "Free",
+      "active": "Active",
+      "on_hold": "On hold",
+      "draft": "Draft",
+      "completed": "Completed"
     },
     "consultant": "Consultant",
     "months": [
@@ -513,7 +538,16 @@
       "F",
       "S",
       "S"
-    ]
+    ],
+    "loading": "// loading…",
+    "headerProject": "Project",
+    "stats": {
+      "active": "Active",
+      "onHold": "On hold",
+      "draft": "Draft",
+      "completed": "Completed"
+    },
+    "noData": "// no projects"
   },
   "common": {
     "day": "day",
@@ -627,7 +661,10 @@
       "tjmCible": "Target daily rate (€/d)",
       "tjmLegacy": "Daily rate (legacy / fallback €/d)",
       "leaveDays": "Paid leave days / year",
-      "margeCible": "Target margin"
+      "margeCible": "Target margin",
+      "country": "Country (public holidays)",
+      "countryInherit": "— Inherits from company ({country})",
+      "countryHint": "Uses company default country:"
     },
     "contractTypes": {
       "employee": "👤 Employee",
@@ -643,7 +680,8 @@
     "actions": {
       "create": "✓ Create consultant",
       "save": "✓ Save changes",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "reset": "reset"
     }
   },
   "staffing": {
@@ -795,5 +833,12 @@
       "superadmin": "Super Admin"
     },
     "ctaNewTeam": "+ New team"
+  },
+  "activity": {
+    "empty": "// no recent activity",
+    "justNow": "just now",
+    "minutesAgo": "{count} min ago",
+    "hoursAgo": "{count}h ago",
+    "yesterday": "yesterday · {time}"
   }
 }

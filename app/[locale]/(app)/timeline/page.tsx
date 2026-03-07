@@ -27,11 +27,9 @@ const STATUS_COLOR: Record<string, { bg: string; border: string; text: string; d
   completed: { bg: 'rgba(0,255,136,0.12)',   border: 'rgba(0,255,136,0.40)',   text: '#1b5e20', dot: '#00ff88' },
 }
 
-const DAYS_SHORT = ['M','T','W','T','F','S','S']
-
 // ── Légende ───────────────────────────────────────────────────
 
-function TimelineLegend() {
+function TimelineLegend({ t }: { t: any }) {
   return (
     <div className="avail-legend">
       {Object.entries(STATUS_COLOR).map(([status, c]) => (
@@ -40,12 +38,12 @@ function TimelineLegend() {
             className="avail-swatch"
             style={{ background: c.bg, border: `1px solid ${c.border}` }}
           />
-          <span style={{ textTransform: 'capitalize' }}>{status.replace('_', ' ')}</span>
+          <span>{t(`legend.${status}`)}</span>
         </div>
       ))}
       <div className="avail-legend-item">
         <div className="avail-swatch avail-swatch--weekend" />
-        <span>Weekend</span>
+        <span>{t('legend.weekend')}</span>
       </div>
     </div>
   )
@@ -71,7 +69,8 @@ export default function TimelinePage() {
   const goToday        = () => { setYear(now.getFullYear()); setMonth(now.getMonth()) }
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth()
 
-  const months = t.raw('months') as string[]
+  const months   = t.raw('months') as string[]
+  const daysShort = t.raw('days')  as string[]
 
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
@@ -108,10 +107,10 @@ export default function TimelinePage() {
   const stats = useMemo(() => {
     const list = visibleProjects
     return [
-      { value: list.filter(p => p.status === 'active').length,    label: 'Active',    color: 'var(--cyan)'  },
-      { value: list.filter(p => p.status === 'on_hold').length,   label: 'On hold',   color: 'var(--gold)'  },
-      { value: list.filter(p => p.status === 'draft').length,     label: 'Draft',     color: 'var(--text2)' },
-      { value: list.filter(p => p.status === 'completed').length, label: 'Completed', color: 'var(--green)' },
+      { value: list.filter(p => p.status === 'active').length,    label: t('stats.active'),    color: 'var(--cyan)'  },
+      { value: list.filter(p => p.status === 'on_hold').length,   label: t('stats.onHold'),    color: 'var(--gold)'  },
+      { value: list.filter(p => p.status === 'draft').length,     label: t('stats.draft'),     color: 'var(--text2)' },
+      { value: list.filter(p => p.status === 'completed').length, label: t('stats.completed'), color: 'var(--green)' },
     ]
   }, [visibleProjects])
 
@@ -128,7 +127,6 @@ export default function TimelinePage() {
     })
   }
 
-  // gridTemplateColumns dynamique → inline obligatoire
   const gridCols = `220px repeat(${daysInMonth}, 1fr)`
 
   return (
@@ -138,27 +136,24 @@ export default function TimelinePage() {
       <div className="app-content">
         <StatRow stats={stats} />
 
-        {/* Navigation mois */}
         <div className="avail-nav">
           <button className="btn btn-ghost btn-sm" onClick={prevMonth}>←</button>
           <span className="avail-month-label">{months[month]} {year}</span>
           <button className="btn btn-ghost btn-sm" onClick={nextMonth}>→</button>
           {!isCurrentMonth && (
-            <button className="btn btn-primary btn-sm" onClick={goToday}>Today</button>
+            <button className="btn btn-primary btn-sm" onClick={goToday}>{t('today')}</button>
           )}
         </div>
 
-        {/* Grille Gantt */}
         <div className="avail-grid-wrap">
           {loading ? (
-            <EmptyState message="// chargement..." />
+            <EmptyState message={t('loading')} />
           ) : (
             <div className="table-wrap">
               <div style={{ minWidth: daysInMonth * 28 + 220 }}>
 
-                {/* En-tête jours */}
                 <div className="avail-head-row" style={{ gridTemplateColumns: gridCols }}>
-                  <div className="avail-head-label label-meta tl-head-project">Project</div>
+                  <div className="avail-head-label label-meta tl-head-project">{t('headerProject')}</div>
                   {headerDays.map(d => (
                     <div
                       key={d.num}
@@ -168,7 +163,7 @@ export default function TimelinePage() {
                         d.isWeekend ? 'avail-head-cell--weekend' : '',
                       ].join(' ')}
                     >
-                      <div className="avail-head-dow">{DAYS_SHORT[(d.dow + 6) % 7]}</div>
+                      <div className="avail-head-dow">{daysShort[(d.dow + 6) % 7]}</div>
                       <div className={`avail-head-num ${d.isToday ? 'avail-head-num--today' : ''}`}>
                         {d.num}
                       </div>
@@ -176,7 +171,6 @@ export default function TimelinePage() {
                   ))}
                 </div>
 
-                {/* Lignes projets */}
                 {visibleProjects.map((project, rowIdx) => {
                   const cells = buildProjectCells(project)
                   const color = STATUS_COLOR[project.status] ?? STATUS_COLOR.draft
@@ -198,7 +192,6 @@ export default function TimelinePage() {
                           : undefined,
                       }}
                     >
-                      {/* Info projet */}
                       <div className="tl-project-cell">
                         <div className="tl-project-name-row">
                           <span className="tl-project-dot" style={{ background: color.dot }} />
@@ -234,12 +227,10 @@ export default function TimelinePage() {
                         )}
                       </div>
 
-                      {/* Cellules jours */}
                       {cells.map((cell, dayIdx) => {
                         const isFirst = dayIdx === firstActive
                         const isLast  = dayIdx === lastActive
 
-                        // bg + borderTop du segment actif → palette dynamique → inline
                         const projectStyle = cell.type === 'active'
                           ? { background: color.bg, borderTop: `2px solid ${color.border}` }
                           : {}
@@ -259,12 +250,10 @@ export default function TimelinePage() {
                             ].join(' ')}
                             style={projectStyle}
                           >
-                            {/* Label projet dans la première cellule active */}
                             {isFirst && lastActive - firstActive >= 3 && (
                               <div
                                 className="tl-cell-label"
                                 style={{
-                                  // maxWidth dynamique (nb cellules actives × largeur)
                                   maxWidth: (lastActive - firstActive) * 27 - 10,
                                   color:    color.text,
                                 }}
@@ -273,7 +262,6 @@ export default function TimelinePage() {
                               </div>
                             )}
 
-                            {/* Point today */}
                             {cell.isToday && cell.type === 'active' && (
                               <span className="avail-today-dot" />
                             )}
@@ -285,7 +273,7 @@ export default function TimelinePage() {
                 })}
 
                 {visibleProjects.length === 0 && (
-                  <EmptyState message="// no projects" />
+                  <EmptyState message={t('noData')} />
                 )}
 
               </div>
@@ -293,7 +281,7 @@ export default function TimelinePage() {
           )}
         </div>
 
-        <TimelineLegend />
+        <TimelineLegend t={t} />
 
       </div>
     </>

@@ -7,10 +7,9 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations }     from 'next-intl'
+import { useAuthContext }      from '@/components/layout/AuthProvider'
 import { createClient, updateClient } from '@/lib/data'
 import type { Client }         from '@/types'
-
-const COMPANY_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 
 export const SECTORS = ['ESN', 'Énergie', 'Finance', 'Industrie', 'Retail', 'Public', 'Autre'] as const
 export type Sector = typeof SECTORS[number]
@@ -23,6 +22,7 @@ interface ClientFormProps {
 
 export function ClientForm({ client, onClose, onSaved }: ClientFormProps) {
   const t    = useTranslations('clients')
+  const { user } = useAuthContext()
   const mode = client ? 'edit' : 'create'
 
   const [name,         setName]         = useState(client?.name         ?? '')
@@ -49,6 +49,9 @@ export function ClientForm({ client, onClose, onSaved }: ClientFormProps) {
   async function handleSubmit() {
     if (!name.trim()) { setError(t('form.errorName')); return }
 
+    const companyId = user?.companyId
+    if (!companyId) { setError('No company context'); return }
+
     setSaving(true)
     setError(null)
 
@@ -61,7 +64,7 @@ export function ClientForm({ client, onClose, onSaved }: ClientFormProps) {
         contact_email: contactEmail.trim() || undefined,
         contact_phone: contactPhone.trim() || undefined,
         notes:         notes.trim() || undefined,
-        company_id:    COMPANY_ID,
+        company_id:    companyId,
       }
 
       if (mode === 'edit' && client) {

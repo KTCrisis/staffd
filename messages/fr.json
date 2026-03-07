@@ -75,7 +75,8 @@
     "activity": "Activité récente",
     "calendar": "Calendrier",
     "activeProjects": "Projets actifs",
-    "noActiveProjects": "// aucun projet actif"
+    "noActiveProjects": "// aucun projet actif",
+    "calEvent": "Événement"
   },
   "consultants": {
     "title": "Consultants",
@@ -326,7 +327,27 @@
       "full": "Journée complète",
       "draft": "Brouillon",
       "submitted": "Soumis",
-      "approved": "Approuvé"
+      "approved": "Approuvé",
+      "leave": "Congé approuvé",
+      "holiday": "Jour férié"
+    },
+    "loading": "// loading…",
+    "loadingProfile": "// loading your profile & assignments…",
+    "noConsultants": "// no consultants",
+    "leave": {
+      "badge": "congé",
+      "title": "Congé {type} approuvé"
+    },
+    "holiday": {
+      "badge": "◈ férié"
+    },
+    "cell": {
+      "noEntry": "Aucune saisie"
+    },
+    "popup": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "close": "Fermer"
     }
   },
   "projects": {
@@ -488,7 +509,11 @@
       "leave": "Congé",
       "partial": "Partiel",
       "weekend": "Weekend",
-      "free": "Libre"
+      "free": "Libre",
+      "active": "Actif",
+      "on_hold": "En attente",
+      "draft": "Brouillon",
+      "completed": "Terminé"
     },
     "consultant": "Consultant",
     "months": [
@@ -513,7 +538,16 @@
       "V",
       "S",
       "D"
-    ]
+    ],
+    "loading": "// chargement…",
+    "headerProject": "Projet",
+    "stats": {
+      "active": "Actifs",
+      "onHold": "En attente",
+      "draft": "Brouillons",
+      "completed": "Terminés"
+    },
+    "noData": "// aucun projet"
   },
   "common": {
     "day": "jour",
@@ -627,7 +661,10 @@
       "tjmCible": "TJM cible (€/j)",
       "tjmLegacy": "TJM (legacy / fallback €/j)",
       "leaveDays": "Jours CP / an",
-      "margeCible": "Marge cible"
+      "margeCible": "Marge cible",
+      "country": "Pays (jours fériés)",
+      "countryInherit": "— Hérite de la company ({country})",
+      "countryHint": "Utilise le pays par défaut de la company :"
     },
     "contractTypes": {
       "employee": "👤 Salarié",
@@ -643,7 +680,8 @@
     "actions": {
       "create": "✓ Créer le consultant",
       "save": "✓ Enregistrer",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "reset": "réinitialiser"
     }
   },
   "staffing": {
@@ -794,5 +832,12 @@
       "superadmin": "Super Admin"
     },
     "ctaNewTeam": "+ Nouvelle équipe"
+  },
+  "activity": {
+    "empty": "// aucune activité récente",
+    "justNow": "à l'instant",
+    "minutesAgo": "il y a {count} min",
+    "hoursAgo": "il y a {count}h",
+    "yesterday": "hier · {time}"
   }
 }
