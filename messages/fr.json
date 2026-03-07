@@ -839,5 +839,86 @@
     "minutesAgo": "il y a {count} min",
     "hoursAgo": "il y a {count}h",
     "yesterday": "hier · {time}"
+  },
+  "invoices": {
+    "form": {
+      "title": "Nouvelle facture",
+      "breadcrumb": "// factures / nouvelle",
+      "livePreview": "// aperçu en direct",
+      "sections": {
+        "source": "Source",
+        "client": "Client",
+        "dates": "Dates & conditions",
+        "lines": "Lignes",
+        "notes": "Notes",
+        "totals": "Totaux"
+      },
+      "source": {
+        "timesheet": "⏱ Feuille de temps",
+        "project": "◧ Projet",
+        "manual": "✎ Manuel"
+      },
+      "timesheetImport": {
+        "label": "Période d'import",
+        "allConsultants": "Tous les consultants",
+        "import": "↓ importer",
+        "loading": "···",
+        "noData": "Aucune entrée approuvée trouvée pour cette période."
+      },
+      "projectImport": {
+        "label": "Projet",
+        "placeholder": "Sélectionner un projet…",
+        "load": "↓ charger"
+      },
+      "fields": {
+        "client": "Client",
+        "clientSelect": "Sélectionner ou saisir ci-dessous…",
+        "clientOverride": "Nom du client (override)",
+        "clientAddress": "Adresse du client",
+        "invoiceDate": "Date de facturation",
+        "paymentTerms": "Délai de paiement (jours)",
+        "dueDate": "Échéance (auto)",
+        "vat": "TVA %",
+        "projectDesc": "Projet / description",
+        "projectDescHint": "Refonte site web T1 2026",
+        "notes": "Notes",
+        "notesHint": "Pénalités de retard, conditions particulières…"
+      },
+      "lines": {
+        "description": "Description",
+        "rate": "Tarif",
+        "detail": "Détail / période (optionnel)",
+        "addLine": "+ ajouter une ligne",
+        "units": {
+          "day": "jour",
+          "hour": "heure",
+          "unit": "unité"
+        }
+      },
+      "totals": {
+        "subtotal": "Sous-total HT",
+        "vat": "TVA {rate}%",
+        "total": "Total TTC"
+      },
+      "actions": {
+        "saveDraft": "enregistrer le brouillon",
+        "send": "→ enregistrer & marquer comme envoyé",
+        "saving": "···"
+      },
+      "months": [
+        "Janvier",
+        "Février",
+        "Mars",
+        "Avril",
+        "Mai",
+        "Juin",
+        "Juillet",
+        "Août",
+        "Septembre",
+        "Octobre",
+        "Novembre",
+        "Décembre"
+      ]
+    }
   }
 }

@@ -840,5 +840,86 @@
     "minutesAgo": "{count} min ago",
     "hoursAgo": "{count}h ago",
     "yesterday": "yesterday · {time}"
+  },
+  "invoices": {
+    "form": {
+      "title": "New invoice",
+      "breadcrumb": "// invoices / new",
+      "livePreview": "// live preview",
+      "sections": {
+        "source": "Source",
+        "client": "Client",
+        "dates": "Dates & terms",
+        "lines": "Line items",
+        "notes": "Notes",
+        "totals": "Totals"
+      },
+      "source": {
+        "timesheet": "⏱ Timesheet",
+        "project": "◧ Project",
+        "manual": "✎ Manual"
+      },
+      "timesheetImport": {
+        "label": "Import period",
+        "allConsultants": "All consultants",
+        "import": "↓ import",
+        "loading": "···",
+        "noData": "No approved timesheet entries found for this period."
+      },
+      "projectImport": {
+        "label": "Project",
+        "placeholder": "Select a project…",
+        "load": "↓ load"
+      },
+      "fields": {
+        "client": "Client",
+        "clientSelect": "Select or type below…",
+        "clientOverride": "Client name (override)",
+        "clientAddress": "Client address",
+        "invoiceDate": "Invoice date",
+        "paymentTerms": "Payment terms (days)",
+        "dueDate": "Due date (auto)",
+        "vat": "VAT %",
+        "projectDesc": "Project / description",
+        "projectDescHint": "Website redesign Q1 2026",
+        "notes": "Notes",
+        "notesHint": "Late payment penalties, special conditions…"
+      },
+      "lines": {
+        "description": "Description",
+        "rate": "Rate",
+        "detail": "Detail / period (optional)",
+        "addLine": "+ add line",
+        "units": {
+          "day": "day",
+          "hour": "hour",
+          "unit": "unit"
+        }
+      },
+      "totals": {
+        "subtotal": "Subtotal HT",
+        "vat": "VAT {rate}%",
+        "total": "Total TTC"
+      },
+      "actions": {
+        "saveDraft": "save draft",
+        "send": "→ save & mark as sent",
+        "saving": "···"
+      },
+      "months": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ]
+    }
   }
 }

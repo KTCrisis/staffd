@@ -2,6 +2,7 @@
 
 import { useState, useEffect }  from 'react'
 import { useRouter }             from 'next/navigation'
+import { useTranslations }       from 'next-intl'
 import { Topbar }                from '@/components/layout/Topbar'
 import { supabase }              from '@/lib/supabase'
 import { InvoicePreview }        from '@/components/invoices/InvoicePreview'
@@ -24,11 +25,6 @@ function fmt(n: number) {
 function emptyLine(): InvoiceLineItem {
   return { id: uid(), description: '', detail: '', quantity: 1, unit: 'day', unit_price: 0 }
 }
-
-const MONTHS = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
-]
 
 // ── UI atoms ──────────────────────────────────────────────────────────────────
 
@@ -99,6 +95,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export function InvoiceForm() {
   const router = useRouter()
+  const t      = useTranslations('invoices.form')
+  const MONTHS = t.raw('months') as string[]
 
   // Form state
   const [sourceType,    setSourceType]    = useState<'timesheet' | 'project' | 'manual'>('timesheet')
@@ -175,7 +173,7 @@ export function InvoiceForm() {
       const { data } = await q
 
       if (!data?.length) {
-        alert('No approved timesheet entries found for this period.')
+        alert(t('timesheetImport.noData'))
         return
       }
 
@@ -193,7 +191,9 @@ export function InvoiceForm() {
       setLines(Array.from(groups.values()).map(g => ({
         id:          uid(),
         description: g.desc,
-        detail:      MONTHS[importMonth] + ' ' + importYear + ' · ' + g.days + (g.days !== 1 ? ' days' : ' day'),
+        detail:      MONTHS[importMonth] + ' ' + importYear + ' · ' + g.days + (g.days !== 1
+          ? ' ' + t('lines.units.day') + 's'
+          : ' ' + t('lines.units.day')),
         quantity:    g.days,
         unit:        'day' as const,
         unit_price:  g.rate,
@@ -254,7 +254,7 @@ export function InvoiceForm() {
         tva_amount:          tvaAmount,
         total_ttc:           total,
         source_type:         sourceType,
-        source_period_start: sourceType === 'timesheet' ? importYear + '-' + month + '-01'       : null,
+        source_period_start: sourceType === 'timesheet' ? importYear + '-' + month + '-01'        : null,
         source_period_end:   sourceType === 'timesheet' ? importYear + '-' + month + '-' + lastDay : null,
         notes:               notes || null,
         payment_terms:       paymentTerms,
@@ -287,7 +287,7 @@ export function InvoiceForm() {
 
   return (
     <>
-      <Topbar title="New invoice" breadcrumb="// invoices / new" />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div style={{ display: 'flex', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
 
@@ -296,18 +296,18 @@ export function InvoiceForm() {
           borderRight: '1px solid var(--border)' }}>
 
           {/* Source */}
-          <SectionTitle>Source</SectionTitle>
+          <SectionTitle>{t('sections.source')}</SectionTitle>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            {(['timesheet', 'project', 'manual'] as const).map(t => (
-              <button key={t} onClick={() => setSourceType(t)} style={{
+            {(['timesheet', 'project', 'manual'] as const).map(s => (
+              <button key={s} onClick={() => setSourceType(s)} style={{
                 flex: 1, padding: '8px', borderRadius: 3, cursor: 'pointer',
                 fontFamily: 'var(--font-mono, monospace)', fontSize: 10,
                 letterSpacing: 1, textTransform: 'uppercase',
-                border:     sourceType === t ? '1px solid var(--cyan)' : '1px solid var(--border)',
-                background: sourceType === t ? 'rgba(0,229,255,.08)'   : 'none',
-                color:      sourceType === t ? 'var(--cyan)'            : 'var(--text2)',
+                border:     sourceType === s ? '1px solid var(--cyan)' : '1px solid var(--border)',
+                background: sourceType === s ? 'rgba(0,229,255,.08)'   : 'none',
+                color:      sourceType === s ? 'var(--cyan)'            : 'var(--text2)',
               }}>
-                {t === 'timesheet' ? '⏱ Timesheet' : t === 'project' ? '◧ Project' : '✎ Manual'}
+                {t(`source.${s}`)}
               </button>
             ))}
           </div>
@@ -316,14 +316,14 @@ export function InvoiceForm() {
           {sourceType === 'timesheet' && (
             <div style={{ padding: '16px', background: 'var(--bg2)',
               border: '1px solid var(--border)', borderRadius: 4, marginBottom: 20 }}>
-              <FieldLabel>Import period</FieldLabel>
+              <FieldLabel>{t('timesheetImport.label')}</FieldLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8 }}>
                 <Select value={String(importMonth)} onChange={v => setImportMonth(Number(v))}>
                   {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
                 </Select>
                 <Input value={importYear} onChange={v => setImportYear(Number(v))} type="number" />
                 <Select value={consultantId} onChange={v => setConsultantId(v)}>
-                  <option value="">All consultants</option>
+                  <option value="">{t('timesheetImport.allConsultants')}</option>
                   {consultants.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
                 <button onClick={importFromTimesheet} disabled={importing} style={{
@@ -332,7 +332,7 @@ export function InvoiceForm() {
                   fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)',
                   opacity: importing ? 0.6 : 1, whiteSpace: 'nowrap',
                 }}>
-                  {importing ? '···' : '↓ import'}
+                  {importing ? t('timesheetImport.loading') : t('timesheetImport.import')}
                 </button>
               </div>
             </div>
@@ -342,14 +342,14 @@ export function InvoiceForm() {
           {sourceType === 'project' && (
             <div style={{ padding: '16px', background: 'var(--bg2)',
               border: '1px solid var(--border)', borderRadius: 4, marginBottom: 20 }}>
-              <FieldLabel>Project</FieldLabel>
+              <FieldLabel>{t('projectImport.label')}</FieldLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
                 <Select value={projectId} onChange={v => {
                   setProjectId(v)
                   const p = projects.find(x => x.id === v)
                   if (p) setProjectName(p.name)
                 }}>
-                  <option value="">Select a project…</option>
+                  <option value="">{t('projectImport.placeholder')}</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </Select>
                 <button onClick={importFromProject} style={{
@@ -357,31 +357,31 @@ export function InvoiceForm() {
                   padding: '8px 16px', borderRadius: 3, cursor: 'pointer',
                   fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)',
                 }}>
-                  ↓ load
+                  {t('projectImport.load')}
                 </button>
               </div>
             </div>
           )}
 
           {/* Client */}
-          <SectionTitle>Client</SectionTitle>
+          <SectionTitle>{t('sections.client')}</SectionTitle>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
-              <FieldLabel>Client</FieldLabel>
+              <FieldLabel>{t('fields.client')}</FieldLabel>
               <Select value={clientId} onChange={v => {
                 setClientId(v)
                 setClientName(clients.find(c => c.id === v)?.name ?? '')
               }}>
-                <option value="">Select or type below…</option>
+                <option value="">{t('fields.clientSelect')}</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </div>
             <div>
-              <FieldLabel>Client name (override)</FieldLabel>
+              <FieldLabel>{t('fields.clientOverride')}</FieldLabel>
               <Input value={clientName} onChange={setClientName} placeholder="Acme Corp" />
             </div>
           </div>
-          <FieldLabel>Client address</FieldLabel>
+          <FieldLabel>{t('fields.clientAddress')}</FieldLabel>
           <textarea
             value={clientAddress} onChange={e => setClientAddress(e.target.value)}
             placeholder={'12 rue de la Paix\n75001 Paris\nFrance'}
@@ -395,36 +395,36 @@ export function InvoiceForm() {
           />
 
           {/* Dates */}
-          <SectionTitle>Dates & terms</SectionTitle>
+          <SectionTitle>{t('sections.dates')}</SectionTitle>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
             <div>
-              <FieldLabel>Invoice date</FieldLabel>
+              <FieldLabel>{t('fields.invoiceDate')}</FieldLabel>
               <Input type="date" value={invoiceDate} onChange={setInvoiceDate} />
             </div>
             <div>
-              <FieldLabel>Payment terms (days)</FieldLabel>
+              <FieldLabel>{t('fields.paymentTerms')}</FieldLabel>
               <Input type="number" value={paymentTerms}
                 onChange={v => setPaymentTerms(Number(v))} />
             </div>
             <div>
-              <FieldLabel>Due date (auto)</FieldLabel>
+              <FieldLabel>{t('fields.dueDate')}</FieldLabel>
               <Input value={dueDate} onChange={() => {}} style={{ opacity: 0.5 }} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: 12, marginBottom: 20 }}>
             <div>
-              <FieldLabel>VAT %</FieldLabel>
+              <FieldLabel>{t('fields.vat')}</FieldLabel>
               <Input type="number" value={tvaRate} onChange={v => setTvaRate(Number(v))} />
             </div>
             <div>
-              <FieldLabel>Project / description</FieldLabel>
+              <FieldLabel>{t('fields.projectDesc')}</FieldLabel>
               <Input value={projectName} onChange={setProjectName}
-                placeholder="Website redesign Q1 2026" />
+                placeholder={t('fields.projectDescHint')} />
             </div>
           </div>
 
           {/* Lines */}
-          <SectionTitle>Line items</SectionTitle>
+          <SectionTitle>{t('sections.lines')}</SectionTitle>
           {lines.map(line => (
             <div key={line.id} style={{
               padding: '12px', background: 'var(--bg2)',
@@ -433,18 +433,18 @@ export function InvoiceForm() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px 80px 100px 28px', gap: 8, marginBottom: 8 }}>
                 <Input value={line.description}
                   onChange={v => updateLine(line.id, 'description', v)}
-                  placeholder="Description" />
+                  placeholder={t('lines.description')} />
                 <Input type="number" value={line.quantity}
                   onChange={v => updateLine(line.id, 'quantity', parseFloat(v) || 0)} />
                 <Select value={line.unit}
                   onChange={v => updateLine(line.id, 'unit', v)}>
-                  <option value="day">day</option>
-                  <option value="hour">hour</option>
-                  <option value="unit">unit</option>
+                  <option value="day">{t('lines.units.day')}</option>
+                  <option value="hour">{t('lines.units.hour')}</option>
+                  <option value="unit">{t('lines.units.unit')}</option>
                 </Select>
                 <Input type="number" value={line.unit_price}
                   onChange={v => updateLine(line.id, 'unit_price', parseFloat(v) || 0)}
-                  placeholder="Rate" />
+                  placeholder={t('lines.rate')} />
                 <button onClick={() => removeLine(line.id)} style={{
                   background: 'none', border: '1px solid var(--border)',
                   color: 'var(--pink)', cursor: 'pointer', borderRadius: 3, fontSize: 12,
@@ -452,7 +452,7 @@ export function InvoiceForm() {
               </div>
               <Input value={line.detail}
                 onChange={v => updateLine(line.id, 'detail', v)}
-                placeholder="Detail / period (optional)"
+                placeholder={t('lines.detail')}
                 style={{ fontSize: 10, opacity: 0.7 }} />
               <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--cyan)',
                 marginTop: 6, fontFamily: 'var(--font-mono, monospace)' }}>
@@ -466,14 +466,14 @@ export function InvoiceForm() {
             color: 'var(--text2)', cursor: 'pointer', fontSize: 11,
             fontFamily: 'var(--font-mono, monospace)', marginBottom: 20,
           }}>
-            + add line
+            {t('lines.addLine')}
           </button>
 
           {/* Notes */}
-          <SectionTitle>Notes</SectionTitle>
+          <SectionTitle>{t('sections.notes')}</SectionTitle>
           <textarea
             value={notes} onChange={e => setNotes(e.target.value)}
-            placeholder="Late payment penalties, special conditions…"
+            placeholder={t('fields.notesHint')}
             rows={3}
             style={{
               width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
@@ -487,8 +487,8 @@ export function InvoiceForm() {
           <div style={{ padding: '16px 20px', background: 'var(--bg2)',
             border: '1px solid var(--border)', borderRadius: 4, marginBottom: 24 }}>
             {[
-              { label: 'Subtotal HT', value: fmt(subtotal)  + ' €', color: 'var(--text2)' },
-              { label: 'VAT ' + tvaRate + '%', value: fmt(tvaAmount) + ' €', color: 'var(--text2)' },
+              { label: t('totals.subtotal'),                  value: fmt(subtotal)  + ' €', color: 'var(--text2)' },
+              { label: t('totals.vat', { rate: tvaRate }),    value: fmt(tvaAmount) + ' €', color: 'var(--text2)' },
             ].map(row => (
               <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between',
                 fontSize: 11, color: row.color, marginBottom: 6 }}>
@@ -499,7 +499,7 @@ export function InvoiceForm() {
             <div style={{ display: 'flex', justifyContent: 'space-between',
               fontSize: 16, fontWeight: 700, color: 'var(--green)',
               borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-              <span>Total TTC</span>
+              <span>{t('totals.total')}</span>
               <span style={{ fontFamily: 'var(--font-mono)' }}>{fmt(total)} €</span>
             </div>
           </div>
@@ -513,7 +513,7 @@ export function InvoiceForm() {
               fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
               opacity: saving ? 0.5 : 1,
             }}>
-              save draft
+              {t('actions.saveDraft')}
             </button>
             <button onClick={() => handleSave(false)} disabled={saving} style={{
               flex: 2, padding: '12px', background: 'var(--green)',
@@ -522,7 +522,7 @@ export function InvoiceForm() {
               fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
               opacity: saving ? 0.5 : 1,
             }}>
-              {saving ? '···' : '→ save & mark as sent'}
+              {saving ? t('actions.saving') : t('actions.send')}
             </button>
           </div>
         </div>
@@ -531,7 +531,7 @@ export function InvoiceForm() {
         <div style={{ width: '50%', overflowY: 'auto', padding: '24px 32px', background: '#1a1a1a' }}>
           <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
             textTransform: 'uppercase', marginBottom: 16 }}>
-            // live preview
+            {t('livePreview')}
           </div>
           <InvoicePreview
             invoiceNumber={(billing.invoice_prefix ?? 'INV-2026-') + '0001'}

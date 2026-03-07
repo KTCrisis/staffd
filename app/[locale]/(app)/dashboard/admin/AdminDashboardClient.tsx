@@ -38,7 +38,6 @@ interface Props {
 
 export function AdminDashboardClient({ consultants, projects, kpi, activity }: Props) {
   const t      = useTranslations('dashboard')
-  const tNav   = useTranslations('timeline')
   const router = useRouter()
   const locale = useLocale()
 
@@ -131,13 +130,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
             </Panel>
 
             <Panel title={t('calendar')}>
-              <MiniCalendar
-                daysShort    ={t.raw('daysShort')   as string[]}
-                months       ={tNav.raw('months')    as string[]}
-                labelToday   ={t('calToday')}
-                labelUpcoming={t('calUpcoming')}
-                labelNoEvent ={t('calNoEvent')}
-              />
+              <MiniCalendar />
             </Panel>
           </div>
         </div>
