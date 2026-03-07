@@ -9,10 +9,11 @@ import { Topbar }               from '@/components/layout/Topbar'
 import { ClientDetailClient }   from '@/components/clients/ClientDetailClient'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>   // ← Next.js 15 : params est une Promise
 }
 
 export default async function ClientDetailPage({ params }: Props) {
+  const { id }      = await params  // ← await obligatoire
   const t           = await getTranslations('clients')
   const cookieStore = await cookies()
 
@@ -26,13 +27,13 @@ export default async function ClientDetailPage({ params }: Props) {
     supabase
       .from('clients')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single(),
 
     supabase
       .from('projects')
       .select('id, name, status, end_date, budget_total')
-      .eq('client_id', params.id)
+      .eq('client_id', id)
       .order('end_date', { ascending: false }),
   ])
 

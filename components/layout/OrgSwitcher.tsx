@@ -2,20 +2,14 @@
 
 /**
  * components/layout/OrgSwitcher.tsx
- * Dropdown super_admin — navigue entre les tenants.
- * Remplace le badge statique "staff7" dans la Topbar.
- *
- * Comportement :
- *   - Charge toutes les companies depuis Supabase (super_admin bypass RLS)
- *   - "⚡ All tenants" → activeTenantId = null (données toutes companies)
- *   - Sélection d'une company → activeTenantId = company.id
- *   - Le label actif s'affiche dans la Topbar, identique visuellement au badge tenant
+ * Migré : setActiveTenantId → router.push(?tenant=xxx)
+ * Les Server Components lisent searchParams.tenant pour filtrer.
  */
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations }             from 'next-intl'
+import { useRouter, useSearchParams }  from 'next/navigation'
 import { supabase }                    from '@/lib/supabase'
-import { useActiveTenant }             from '@/lib/tenant-context'
 
 interface Company {
   id:   string
@@ -24,8 +18,11 @@ interface Company {
 }
 
 export function OrgSwitcher() {
-  const t = useTranslations('orgSwitcher')
-  const { activeTenantId, setActiveTenantId } = useActiveTenant()
+  const t            = useTranslations('orgSwitcher')
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const activeTenantId = searchParams.get('tenant')
+
   const [companies, setCompanies] = useState<Company[]>([])
   const [open,      setOpen]      = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -47,13 +44,23 @@ export function OrgSwitcher() {
     return () => window.removeEventListener('mousedown', handler)
   }, [open])
 
+  const select = (id: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (id) {
+      params.set('tenant', id)
+    } else {
+      params.delete('tenant')
+    }
+    router.push(`?${params.toString()}`)
+    setOpen(false)
+  }
+
   const active = companies.find(c => c.id === activeTenantId)
   const label  = active ? active.name : t('allTenants')
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
 
-      {/* ── Trigger button ── */}
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -84,12 +91,9 @@ export function OrgSwitcher() {
           transform:  open ? 'rotate(180deg)' : 'none',
           display:    'inline-block',
           transition: 'transform 0.15s',
-        }}>
-          ▾
-        </span>
+        }}>▾</span>
       </button>
 
-      {/* ── Dropdown ── */}
       {open && (
         <div style={{
           position:     'absolute',
@@ -104,7 +108,6 @@ export function OrgSwitcher() {
           overflow:     'hidden',
         }}>
 
-          {/* Header */}
           <div style={{
             padding:       '8px 14px 6px',
             fontSize:      8,
@@ -116,12 +119,11 @@ export function OrgSwitcher() {
             {t('header')}
           </div>
 
-          {/* All tenants option */}
           <DropdownItem
             label={t('allTenants')}
             sub={t('companies', { count: companies.length })}
             active={activeTenantId === null}
-            onClick={() => { setActiveTenantId(null); setOpen(false) }}
+            onClick={() => select(null)}
           />
 
           {companies.length > 0 && (
@@ -134,7 +136,7 @@ export function OrgSwitcher() {
               label={c.name}
               sub={t(`modes.${c.mode}`)}
               active={activeTenantId === c.id}
-              onClick={() => { setActiveTenantId(c.id); setOpen(false) }}
+              onClick={() => select(c.id)}
             />
           ))}
 
@@ -149,18 +151,10 @@ export function OrgSwitcher() {
   )
 }
 
-// ── Item interne ────────────────────────────────────────────────
-
-function DropdownItem({
-  label, sub, active, onClick,
-}: {
-  label:   string
-  sub?:    string
-  active:  boolean
-  onClick: () => void
+function DropdownItem({ label, sub, active, onClick }: {
+  label: string; sub?: string; active: boolean; onClick: () => void
 }) {
   const [hover, setHover] = useState(false)
-
   return (
     <button
       onClick={onClick}
@@ -173,32 +167,20 @@ function DropdownItem({
         justifyContent: 'space-between',
         gap:            8,
         padding:        '9px 14px',
-        background:     active
-          ? 'rgba(0,229,255,0.08)'
-          : hover ? 'var(--bg3)' : 'transparent',
-        border:      'none',
-        borderLeft:  active ? '2px solid var(--cyan)' : '2px solid transparent',
-        cursor:      'pointer',
-        textAlign:   'left',
-        fontFamily:  'inherit',
-        transition:  'background 0.1s',
+        background:     active ? 'rgba(0,229,255,0.08)' : hover ? 'var(--bg3)' : 'transparent',
+        border:         'none',
+        borderLeft:     active ? '2px solid var(--cyan)' : '2px solid transparent',
+        cursor:         'pointer',
+        textAlign:      'left',
+        fontFamily:     'inherit',
+        transition:     'background 0.1s',
       }}
     >
-      <span style={{
-        fontSize:   11,
-        fontWeight: active ? 700 : 400,
-        color:      active ? 'var(--cyan)' : 'var(--text)',
-      }}>
+      <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? 'var(--cyan)' : 'var(--text)' }}>
         {label}
       </span>
       {sub && (
-        <span style={{
-          fontSize:      8,
-          letterSpacing: 1,
-          textTransform: 'uppercase',
-          color:         'var(--text2)',
-          flexShrink:    0,
-        }}>
+        <span style={{ fontSize: 8, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--text2)', flexShrink: 0 }}>
           {sub}
         </span>
       )}

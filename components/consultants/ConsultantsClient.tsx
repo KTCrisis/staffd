@@ -116,13 +116,14 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
 // ── Props ─────────────────────────────────────────────────────
 
 interface Props {
+  companyId?:   string
   consultants?: any[]
   userRole?:    string
 }
 
 // ── Composant principal ───────────────────────────────────────
 
-export function ConsultantsClient({ consultants = [], userRole }: Props) {
+export function ConsultantsClient({ consultants = [], userRole, companyId }: Props) {
   const t       = useTranslations('consultants')
   const tCommon = useTranslations('common')
   const router  = useRouter()
@@ -186,7 +187,7 @@ export function ConsultantsClient({ consultants = [], userRole }: Props) {
       const res  = await fetch('/api/invite', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ consultantId: selected.id, email: selected.email }),
+        body:    JSON.stringify({ consultantId: selected.id, email: selected.email, companyId }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error)
