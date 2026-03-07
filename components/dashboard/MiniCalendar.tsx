@@ -3,15 +3,16 @@
 import { useState }         from 'react'
 import { useTranslations }  from 'next-intl'
 
-// Hardcoded pour mock — viendra de Supabase plus tard
 const EVENT_DAYS = [5, 12, 14, 15, 16, 17, 18, 24, 31]
 
-// ── Helpers ──────────────────────────────────────────────────
+// Fallbacks — protègent contre t.raw() undefined pendant SSR/hydration
+const DAYS_SHORT_FB = ['Mo','Tu','We','Th','Fr','Sa','Su']
+const MONTHS_FB     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function getMonday(date: Date): Date {
-  const d   = new Date(date)
-  const day = d.getDay()
-  const diff = (day === 0 ? -6 : 1 - day)
+  const d    = new Date(date)
+  const day  = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   d.setHours(0, 0, 0, 0)
   return d
@@ -29,13 +30,9 @@ function isSameDay(a: Date, b: Date): boolean {
          a.getDate()     === b.getDate()
 }
 
-// ── Types ─────────────────────────────────────────────────────
-
 interface MiniCalendarProps {
   today?: { day: number; month: number; year: number }
 }
-
-// ── Composant ────────────────────────────────────────────────
 
 export function MiniCalendar({
   today = {
@@ -46,9 +43,10 @@ export function MiniCalendar({
 }: MiniCalendarProps) {
   const t = useTranslations('dashboard')
 
-  const daysShort    = t.raw('daysShort')    as string[]
-  const months       = t.raw('months')       as string[]
-  const labelToday   = t('calToday')
+  // t.raw() peut retourner undefined si la clé n'est pas résolue → fallback
+  const daysShort     = (t.raw('daysShort') as string[] | undefined) ?? DAYS_SHORT_FB
+  const months        = (t.raw('months')    as string[] | undefined) ?? MONTHS_FB
+  const labelToday    = t('calToday')
   const labelUpcoming = t('calUpcoming')
   const labelNoEvent  = t('calNoEvent')
   const labelEvent    = t('calEvent')
@@ -73,7 +71,7 @@ export function MiniCalendar({
   return (
     <div style={{ fontFamily: "'JetBrains Mono', monospace" }}>
 
-      {/* ── Header navigation ── */}
+      {/* Header navigation */}
       <div style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', marginBottom: 12,
@@ -99,7 +97,7 @@ export function MiniCalendar({
         <button className="cal-btn" onClick={nextWeek}>›</button>
       </div>
 
-      {/* ── Week strip ── */}
+      {/* Week strip */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
@@ -118,7 +116,7 @@ export function MiniCalendar({
                 color: isWeekend ? 'var(--border2)' : 'var(--text2)',
                 marginBottom: 4,
               }}>
-                {daysShort[i]}
+                {daysShort[i] ?? ''}
               </div>
               <div style={{
                 width: '100%', aspectRatio: '1',
@@ -152,10 +150,10 @@ export function MiniCalendar({
         })}
       </div>
 
-      {/* ── Séparateur ── */}
+      {/* Séparateur */}
       <div style={{ height: 1, background: 'var(--border)', marginBottom: 10 }} />
 
-      {/* ── Prochains événements ── */}
+      {/* Prochains événements */}
       {upcomingEvents.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{
