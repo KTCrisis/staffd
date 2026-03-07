@@ -12,19 +12,26 @@ interface ProjectRowProps {
   onClick?:    () => void
 }
 
-export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
+export function ProjectRow({ project, consultants = [], onClick }: ProjectRowProps) {
   const t = useTranslations('projects')
 
-  const members = project.consultantIds
+  // Supporte camelCase (hooks) ET snake_case (Server Component raw)
+  const consultantIds: string[] =
+    (project as any).consultantIds ??
+    (project as any).consultant_ids ??
+    []
+
+  const members = consultantIds
     .slice(0, 3)
     .map(id => consultants.find(c => c.id === id))
     .filter(Boolean) as Consultant[]
 
-  const extra = project.consultantIds.length - 3
+  const extra    = Math.max(0, consultantIds.length - 3)
+  const progress = (project as any).progress ?? 0
 
   const pctColor =
-    project.progress >= 80 ? 'var(--green)' :
-    project.progress >= 50 ? 'var(--gold)'  :
+    progress >= 80 ? 'var(--green)' :
+    progress >= 50 ? 'var(--gold)'  :
     'var(--cyan)'
 
   return (
@@ -33,7 +40,9 @@ export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
       <div>
         <div className="pr-name">{project.name}</div>
         <div className="pr-client">
-          {project.clientName ?? project.client} · {t('consultantCount', { count: project.consultantIds.length })}
+          {(project as any).clientName ?? (project as any).client_name ?? '—'}
+          {' · '}
+          {t('consultantCount', { count: consultantIds.length })}
         </div>
       </div>
 
@@ -57,14 +66,16 @@ export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
       {/* Progress */}
       <div>
         <div style={{ fontSize: 12, fontWeight: 700, color: pctColor }}>
-          {project.progress}%
+          {progress}%
         </div>
-        <ProgressBar value={project.progress} style={{ marginTop: 4 }} />
+        <ProgressBar value={progress} style={{ marginTop: 4 }} />
       </div>
 
       {/* Due date */}
       <div style={{ fontSize: 10, color: 'var(--text2)', textAlign: 'right' }}>
-        {project.endDate ? formatDate(project.endDate) : '—'}
+        {project.endDate ?? (project as any).end_date
+          ? formatDate(project.endDate ?? (project as any).end_date)
+          : '—'}
       </div>
     </div>
   )

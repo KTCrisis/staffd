@@ -11,14 +11,14 @@ const DOT_COLOR: Record<ActivityItem['type'], string> = {
 }
 
 interface ActivityFeedProps {
-  items: ActivityItem[]
+  items?: ActivityItem[]
 }
 
-export function ActivityFeed({ items }: ActivityFeedProps) {
+export function ActivityFeed({ items = [] }: ActivityFeedProps) {
   const t = useTranslations('activity')
 
-  // ── Formate une date ISO ou string relative en texte lisible ──
-  function formatTime(raw: string): string {
+  function formatTime(raw: string | undefined): string {
+    if (!raw) return ''
     if (!raw.includes('T') && !raw.includes('-')) return raw
 
     try {
@@ -31,7 +31,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
 
       if (diffMin < 1)  return t('justNow')
       if (diffMin < 60) return t('minutesAgo', { count: diffMin })
-      if (diffH < 24)   return t('hoursAgo', { count: diffH })
+      if (diffH < 24)   return t('hoursAgo',   { count: diffH })
       if (diffD === 1)  return t('yesterday', {
         time: date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
       })
@@ -59,7 +59,8 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
               className="notif-text"
               dangerouslySetInnerHTML={{ __html: item.message }}
             />
-            <div className="notif-time">{formatTime(item.time)}</div>
+            {/* Supporte item.time (camelCase legacy) ET item.created_at (Supabase snake_case) */}
+            <div className="notif-time">{formatTime((item as any).time ?? (item as any).created_at)}</div>
           </div>
         </div>
       ))}
