@@ -919,6 +919,47 @@
         "Novembre",
         "Décembre"
       ]
+    },
+    "list": {
+      "title": "Factures",
+      "breadcrumb": "// factures",
+      "cta": "+ Nouvelle facture",
+      "kpi": {
+        "totalBilled": "Total facturé",
+        "collected": "Encaissé",
+        "pending": "En attente",
+        "overdue": "En retard",
+        "invoiceCount": "{count} factures",
+        "awaitingPayment": "en attente de paiement",
+        "requiresAction": "action requise",
+        "allGood": "tout est ok"
+      },
+      "filters": {
+        "all": "Tout",
+        "draft": "Brouillon",
+        "sent": "Envoyée",
+        "paid": "Payée",
+        "overdue": "En retard",
+        "cancelled": "Annulée"
+      },
+      "table": {
+        "number": "Numéro",
+        "client": "Client",
+        "project": "Projet",
+        "date": "Date",
+        "due": "Échéance",
+        "subtotal": "Sous-total HT",
+        "vat": "TVA",
+        "total": "Total TTC",
+        "status": "Statut"
+      },
+      "overdueBadge": "⚠ {days}j de retard",
+      "paidBadge": "✓ payée le {date}",
+      "actions": {
+        "preview": "aperçu",
+        "pdf": "PDF ↓"
+      },
+      "empty": "Aucune facture ne correspond à ce filtre."
     }
   }
 }

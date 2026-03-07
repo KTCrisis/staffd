@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter }           from 'next/navigation'
-import { supabase }            from '@/lib/supabase'
+import { useState }         from 'react'
+import { useRouter }        from 'next/navigation'
+import { useTranslations }  from 'next-intl'
+import { supabase }         from '@/lib/supabase'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,12 +32,12 @@ interface Invoice {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const STATUS: Record<InvoiceStatus, { label: string; color: string; bg: string }> = {
-  draft:     { label: 'Draft',     color: 'var(--text2)', bg: 'rgba(255,255,255,.05)' },
-  sent:      { label: 'Sent',      color: 'var(--cyan)',  bg: 'rgba(0,229,255,.08)'   },
-  paid:      { label: 'Paid',      color: 'var(--green)', bg: 'rgba(0,255,136,.08)'   },
-  overdue:   { label: 'Overdue',   color: 'var(--pink)',  bg: 'rgba(255,45,107,.08)'  },
-  cancelled: { label: 'Cancelled', color: 'var(--text2)', bg: 'rgba(255,255,255,.03)' },
+const STATUS_COLORS: Record<InvoiceStatus, { color: string; bg: string }> = {
+  draft:     { color: 'var(--text2)', bg: 'rgba(255,255,255,.05)' },
+  sent:      { color: 'var(--cyan)',  bg: 'rgba(0,229,255,.08)'   },
+  paid:      { color: 'var(--green)', bg: 'rgba(0,255,136,.08)'   },
+  overdue:   { color: 'var(--pink)',  bg: 'rgba(255,45,107,.08)'  },
+  cancelled: { color: 'var(--text2)', bg: 'rgba(255,255,255,.03)' },
 }
 
 const SOURCE_ICON: Record<string, string> = {
@@ -56,14 +57,15 @@ function fmtDate(d: string) {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {
-  const s = STATUS[status]
+  const t = useTranslations('invoices.list.filters')
+  const s = STATUS_COLORS[status]
   return (
     <span style={{
       fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
       padding: '2px 8px', borderRadius: 2,
       color: s.color, background: s.bg, border: '1px solid ' + s.color + '33',
     }}>
-      {s.label}
+      {t(status)}
     </span>
   )
 }
@@ -122,7 +124,9 @@ const MOCK: Invoice[] = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function InvoiceList() {
-  const router = useRouter()
+  const router  = useRouter()
+  const t       = useTranslations('invoices.list')
+
   const [invoices, setInvoices] = useState<Invoice[]>(MOCK)
   const [filter,   setFilter]   = useState<InvoiceStatus | 'all'>('all')
 
@@ -134,38 +138,54 @@ export function InvoiceList() {
 
   const filtered = filter === 'all' ? invoices : invoices.filter(i => i.status === filter)
 
-  const totalBilled   = invoices.reduce((s, i) => s + i.total_ttc, 0)
-  const totalPaid     = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
-  const totalPending  = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total_ttc, 0)
-  const overdueCount  = invoices.filter(i => i.is_overdue).length
+  const totalBilled  = invoices.reduce((s, i) => s + i.total_ttc, 0)
+  const totalPaid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
+  const totalPending = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total_ttc, 0)
+  const overdueCount = invoices.filter(i => i.is_overdue).length
 
   return (
     <>
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        <KpiCard label="Total billed"  value={fmt(totalBilled)}   sub={invoices.length + ' invoices'} />
-        <KpiCard label="Collected"     value={fmt(totalPaid)}     color="var(--green)" />
-        <KpiCard label="Pending"       value={fmt(totalPending)}  color="var(--cyan)" sub="awaiting payment" />
-        <KpiCard label="Overdue"       value={String(overdueCount)}
+        <KpiCard
+          label={t('kpi.totalBilled')}
+          value={fmt(totalBilled)}
+          sub={t('kpi.invoiceCount', { count: invoices.length })}
+        />
+        <KpiCard
+          label={t('kpi.collected')}
+          value={fmt(totalPaid)}
+          color="var(--green)"
+        />
+        <KpiCard
+          label={t('kpi.pending')}
+          value={fmt(totalPending)}
+          color="var(--cyan)"
+          sub={t('kpi.awaitingPayment')}
+        />
+        <KpiCard
+          label={t('kpi.overdue')}
+          value={String(overdueCount)}
           color={overdueCount > 0 ? 'var(--pink)' : 'var(--text2)'}
-          sub={overdueCount > 0 ? 'requires action' : 'all good'} />
+          sub={overdueCount > 0 ? t('kpi.requiresAction') : t('kpi.allGood')}
+        />
       </div>
 
       {/* Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {(['all', 'draft', 'sent', 'paid', 'overdue', 'cancelled'] as const).map(s => {
-            const cfg   = s !== 'all' ? STATUS[s] : null
+            const color  = s !== 'all' ? STATUS_COLORS[s].color : 'var(--text)'
             const active = filter === s
             return (
               <button key={s} onClick={() => setFilter(s)} style={{
                 padding: '5px 12px', borderRadius: 3, fontSize: 10, cursor: 'pointer',
                 fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1, textTransform: 'uppercase',
-                border:     active ? '1px solid ' + (cfg?.color ?? 'var(--text)') : '1px solid var(--border)',
+                border:     active ? '1px solid ' + color : '1px solid var(--border)',
                 background: active ? 'var(--bg3)' : 'none',
-                color:      active ? (cfg?.color ?? 'var(--text)') : 'var(--text2)',
+                color:      active ? color : 'var(--text2)',
               }}>
-                {s === 'all' ? 'All' : cfg!.label}
+                {t(`filters.${s}`)}
               </button>
             )
           })}
@@ -177,7 +197,7 @@ export function InvoiceList() {
             padding: '8px 20px', borderRadius: 3, fontSize: 11, fontWeight: 700,
             cursor: 'pointer', fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
           }}>
-          + New invoice
+          {t('cta')}
         </button>
       </div>
 
@@ -186,15 +206,15 @@ export function InvoiceList() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Number</th>
-              <th>Client</th>
-              <th>Project</th>
-              <th>Date</th>
-              <th>Due</th>
-              <th style={{ textAlign: 'right' }}>Subtotal HT</th>
-              <th style={{ textAlign: 'right' }}>VAT</th>
-              <th style={{ textAlign: 'right' }}>Total TTC</th>
-              <th>Status</th>
+              <th>{t('table.number')}</th>
+              <th>{t('table.client')}</th>
+              <th>{t('table.project')}</th>
+              <th>{t('table.date')}</th>
+              <th>{t('table.due')}</th>
+              <th style={{ textAlign: 'right' }}>{t('table.subtotal')}</th>
+              <th style={{ textAlign: 'right' }}>{t('table.vat')}</th>
+              <th style={{ textAlign: 'right' }}>{t('table.total')}</th>
+              <th>{t('table.status')}</th>
               <th></th>
             </tr>
           </thead>
@@ -241,12 +261,12 @@ export function InvoiceList() {
                       </span>
                       {inv.is_overdue && (
                         <span style={{ fontSize: 9, color: 'var(--pink)' }}>
-                          {'⚠ ' + inv.days_overdue + 'd late'}
+                          {t('overdueBadge', { days: inv.days_overdue ?? 0 })}
                         </span>
                       )}
                       {inv.paid_at && (
                         <span style={{ fontSize: 9, color: 'var(--green)' }}>
-                          {'✓ paid ' + fmtDate(inv.paid_at)}
+                          {t('paidBadge', { date: fmtDate(inv.paid_at) })}
                         </span>
                       )}
                     </div>
@@ -278,7 +298,7 @@ export function InvoiceList() {
                       borderRadius: 2, cursor: 'pointer',
                       fontFamily: 'var(--font-mono, monospace)',
                     }}>
-                      preview
+                      {t('actions.preview')}
                     </button>
                     <button style={{
                       background: 'none', border: '1px solid var(--border)',
@@ -286,7 +306,7 @@ export function InvoiceList() {
                       borderRadius: 2, cursor: 'pointer',
                       fontFamily: 'var(--font-mono, monospace)',
                     }}>
-                      PDF ↓
+                      {t('actions.pdf')}
                     </button>
                   </div>
                 </td>
@@ -298,7 +318,7 @@ export function InvoiceList() {
 
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text2)', fontSize: 12 }}>
-          No invoices matching this filter.
+          {t('empty')}
         </div>
       )}
     </>

@@ -18,7 +18,6 @@ function Skeleton({ h = 80 }: { h?: number }) {
 
 export default function AdminDashboardPage() {
   const t      = useTranslations('dashboard')
-  const tNav   = useTranslations('timeline')
   const router = useRouter()
   const locale = useLocale()
 
@@ -119,13 +118,7 @@ export default function AdminDashboardPage() {
             </Panel>
 
             <Panel title={t('calendar')}>
-              <MiniCalendar
-                daysShort    ={t.raw('daysShort')   as string[]}
-                months       ={tNav.raw('months')    as string[]}
-                labelToday   ={t('calToday')}
-                labelUpcoming={t('calUpcoming')}
-                labelNoEvent ={t('calNoEvent')}
-              />
+              <MiniCalendar />
             </Panel>
           </div>
         </div>

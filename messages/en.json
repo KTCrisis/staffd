@@ -920,6 +920,47 @@
         "November",
         "December"
       ]
+    },
+    "list": {
+      "title": "Invoices",
+      "breadcrumb": "// invoices",
+      "cta": "+ New invoice",
+      "kpi": {
+        "totalBilled": "Total billed",
+        "collected": "Collected",
+        "pending": "Pending",
+        "overdue": "Overdue",
+        "invoiceCount": "{count} invoices",
+        "awaitingPayment": "awaiting payment",
+        "requiresAction": "requires action",
+        "allGood": "all good"
+      },
+      "filters": {
+        "all": "All",
+        "draft": "Draft",
+        "sent": "Sent",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "cancelled": "Cancelled"
+      },
+      "table": {
+        "number": "Number",
+        "client": "Client",
+        "project": "Project",
+        "date": "Date",
+        "due": "Due",
+        "subtotal": "Subtotal HT",
+        "vat": "VAT",
+        "total": "Total TTC",
+        "status": "Status"
+      },
+      "overdueBadge": "⚠ {days}d late",
+      "paidBadge": "✓ paid {date}",
+      "actions": {
+        "preview": "preview",
+        "pdf": "PDF ↓"
+      },
+      "empty": "No invoices matching this filter."
     }
   }
 }
