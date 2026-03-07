@@ -1,17 +1,20 @@
 'use client'
 
 import type { Project, Consultant } from '@/types'
-import { ProgressBar } from '@/components/ui/ProgressBar'
-import { Avatar }      from '@/components/ui/Avatar'
-import { formatDate }  from '@/lib/utils'
+import { ProgressBar }              from '@/components/ui/ProgressBar'
+import { Avatar }                   from '@/components/ui/Avatar'
+import { formatDate }               from '@/lib/utils'
+import { useTranslations }          from 'next-intl'
 
 interface ProjectRowProps {
-  project: Project
+  project:     Project
   consultants: Consultant[]
-  onClick?: () => void
+  onClick?:    () => void
 }
 
 export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
+  const t = useTranslations('projects')
+
   const members = project.consultantIds
     .slice(0, 3)
     .map(id => consultants.find(c => c.id === id))
@@ -30,7 +33,7 @@ export function ProjectRow({ project, consultants, onClick }: ProjectRowProps) {
       <div>
         <div className="pr-name">{project.name}</div>
         <div className="pr-client">
-          {project.clientName ?? project.client} · {project.consultantIds.length} consultant{project.consultantIds.length > 1 ? 's' : ''}
+          {project.clientName ?? project.client} · {t('consultantCount', { count: project.consultantIds.length })}
         </div>
       </div>
 

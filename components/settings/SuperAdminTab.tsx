@@ -4,9 +4,12 @@
 // components/settings/SuperAdminTab.tsx
 // ══════════════════════════════════════════════════════════════
 
+import { useTranslations } from 'next-intl'
 import { SectionLabel, ComingSoon } from './shared'
 
 export function SuperAdminTab() {
+  const t = useTranslations('settings.superAdmin')
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{
@@ -14,14 +17,14 @@ export function SuperAdminTab() {
         background: 'rgba(255,45,107,0.06)', border: '1px solid rgba(255,45,107,0.2)',
         fontSize: 10, color: 'var(--pink)', letterSpacing: 1,
       }}>
-        ⬡ Super Admin — cross-tenant access
+        {t('badge')}
       </div>
 
-      <SectionLabel label="TENANTS" />
-      <ComingSoon label="tenant_management" />
+      <SectionLabel label={t('tenantsSection')} />
+      <ComingSoon label={t('tenantsMgmt')} />
 
-      <SectionLabel label="PLATFORM_STATS" />
-      <ComingSoon label="platform_stats" />
+      <SectionLabel label={t('statsSection')} />
+      <ComingSoon label={t('statsMgmt')} />
     </div>
   )
 }

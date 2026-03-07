@@ -66,7 +66,6 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
           setForm(f => ({ ...f, type: 'Sans solde' }))
         }
 
-        // Pays : consultant.country_code → sinon company hr_settings → sinon 'FR'
         let cc = data?.country_code as string | null
         if (!cc && data?.company_id) {
           const { data: company } = await supabase
@@ -79,7 +78,6 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
         const resolvedCC = cc ?? 'FR'
         setCountryCode(resolvedCC)
 
-        // Fetch jours fériés pour l'année courante
         const year = new Date().getFullYear()
         const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${resolvedCC}`)
         const hData = await r.json()
@@ -95,7 +93,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
     fetchProfile()
   }, [user?.id])
 
-  // ── Types disponibles selon contract_type — labels via i18n ────────────
+  // ── Types disponibles selon contract_type ────────────────────────────
   const allTypes: { value: LeaveType; label: string }[] = [
     { value: 'CP',                label: t('types.CP')                },
     { value: 'RTT',               label: t('types.RTT')               },
@@ -306,7 +304,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
                   </span>
                   {!isAbsence && holidays.size > 0 && (
                     <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2, letterSpacing: 0.5 }}>
-                      weekends + jours fériés {countryCode} exclus
+                      {t('form.holidaysExcluded', { country: countryCode })}
                     </div>
                   )}
                 </div>

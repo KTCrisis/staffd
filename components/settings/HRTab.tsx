@@ -5,10 +5,11 @@
 // ══════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
+import { useTranslations }    from 'next-intl'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateHRSettings } from '@/lib/data'
 import { supabase }           from '@/lib/supabase'
-import type { HRSettings, PublicHoliday }        from '@/lib/data'
+import type { HRSettings, PublicHoliday } from '@/lib/data'
 import {
   SectionLabel, SettingsField, SaveBar, Skeleton, ToggleRow, ErrorBanner,
 } from './shared'
@@ -23,11 +24,6 @@ const COUNTRIES = [
   { code: 'US', flag: '🇺🇸', label: 'United States' },
 ]
 
-const MONTHS_FR = [
-  'Janvier','Février','Mars','Avril','Mai','Juin',
-  'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
-]
-
 const numberInput = {
   width: '100%', background: 'var(--bg3)',
   border: '1px solid var(--border2)', color: 'var(--text)',
@@ -36,6 +32,7 @@ const numberInput = {
 }
 
 export function HRTab() {
+  const t = useTranslations('settings.hr')
   const { activeTenantId } = useActiveTenant()
   const [refresh, setRefresh] = useState(0)
   const { data: companyData, loading } = useCompanySettings(refresh)
@@ -52,11 +49,11 @@ export function HRTab() {
 
   // ── Types d'activité CRA ──────────────────────────────────
   interface ActivityType { id: string; name: string }
-  const [activityTypes,    setActivityTypes]    = useState<ActivityType[]>([])
-  const [newActivityName,  setNewActivityName]  = useState('')
-  const [activityLoading,  setActivityLoading]  = useState(false)
-  const [activitySaving,   setActivitySaving]   = useState(false)
-  const [activityError,    setActivityError]    = useState<string | null>(null)
+  const [activityTypes,   setActivityTypes]   = useState<ActivityType[]>([])
+  const [newActivityName, setNewActivityName] = useState('')
+  const [activityLoading, setActivityLoading] = useState(false)
+  const [activitySaving,  setActivitySaving]  = useState(false)
+  const [activityError,   setActivityError]   = useState<string | null>(null)
 
   const companyId = activeTenantId ?? companyData?.id
 
@@ -118,7 +115,6 @@ export function HRTab() {
     setHrAutoApprove(hr.leave_auto_approve ?? false)
   }, [companyData])
 
-  // Fetch jours fériés au changement de pays
   useEffect(() => {
     const year = new Date().getFullYear()
     setHolidaysLoading(true)
@@ -131,12 +127,12 @@ export function HRTab() {
 
   const hr = (companyData?.hr_settings ?? {}) as Partial<HRSettings>
   const dirty = (
-    hrCountry     !== (hr.country_code               ?? 'FR')  ||
-    hrCp          !== String(hr.default_cp            ?? 25)   ||
-    hrRtt         !== String(hr.default_rtt           ?? 10)   ||
+    hrCountry     !== (hr.country_code                ?? 'FR')  ||
+    hrCp          !== String(hr.default_cp             ?? 25)   ||
+    hrRtt         !== String(hr.default_rtt            ?? 10)   ||
     hrWorkDays    !== String(hr.working_days_per_year  ?? 218)  ||
-    hrCraDeadline !== String(hr.cra_submission_deadline ?? 5)  ||
-    hrAutoApprove !== (hr.leave_auto_approve          ?? false)
+    hrCraDeadline !== String(hr.cra_submission_deadline ?? 5)   ||
+    hrAutoApprove !== (hr.leave_auto_approve           ?? false)
   )
 
   const handleSave = async () => {
@@ -172,13 +168,16 @@ export function HRTab() {
     setHrAutoApprove(h.leave_auto_approve ?? false)
   }
 
+  const weekdays = t.raw('weekdays') as string[]
+  const months   = t.raw('months')   as string[]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <ErrorBanner message={error} />
 
-      {/* Congés par défaut */}
+      {/* ── Congés par défaut ── */}
       <section>
-        <SectionLabel label="DEFAULT_LEAVE_POLICY" />
+        <SectionLabel label={t('leaveSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -187,18 +186,18 @@ export function HRTab() {
           {loading ? <Skeleton h={100} /> : (
             <>
               <div style={{ fontSize: 11, color: 'var(--text2)' }}>
-                Valeurs appliquées automatiquement à la création de chaque nouveau consultant.
+                {t('leavePolicyNote')}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-                <SettingsField label="CP / an (jours)" hint="Légal FR : 25j minimum">
+                <SettingsField label={t('cpLabel')} hint={t('cpHint')}>
                   <input type="number" min={0} max={60} value={hrCp}
                     onChange={e => setHrCp(e.target.value)} style={numberInput} />
                 </SettingsField>
-                <SettingsField label="RTT / an (jours)" hint="Selon accord d'entreprise">
+                <SettingsField label={t('rttLabel')} hint={t('rttHint')}>
                   <input type="number" min={0} max={30} value={hrRtt}
                     onChange={e => setHrRtt(e.target.value)} style={numberInput} />
                 </SettingsField>
-                <SettingsField label="Jours travaillés / an" hint="Standard FR : 218j">
+                <SettingsField label={t('workDaysLabel')} hint={t('workDaysHint')}>
                   <input type="number" min={200} max={260} value={hrWorkDays}
                     onChange={e => setHrWorkDays(e.target.value)} style={numberInput} />
                 </SettingsField>
@@ -208,9 +207,9 @@ export function HRTab() {
         </div>
       </section>
 
-      {/* Règles CRA */}
+      {/* ── Règles CRA ── */}
       <section>
-        <SectionLabel label="CRA_RULES" />
+        <SectionLabel label={t('craSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '0 24px',
@@ -223,10 +222,10 @@ export function HRTab() {
               }}>
                 <div>
                   <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 500 }}>
-                    Deadline soumission CRA
+                    {t('craDeadlineLabel')}
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                    Jour limite du mois suivant pour soumettre son CRA
+                    {t('craDeadlineHint')}
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -242,12 +241,14 @@ export function HRTab() {
                       textAlign: 'center', fontWeight: 700,
                     }}
                   />
-                  <span style={{ fontSize: 11, color: 'var(--text2)' }}>du mois</span>
+                  <span style={{ fontSize: 11, color: 'var(--text2)' }}>
+                    {t('craDeadlineUnit')}
+                  </span>
                 </div>
               </div>
               <ToggleRow
-                label="Approbation automatique des congés"
-                hint="Si activé, les demandes sont approuvées sans validation manager"
+                label={t('autoApproveLabel')}
+                hint={t('autoApproveHint')}
                 checked={hrAutoApprove}
                 onChange={setHrAutoApprove}
               />
@@ -256,9 +257,9 @@ export function HRTab() {
         </div>
       </section>
 
-      {/* Jours fériés */}
+      {/* ── Jours fériés ── */}
       <section>
-        <SectionLabel label="PUBLIC_HOLIDAYS" />
+        <SectionLabel label={t('holidaysSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, overflow: 'hidden',
@@ -269,10 +270,10 @@ export function HRTab() {
           }}>
             <div>
               <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
-                Pays de référence
+                {t('holidaysCountryLabel')}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                Jours fériés exclus des CRAs — source : date.nager.at
+                {t('holidaysCountryHint')}
               </div>
             </div>
             <select
@@ -298,12 +299,12 @@ export function HRTab() {
                 animation: 'spin 0.8s linear infinite',
               }} />
               <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 8, letterSpacing: 1 }}>
-                // fetching holidays…
+                {t('holidaysFetching')}
               </div>
             </div>
           ) : holidays.length === 0 ? (
             <div style={{ padding: '24px 20px', textAlign: 'center', fontSize: 11, color: 'var(--text2)' }}>
-              Aucun jour férié trouvé pour {hrCountry}
+              {t('holidaysNone', { country: hrCountry })}
             </div>
           ) : (() => {
             const byMonth = holidays.reduce<Record<number, PublicHoliday[]>>((acc, h) => {
@@ -312,7 +313,6 @@ export function HRTab() {
               acc[m].push(h)
               return acc
             }, {})
-            const weekdays = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
                 {Object.entries(byMonth)
@@ -327,7 +327,7 @@ export function HRTab() {
                         fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
                         color: 'var(--cyan)', marginBottom: 8, fontWeight: 700,
                       }}>
-                        {MONTHS_FR[Number(mIdx)]}
+                        {months[Number(mIdx)]}
                       </div>
                       {mHolidays.map(h => {
                         const d = new Date(h.date)
@@ -358,10 +358,10 @@ export function HRTab() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span style={{ fontSize: 10, color: 'var(--text2)' }}>
-                {holidays.length} jours fériés en {new Date().getFullYear()}
+                {t('holidaysCount', { count: holidays.length, year: new Date().getFullYear() })}
               </span>
               <span style={{ fontSize: 9, color: 'var(--text2)', opacity: 0.5, letterSpacing: 1 }}>
-                source: date.nager.at
+                {t('holidaysSource')}
               </span>
             </div>
           )}
@@ -372,7 +372,7 @@ export function HRTab() {
 
       {/* ── Types d'activité CRA ── */}
       <section>
-        <SectionLabel label="CRA_ACTIVITY_TYPES" />
+        <SectionLabel label={t('activitySection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, overflow: 'hidden',
@@ -384,10 +384,10 @@ export function HRTab() {
           }}>
             <div>
               <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
-                Types d'activité génériques
+                {t('activityTitle')}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                Sélectionnables dans les CRAs — non affichés dans la liste des projets clients
+                {t('activitySubtitle')}
               </div>
             </div>
             <span style={{
@@ -395,7 +395,7 @@ export function HRTab() {
               background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
               border: '1px solid rgba(0,229,255,0.2)',
             }}>
-              {activityTypes.length} types
+              {t('activityCount', { count: activityTypes.length })}
             </span>
           </div>
 
@@ -406,7 +406,7 @@ export function HRTab() {
             </div>
           ) : activityTypes.length === 0 ? (
             <div style={{ padding: '24px 20px', textAlign: 'center', fontSize: 11, color: 'var(--text2)' }}>
-              Aucun type d'activité défini
+              {t('activityEmpty')}
             </div>
           ) : (
             <div>
@@ -417,10 +417,7 @@ export function HRTab() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{
-                      fontSize: 9, color: 'var(--cyan)', fontFamily: 'var(--font-mono)',
-                      opacity: 0.5,
-                    }}>
+                    <span style={{ fontSize: 9, color: 'var(--cyan)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
                       ◈
                     </span>
                     <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 500 }}>
@@ -436,7 +433,7 @@ export function HRTab() {
                       letterSpacing: 0.5,
                     }}
                   >
-                    Archiver
+                    {t('activityArchive')}
                   </button>
                 </div>
               ))}
@@ -452,7 +449,7 @@ export function HRTab() {
               value={newActivityName}
               onChange={e => setNewActivityName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddActivity()}
-              placeholder="Intercontrat, Formation, Avant-vente…"
+              placeholder={t('activityPlaceholder')}
               style={{
                 flex: 1, background: 'var(--bg3)',
                 border: '1px solid var(--border2)',
@@ -472,7 +469,7 @@ export function HRTab() {
                 transition: 'background 0.15s',
               }}
             >
-              {activitySaving ? '…' : '+ Ajouter'}
+              {activitySaving ? t('activityAdding') : t('activityAdd')}
             </button>
           </div>
 

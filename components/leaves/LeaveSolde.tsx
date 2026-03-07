@@ -19,14 +19,20 @@ function BalanceBar({ taken, total, color }: { taken: number; total: number; col
   )
 }
 
-function SoldeRow({ label, left, total, color }: { label: string; left: number; total: number; color: string }) {
+function SoldeRow({ label, left, total, color, dayAbbr }: {
+  label:    string
+  left:     number
+  total:    number
+  color:    string
+  dayAbbr:  string
+}) {
   return (
     <div style={{ marginTop: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
         <span style={{ fontSize: 13, fontWeight: 700, color }}>
-          {left}j
-          <span style={{ fontSize: 9, color: 'var(--text2)', fontWeight: 400, marginLeft: 3 }}>/ {total}j</span>
+          {left}{dayAbbr}
+          <span style={{ fontSize: 9, color: 'var(--text2)', fontWeight: 400, marginLeft: 3 }}>/ {total}{dayAbbr}</span>
         </span>
       </div>
       <BalanceBar taken={total - left} total={total} color={color} />
@@ -35,7 +41,8 @@ function SoldeRow({ label, left, total, color }: { label: string; left: number; 
 }
 
 export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSoldeProps) {
-  const t = useTranslations('conges')
+  const t       = useTranslations('conges')
+  const dayAbbr = t('soldes.dayAbbr')
 
   const visible = isConsultant && currentUserId
     ? consultants.filter(c => c.user_id === currentUserId)
@@ -45,7 +52,7 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
     <div>
       {visible.length === 0 && (
         <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-          // no profile linked
+          {t('soldes.noProfile')}
         </div>
       )}
 
@@ -89,6 +96,7 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
                     left={c.leaveDaysLeft}
                     total={c.leaveDaysTotal ?? 25}
                     color={cpColor}
+                    dayAbbr={dayAbbr}
                   />
                   {hasRtt && (
                     <SoldeRow
@@ -96,6 +104,7 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
                       left={c.rttLeft ?? 0}
                       total={c.rttTotal ?? 0}
                       color={rttColor}
+                      dayAbbr={dayAbbr}
                     />
                   )}
                 </>

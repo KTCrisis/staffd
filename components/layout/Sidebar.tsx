@@ -184,7 +184,7 @@ export function Sidebar() {
         )}
         <button
           onClick={() => setCollapsed(c => !c)}
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? t('expand') : t('collapse')}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--text2)', fontSize: 14, padding: '4px 6px',
@@ -260,7 +260,7 @@ export function Sidebar() {
             <input
               value={command}
               onChange={e => setCommand(e.target.value)}
-              placeholder="Ask agent..."
+              placeholder={t('askAgent')}
               style={{
                 background: 'none', border: 'none', outline: 'none',
                 color: '#fff', fontSize: 11, width: '100%',

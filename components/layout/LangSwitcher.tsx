@@ -33,7 +33,7 @@ export function LangSwitcher() {
             opacity:     locale === l.code ? 1 : 0.45,
             borderColor: locale === l.code ? 'var(--green)' : 'transparent',
             color:       locale === l.code ? 'var(--green)' : 'var(--text2)',
-            borderRight: i === 0 ? '1px solid var(--border)' : undefined,
+            borderRight: i < LOCALES.length - 1 ? '1px solid var(--border)' : undefined,
             borderRadius: 0,
           }}
           title={l.code === 'fr' ? 'Français' : 'English'}

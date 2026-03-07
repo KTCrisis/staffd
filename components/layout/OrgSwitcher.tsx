@@ -12,9 +12,10 @@
  *   - Le label actif s'affiche dans la Topbar, identique visuellement au badge tenant
  */
 
-import { useState, useEffect, useRef }  from 'react'
-import { supabase }                      from '@/lib/supabase'
-import { useActiveTenant }               from '@/lib/tenant-context'
+import { useState, useEffect, useRef } from 'react'
+import { useTranslations }             from 'next-intl'
+import { supabase }                    from '@/lib/supabase'
+import { useActiveTenant }             from '@/lib/tenant-context'
 
 interface Company {
   id:   string
@@ -23,12 +24,12 @@ interface Company {
 }
 
 export function OrgSwitcher() {
+  const t = useTranslations('orgSwitcher')
   const { activeTenantId, setActiveTenantId } = useActiveTenant()
   const [companies, setCompanies] = useState<Company[]>([])
   const [open,      setOpen]      = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // Charger toutes les companies (super_admin voit tout via RLS)
   useEffect(() => {
     supabase
       .from('companies')
@@ -37,7 +38,6 @@ export function OrgSwitcher() {
       .then(({ data }) => setCompanies((data ?? []) as Company[]))
   }, [])
 
-  // Fermer en cliquant en dehors
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
@@ -48,12 +48,12 @@ export function OrgSwitcher() {
   }, [open])
 
   const active = companies.find(c => c.id === activeTenantId)
-  const label  = active ? active.name : 'All tenants'
+  const label  = active ? active.name : t('allTenants')
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
 
-      {/* ── Trigger button — même style que le badge tenant normal ── */}
+      {/* ── Trigger button ── */}
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -92,16 +92,16 @@ export function OrgSwitcher() {
       {/* ── Dropdown ── */}
       {open && (
         <div style={{
-          position:  'absolute',
-          top:       'calc(100% + 6px)',
-          right:     0,
-          minWidth:  200,
-          background: 'var(--bg2)',
-          border:    '1px solid var(--border2)',
+          position:     'absolute',
+          top:          'calc(100% + 6px)',
+          right:        0,
+          minWidth:     200,
+          background:   'var(--bg2)',
+          border:       '1px solid var(--border2)',
           borderRadius: 4,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          zIndex:    999,
-          overflow:  'hidden',
+          boxShadow:    '0 8px 32px rgba(0,0,0,0.4)',
+          zIndex:       999,
+          overflow:     'hidden',
         }}>
 
           {/* Header */}
@@ -113,28 +113,26 @@ export function OrgSwitcher() {
             color:         'var(--text2)',
             borderBottom:  '1px solid var(--border)',
           }}>
-            // switch_tenant
+            {t('header')}
           </div>
 
           {/* All tenants option */}
           <DropdownItem
-            label="⚡ All tenants"
-            sub={`${companies.length} companies`}
+            label={t('allTenants')}
+            sub={t('companies', { count: companies.length })}
             active={activeTenantId === null}
             onClick={() => { setActiveTenantId(null); setOpen(false) }}
           />
 
-          {/* Divider */}
           {companies.length > 0 && (
             <div style={{ height: 1, background: 'var(--border)', margin: '2px 0' }} />
           )}
 
-          {/* Company list */}
           {companies.map(c => (
             <DropdownItem
               key={c.id}
               label={c.name}
-              sub={c.mode === 'solo' ? 'solo' : 'team'}
+              sub={t(`modes.${c.mode}`)}
               active={activeTenantId === c.id}
               onClick={() => { setActiveTenantId(c.id); setOpen(false) }}
             />
@@ -142,7 +140,7 @@ export function OrgSwitcher() {
 
           {companies.length === 0 && (
             <div style={{ padding: '12px 14px', fontSize: 11, color: 'var(--text2)' }}>
-              Loading…
+              {t('loading')}
             </div>
           )}
         </div>
@@ -169,13 +167,13 @@ function DropdownItem({
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width:       '100%',
-        display:     'flex',
-        alignItems:  'center',
+        width:          '100%',
+        display:        'flex',
+        alignItems:     'center',
         justifyContent: 'space-between',
-        gap:         8,
-        padding:     '9px 14px',
-        background:  active
+        gap:            8,
+        padding:        '9px 14px',
+        background:     active
           ? 'rgba(0,229,255,0.08)'
           : hover ? 'var(--bg3)' : 'transparent',
         border:      'none',

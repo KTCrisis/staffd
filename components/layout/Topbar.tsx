@@ -57,9 +57,8 @@ export function Topbar({ title, breadcrumb, ctaLabel, onCta }: TopbarProps) {
         <LangSwitcher />
 
         <button className="btn btn-ghost" onClick={toggle} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {theme === 'dark' ? '☀ Light' : '☾ Dark'}
+          {theme === 'dark' ? t('themeLight') : t('themeDark')}
         </button>
-
 
         {onCta && (
           <button className="btn btn-primary" onClick={onCta}>{ctaLabel ?? t('new')}</button>

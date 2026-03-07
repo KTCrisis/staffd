@@ -5,6 +5,8 @@
 // Composants partagés entre tous les onglets Settings
 // ══════════════════════════════════════════════════════════════
 
+import { useTranslations } from 'next-intl'
+
 export function SectionLabel({ label }: { label: string }) {
   return (
     <div style={{
@@ -17,6 +19,7 @@ export function SectionLabel({ label }: { label: string }) {
 }
 
 export function ComingSoon({ label }: { label: string }) {
+  const t = useTranslations('settings')
   return (
     <div style={{
       padding: '48px 24px', textAlign: 'center',
@@ -25,7 +28,7 @@ export function ComingSoon({ label }: { label: string }) {
     }}>
       <div style={{ fontSize: 20, marginBottom: 12, opacity: 0.4 }}>⚙</div>
       <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-        // {label} — coming soon
+        {t('comingSoon', { label })}
       </div>
     </div>
   )
@@ -104,6 +107,7 @@ export function SaveBar({
 }: {
   dirty: boolean; saving: boolean; onSave: () => void; onReset: () => void
 }) {
+  const t = useTranslations('settings')
   if (!dirty && !saving) return null
   return (
     <div style={{
@@ -114,14 +118,14 @@ export function SaveBar({
       borderRadius: 6,
     }}>
       <span style={{ fontSize: 10, color: 'var(--cyan)', letterSpacing: 1 }}>
-        // unsaved changes
+        {t('unsavedChanges')}
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn btn-ghost btn-sm" onClick={onReset} disabled={saving}>
-          Reset
+          {t('reset')}
         </button>
         <button className="btn btn-primary btn-sm" onClick={onSave} disabled={saving}>
-          {saving ? '...' : '✓ Save changes'}
+          {saving ? '...' : t('saveChanges')}
         </button>
       </div>
     </div>

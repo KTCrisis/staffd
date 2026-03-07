@@ -22,12 +22,17 @@
     "profitability": "Profitability",
     "invoices": "Invoices",
     "agenticAI": "Agentic AI",
-    "logout": "Log out"
+    "logout": "Log out",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "askAgent": "Ask agent..."
   },
   "topbar": {
     "search": "Search...",
     "sync": "↻ Sync",
-    "new": "+ New"
+    "new": "+ New",
+    "themeLight": "☀ Light",
+    "themeDark": "☾ Dark"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -174,7 +179,9 @@
     "requests": "Requests",
     "soldes": {
       "title": "Leave balances",
-      "freelanceNote": "No CP/RTT — freelance contract"
+      "freelanceNote": "No CP/RTT — freelance contract",
+      "noProfile": "// no profile linked",
+      "dayAbbr": "d"
     },
     "noRequests": "// no requests",
     "approve": "✓ Approve",
@@ -200,7 +207,8 @@
       "legalDuration": "Legal duration",
       "workingDays": "Working days",
       "submit": "✓ Submit request",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "holidaysExcluded": "weekends & public holidays ({country}) excluded"
     },
     "errors": {
       "startDate": "Please select a start date",
@@ -438,7 +446,8 @@
       "tjmVendu": "Rate sold (€/day)",
       "joursVendus": "Days sold",
       "budgetTotal": "Total budget (€)"
-    }
+    },
+    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}"
   },
   "assignments": {
     "team": "Team",
@@ -458,7 +467,16 @@
     "errorConsultant": "Please select a consultant.",
     "errorStartDate": "Start date is required.",
     "errorEndDate": "End date is required.",
-    "errorProject": "Please select a project."
+    "errorProject": "Please select a project.",
+    "companyMissing": "Company context missing",
+    "occupied": "{rate}% occupied",
+    "available": "Available",
+    "missionDuration": "MISSION DURATION",
+    "workingDays": "{count} working days",
+    "daysOnMission": "{days}d out of {total} working days",
+    "dayUnit": "D",
+    "overAlloc": "⚠ Allocation over 100% — please verify",
+    "overDays": "⚠ Days exceed mission duration"
   },
   "disponibilites": {
     "title": "Staffing",
@@ -832,7 +850,202 @@
       "ai": "AI & MCP",
       "superadmin": "Super Admin"
     },
-    "ctaNewTeam": "+ New team"
+    "ctaNewTeam": "+ New team",
+    "ai": {
+      "modelSection": "AI_MODEL",
+      "endpointLabel": "Ollama endpoint",
+      "endpointHint": "URL of your Ollama instance — local or cloud",
+      "modelLabel": "Model",
+      "modelHint": "Model used by the /cmd AI console",
+      "agentsLabel": "Agents",
+      "agentsHint": "Enable autonomous agents in /cmd (predictive staffing, alerts, etc.)",
+      "mcpSection": "MCP_TOOLS",
+      "mcpSubtitle": "Available MCP connectors — manage tools accessible by the AI",
+      "mcpPlanned": "PLANNED",
+      "usageSection": "USAGE",
+      "usageComingSoon": "// AI call history and token consumption — coming soon",
+      "usageCallsToday": "Calls today",
+      "usageTokens": "Tokens used",
+      "usageLastCall": "Last call",
+      "statusActive": "active",
+      "statusPlanned": "planned",
+      "statusSoon": "soon",
+      "mcp": {
+        "supabase": {
+          "name": "Supabase MCP",
+          "desc": "Read/write company data via natural language"
+        },
+        "calendar": {
+          "name": "Calendar MCP",
+          "desc": "Sync leave requests to Google Calendar"
+        },
+        "slack": {
+          "name": "Slack MCP",
+          "desc": "Notify managers on assignment & leave events"
+        },
+        "spreadsheet": {
+          "name": "Spreadsheet MCP",
+          "desc": "Export CRA and profitability data to Google Sheets"
+        },
+        "custom": {
+          "name": "Custom MCP",
+          "desc": "Connect your own MCP server via endpoint URL"
+        }
+      }
+    },
+    "billing": {
+      "bankSection": "BANK_DETAILS",
+      "ibanLabel": "IBAN",
+      "bicLabel": "BIC / SWIFT",
+      "bankNameLabel": "Bank name",
+      "invoiceSection": "INVOICE_SETTINGS",
+      "prefixLabel": "Invoice prefix",
+      "prefixHint": "e.g. NEX-2026-",
+      "counterLabel": "Invoice counter",
+      "counterHint": "Read-only — auto-incremented",
+      "paymentTermsLabel": "Payment terms (days)",
+      "taxSection": "TAX_AND_LEGAL",
+      "tvaLabel": "TVA rate (%)",
+      "tvaHint": "Set to 0 for auto-entrepreneur (non assujetti)",
+      "legalLabel": "Legal mention",
+      "legalHint": "Appears at the bottom of every invoice"
+    },
+    "company": {
+      "identitySection": "COMPANY_IDENTITY",
+      "nameLabel": "Company name *",
+      "slugLabel": "Slug",
+      "slugHint": "Used in URLs — cannot be changed",
+      "addressLabel": "Address",
+      "addressHint": "Appears on invoices",
+      "legalSection": "LEGAL_INFO",
+      "siretLabel": "SIRET",
+      "siretHint": "14 digits",
+      "tvaLabel": "EU VAT number"
+    },
+    "hr": {
+      "leaveSection": "DEFAULT_LEAVE_POLICY",
+      "leavePolicyNote": "Values automatically applied when creating each new consultant.",
+      "cpLabel": "CP / year (days)",
+      "cpHint": "FR legal: 25 days minimum",
+      "rttLabel": "RTT / year (days)",
+      "rttHint": "Per company agreement",
+      "workDaysLabel": "Working days / year",
+      "workDaysHint": "FR standard: 218 days",
+      "craSection": "CRA_RULES",
+      "craDeadlineLabel": "CRA submission deadline",
+      "craDeadlineHint": "Last day of the following month to submit a CRA",
+      "craDeadlineUnit": "of the month",
+      "autoApproveLabel": "Automatic leave approval",
+      "autoApproveHint": "If enabled, requests are approved without manager validation",
+      "holidaysSection": "PUBLIC_HOLIDAYS",
+      "holidaysCountryLabel": "Reference country",
+      "holidaysCountryHint": "Public holidays excluded from CRAs — source: date.nager.at",
+      "holidaysFetching": "// fetching holidays…",
+      "holidaysNone": "No public holidays found for {country}",
+      "holidaysCount": "{count} public holidays in {year}",
+      "holidaysSource": "source: date.nager.at",
+      "activitySection": "CRA_ACTIVITY_TYPES",
+      "activityTitle": "Generic activity types",
+      "activitySubtitle": "Selectable in CRAs — not shown in the client project list",
+      "activityCount": "{count} types",
+      "activityLoading": "Loading...",
+      "activityEmpty": "No activity types defined",
+      "activityArchive": "Archive",
+      "activityPlaceholder": "Bench, Training, Pre-sales…",
+      "activityAdd": "+ Add",
+      "activityAdding": "…",
+      "weekdays": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "months": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ]
+    },
+    "unsavedChanges": "// unsaved changes",
+    "reset": "Reset",
+    "saveChanges": "✓ Save changes",
+    "comingSoon": "// {label} — coming soon",
+    "superAdmin": {
+      "badge": "⬡ Super Admin — cross-tenant access",
+      "tenantsSection": "TENANTS",
+      "statsSection": "PLATFORM_STATS",
+      "tenantsMgmt": "tenant_management",
+      "statsMgmt": "platform_stats"
+    },
+    "team": {
+      "statsTeams": "Teams",
+      "statsConsultants": "Consultants",
+      "statsFreelances": "Freelancers",
+      "statsUnassigned": "Unassigned",
+      "section": "TEAM_MANAGEMENT",
+      "unassignedSection": "UNASSIGNED",
+      "unassignedWarning": "{count, plural, one {⚠ # consultant without a team} other {⚠ # consultants without a team}}",
+      "emptyTitle": "No teams defined",
+      "emptySubtitle": "Create your first team to organise your consultants and managers.",
+      "createFirst": "+ Create a team",
+      "card": {
+        "memberCount": "{count, plural, one {# member} other {# members}}",
+        "edit": "Edit",
+        "delete": "Delete",
+        "managerLabel": "Manager",
+        "noManager": "— not defined",
+        "membersLabel": "Members",
+        "emptyMembers": "No members — add consultants below",
+        "selectConsultant": "Select a consultant…",
+        "add": "Add",
+        "addMember": "+ Add a member",
+        "remove": "Remove",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "titleNew": "NEW_TEAM",
+        "titleEdit": "EDIT_TEAM",
+        "nameLabel": "Team name *",
+        "namePlaceholder": "Front-end, Data, DevOps…",
+        "descLabel": "Description",
+        "descPlaceholder": "Short description (optional)",
+        "managerLabel": "Manager",
+        "noManager": "— No manager",
+        "errorName": "Name is required.",
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Edit",
+        "create": "Create team"
+      },
+      "confirmDelete": {
+        "header": "CONFIRM_DELETE",
+        "title": "Delete team \"{name}\"?",
+        "body": "{count, plural, one {# member will be unassigned.} other {# members will be unassigned.}} This action is irreversible.",
+        "cancel": "Cancel",
+        "deleting": "Deleting…",
+        "confirm": "Delete"
+      },
+      "confirmRemove": {
+        "header": "CONFIRM_REMOVE_MEMBER",
+        "title": "Remove \"{consultant}\"?",
+        "body": "This consultant will be removed from team \"{team}\" and marked as unassigned.",
+        "cancel": "Cancel",
+        "removing": "Removing…",
+        "confirm": "Remove"
+      }
+    }
   },
   "activity": {
     "empty": "// no recent activity",
@@ -961,6 +1174,40 @@
         "pdf": "PDF ↓"
       },
       "empty": "No invoices matching this filter."
+    },
+    "preview": {
+      "title": "INVOICE",
+      "date": "Date:",
+      "due": "Due:",
+      "netDays": "Net {days} days",
+      "from": "From",
+      "billTo": "Bill to",
+      "emitterName": "— emitter name —",
+      "clientName": "— client name —",
+      "companyName": "Your Company Name",
+      "re": "Re:",
+      "table": {
+        "description": "Description",
+        "qty": "Qty",
+        "unit": "Unit",
+        "unitPrice": "Unit price",
+        "total": "Total"
+      },
+      "emptyLines": "Add lines on the left to see them here",
+      "subtotal": "Subtotal (excl. VAT)",
+      "vat": "VAT {rate}%",
+      "grandTotal": "TOTAL (incl. VAT)",
+      "paymentDetails": "Payment details"
+    }
+  },
+  "orgSwitcher": {
+    "allTenants": "⚡ All tenants",
+    "header": "// switch_tenant",
+    "companies": "{count} companies",
+    "loading": "Loading…",
+    "modes": {
+      "solo": "solo",
+      "team": "team"
     }
   }
 }

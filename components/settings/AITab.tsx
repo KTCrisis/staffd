@@ -5,6 +5,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
+import { useTranslations }    from 'next-intl'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateAISettings } from '@/lib/data'
 import {
@@ -22,15 +23,16 @@ const OLLAMA_MODELS = [
   'phi4:latest',
 ]
 
-const MCP_TOOLS = [
-  { icon: '🗄', name: 'Supabase MCP',    desc: 'Read/write company data via natural language',       status: 'active',  color: 'var(--green)' },
-  { icon: '📅', name: 'Calendar MCP',    desc: 'Sync leave requests to Google Calendar',             status: 'planned', color: 'var(--text2)' },
-  { icon: '💬', name: 'Slack MCP',       desc: 'Notify managers on assignment & leave events',       status: 'planned', color: 'var(--text2)' },
-  { icon: '📊', name: 'Spreadsheet MCP', desc: 'Export CRA and profitability data to Google Sheets', status: 'planned', color: 'var(--text2)' },
-  { icon: '⚙',  name: 'Custom MCP',     desc: 'Connect your own MCP server via endpoint URL',       status: 'soon',    color: 'var(--cyan)' },
+const MCP_TOOL_KEYS = [
+  { key: 'supabase',    icon: '🗄', status: 'active',  color: 'var(--green)' },
+  { key: 'calendar',    icon: '📅', status: 'planned', color: 'var(--text2)' },
+  { key: 'slack',       icon: '💬', status: 'planned', color: 'var(--text2)' },
+  { key: 'spreadsheet', icon: '📊', status: 'planned', color: 'var(--text2)' },
+  { key: 'custom',      icon: '⚙',  status: 'soon',    color: 'var(--cyan)'  },
 ]
 
 export function AITab() {
+  const t = useTranslations('settings.ai')
   const { activeTenantId } = useActiveTenant()
   const [refresh, setRefresh] = useState(0)
   const { data: companyData, loading } = useCompanySettings(refresh)
@@ -38,9 +40,8 @@ export function AITab() {
   const [ollamaEndpoint, setOllamaEndpoint] = useState('')
   const [ollamaModel,    setOllamaModel]    = useState('kimi-k2.5:cloud')
   const [agentsEnabled,  setAgentsEnabled]  = useState(false)
-
-  const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState<string | null>(null)
+  const [saving,         setSaving]         = useState(false)
+  const [error,          setError]          = useState<string | null>(null)
 
   useEffect(() => {
     if (!companyData) return
@@ -84,13 +85,19 @@ export function AITab() {
     setAgentsEnabled(a.agents_enabled ?? false)
   }
 
+  const usageStats = [
+    { labelKey: 'usageCallsToday', color: 'var(--cyan)'  },
+    { labelKey: 'usageTokens',     color: 'var(--green)' },
+    { labelKey: 'usageLastCall',   color: 'var(--text2)' },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <ErrorBanner message={error} />
 
-      {/* Modèle Ollama */}
+      {/* ── Modèle Ollama ── */}
       <section>
-        <SectionLabel label="AI_MODEL" />
+        <SectionLabel label={t('modelSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -98,14 +105,14 @@ export function AITab() {
         }}>
           {loading ? <Skeleton h={100} /> : (
             <>
-              <SettingsField label="Ollama endpoint" hint="URL de ton instance Ollama — local ou cloud">
+              <SettingsField label={t('endpointLabel')} hint={t('endpointHint')}>
                 <SettingsInput
                   value={ollamaEndpoint} onChange={setOllamaEndpoint}
                   placeholder="https://ollama.yourdomain.com"
                 />
               </SettingsField>
 
-              <SettingsField label="Model" hint="Modèle utilisé par le /cmd AI console">
+              <SettingsField label={t('modelLabel')} hint={t('modelHint')}>
                 <select
                   value={ollamaModel}
                   onChange={e => setOllamaModel(e.target.value)}
@@ -130,9 +137,11 @@ export function AITab() {
                 border: `1px solid ${agentsEnabled ? 'rgba(0,255,136,0.2)' : 'var(--border)'}`,
               }}>
                 <div>
-                  <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>Agents</div>
+                  <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
+                    {t('agentsLabel')}
+                  </div>
                   <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                    Active les agents autonomes dans le /cmd (staffing prédictif, alertes, etc.)
+                    {t('agentsHint')}
                   </div>
                 </div>
                 <button
@@ -157,9 +166,9 @@ export function AITab() {
         </div>
       </section>
 
-      {/* MCP Tools */}
+      {/* ── MCP Tools ── */}
       <section>
-        <SectionLabel label="MCP_TOOLS" />
+        <SectionLabel label={t('mcpSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, overflow: 'hidden',
@@ -169,29 +178,33 @@ export function AITab() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <div style={{ fontSize: 10, color: 'var(--text2)' }}>
-              Connecteurs MCP disponibles — gèrent les outils accessibles par l'AI
+              {t('mcpSubtitle')}
             </div>
             <span style={{
               fontSize: 8, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
               background: 'rgba(255,209,102,0.1)', color: 'var(--gold)',
               border: '1px solid rgba(255,209,102,0.2)',
             }}>
-              PLANNED
+              {t('mcpPlanned')}
             </span>
           </div>
 
-          {MCP_TOOLS.map((tool, i) => (
-            <div key={tool.name} style={{
+          {MCP_TOOL_KEYS.map((tool, i) => (
+            <div key={tool.key} style={{
               padding: '14px 20px',
-              borderBottom: i < MCP_TOOLS.length - 1 ? '1px solid var(--border)' : undefined,
+              borderBottom: i < MCP_TOOL_KEYS.length - 1 ? '1px solid var(--border)' : undefined,
               display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <div style={{ fontSize: 18, width: 28, textAlign: 'center', flexShrink: 0 }}>
                 {tool.icon}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{tool.name}</div>
-                <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{tool.desc}</div>
+                <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
+                  {t(`mcp.${tool.key}.name`)}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
+                  {t(`mcp.${tool.key}.desc`)}
+                </div>
               </div>
               <span style={{
                 fontSize: 8, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
@@ -200,39 +213,35 @@ export function AITab() {
                 border: `1px solid ${tool.color}40`,
                 background: `${tool.color}10`,
               }}>
-                {tool.status}
+                {t(`status${tool.status.charAt(0).toUpperCase()}${tool.status.slice(1)}` as any)}
               </span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Usage */}
+      {/* ── Usage ── */}
       <section>
-        <SectionLabel label="USAGE" />
+        <SectionLabel label={t('usageSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
-            // Historique des appels AI et consommation de tokens — coming soon
+            {t('usageComingSoon')}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            {[
-              { label: 'Calls today', value: '—', color: 'var(--cyan)' },
-              { label: 'Tokens used', value: '—', color: 'var(--green)' },
-              { label: 'Last call',   value: '—', color: 'var(--text2)' },
-            ].map(stat => (
-              <div key={stat.label} style={{
+            {usageStats.map(stat => (
+              <div key={stat.labelKey} style={{
                 padding: '14px 16px', borderRadius: 3,
                 background: 'var(--bg3)', border: '1px solid var(--border)',
               }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: stat.color, fontFamily: 'var(--font-mono)' }}>
-                  {stat.value}
+                  —
                 </div>
                 <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
-                  {stat.label}
+                  {t(stat.labelKey as any)}
                 </div>
               </div>
             ))}

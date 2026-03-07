@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 // ── Shared types (exported for InvoiceForm) ──────────────────────────────────
 
 export interface InvoiceLineItem {
@@ -50,10 +52,20 @@ export function InvoicePreview({
   clientName, clientAddress, projectName,
   billing, notes, periodLabel,
 }: InvoicePreviewProps) {
+  const t = useTranslations('invoices.preview')
+
   const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unit_price, 0)
   const tvaAmount = subtotal * tvaRate / 100
   const total     = subtotal + tvaAmount
   const today     = invoiceDate || new Date().toISOString().slice(0, 10)
+
+  const tableHeaders = [
+    { key: 'description', align: 'left'  },
+    { key: 'qty',         align: 'right' },
+    { key: 'unit',        align: 'right' },
+    { key: 'unitPrice',   align: 'right' },
+    { key: 'total',       align: 'right' },
+  ] as const
 
   return (
     <div style={{
@@ -66,14 +78,20 @@ export function InvoicePreview({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#000', letterSpacing: -1 }}>INVOICE</div>
-          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>{invoiceNumber || 'INV-2026-0001'}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#000', letterSpacing: -1 }}>
+            {t('title')}
+          </div>
+          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+            {invoiceNumber || 'INV-2026-0001'}
+          </div>
         </div>
         <div style={{ textAlign: 'right', fontSize: 11, color: '#555' }}>
-          <div><strong>Date:</strong> {today}</div>
-          {dueDate && <div><strong>Due:</strong> {dueDate}</div>}
+          <div><strong>{t('date')}</strong> {today}</div>
+          {dueDate && <div><strong>{t('due')}</strong> {dueDate}</div>}
           {billing.payment_terms && (
-            <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>Net {billing.payment_terms} days</div>
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>
+              {t('netDays', { days: billing.payment_terms })}
+            </div>
           )}
         </div>
       </div>
@@ -82,10 +100,10 @@ export function InvoicePreview({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 36 }}>
         <div>
           <div style={{ fontSize: 9, letterSpacing: 2, color: '#aaa', textTransform: 'uppercase', marginBottom: 8 }}>
-            From
+            {t('from')}
           </div>
           <div style={{ fontWeight: 700, fontSize: 13 }}>
-            {billing.siret ? 'Your Company Name' : '— emitter name —'}
+            {billing.siret ? t('companyName') : t('emitterName')}
           </div>
           {billing.siret && (
             <div style={{ fontSize: 10, color: '#777', marginTop: 4 }}>
@@ -99,9 +117,9 @@ export function InvoicePreview({
         </div>
         <div>
           <div style={{ fontSize: 9, letterSpacing: 2, color: '#aaa', textTransform: 'uppercase', marginBottom: 8 }}>
-            Bill to
+            {t('billTo')}
           </div>
-          <div style={{ fontWeight: 700, fontSize: 13 }}>{clientName || '— client name —'}</div>
+          <div style={{ fontWeight: 700, fontSize: 13 }}>{clientName || t('clientName')}</div>
           {clientAddress && (
             <div style={{ fontSize: 10, color: '#777', marginTop: 4, whiteSpace: 'pre-line' }}>
               {clientAddress}
@@ -109,7 +127,7 @@ export function InvoicePreview({
           )}
           {projectName && (
             <div style={{ fontSize: 10, color: '#555', marginTop: 6 }}>
-              Re: {projectName}{periodLabel ? ' · ' + periodLabel : ''}
+              {t('re')} {projectName}{periodLabel ? ' · ' + periodLabel : ''}
             </div>
           )}
         </div>
@@ -119,13 +137,13 @@ export function InvoicePreview({
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
         <thead>
           <tr style={{ borderBottom: '2px solid #000' }}>
-            {['Description', 'Qty', 'Unit', 'Unit price', 'Total'].map(h => (
-              <th key={h} style={{
-                textAlign: h === 'Description' ? 'left' : 'right',
+            {tableHeaders.map(h => (
+              <th key={h.key} style={{
+                textAlign: h.align,
                 padding: '6px 8px', fontSize: 10, letterSpacing: 1,
                 textTransform: 'uppercase', color: '#555', fontWeight: 600,
               }}>
-                {h}
+                {t(`table.${h.key}`)}
               </th>
             ))}
           </tr>
@@ -148,7 +166,7 @@ export function InvoicePreview({
           {lines.filter(l => l.description).length === 0 && (
             <tr>
               <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: '#ccc', fontSize: 11 }}>
-                Add lines on the left to see them here
+                {t('emptyLines')}
               </td>
             </tr>
           )}
@@ -160,17 +178,17 @@ export function InvoicePreview({
         <div style={{ minWidth: 240 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between',
             padding: '5px 0', fontSize: 11, color: '#555', borderBottom: '1px solid #eee' }}>
-            <span>Subtotal (excl. VAT)</span>
+            <span>{t('subtotal')}</span>
             <span>{fmt(subtotal)} €</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between',
             padding: '5px 0', fontSize: 11, color: '#555', borderBottom: '1px solid #eee' }}>
-            <span>VAT {tvaRate}%</span>
+            <span>{t('vat', { rate: tvaRate })}</span>
             <span>{fmt(tvaAmount)} €</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between',
             padding: '8px 0', fontSize: 14, fontWeight: 700, color: '#000', borderBottom: '2px solid #000' }}>
-            <span>TOTAL (incl. VAT)</span>
+            <span>{t('grandTotal')}</span>
             <span>{fmt(total)} €</span>
           </div>
         </div>
@@ -180,7 +198,7 @@ export function InvoicePreview({
       {billing.bank_iban && (
         <div style={{ padding: '12px 16px', background: '#f8f8f8',
           borderRadius: 3, fontSize: 10, color: '#555', marginBottom: 16 }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Payment details</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('paymentDetails')}</div>
           <div>IBAN: {billing.bank_iban}</div>
           {billing.bank_bic  && <div>BIC: {billing.bank_bic}</div>}
           {billing.bank_name && <div>Bank: {billing.bank_name}</div>}

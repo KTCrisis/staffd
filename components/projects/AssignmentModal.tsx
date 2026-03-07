@@ -27,13 +27,11 @@ function countWorkingDays(start: string, end: string): number {
   return count
 }
 
-// ── Helper : jours → % arrondi au % près ─────────────────────
 function daysToPercent(days: number, totalDays: number): number {
   if (totalDays <= 0 || days <= 0) return 0
   return Math.min(100, Math.round((days / totalDays) * 100))
 }
 
-// ── Helper : % → jours arrondi ───────────────────────────────
 function percentToDays(pct: number, totalDays: number): number {
   if (totalDays <= 0 || pct <= 0) return 0
   return Math.round((pct / 100) * totalDays)
@@ -48,7 +46,7 @@ interface AssignmentModalProps {
 export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalProps) {
   const t = useTranslations('assignments')
 
-  const { data: consultants }    = useConsultants()
+  const { data: consultants }     = useConsultants()
   const { data: companySettings } = useCompanySettings()
 
   const [consultantId, setConsultantId] = useState('')
@@ -59,13 +57,11 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
   const [saving,       setSaving]       = useState(false)
   const [error,        setError]        = useState<string | null>(null)
 
-  // Durée totale de la mission (jours ouvrés)
   const missionDays = useMemo(
     () => countWorkingDays(startDate, endDate),
     [startDate, endDate]
   )
 
-  // Quand les dates changent, recalculer les jours depuis le % actuel
   const handleStartDate = (v: string) => {
     setStartDate(v)
     const total = countWorkingDays(v, endDate)
@@ -81,7 +77,6 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
     }
   }
 
-  // Saisie jours → calcule le %
   const handleJours = (v: string) => {
     setJours(v)
     const j = parseInt(v)
@@ -90,7 +85,6 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
     }
   }
 
-  // Saisie % → calcule les jours
   const handleAllocation = (v: string) => {
     setAllocation(v)
     const pct = parseInt(v)
@@ -101,11 +95,11 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
 
   async function handleSubmit() {
     if (!consultantId) { setError(t('errorConsultant')); return }
-    if (!startDate)    { setError(t('errorStartDate')); return }
-    if (!endDate)      { setError(t('errorEndDate'));   return }
+    if (!startDate)    { setError(t('errorStartDate'));  return }
+    if (!endDate)      { setError(t('errorEndDate'));    return }
 
     const companyId = companySettings?.id
-    if (!companyId) { setError('Company context missing'); return }
+    if (!companyId) { setError(t('companyMissing')); return }
 
     setSaving(true)
     setError(null)
@@ -189,7 +183,10 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             {(consultants ?? []).map(c => (
               <option key={c.id} value={c.id}>
                 {c.name} · {c.role}
-                {c.occupancyRate > 0 ? ` · ${c.occupancyRate}% occupé` : ' · Disponible'}
+                {c.occupancyRate > 0
+                  ? ` · ${t('occupied', { rate: c.occupancyRate })}`
+                  : ` · ${t('available')}`
+                }
               </option>
             ))}
           </select>
@@ -219,10 +216,10 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 1 }}>
-              DURÉE MISSION
+              {t('missionDuration')}
             </span>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>
-              {missionDays} j ouvrés
+              {t('workingDays', { count: missionDays })}
             </span>
           </div>
         )}
@@ -233,12 +230,11 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             <span>{t('allocation')}</span>
             {missionDays > 0 && jours && (
               <span style={{ fontSize: 10, color: 'var(--text2)', fontStyle: 'italic' }}>
-                {jours} j sur {missionDays} j ouvrés
+                {t('daysOnMission', { days: jours, total: missionDays })}
               </span>
             )}
           </label>
 
-          {/* Style global pour masquer les flèches natives des inputs number */}
           <style>{`
             .no-spin::-webkit-inner-spin-button,
             .no-spin::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -246,7 +242,7 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
           `}</style>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 8 }}>
-            {/* Input jours — principal avec boutons +/- */}
+            {/* Input jours */}
             <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg3)', border: '1px solid var(--border2)', borderRadius: 2 }}>
               <button
                 type="button"
@@ -276,7 +272,9 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
                 <span style={{
                   position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
                   fontSize: 9, color: 'var(--text2)', letterSpacing: 1, pointerEvents: 'none',
-                }}>J</span>
+                }}>
+                  {t('dayUnit')}
+                </span>
               </div>
               <button
                 type="button"
@@ -290,7 +288,7 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
               >+</button>
             </div>
 
-            {/* Input % — dérivé mais éditable */}
+            {/* Input % */}
             <div style={{
               display: 'flex', alignItems: 'center',
               background: 'var(--bg3)', border: `1px solid ${allocColor}40`, borderRadius: 2,
@@ -325,15 +323,14 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             </div>
           )}
 
-          {/* Warning surcharge */}
           {allocPct > 100 && (
             <div style={{ marginTop: 6, fontSize: 10, color: 'var(--pink)' }}>
-              ⚠ Allocation supérieure à 100% — vérifiez la cohérence
+              {t('overAlloc')}
             </div>
           )}
           {jours && missionDays > 0 && parseInt(jours) > missionDays && (
             <div style={{ marginTop: 6, fontSize: 10, color: 'var(--gold)' }}>
-              ⚠ Jours saisis supérieurs à la durée de la mission
+              {t('overDays')}
             </div>
           )}
         </div>

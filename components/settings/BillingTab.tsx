@@ -5,6 +5,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
+import { useTranslations }    from 'next-intl'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateCompanySettings } from '@/lib/data'
 import {
@@ -13,6 +14,7 @@ import {
 } from './shared'
 
 export function BillingTab() {
+  const t = useTranslations('settings.billing')
   const { activeTenantId } = useActiveTenant()
   const [refresh, setRefresh] = useState(0)
   const { data: companyData, loading } = useCompanySettings(refresh)
@@ -86,9 +88,9 @@ export function BillingTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <ErrorBanner message={error} />
 
-      {/* Coordonnées bancaires */}
+      {/* ── Coordonnées bancaires ── */}
       <section>
-        <SectionLabel label="BANK_DETAILS" />
+        <SectionLabel label={t('bankSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -96,17 +98,17 @@ export function BillingTab() {
         }}>
           {loading ? <Skeleton h={120} /> : (
             <>
-              <SettingsField label="IBAN">
+              <SettingsField label={t('ibanLabel')}>
                 <SettingsInput
                   value={iban} onChange={setIban}
                   placeholder="FR76 1234 5678 9012 3456 7890 123"
                 />
               </SettingsField>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <SettingsField label="BIC / SWIFT">
+                <SettingsField label={t('bicLabel')}>
                   <SettingsInput value={bic} onChange={setBic} placeholder="BNPAFRPPXXX" />
                 </SettingsField>
-                <SettingsField label="Bank name">
+                <SettingsField label={t('bankNameLabel')}>
                   <SettingsInput value={bankName} onChange={setBankName} placeholder="BNP Paribas" />
                 </SettingsField>
               </div>
@@ -115,9 +117,9 @@ export function BillingTab() {
         </div>
       </section>
 
-      {/* Paramètres factures */}
+      {/* ── Paramètres factures ── */}
       <section>
-        <SectionLabel label="INVOICE_SETTINGS" />
+        <SectionLabel label={t('invoiceSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -125,20 +127,20 @@ export function BillingTab() {
         }}>
           {loading ? <Skeleton h={120} /> : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              <SettingsField label="Invoice prefix" hint="e.g. NEX-2026-">
+              <SettingsField label={t('prefixLabel')} hint={t('prefixHint')}>
                 <SettingsInput
                   value={invoicePrefix} onChange={setInvoicePrefix}
                   placeholder="NEX-2026-"
                 />
               </SettingsField>
-              <SettingsField label="Invoice counter" hint="Read-only — auto-incremented">
+              <SettingsField label={t('counterLabel')} hint={t('counterHint')}>
                 <SettingsInput
                   value={String(companyData?.billing_settings?.invoice_counter ?? 0)}
                   onChange={() => {}}
                   disabled
                 />
               </SettingsField>
-              <SettingsField label="Payment terms (days)">
+              <SettingsField label={t('paymentTermsLabel')}>
                 <SettingsInput
                   value={paymentTerms} onChange={setPaymentTerms}
                   type="number" placeholder="30"
@@ -149,9 +151,9 @@ export function BillingTab() {
         </div>
       </section>
 
-      {/* TVA + mentions légales */}
+      {/* ── TVA + mentions légales ── */}
       <section>
-        <SectionLabel label="TAX_AND_LEGAL" />
+        <SectionLabel label={t('taxSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -159,13 +161,13 @@ export function BillingTab() {
         }}>
           {loading ? <Skeleton h={120} /> : (
             <>
-              <SettingsField label="TVA rate (%)" hint="Set to 0 for auto-entrepreneur (non assujetti)">
+              <SettingsField label={t('tvaLabel')} hint={t('tvaHint')}>
                 <SettingsInput
                   value={tvaRate} onChange={setTvaRate}
                   type="number" placeholder="20"
                 />
               </SettingsField>
-              <SettingsField label="Legal mention" hint="Appears at the bottom of every invoice">
+              <SettingsField label={t('legalLabel')} hint={t('legalHint')}>
                 <SettingsTextarea
                   value={legalMention} onChange={setLegalMention}
                   placeholder="Auto-entrepreneur — dispensé d'immatriculation au RCS..."

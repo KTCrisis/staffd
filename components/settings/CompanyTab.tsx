@@ -5,6 +5,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
+import { useTranslations }    from 'next-intl'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateCompanySettings } from '@/lib/data'
 import {
@@ -13,6 +14,7 @@ import {
 } from './shared'
 
 export function CompanyTab() {
+  const t = useTranslations('settings.company')
   const { activeTenantId } = useActiveTenant()
   const [refresh, setRefresh] = useState(0)
   const { data: companyData, loading } = useCompanySettings(refresh)
@@ -71,9 +73,9 @@ export function CompanyTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <ErrorBanner message={error} />
 
-      {/* Identité */}
+      {/* ── Identité ── */}
       <section>
-        <SectionLabel label="COMPANY_IDENTITY" />
+        <SectionLabel label={t('identitySection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -82,14 +84,14 @@ export function CompanyTab() {
           {loading ? <Skeleton h={120} /> : (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <SettingsField label="Company name *">
+                <SettingsField label={t('nameLabel')}>
                   <SettingsInput
                     value={companyName}
                     onChange={setCompanyName}
                     placeholder="NexDigital"
                   />
                 </SettingsField>
-                <SettingsField label="Slug" hint="Used in URLs — cannot be changed">
+                <SettingsField label={t('slugLabel')} hint={t('slugHint')}>
                   <SettingsInput
                     value={companyData?.slug ?? ''}
                     onChange={() => {}}
@@ -97,7 +99,7 @@ export function CompanyTab() {
                   />
                 </SettingsField>
               </div>
-              <SettingsField label="Address" hint="Appears on invoices">
+              <SettingsField label={t('addressLabel')} hint={t('addressHint')}>
                 <SettingsInput
                   value={companyAddress}
                   onChange={setCompanyAddress}
@@ -109,9 +111,9 @@ export function CompanyTab() {
         </div>
       </section>
 
-      {/* Infos légales */}
+      {/* ── Infos légales ── */}
       <section>
-        <SectionLabel label="LEGAL_INFO" />
+        <SectionLabel label={t('legalSection')} />
         <div style={{
           background: 'var(--bg2)', border: '1px solid var(--border)',
           borderRadius: 4, padding: '20px 24px',
@@ -119,14 +121,14 @@ export function CompanyTab() {
         }}>
           {loading ? <Skeleton h={80} /> : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <SettingsField label="SIRET" hint="14 chiffres">
+              <SettingsField label={t('siretLabel')} hint={t('siretHint')}>
                 <SettingsInput
                   value={companySiret}
                   onChange={setCompanySiret}
                   placeholder="12345678901234"
                 />
               </SettingsField>
-              <SettingsField label="N° TVA intracommunautaire">
+              <SettingsField label={t('tvaLabel')}>
                 <SettingsInput
                   value={companyTva}
                   onChange={setCompanyTva}

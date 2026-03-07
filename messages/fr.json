@@ -22,12 +22,17 @@
     "profitability": "Rentabilité",
     "invoices": "Factures",
     "agenticAI": "IA agentique",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "expand": "Développer",
+    "collapse": "Réduire",
+    "askAgent": "Demander à l'agent..."
   },
   "topbar": {
     "search": "Rechercher...",
     "sync": "↻ Sync",
-    "new": "+ Nouveau"
+    "new": "+ Nouveau",
+    "themeLight": "☀ Clair",
+    "themeDark": "☾ Sombre"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -174,7 +179,9 @@
     "requests": "Demandes",
     "soldes": {
       "title": "Soldes congés",
-      "freelanceNote": "Pas de CP ni RTT — contrat freelance"
+      "freelanceNote": "Pas de CP ni RTT — contrat freelance",
+      "noProfile": "// aucun profil lié",
+      "dayAbbr": "j"
     },
     "noRequests": "// aucune demande",
     "approve": "✓ Valider",
@@ -200,7 +207,8 @@
       "legalDuration": "Durée légale",
       "workingDays": "Jours ouvrés",
       "submit": "✓ Soumettre la demande",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "holidaysExcluded": "weekends + jours fériés ({country}) exclus"
     },
     "errors": {
       "startDate": "Veuillez sélectionner une date de début",
@@ -438,7 +446,8 @@
       "tjmVendu": "TJM vendu (€/j)",
       "joursVendus": "Jours vendus",
       "budgetTotal": "Budget total (€)"
-    }
+    },
+    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}"
   },
   "assignments": {
     "team": "Équipe",
@@ -458,7 +467,16 @@
     "errorConsultant": "Veuillez sélectionner un consultant.",
     "errorStartDate": "La date de début est requise.",
     "errorEndDate": "La date de fin est requise.",
-    "errorProject": "Veuillez sélectionner un projet."
+    "errorProject": "Veuillez sélectionner un projet.",
+    "companyMissing": "Contexte company manquant",
+    "occupied": "{rate}% occupé",
+    "available": "Disponible",
+    "missionDuration": "DURÉE MISSION",
+    "workingDays": "{count} j ouvrés",
+    "daysOnMission": "{days} j sur {total} j ouvrés",
+    "dayUnit": "J",
+    "overAlloc": "⚠ Allocation supérieure à 100% — vérifiez la cohérence",
+    "overDays": "⚠ Jours saisis supérieurs à la durée de la mission"
   },
   "disponibilites": {
     "title": "Staffing",
@@ -831,7 +849,202 @@
       "ai": "IA & MCP",
       "superadmin": "Super Admin"
     },
-    "ctaNewTeam": "+ Nouvelle équipe"
+    "ctaNewTeam": "+ Nouvelle équipe",
+    "ai": {
+      "modelSection": "AI_MODEL",
+      "endpointLabel": "Endpoint Ollama",
+      "endpointHint": "URL de ton instance Ollama — local ou cloud",
+      "modelLabel": "Modèle",
+      "modelHint": "Modèle utilisé par la console /cmd",
+      "agentsLabel": "Agents",
+      "agentsHint": "Active les agents autonomes dans le /cmd (staffing prédictif, alertes, etc.)",
+      "mcpSection": "MCP_TOOLS",
+      "mcpSubtitle": "Connecteurs MCP disponibles — gèrent les outils accessibles par l'IA",
+      "mcpPlanned": "PLANNED",
+      "usageSection": "USAGE",
+      "usageComingSoon": "// Historique des appels IA et consommation de tokens — bientôt disponible",
+      "usageCallsToday": "Appels aujourd'hui",
+      "usageTokens": "Tokens utilisés",
+      "usageLastCall": "Dernier appel",
+      "statusActive": "actif",
+      "statusPlanned": "planifié",
+      "statusSoon": "bientôt",
+      "mcp": {
+        "supabase": {
+          "name": "Supabase MCP",
+          "desc": "Lecture/écriture des données company en langage naturel"
+        },
+        "calendar": {
+          "name": "Calendar MCP",
+          "desc": "Synchronise les congés avec Google Calendar"
+        },
+        "slack": {
+          "name": "Slack MCP",
+          "desc": "Notifie les managers sur les affectations et congés"
+        },
+        "spreadsheet": {
+          "name": "Spreadsheet MCP",
+          "desc": "Exporte les CRA et données de rentabilité vers Sheets"
+        },
+        "custom": {
+          "name": "Custom MCP",
+          "desc": "Connecte ton propre serveur MCP via une URL endpoint"
+        }
+      }
+    },
+    "billing": {
+      "bankSection": "COORDONNÉES BANCAIRES",
+      "ibanLabel": "IBAN",
+      "bicLabel": "BIC / SWIFT",
+      "bankNameLabel": "Nom de la banque",
+      "invoiceSection": "PARAMÈTRES FACTURES",
+      "prefixLabel": "Préfixe facture",
+      "prefixHint": "ex. NEX-2026-",
+      "counterLabel": "Compteur factures",
+      "counterHint": "Lecture seule — auto-incrémenté",
+      "paymentTermsLabel": "Délai de paiement (jours)",
+      "taxSection": "TVA ET MENTIONS LÉGALES",
+      "tvaLabel": "Taux TVA (%)",
+      "tvaHint": "Mettre 0 pour auto-entrepreneur (non assujetti)",
+      "legalLabel": "Mention légale",
+      "legalHint": "Apparaît en bas de chaque facture"
+    },
+    "company": {
+      "identitySection": "IDENTITÉ SOCIÉTÉ",
+      "nameLabel": "Nom de la société *",
+      "slugLabel": "Slug",
+      "slugHint": "Utilisé dans les URLs — non modifiable",
+      "addressLabel": "Adresse",
+      "addressHint": "Apparaît sur les factures",
+      "legalSection": "INFOS LÉGALES",
+      "siretLabel": "SIRET",
+      "siretHint": "14 chiffres",
+      "tvaLabel": "N° TVA intracommunautaire"
+    },
+    "hr": {
+      "leaveSection": "CONGÉS PAR DÉFAUT",
+      "leavePolicyNote": "Valeurs appliquées automatiquement à la création de chaque nouveau consultant.",
+      "cpLabel": "CP / an (jours)",
+      "cpHint": "Légal FR : 25j minimum",
+      "rttLabel": "RTT / an (jours)",
+      "rttHint": "Selon accord d'entreprise",
+      "workDaysLabel": "Jours travaillés / an",
+      "workDaysHint": "Standard FR : 218j",
+      "craSection": "RÈGLES CRA",
+      "craDeadlineLabel": "Deadline soumission CRA",
+      "craDeadlineHint": "Jour limite du mois suivant pour soumettre son CRA",
+      "craDeadlineUnit": "du mois",
+      "autoApproveLabel": "Approbation automatique des congés",
+      "autoApproveHint": "Si activé, les demandes sont approuvées sans validation manager",
+      "holidaysSection": "JOURS FÉRIÉS",
+      "holidaysCountryLabel": "Pays de référence",
+      "holidaysCountryHint": "Jours fériés exclus des CRAs — source : date.nager.at",
+      "holidaysFetching": "// récupération des jours fériés…",
+      "holidaysNone": "Aucun jour férié trouvé pour {country}",
+      "holidaysCount": "{count} jours fériés en {year}",
+      "holidaysSource": "source: date.nager.at",
+      "activitySection": "TYPES D'ACTIVITÉ CRA",
+      "activityTitle": "Types d'activité génériques",
+      "activitySubtitle": "Sélectionnables dans les CRAs — non affichés dans la liste des projets clients",
+      "activityCount": "{count} types",
+      "activityLoading": "Chargement...",
+      "activityEmpty": "Aucun type d'activité défini",
+      "activityArchive": "Archiver",
+      "activityPlaceholder": "Intercontrat, Formation, Avant-vente…",
+      "activityAdd": "+ Ajouter",
+      "activityAdding": "…",
+      "weekdays": [
+        "Dim",
+        "Lun",
+        "Mar",
+        "Mer",
+        "Jeu",
+        "Ven",
+        "Sam"
+      ],
+      "months": [
+        "Janvier",
+        "Février",
+        "Mars",
+        "Avril",
+        "Mai",
+        "Juin",
+        "Juillet",
+        "Août",
+        "Septembre",
+        "Octobre",
+        "Novembre",
+        "Décembre"
+      ]
+    },
+    "unsavedChanges": "// modifications non sauvegardées",
+    "reset": "Réinitialiser",
+    "saveChanges": "✓ Sauvegarder",
+    "comingSoon": "// {label} — bientôt disponible",
+    "superAdmin": {
+      "badge": "⬡ Super Admin — accès cross-tenant",
+      "tenantsSection": "TENANTS",
+      "statsSection": "STATISTIQUES PLATEFORME",
+      "tenantsMgmt": "tenant_management",
+      "statsMgmt": "platform_stats"
+    },
+    "team": {
+      "statsTeams": "Équipes",
+      "statsConsultants": "Consultants",
+      "statsFreelances": "Freelances",
+      "statsUnassigned": "Non assignés",
+      "section": "GESTION DES ÉQUIPES",
+      "unassignedSection": "NON ASSIGNÉS",
+      "unassignedWarning": "{count, plural, one {⚠ # consultant sans équipe} other {⚠ # consultants sans équipe}}",
+      "emptyTitle": "Aucune équipe définie",
+      "emptySubtitle": "Créez votre première équipe pour organiser vos consultants et managers.",
+      "createFirst": "+ Créer une équipe",
+      "card": {
+        "memberCount": "{count, plural, one {# membre} other {# membres}}",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "managerLabel": "Manager",
+        "noManager": "— non défini",
+        "membersLabel": "Membres",
+        "emptyMembers": "Aucun membre — ajoutez des consultants ci-dessous",
+        "selectConsultant": "Sélectionner un consultant…",
+        "add": "Ajouter",
+        "addMember": "+ Ajouter un membre",
+        "remove": "Retirer",
+        "cancel": "Annuler"
+      },
+      "form": {
+        "titleNew": "NEW_TEAM",
+        "titleEdit": "EDIT_TEAM",
+        "nameLabel": "Nom de l'équipe *",
+        "namePlaceholder": "Front-end, Data, DevOps…",
+        "descLabel": "Description",
+        "descPlaceholder": "Description courte (optionnel)",
+        "managerLabel": "Manager",
+        "noManager": "— Aucun manager",
+        "errorName": "Le nom est requis.",
+        "cancel": "Annuler",
+        "saving": "Enregistrement…",
+        "save": "Modifier",
+        "create": "Créer l'équipe"
+      },
+      "confirmDelete": {
+        "header": "CONFIRM_DELETE",
+        "title": "Supprimer l'équipe \"{name}\" ?",
+        "body": "{count, plural, one {# membre sera désassigné.} other {# membres seront désassignés.}} Cette action est irréversible.",
+        "cancel": "Annuler",
+        "deleting": "Suppression…",
+        "confirm": "Supprimer"
+      },
+      "confirmRemove": {
+        "header": "CONFIRM_REMOVE_MEMBER",
+        "title": "Retirer \"{consultant}\" ?",
+        "body": "Ce consultant sera retiré de l'équipe \"{team}\" et repassera en \"sans équipe\".",
+        "cancel": "Annuler",
+        "removing": "Retrait…",
+        "confirm": "Retirer"
+      }
+    }
   },
   "activity": {
     "empty": "// aucune activité récente",
@@ -960,6 +1173,40 @@
         "pdf": "PDF ↓"
       },
       "empty": "Aucune facture ne correspond à ce filtre."
+    },
+    "preview": {
+      "title": "FACTURE",
+      "date": "Date :",
+      "due": "Échéance :",
+      "netDays": "Net {days} jours",
+      "from": "Émetteur",
+      "billTo": "Facturé à",
+      "emitterName": "— nom émetteur —",
+      "clientName": "— nom client —",
+      "companyName": "Votre société",
+      "re": "Objet :",
+      "table": {
+        "description": "Description",
+        "qty": "Qté",
+        "unit": "Unité",
+        "unitPrice": "Prix unitaire",
+        "total": "Total"
+      },
+      "emptyLines": "Ajoutez des lignes à gauche pour les voir ici",
+      "subtotal": "Sous-total HT",
+      "vat": "TVA {rate}%",
+      "grandTotal": "TOTAL TTC",
+      "paymentDetails": "Coordonnées bancaires"
+    }
+  },
+  "orgSwitcher": {
+    "allTenants": "⚡ Tous les tenants",
+    "header": "// switch_tenant",
+    "companies": "{count} sociétés",
+    "loading": "Chargement…",
+    "modes": {
+      "solo": "solo",
+      "team": "équipe"
     }
   }
 }
