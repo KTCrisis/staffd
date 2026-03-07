@@ -13,6 +13,7 @@ import { EmptyState }        from '@/components/ui/EmptyState'
 import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
 import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
 import { useConsultants, deleteConsultant } from '@/lib/data'
+import { toast } from '@/lib/toast'
 import type { ConsultantStatus, Consultant } from '@/types'
 
 function Skeleton({ h = 80 }: { h?: number }) {
@@ -22,6 +23,7 @@ function Skeleton({ h = 80 }: { h?: number }) {
 // ── Badge contrat ─────────────────────────────────────────────
 
 function ContractBadge({ type }: { type: string }) {
+  const t = useTranslations('consultants')
   const isFreelance = type === 'freelance'
   return (
     <span
@@ -32,7 +34,7 @@ function ContractBadge({ type }: { type: string }) {
         color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
       }}
     >
-      {isFreelance ? 'Freelance' : 'Salarié'}
+      {t(isFreelance ? 'contractType.freelance' : 'contractType.employee')}
     </span>
   )
 }
@@ -50,13 +52,13 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus }: {
   const t = useTranslations('consultants')
   return (
     <div className="cons-section">
-      <div className="label-meta" style={{ marginBottom: 12 }}>// account access</div>
+      <div className="label-meta" style={{ marginBottom: 12 }}>{t('account.label')}</div>
 
       {selected.user_id ? (
         <div className="cons-account-linked">
           <span className="cons-account-dot cons-account-dot--linked">●</span>
           <div>
-            <div className="cons-account-status">Compte lié</div>
+            <div className="cons-account-status">{t('account.linked')}</div>
             <div className="cons-account-email">{selected.email}</div>
           </div>
         </div>
@@ -65,11 +67,11 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus }: {
           <div className="cons-account-linked" style={{ marginBottom: 12 }}>
             <span className="cons-account-dot">○</span>
             <div>
-              <div className="cons-account-status" style={{ color: 'var(--text2)' }}>Aucun compte</div>
+              <div className="cons-account-status" style={{ color: 'var(--text2)' }}>{t('account.none')}</div>
               <div className="cons-account-email">
                 {selected.email
                   ? selected.email
-                  : <span style={{ color: 'var(--pink)' }}>Email manquant</span>
+                  : <span style={{ color: 'var(--pink)' }}>{t('account.emailMissing')}</span>
                 }
               </div>
             </div>
@@ -86,12 +88,12 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus }: {
             onClick={onInvite}
             disabled={!selected.email || inviteLoading}
           >
-            {inviteLoading ? '⏳ Envoi...' : '✉ Envoyer une invitation'}
+            {inviteLoading ? t('account.inviting') : t('account.invite')}
           </button>
 
-          {inviteStatus === 'sent'    && <p className="cons-invite-msg cons-invite-msg--sent">✓ Invitation envoyée à {selected.email}</p>}
-          {inviteStatus === 'already' && <p className="cons-invite-msg cons-invite-msg--already">⚠ Compte existant — rôle mis à jour</p>}
-          {inviteStatus === 'error'   && <p className="cons-invite-msg cons-invite-msg--error">✗ Erreur — vérifiez l'adresse email</p>}
+          {inviteStatus === 'sent'    && <p className="cons-invite-msg cons-invite-msg--sent">{t('account.sent', { email: selected.email ?? '' })}</p>}
+          {inviteStatus === 'already' && <p className="cons-invite-msg cons-invite-msg--already">{t('account.already')}</p>}
+          {inviteStatus === 'error'   && <p className="cons-invite-msg cons-invite-msg--error">{t('account.error')}</p>}
         </>
       )}
     </div>
@@ -106,10 +108,11 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
   onCancel:  () => void
   loading:   boolean
 }) {
+  const t = useTranslations('consultants')
   return (
     <div className="cons-delete-confirm">
       <div className="cons-delete-msg">
-        Supprimer <strong>{name}</strong> définitivement ?
+        {t('deleteConfirm.message', { name })}
       </div>
       <div className="cons-delete-actions">
         <button
@@ -117,10 +120,10 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
           onClick={onConfirm}
           disabled={loading}
         >
-          {loading ? '...' : '✕ Confirmer'}
+          {loading ? '...' : t('deleteConfirm.confirm')}
         </button>
         <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} onClick={onCancel}>
-          Annuler
+          {t('deleteConfirm.cancel')}
         </button>
       </div>
     </div>
@@ -190,7 +193,7 @@ export default function ConsultantsPage() {
       setSelected(null)
       setConfirmDelete(false)
       setRefresh(r => r + 1)
-    } catch (e: any) { alert(e.message) }
+    } catch (e) { toast.error(e) }
     finally { setDeleting(false) }
   }
 

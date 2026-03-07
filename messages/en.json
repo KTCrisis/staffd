@@ -128,7 +128,24 @@
       "facture": "Billed rate",
       "cible": "Target rate",
       "reel": "Actual cost"
-    }
+    },
+    "account": {
+      "label": "// account access",
+      "linked": "Account linked",
+      "none": "No account",
+      "emailMissing": "Missing email",
+      "invite": "✉ Send invitation",
+      "inviting": "⏳ Sending...",
+      "sent": "✓ Invitation sent to {email}",
+      "already": "⚠ Existing account — role updated",
+      "error": "✗ Error — check email address"
+    },
+    "deleteConfirm": {
+      "message": "Delete {name} permanently?",
+      "confirm": "✕ Confirm",
+      "cancel": "Cancel"
+    },
+    "deleteBtn": "✕ Delete"
   },
   "conges": {
     "title": "Time Off",
