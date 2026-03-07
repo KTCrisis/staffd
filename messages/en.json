@@ -1201,7 +1201,7 @@
     }
   },
   "orgSwitcher": {
-    "allTenants": "⚡ All tenants",
+    "allTenants": "All tenants",
     "header": "// switch_tenant",
     "companies": "{count} companies",
     "loading": "Loading…",

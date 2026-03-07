@@ -1201,7 +1201,7 @@
     }
   },
   "orgSwitcher": {
-    "allTenants": "⚡ Tous les tenants",
+    "allTenants": "Tous les tenants",
     "header": "// switch_tenant",
     "companies": "{count} sociétés",
     "loading": "Chargement…",

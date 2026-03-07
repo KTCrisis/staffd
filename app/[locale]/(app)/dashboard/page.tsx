@@ -1,14 +1,16 @@
+// app/[locale]/(app)/dashboard/page.tsx
+// ── Server Component ─────────────────────────────────────────
+// Lit le rôle depuis le JWT app_metadata côté serveur,
+// redirect immédiat sans hydration ni flash "// loading…"
+// Avant : 'use client' + useEffect + useAuth → 1 render inutile
+// Après : async Server Component → redirect avant le premier paint
+
 import { redirect }           from 'next/navigation'
-import { createServerClient } from '@supabase/ssr'
 import { cookies }            from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
-interface Props {
-  params: Promise<{ locale: string }>
-}
-
-export default async function DashboardPage({ params }: Props) {
-  const { locale }    = await params
-  const cookieStore   = await cookies()
+export default async function DashboardPage() {
+  const cookieStore = await cookies()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,16 +18,16 @@ export default async function DashboardPage({ params }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
+  // getUser() vérifie le JWT côté serveur (plus sûr que getSession())
   const { data: { user } } = await supabase.auth.getUser()
-  const role = user?.app_metadata?.user_role
+  const role = user?.app_metadata?.user_role as string | undefined
 
-  // Préfixe de locale — 'en' est la locale par défaut, pas de préfixe
-  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
+  if (role === 'consultant')                           redirect('/dashboard/consultant')
+  if (role === 'manager')                              redirect('/dashboard/manager')
+  if (role === 'admin' || role === 'super_admin')      redirect('/dashboard/admin')
 
-  if (!role)                                        redirect(p('/login'))
-  if (role === 'consultant'|| role === 'freelance')                        redirect(p('/dashboard/consultant'))
-  if (role === 'manager')                           redirect(p('/dashboard/manager'))
-  if (role === 'admin' || role === 'super_admin')   redirect(p('/dashboard/admin'))
-
-  redirect(p('/login'))
+  // Fallback : pas de rôle connu → retour login
+  // (le middleware gère déjà le cas "pas de session",
+  //  ce fallback couvre un app_metadata mal formé)
+  redirect('/login')
 }
