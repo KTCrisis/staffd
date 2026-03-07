@@ -1,19 +1,15 @@
 'use client'
 
-/**
- * app/[locale]/(app)/clients/page.tsx
- * Liste des clients avec stats et CRUD
- */
-
 import { useState }        from 'react'
 import { useRouter }       from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import { Topbar }          from '@/components/layout/Topbar'
-import { Panel, StatRow, Badge } from '@/components/ui'
+import { Panel, StatRow }  from '@/components/ui'
+import { EmptyState }      from '@/components/ui/EmptyState'
 import { ClientForm }      from '@/components/clients/ClientForm'
 import { useClients, deleteClient } from '@/lib/data'
-import type { Client }     from '@/types'
 import { SECTORS }         from '@/components/clients/ClientForm'
+import type { Client }     from '@/types'
 
 type FilterValue = 'all' | typeof SECTORS[number]
 
@@ -21,12 +17,12 @@ export default function ClientsPage() {
   const t      = useTranslations('clients')
   const router = useRouter()
 
-  const [refresh,     setRefresh]     = useState(0)
-  const [filter,      setFilter]      = useState<FilterValue>('all')
-  const [search,      setSearch]      = useState('')
-  const [formOpen,    setFormOpen]    = useState(false)
-  const [editClient,  setEditClient]  = useState<Client | null>(null)
-  const [deleting,    setDeleting]    = useState(false)
+  const [refresh,    setRefresh]    = useState(0)
+  const [filter,     setFilter]     = useState<FilterValue>('all')
+  const [search,     setSearch]     = useState('')
+  const [formOpen,   setFormOpen]   = useState(false)
+  const [editClient, setEditClient] = useState<Client | null>(null)
+  const [deleting,   setDeleting]   = useState(false)
 
   const { data: clients, loading, error } = useClients(refresh)
 
@@ -37,34 +33,21 @@ export default function ClientsPage() {
   })
 
   const stats = [
-    { value: (clients ?? []).length,                                                     label: t('stats.total'),    color: 'var(--cyan)' },
-    { value: new Set((clients ?? []).map(c => c.sector).filter(Boolean)).size,           label: t('stats.sectors'),  color: 'var(--gold)' },
-    { value: (clients ?? []).filter(c => (c.activeProjects ?? 0) > 0).length,           label: t('stats.active'),   color: 'var(--green)' },
+    { value: (clients ?? []).length,                                           label: t('stats.total'),   color: 'var(--cyan)'  },
+    { value: new Set((clients ?? []).map(c => c.sector).filter(Boolean)).size, label: t('stats.sectors'), color: 'var(--gold)'  },
+    { value: (clients ?? []).filter(c => (c.activeProjects ?? 0) > 0).length, label: t('stats.active'),  color: 'var(--green)' },
   ]
 
-  function openCreate() {
-    setEditClient(null)
-    setFormOpen(true)
-  }
-
-  function openEdit(c: Client, e: React.MouseEvent) {
-    e.stopPropagation()
-    setEditClient(c)
-    setFormOpen(true)
-  }
+  function openCreate()                          { setEditClient(null); setFormOpen(true) }
+  function openEdit(c: Client, e: React.MouseEvent) { e.stopPropagation(); setEditClient(c); setFormOpen(true) }
 
   async function handleDelete(c: Client, e: React.MouseEvent) {
     e.stopPropagation()
     if (!confirm(t('confirmDelete', { name: c.name }))) return
     setDeleting(true)
-    try {
-      await deleteClient(c.id)
-      setRefresh(r => r + 1)
-    } catch (err: any) {
-      alert(err.message)
-    } finally {
-      setDeleting(false)
-    }
+    try   { await deleteClient(c.id); setRefresh(r => r + 1) }
+    catch (err: any) { alert(err.message) }
+    finally { setDeleting(false) }
   }
 
   return (
@@ -75,12 +58,19 @@ export default function ClientsPage() {
         <StatRow stats={stats} />
 
         {/* Filtres + search */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <button className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter('all')}>
+        <div className="sort-bar" style={{ flexWrap: 'wrap' }}>
+          <button
+            className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setFilter('all')}
+          >
             {t('filters.all')}
           </button>
           {SECTORS.map(s => (
-            <button key={s} className={`btn ${filter === s ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setFilter(s)}>
+            <button
+              key={s}
+              className={`btn ${filter === s ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setFilter(s)}
+            >
               {s}
             </button>
           ))}
@@ -93,72 +83,79 @@ export default function ClientsPage() {
           />
         </div>
 
-        {loading && <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>{t('loading')}</div>}
-        {error   && <div style={{ padding: 16, color: 'var(--pink)', fontSize: 12 }}>{t('error')}: {error}</div>}
+        {loading && <EmptyState message={t('loading')} />}
+        {error   && <p className="ts-status-msg ts-status-msg--error">{t('error')}: {error}</p>}
 
         {!loading && !error && (
           <Panel noPadding>
-            {visible.length === 0
-              ? <div style={{ padding: '40px 18px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>{t('noResults')}</div>
-              : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>{t('table.name')}</th>
-                        <th>{t('table.sector')}</th>
-                        <th>{t('table.contact')}</th>
-                        <th>{t('table.projects')}</th>
-                        <th>{t('table.actions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visible.map(c => (
-                        <tr key={c.id} onClick={() => router.push(`/clients/${c.id}`)} style={{ cursor: 'pointer' }}>
-                          <td>
-                            <div className="td-primary">{c.name}</div>
-                            {c.website && (
-                              <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>
-                                {c.website.replace(/^https?:\/\//, '')}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            {c.sector
-                              ? <span className="badge badge-starting">{c.sector}</span>
-                              : <span style={{ color: 'var(--text2)' }}>—</span>
-                            }
-                          </td>
-                          <td style={{ fontSize: 11, color: 'var(--text2)' }}>
-                            {c.contactName
-                              ? <div>
-                                  <div style={{ color: 'var(--text)', fontWeight: 600 }}>{c.contactName}</div>
-                                  <div>{c.contactEmail}</div>
-                                </div>
-                              : '—'
-                            }
-                          </td>
-                          <td style={{ fontSize: 12 }}>
-                            {c.activeProjects != null
-                              ? <span style={{ color: c.activeProjects > 0 ? 'var(--green)' : 'var(--text2)', fontWeight: 700 }}>
-                                  {c.activeProjects} actif{c.activeProjects > 1 ? 's' : ''}
-                                </span>
-                              : '—'
-                            }
-                          </td>
-                          <td onClick={e => e.stopPropagation()}>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button className="btn btn-ghost btn-sm" onClick={e => openEdit(c, e)}>{t('actions.edit')}</button>
-                              <button className="btn btn-ghost btn-sm" style={{ color: 'var(--pink)' }} onClick={e => handleDelete(c, e)} disabled={deleting}>{t('actions.delete')}</button>
+            {visible.length === 0 ? (
+              <EmptyState message={t('noResults')} />
+            ) : (
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t('table.name')}</th>
+                      <th>{t('table.sector')}</th>
+                      <th>{t('table.contact')}</th>
+                      <th>{t('table.projects')}</th>
+                      <th>{t('table.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map(c => (
+                      <tr key={c.id} onClick={() => router.push(`/clients/${c.id}`)}>
+                        <td>
+                          <div className="td-primary">{c.name}</div>
+                          {c.website && (
+                            <div className="td-sub">{c.website.replace(/^https?:\/\//, '')}</div>
+                          )}
+                        </td>
+                        <td>
+                          {c.sector
+                            ? <span className="badge badge-starting">{c.sector}</span>
+                            : <span className="td-empty">—</span>
+                          }
+                        </td>
+                        <td>
+                          {c.contactName ? (
+                            <div>
+                              <div className="client-contact-name">{c.contactName}</div>
+                              <div className="td-sub">{c.contactEmail}</div>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            }
+                          ) : <span className="td-empty">—</span>}
+                        </td>
+                        <td>
+                          {c.activeProjects != null ? (
+                            <span
+                              className="client-projects"
+                              style={{ color: c.activeProjects > 0 ? 'var(--green)' : 'var(--text2)' }}
+                            >
+                              {c.activeProjects} actif{c.activeProjects > 1 ? 's' : ''}
+                            </span>
+                          ) : <span className="td-empty">—</span>}
+                        </td>
+                        <td onClick={e => e.stopPropagation()}>
+                          <div className="row-actions">
+                            <button className="btn btn-ghost btn-sm" onClick={e => openEdit(c, e)}>
+                              {t('actions.edit')}
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--pink)' }}
+                              onClick={e => handleDelete(c, e)}
+                              disabled={deleting}
+                            >
+                              {t('actions.delete')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Panel>
         )}
 

@@ -323,21 +323,19 @@ export default function ProjectsPage() {
               <div className="project-drawer-description">{selected.description}</div>
             )}
 
-            <div className="project-drawer-rows">
-              {([
-                { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
-                { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString('fr-FR') : '—' },
-                { label: t('drawer.deadline'),  value: <DeadlineChip date={selected.endDate} t={t} /> },
-                ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                                 : []),
-                ...(selected.joursVendus ? [{ label: t('drawer.jours'),  value: `${selected.joursVendus} j` }]                                : []),
-                ...(selected.budgetTotal ? [{ label: t('drawer.budget'), value: `${selected.budgetTotal.toLocaleString('fr-FR')} €` }]        : []),
-              ] as { label: string; value: React.ReactNode }[]).map((row, i) => (
-                <div key={i} className="project-drawer-row">
-                  <span className="project-drawer-row-label">{row.label}</span>
-                  <span className="project-drawer-row-value">{row.value}</span>
-                </div>
-              ))}
-            </div>
+            {([
+              { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
+              { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString('fr-FR') : '—' },
+              { label: t('drawer.deadline'),  value: <DeadlineChip date={selected.endDate} t={t} /> },
+              ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                          : []),
+              ...(selected.joursVendus ? [{ label: t('drawer.jours'),  value: `${selected.joursVendus} j` }]                         : []),
+              ...(selected.budgetTotal ? [{ label: t('drawer.budget'), value: `${selected.budgetTotal.toLocaleString('fr-FR')} €` }] : []),
+            ] as { label: string; value: React.ReactNode }[]).map((row, i) => (
+              <div key={i} className="project-drawer-row">
+                <span className="project-drawer-row-label">{row.label}</span>
+                <span className="project-drawer-row-value">{row.value}</span>
+              </div>
+            ))}
 
             <ProjectTeam
               project={selected}
