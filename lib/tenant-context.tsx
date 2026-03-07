@@ -9,7 +9,7 @@
  * Usage :
  *   - AppShell wrap avec <TenantProvider>
  *   - OrgSwitcher appelle setActiveTenantId
- *   - data.ts hooks lisent activeTenantId et filtrent si != null
+ *   - data hooks lisent activeTenantId et filtrent si != null
  */
 
 import { createContext, useContext, useState, ReactNode } from 'react'

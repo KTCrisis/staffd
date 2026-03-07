@@ -444,7 +444,8 @@
       "busy": "En mission",
       "partial": "Partiel",
       "leave": "Congé",
-      "weekend": "Weekend"
+      "weekend": "Weekend",
+      "overloaded": "⚠ Surchargé (>100%)"
     },
     "days": {
       "Mon": "Lun",
@@ -647,5 +648,61 @@
     "errors": {
       "dateOrder": "La date de fin doit être après la date de début"
     }
+  },
+  "bids": {
+    "title": "Appels d'offres",
+    "breadcrumb": "// pipeline & staffing IA",
+    "cta": "+ Nouvel AO",
+    "statuses": {
+      "draft": "Brouillon",
+      "analysis": "Analyse IA",
+      "staffed": "Équipe prête",
+      "submitted": "Soumis",
+      "won": "Gagné ✓",
+      "lost": "Perdu"
+    },
+    "deadline": {
+      "expired": "Expiré",
+      "today": "Aujourd'hui"
+    },
+    "noTeam": "// aucune équipe",
+    "gap": "{count} profil(s) manquant(s)",
+    "profile": {
+      "matched": "✓ Matchée",
+      "missing": "⚠ Manquant"
+    },
+    "stats": {
+      "inProgress": "En cours",
+      "won": "Gagnés",
+      "lost": "Perdus",
+      "revenue": "CA gagné"
+    },
+    "filters": {
+      "all": "Tous",
+      "draft": "Brouillon",
+      "analysis": "Analyse IA",
+      "staffed": "Équipe prête",
+      "submitted": "Soumis",
+      "won": "Gagnés"
+    },
+    "listTitle": "{count} appel(s) d'offres",
+    "empty": "// aucun appel d'offres",
+    "drawer": {
+      "title": "// détail AO",
+      "empty": "// sélectionnez un AO",
+      "emptyHint": "Cliquez sur un appel d'offres pour voir le détail",
+      "status": "Statut",
+      "deadline": "Échéance",
+      "budget": "Budget",
+      "probability": "Probabilité",
+      "profiles": "Profils requis",
+      "ai": "⚡ Analyse IA",
+      "aiAnalyzing": "// Extraction des profils en cours... Upload un PDF pour lancer l'analyse",
+      "aiGaps": "// {count} profil(s) non couvert(s) par l'équipe actuelle. Envisager un recrutement ou sous-traitance.",
+      "aiReady": "// Équipe complète — tous les profils sont couverts. Prêt à soumettre.",
+      "edit": "✏ Modifier",
+      "analyze": "⚡ Analyser AO"
+    },
+    "mockNote": "// données simulées — sera branché sur Supabase + module IA (upload PDF AO, extraction profils, matching consultants)"
   }
 }

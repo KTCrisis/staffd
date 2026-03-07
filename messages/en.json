@@ -444,7 +444,8 @@
       "busy": "On assignment",
       "partial": "Partial",
       "leave": "On leave",
-      "weekend": "Weekend"
+      "weekend": "Weekend",
+      "overloaded": "⚠ Overloaded (>100%)"
     },
     "days": {
       "Mon": "Mon",
@@ -647,5 +648,61 @@
     "errors": {
       "dateOrder": "End date must be after start date"
     }
+  },
+  "bids": {
+    "title": "Bids / RFPs",
+    "breadcrumb": "// pipeline & AI staffing",
+    "cta": "+ New bid",
+    "statuses": {
+      "draft": "Draft",
+      "analysis": "AI Analysis",
+      "staffed": "Team ready",
+      "submitted": "Submitted",
+      "won": "Won ✓",
+      "lost": "Lost"
+    },
+    "deadline": {
+      "expired": "Expired",
+      "today": "Today"
+    },
+    "noTeam": "// no team",
+    "gap": "{count} missing profile(s)",
+    "profile": {
+      "matched": "✓ Matched",
+      "missing": "⚠ Missing"
+    },
+    "stats": {
+      "inProgress": "In progress",
+      "won": "Won",
+      "lost": "Lost",
+      "revenue": "Revenue won"
+    },
+    "filters": {
+      "all": "All",
+      "draft": "Draft",
+      "analysis": "AI Analysis",
+      "staffed": "Team ready",
+      "submitted": "Submitted",
+      "won": "Won"
+    },
+    "listTitle": "{count} bid(s)",
+    "empty": "// no bids",
+    "drawer": {
+      "title": "// bid detail",
+      "empty": "// select a bid",
+      "emptyHint": "Click on a bid to see details",
+      "status": "Status",
+      "deadline": "Deadline",
+      "budget": "Budget",
+      "probability": "Probability",
+      "profiles": "Required profiles",
+      "ai": "⚡ AI Analysis",
+      "aiAnalyzing": "// Extracting profiles... Upload a PDF to start analysis",
+      "aiGaps": "// {count} profile(s) not covered by current team. Consider recruiting or subcontracting.",
+      "aiReady": "// Full team — all profiles covered. Ready to submit.",
+      "edit": "✏ Edit",
+      "analyze": "⚡ Analyze bid"
+    },
+    "mockNote": "// simulated data — will connect to Supabase + AI module (PDF upload, profile extraction, consultant matching)"
   }
 }

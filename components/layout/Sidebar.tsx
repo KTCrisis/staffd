@@ -36,10 +36,10 @@ export function Sidebar() {
   const t        = useTranslations('nav')
   const { user, companyMode } = useAuthContext()
   const isSolo = companyMode === 'solo'
-  const router   = useRouter()
+  const router = useRouter()
 
   const [collapsed, setCollapsed] = useState(false)
-  const [command, setCommand]     = useState('')
+  const [command,   setCommand]   = useState('')
 
   // ── Rôles ────────────────────────────────────────────────
   const isSuperAdmin     = user?.role === 'super_admin'
@@ -52,10 +52,10 @@ export function Sidebar() {
 
   const roleLabel =
     isSuperAdmin ? 'Super Admin' :
-    isAdmin      ? 'Admin' :
-    isManager    ? 'Manager' :
-    isFreelance  ? 'Freelance' :
-    isConsultant ? 'Consultant' : 'Viewer'
+    isAdmin      ? 'Admin'       :
+    isManager    ? 'Manager'     :
+    isFreelance  ? 'Freelance'   :
+    isConsultant ? 'Consultant'  : 'Viewer'
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
@@ -125,8 +125,9 @@ export function Sidebar() {
     ...(!isConsultantOnly || isSolo ? [{
       group: t('projects'), key: 'projects',
       items: [
-        { label: t('projets'),  icon: '◧', href: p('/projects') },
-        { label: t('clients'),  icon: '◉', href: p('/clients')  },
+        { label: t('projets'),      icon: '◧', href: p('/projects')  },
+        { label: t('clients'),      icon: '◉', href: p('/clients')   },
+        { label: t('appelsOffres'), icon: '◬', href: p('/bids')      },
         ...(!isSolo ? [
           { label: t('timeline'), icon: '▤', href: p('/timeline') },
         ] : []),
@@ -140,7 +141,7 @@ export function Sidebar() {
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
         ] : []),
-        { label: 'Invoices', icon: '◉', href: p('/invoices') },
+        { label: t('invoices'), icon: '◉', href: p('/invoices') },
       ],
     }] : []),
 
@@ -152,9 +153,9 @@ export function Sidebar() {
     }] : []),
 
     ...(isSuperAdmin || isAdmin ? [{
-      group: 'Agents', key: 'agents',
+      group: t('agents'), key: 'agents',
       items: [{
-        label: 'Agentic AI', icon: '◬', href: p('/ai'),
+        label: t('agenticAI'), icon: '◬', href: p('/ai'),
         glow: true,
       } as NavItem],
     }] : []),
@@ -188,8 +189,7 @@ export function Sidebar() {
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--text2)', fontSize: 14, padding: '4px 6px',
             marginLeft: collapsed ? 'auto' : undefined,
-            transition: 'color 0.2s',
-            lineHeight: 1,
+            transition: 'color 0.2s', lineHeight: 1,
           }}
           onMouseEnter={e => (e.currentTarget.style.color = 'var(--green)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text2)')}
@@ -202,12 +202,8 @@ export function Sidebar() {
       <nav className="sidebar-nav">
         {NAV.map(group => (
           <div key={group.key} className="nav-group">
-            {/* Group label — masqué en mode collapsed */}
             {!collapsed && (
-              <div
-                className="nav-group-label"
-                style={{ color: GROUP_COLORS[group.key] ?? 'var(--text2)' }}
-              >
+              <div className="nav-group-label" style={{ color: GROUP_COLORS[group.key] ?? 'var(--text2)' }}>
                 {group.group}
               </div>
             )}
@@ -222,10 +218,7 @@ export function Sidebar() {
                   title={collapsed ? item.label : undefined}
                   style={isActive ? { color: accent, borderLeftColor: accent } : undefined}
                 >
-                  <span
-                    className="nav-icon"
-                    style={{ color: isActive ? accent : undefined }}
-                  >
+                  <span className="nav-icon" style={{ color: isActive ? accent : undefined }}>
                     {item.icon}
                   </span>
                   {!collapsed && (
@@ -300,7 +293,7 @@ export function Sidebar() {
               </div>
               <button
                 onClick={handleLogout}
-                title="Déconnexion"
+                title={t('logout')}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: 'var(--text2)', fontSize: 14, padding: '2px 4px',
@@ -315,6 +308,7 @@ export function Sidebar() {
           )}
         </div>
       </div>
+
       <style>{`
         @keyframes shimmer-ai {
           0%,100% { color: var(--text2); text-shadow: none; }
