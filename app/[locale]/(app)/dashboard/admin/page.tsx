@@ -5,34 +5,23 @@ import { useRouter }        from '@/lib/navigation'
 import { useLocale }        from 'next-intl'
 import { Topbar }           from '@/components/layout/Topbar'
 import { KpiCard, Panel }   from '@/components/ui'
+import { EmptyState }       from '@/components/ui/EmptyState'
 import { ConsultantItem }   from '@/components/consultants/ConsultantItem'
 import { ProjectRow }       from '@/components/projects/ProjectRow'
 import { ActivityFeed }     from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }     from '@/components/dashboard/MiniCalendar'
 import { useConsultants, useProjects, useKpi, useActivity } from '@/lib/data'
 
-// ══════════════════════════════════════════════════════════════
-// SKELETON
-// ══════════════════════════════════════════════════════════════
-
 function Skeleton({ h = 80 }: { h?: number }) {
-  return (
-    <div style={{
-      height: h, background: 'var(--bg3)',
-      borderRadius: 4, animation: 'pulse 1.5s ease infinite',
-    }} />
-  )
+  return <div className="skeleton" style={{ height: h }} />
 }
-
-// ══════════════════════════════════════════════════════════════
-// PAGE
-// ══════════════════════════════════════════════════════════════
 
 export default function AdminDashboardPage() {
   const t      = useTranslations('dashboard')
+  const tNav   = useTranslations('timeline')
   const router = useRouter()
   const locale = useLocale()
-  const tNav   = useTranslations('timeline')
+
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const { data: consultants, loading: lC } = useConsultants()
@@ -40,14 +29,10 @@ export default function AdminDashboardPage() {
   const { data: kpi,         loading: lK } = useKpi()
   const { data: activity,    loading: lA } = useActivity(5)
 
-  const activeProjects = projects?.filter(p => p.status === 'active').slice(0, 3) ?? []
-
-  // Calcul dynamique du progress "active projects"
-  const totalProjects  = projects?.length ?? 0
-  const activeCount    = projects?.filter(p => p.status === 'active').length ?? 0
-  const projectProgress = totalProjects > 0
-    ? Math.round((activeCount / totalProjects) * 100)
-    : 0
+  const activeProjects  = projects?.filter(proj => proj.status === 'active').slice(0, 3) ?? []
+  const totalProjects   = projects?.length ?? 0
+  const activeCount     = projects?.filter(proj => proj.status === 'active').length ?? 0
+  const projectProgress = totalProjects > 0 ? Math.round((activeCount / totalProjects) * 100) : 0
 
   return (
     <>
@@ -55,10 +40,10 @@ export default function AdminDashboardPage() {
 
       <div className="app-content">
 
-        {/* ── KPIs globaux ── */}
+        {/* KPIs */}
         <div className="kpi-grid">
           {lK || !kpi ? (
-            <>{[0,1,2,3].map(i => <Skeleton key={i} h={110} />)}</>
+            [0,1,2,3].map(i => <Skeleton key={i} h={110} />)
           ) : (
             <>
               <KpiCard
@@ -67,7 +52,10 @@ export default function AdminDashboardPage() {
                 valueSuffix={`/${kpi.totalConsultants}`}
                 accent="green"
                 trend={{ label: t('trends.up'), direction: 'up' }}
-                progress={Math.round((kpi.activeConsultants / kpi.totalConsultants) * 100)}
+                progress={kpi.totalConsultants > 0
+                  ? Math.round((kpi.activeConsultants / kpi.totalConsultants) * 100)
+                  : 0
+                }
               />
               <KpiCard
                 label={t('kpi.activeProjects')}
@@ -94,7 +82,7 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* ── Projets actifs ── */}
+        {/* Projets actifs */}
         <Panel
           title={t('activeProjects')}
           action={{ label: t('seeAll'), onClick: () => router.push(p('/projects') as never) }}
@@ -104,18 +92,16 @@ export default function AdminDashboardPage() {
             {lP ? (
               <Skeleton h={80} />
             ) : activeProjects.length === 0 ? (
-              <div style={{ fontSize: 11, color: 'var(--text2)', fontStyle: 'italic', padding: '12px 0' }}>
-                // aucun projet actif
-              </div>
+              <EmptyState message="// aucun projet actif" />
             ) : (
-              activeProjects.map(p => (
-                <ProjectRow key={p.id} project={p} consultants={consultants ?? []} />
+              activeProjects.map(proj => (
+                <ProjectRow key={proj.id} project={proj} consultants={consultants ?? []} />
               ))
             )}
           </div>
         </Panel>
 
-        {/* ── Consultants + Activité + Calendrier ── */}
+        {/* Consultants + Activité + Calendrier */}
         <div className="two-col">
           <Panel
             title={t('consultants')}
@@ -127,19 +113,18 @@ export default function AdminDashboardPage() {
             }
           </Panel>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="dashboard-side">
             <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
               {lA ? <Skeleton h={120} /> : <ActivityFeed items={activity ?? []} />}
             </Panel>
 
-            {/* MiniCalendar compact — pas besoin de scale, le composant est déjà petit */}
             <Panel title={t('calendar')}>
               <MiniCalendar
-              daysShort    = {t.raw('daysShort') as string[]}
-              months       = {tNav.raw('months') as string[]}
-              labelToday   = {t('calToday')}
-              labelUpcoming= {t('calUpcoming')}
-              labelNoEvent = {t('calNoEvent')}
+                daysShort    ={t.raw('daysShort')   as string[]}
+                months       ={tNav.raw('months')    as string[]}
+                labelToday   ={t('calToday')}
+                labelUpcoming={t('calUpcoming')}
+                labelNoEvent ={t('calNoEvent')}
               />
             </Panel>
           </div>

@@ -3,35 +3,21 @@
 import { useTranslations }  from 'next-intl'
 import { Topbar }           from '@/components/layout/Topbar'
 import { KpiCard, Panel }   from '@/components/ui'
+import { EmptyState }       from '@/components/ui/EmptyState'
 import { ConsultantItem }   from '@/components/consultants/ConsultantItem'
 import { ActivityFeed }     from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }     from '@/components/dashboard/MiniCalendar'
 import { useConsultants, useLeaveRequests, useTimesheets, useActivity } from '@/lib/data'
+import { pluralFr }         from '@/lib/utils'
+import { getMondayOf} from '@/lib/utils'
 
-// ══════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════
 
-function getMondayOf(d: Date): Date {
-  const date = new Date(d)
-  const day  = date.getDay()
-  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1))
-  date.setHours(0, 0, 0, 0)
-  return date
-}
 
 function Skeleton({ h = 80 }: { h?: number }) {
-  return (
-    <div style={{
-      height: h, background: 'var(--bg3)',
-      borderRadius: 4, animation: 'pulse 1.5s ease infinite',
-    }} />
-  )
+  return <div className="skeleton" style={{ height: h }} />
 }
 
-// ══════════════════════════════════════════════════════════════
-// PAGE
-// ══════════════════════════════════════════════════════════════
+// ── Page ──────────────────────────────────────────────────────
 
 export default function ManagerDashboardPage() {
   const monday = getMondayOf(new Date())
@@ -43,10 +29,10 @@ export default function ManagerDashboardPage() {
 
   const list = consultants ?? []
 
-  // ── KPIs équipe ─────────────────────────────────────────
+  // ── KPIs ─────────────────────────────────────────────────
   const available    = list.filter(c => c.status === 'available').length
   const assigned     = list.filter(c => c.status === 'assigned').length
-  const pendingLeave = (leaveReqs ?? []).filter(l => l.status === 'pending').length
+  const pendingLeave = (leaveReqs ?? []).filter(l => l.status === 'pending')
   const pendingCra   = (timesheets ?? []).filter(ts => ts.status === 'submitted').length
   const avgOcc       = list.length
     ? Math.round(list.reduce((s, c) => s + (c.occupancyRate ?? 0), 0) / list.length)
@@ -58,19 +44,28 @@ export default function ManagerDashboardPage() {
 
       <div className="app-content">
 
-        {/* ── KPIs ── */}
+        {/* KPIs */}
         <div className="kpi-grid">
-          <KpiCard label="Disponibles" value={available}
-            valueSuffix={`/${list.length}`} accent="green"
-            progress={list.length ? Math.round((available / list.length) * 100) : 0} />
-          <KpiCard label="En mission" value={assigned} accent="cyan"
-            progress={list.length ? Math.round((assigned / list.length) * 100) : 0} />
-          <KpiCard label="Congés en attente" value={pendingLeave} accent="pink" />
+          <KpiCard
+            label="Disponibles"
+            value={available}
+            valueSuffix={`/${list.length}`}
+            accent="green"
+            progress={list.length ? Math.round((available / list.length) * 100) : 0}
+          />
+          <KpiCard
+            label="En mission"
+            value={assigned}
+            accent="cyan"
+            progress={list.length ? Math.round((assigned / list.length) * 100) : 0}
+          />
+          <KpiCard label="Congés en attente" value={pendingLeave.length} accent="pink" />
           <KpiCard label="Taux d'occupation" value={avgOcc} valueSuffix="%" accent="gold" progress={avgOcc} />
         </div>
 
         <div className="two-col">
-          {/* ── Équipe ── */}
+
+          {/* Équipe */}
           <Panel title="Mon équipe">
             {lC
               ? <Skeleton h={200} />
@@ -78,48 +73,39 @@ export default function ManagerDashboardPage() {
             }
           </Panel>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="dashboard-side">
 
-            {/* ── CRA à valider ── */}
+            {/* CRA à valider */}
             <Panel title="CRA à valider">
               {pendingCra === 0 ? (
-                <div style={{ fontSize: 11, color: 'var(--text2)', padding: '8px 0' }}>
-                  ✓ Aucun CRA en attente
-                </div>
+                <EmptyState message="✓ Aucun CRA en attente" />
               ) : (
-                <div style={{ fontSize: 11, color: 'var(--gold)', padding: '8px 0' }}>
-                  {pendingCra} entrée{pendingCra > 1 ? 's' : ''} à approuver cette semaine
+                <p className="manager-pending-cra">
+                  {pendingCra} {pluralFr(pendingCra, 'entrée')} à approuver cette semaine
+                </p>
+              )}
+            </Panel>
+
+            {/* Demandes de congés */}
+            <Panel title="Demandes de congés">
+              {lL ? <Skeleton h={80} /> : pendingLeave.length === 0 ? (
+                <EmptyState message="✓ Aucune demande en attente" />
+              ) : (
+                <div className="manager-leave-list">
+                  {pendingLeave.slice(0, 4).map(l => (
+                    <div key={l.id} className="manager-leave-row">
+                      <div>
+                        <span className="manager-leave-name">{l.consultantName}</span>
+                        <span className="manager-leave-type">{l.type}</span>
+                      </div>
+                      <span className="manager-leave-dates">{l.startDate} → {l.endDate}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </Panel>
 
-            {/* ── Congés pending ── */}
-            <Panel title="Demandes de congés">
-              {lL ? <Skeleton h={80} /> : (
-                (leaveReqs ?? []).filter(l => l.status === 'pending').length === 0 ? (
-                  <div style={{ fontSize: 11, color: 'var(--text2)', padding: '8px 0' }}>
-                    ✓ Aucune demande en attente
-                  </div>
-                ) : (
-                  (leaveReqs ?? []).filter(l => l.status === 'pending').slice(0, 4).map(l => (
-                    <div key={l.id} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 11,
-                    }}>
-                      <div>
-                        <span style={{ color: 'var(--text)', fontWeight: 600 }}>{l.consultantName}</span>
-                        <span style={{ color: 'var(--text2)', marginLeft: 8 }}>{l.type}</span>
-                      </div>
-                      <span style={{ color: 'var(--text2)', fontSize: 10 }}>
-                        {l.startDate} → {l.endDate}
-                      </span>
-                    </div>
-                  ))
-                )
-              )}
-            </Panel>
-
-            {/* ── Activité récente ── */}
+            {/* Activité */}
             <Panel title="Activité récente">
               {lA ? <Skeleton h={80} /> : <ActivityFeed items={activity ?? []} />}
             </Panel>

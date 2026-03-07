@@ -5,6 +5,7 @@ import { useTranslations, useLocale }                from 'next-intl'
 import { Topbar }                                    from '@/components/layout/Topbar'
 import { Panel, StatRow }                            from '@/components/ui'
 import { Avatar }                                    from '@/components/ui/Avatar'
+import { EmptyState }                                from '@/components/ui/EmptyState'
 import {
   useTimesheets,
   useConsultants,
@@ -20,38 +21,7 @@ import type { Timesheet, LeaveOverlay } from '@/lib/data'
 import { useAuthContext }   from '@/components/layout/AuthProvider'
 import { useActiveTenant }  from '@/lib/tenant-context'
 import { isAdmin, canEdit } from '@/lib/auth'
-
-// ══════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════
-
-function getMondayOf(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function getWeekDays(monday: Date): Date[] {
-  return Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return d
-  })
-}
-
-function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
-
-function fmtDay(d: Date) {
-  return {
-    dow: d.toLocaleDateString('en', { weekday: 'short' }),
-    num: d.toLocaleDateString('en', { day: 'numeric', month: 'short' }),
-  }
-}
+import { getMondayOf, toISO, getWeekDays, fmtDay } from '@/lib/utils'
 
 // ══════════════════════════════════════════════════════════════
 // TYPES
@@ -60,27 +30,26 @@ function fmtDay(d: Date) {
 type TSStatus = 'draft' | 'submitted' | 'approved'
 
 interface HolidayEntry {
-  date:      string  // YYYY-MM-DD
+  date:      string
   localName: string
 }
 
-// Map : countryCode → HolidayEntry[]
 type HolidayMap = Record<string, HolidayEntry[]>
 
 // ══════════════════════════════════════════════════════════════
-// COLORS
+// HELPERS COULEUR
 // ══════════════════════════════════════════════════════════════
 
 function valueColor(v?: number) {
-  if (!v) return 'var(--text3)'
+  if (!v)    return 'var(--text2)'
   if (v < 1) return 'var(--gold)'
   return 'var(--green)'
 }
 
 function dotColor(s: TSStatus) {
-  if (s === 'approved') return 'var(--green)'
+  if (s === 'approved')  return 'var(--green)'
   if (s === 'submitted') return 'var(--gold)'
-  return 'var(--text3)'
+  return 'var(--text2)'
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -88,25 +57,13 @@ function dotColor(s: TSStatus) {
 // ══════════════════════════════════════════════════════════════
 
 function Pill({ status }: { status: TSStatus }) {
-  const cfg: Record<TSStatus, { bg: string; color: string }> = {
-    draft:     { bg: 'rgba(100,100,100,.2)',    color: 'var(--text3)' },
-    submitted: { bg: 'rgba(255,209,102,.15)',   color: 'var(--gold)' },
-    approved:  { bg: 'rgba(0,255,136,.12)',     color: 'var(--green)' },
-  }
   return (
-    <span style={{
-      fontSize: 9, fontWeight: 700,
-      letterSpacing: '.06em', textTransform: 'uppercase',
-      padding: '2px 6px', borderRadius: 4,
-      ...cfg[status],
-    }}>
-      {status}
-    </span>
+    <span className={`ts-pill ts-pill--${status}`}>{status}</span>
   )
 }
 
 // ══════════════════════════════════════════════════════════════
-// LEAVE BADGE — affiché dans les cellules congés approuvés
+// LEAVE BADGE
 // ══════════════════════════════════════════════════════════════
 
 function LeaveBadge({ type }: { type: string }) {
@@ -115,51 +72,22 @@ function LeaveBadge({ type }: { type: string }) {
     'Sans solde': 'SLD', 'Absence autorisée': 'ABS',
   }
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: 2,
-    }}>
-      <div style={{
-        fontSize: 9, fontWeight: 700, letterSpacing: 1,
-        color: 'var(--cyan)',
-        background: 'rgba(0,229,255,.1)',
-        border: '1px solid rgba(0,229,255,.25)',
-        borderRadius: 3, padding: '1px 5px',
-      }}>
-        {short[type] ?? type}
-      </div>
-      <div style={{ fontSize: 8, color: 'var(--text3)', letterSpacing: 0.5 }}>congé</div>
+    <div className="ts-badge-wrap">
+      <div className="ts-badge ts-badge--leave">{short[type] ?? type}</div>
+      <div className="ts-badge-sub">congé</div>
     </div>
   )
 }
 
 // ══════════════════════════════════════════════════════════════
-// HOLIDAY BADGE — affiché dans les cellules jours fériés
+// HOLIDAY BADGE
 // ══════════════════════════════════════════════════════════════
 
 function HolidayBadge({ name }: { name: string }) {
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: 2,
-    }}>
-      <div style={{
-        fontSize: 9, fontWeight: 700,
-        color: 'var(--gold)',
-        background: 'rgba(255,209,102,.1)',
-        border: '1px solid rgba(255,209,102,.25)',
-        borderRadius: 3, padding: '1px 5px',
-        maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        ◈ férié
-      </div>
-      <div style={{
-        fontSize: 7, color: 'var(--text3)', letterSpacing: 0.3,
-        maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        textAlign: 'center',
-      }}>
-        {name}
-      </div>
+    <div className="ts-badge-wrap">
+      <div className="ts-badge ts-badge--holiday">◈ férié</div>
+      <div className="ts-badge-sub ts-badge-sub--holiday">{name}</div>
     </div>
   )
 }
@@ -188,7 +116,7 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
   const [val,  setVal]  = useState(entry?.value ?? 0)
   const [proj, setProj] = useState(entry?.projectId ?? projects[0]?.id ?? '')
 
-  useEffect(() => { setVal(entry?.value ?? 0) }, [entry?.value])
+  useEffect(() => { setVal(entry?.value ?? 0) },            [entry?.value])
   useEffect(() => { setProj(entry?.projectId ?? projects[0]?.id ?? '') }, [entry?.projectId, projects])
 
   useEffect(() => {
@@ -197,52 +125,29 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
+  // Position dynamique — doit rester inline
   const safeX = Math.min(x, window.innerWidth  - 200)
   const safeY = Math.min(y, window.innerHeight - 210)
 
-  const popupStyle: React.CSSProperties = {
-    position: 'fixed', top: safeY, left: safeX, zIndex: 1000,
-    background: 'var(--bg2)', border: '1px solid var(--border)',
-    borderRadius: 12, padding: 12, minWidth: 180,
-    boxShadow: '0 8px 32px rgba(0,0,0,.55)',
-  }
-
   if (!canEditEntry) {
     return (
-      <div style={popupStyle}>
+      <div className="ts-popup" style={{ top: safeY, left: safeX }}>
         <Pill status={entry?.status ?? 'draft'} />
-        <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 8 }}>
-          {entry?.projectId ?? '—'}
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            marginTop: 10, width: '100%', background: 'var(--bg3)',
-            border: '1px solid var(--border)', borderRadius: 6,
-            color: 'var(--text2)', fontSize: 10, padding: '5px 0', cursor: 'pointer',
-          }}
-        >
-          Close
-        </button>
+        <div className="ts-popup-readonly-id">{entry?.projectId ?? '—'}</div>
+        <button className="ts-popup-close" onClick={onClose}>Close</button>
       </div>
     )
   }
 
   return (
-    <div style={popupStyle}>
+    <div className="ts-popup" style={{ top: safeY, left: safeX }}>
       {/* Sélecteur valeur */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+      <div className="ts-popup-values">
         {VALUES.map(({ label, v }) => (
           <button
             key={v}
             onClick={() => setVal(v)}
-            style={{
-              flex: 1, padding: '6px 0', borderRadius: 6, cursor: 'pointer',
-              fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
-              background: val === v ? 'var(--green)' : 'var(--bg3)',
-              color: val === v ? '#000' : 'var(--text2)',
-              border: val === v ? '1px solid var(--green)' : '1px solid var(--border)',
-            }}
+            className={`ts-popup-val ${val === v ? 'ts-popup-val--active' : ''}`}
           >
             {label}
           </button>
@@ -254,13 +159,8 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
         <select
           value={proj}
           onChange={e => setProj(e.target.value)}
-          style={{
-            width: '100%', background: 'var(--bg3)',
-            border: '1px solid var(--border2)',
-            color: 'var(--text)', padding: '6px 8px',
-            borderRadius: 4, fontSize: 11,
-            fontFamily: 'inherit', marginBottom: 10,
-          }}
+          className="input"
+          style={{ marginBottom: 10 }}
         >
           {projects.map(p => (
             <option key={p.id} value={p.id}>{p.name}</option>
@@ -269,27 +169,32 @@ function CellEditor({ entry, projects, canEditEntry, x, y, onSave, onClose }: Ce
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button
-          onClick={() => { onSave(val, proj); onClose() }}
-          style={{
-            flex: 1, background: 'var(--green)', color: '#000',
-            border: 'none', borderRadius: 6, padding: '6px 0',
-            fontSize: 11, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
+      <div className="ts-popup-actions">
+        <button className="ts-popup-save" onClick={() => { onSave(val, proj); onClose() }}>
           Save
         </button>
-        <button
-          onClick={onClose}
-          style={{
-            flex: 1, background: 'var(--bg3)', color: 'var(--text2)',
-            border: '1px solid var(--border)', borderRadius: 6,
-            padding: '6px 0', fontSize: 11, cursor: 'pointer',
-          }}
-        >
+        <button className="ts-popup-cancel" onClick={onClose}>
           Cancel
         </button>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════
+// LÉGENDE
+// ══════════════════════════════════════════════════════════════
+
+function TimesheetLegend() {
+  return (
+    <div className="ts-legend">
+      <div className="ts-legend-item">
+        <span className="ts-legend-swatch ts-legend-swatch--leave" />
+        Congé approuvé
+      </div>
+      <div className="ts-legend-item">
+        <span className="ts-legend-swatch ts-legend-swatch--holiday" />
+        Jour férié
       </div>
     </div>
   )
@@ -309,7 +214,7 @@ export default function TimesheetsPage() {
   const currentUserId = user?.id ?? null
   const isConsultant  = role === 'consultant' || role === 'freelance'
 
-  // ── Navigation semaine ───────────────────────────────────
+  // ── Navigation semaine ──────────────────────────────────
   const [monday, setMonday] = useState(() => getMondayOf(new Date()))
   const days       = useMemo(() => getWeekDays(monday), [monday])
   const weekStart  = useMemo(() => toISO(monday), [monday])
@@ -330,7 +235,7 @@ export default function TimesheetsPage() {
 
   const consultantsSafe   = consultants ?? []
   const consultantsLoaded = Array.isArray(consultants)
-  const projectsLoaded    = projectsMap != null  // null ET undefined 2192 false
+  const projectsLoaded    = projectsMap != null
 
   // ── Pays par défaut de la company ────────────────────────
   const companyCountry = useMemo(
@@ -338,21 +243,17 @@ export default function TimesheetsPage() {
     [companyData]
   )
 
-  // ── Fetch jours fériés depuis Nager — un par pays unique ─
+  // ── Fetch jours fériés ────────────────────────────────────
   const [holidayMap, setHolidayMap] = useState<HolidayMap>({})
 
   useEffect(() => {
     if (!consultantsSafe.length) return
-
-    // Collecter tous les pays uniques (consultant.country_code ou fallback company)
     const countries = new Set<string>()
     countries.add(companyCountry)
     for (const c of consultantsSafe) {
       if (c.country_code) countries.add(c.country_code)
     }
-
     const year = monday.getFullYear()
-
     Promise.all(
       Array.from(countries).map(async cc => {
         try {
@@ -370,13 +271,12 @@ export default function TimesheetsPage() {
     })
   }, [companyCountry, consultantsSafe, monday.getFullYear()])
 
-  // ── Helper : est-ce un jour férié pour un consultant ? ───
   const getHoliday = useCallback((consultantCountry: string | null | undefined, dateStr: string): HolidayEntry | undefined => {
     const cc = consultantCountry ?? companyCountry
     return holidayMap[cc]?.find(h => h.date === dateStr)
   }, [holidayMap, companyCountry])
 
-  // ── Leave overlay map : consultantId__date → LeaveOverlay
+  // ── Leave overlay map ─────────────────────────────────────
   const leaveOverlayMap = useMemo(() => {
     const map: Record<string, LeaveOverlay> = {}
     for (const l of (approvedLeaves ?? [])) {
@@ -385,7 +285,7 @@ export default function TimesheetsPage() {
     return map
   }, [approvedLeaves])
 
-  // ── Projets internes dédoublonnés ────────────────────────
+  // ── Projets internes dédoublonnés ─────────────────────────
   const systemProjects = useMemo(() => {
     const seen = new Set<string>()
     return (internalTypes ?? []).filter(p => {
@@ -430,15 +330,15 @@ export default function TimesheetsPage() {
     return map
   }, [timesheets, localEntries])
 
-  // ── Stats ────────────────────────────────────────────────
+  // ── Stats ─────────────────────────────────────────────────
   const stats = useMemo(() => {
     const all = Object.values(lookup)
     const daysCount = all.reduce((s, ts) => s + (ts.value ?? 0), 0)
     return [
-      { value: daysCount.toFixed(1),                                    label: t('stats.totalDays'), color: 'var(--cyan)' },
-      { value: all.filter(ts => ts.status === 'draft').length,          label: t('stats.draft'),     color: 'var(--text2)' },
-      { value: all.filter(ts => ts.status === 'submitted').length,      label: t('stats.submitted'), color: 'var(--gold)' },
-      { value: all.filter(ts => ts.status === 'approved').length,       label: t('stats.approved'),  color: 'var(--green)' },
+      { value: daysCount.toFixed(1),                               label: t('stats.totalDays'), color: 'var(--cyan)'  },
+      { value: all.filter(ts => ts.status === 'draft').length,     label: t('stats.draft'),     color: 'var(--text2)' },
+      { value: all.filter(ts => ts.status === 'submitted').length, label: t('stats.submitted'), color: 'var(--gold)'  },
+      { value: all.filter(ts => ts.status === 'approved').length,  label: t('stats.approved'),  color: 'var(--green)' },
     ]
   }, [lookup, t])
 
@@ -473,7 +373,7 @@ export default function TimesheetsPage() {
     }
   }, [])
 
-  // ── Submit / Approve ─────────────────────────────────────
+  // ── Submit / Approve ──────────────────────────────────────
   const handleSubmitAll = useCallback(async (consultantId: string) => {
     const draftIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'draft')
@@ -506,122 +406,21 @@ export default function TimesheetsPage() {
     })
   }, [lookup])
 
-  const internalTypesLoaded  = internalTypes != null
+  const internalTypesLoaded = internalTypes != null
   const consultantDataReady = !loading && consultantsLoaded && projectsLoaded && internalTypesLoaded && (!isConsultant || !!currentUserId)
 
-  // ── Render ───────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────
   return (
     <>
-      {/* ── Styles CRA ─────────────────────────────────────────── */}
-      <style>{`
-        .ts-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-family: var(--font-mono);
-          font-size: 12px;
-        }
-        .ts-table th {
-          padding: 6px 8px;
-          color: var(--text3);
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          border-bottom: 1px solid var(--border);
-          background: var(--bg2);
-        }
-        .ts-table td {
-          padding: 4px 4px;
-          border-bottom: 1px solid var(--border);
-          vertical-align: middle;
-        }
-        .ts-table tbody tr:hover td {
-          background: var(--bg3);
-        }
-
-        /* ── Cellule standard ── */
-        .ts-cell {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          width: 72px;
-          height: 48px;
-          margin: 0 auto;
-          border-radius: 6px;
-          border: 1px solid var(--border);
-          background: var(--bg3);
-          cursor: pointer;
-          transition: border-color .12s, background .12s;
-          font-family: var(--font-mono);
-          font-size: 14px;
-          font-weight: 700;
-        }
-        .ts-cell:hover {
-          border-color: var(--cyan);
-          background: var(--bg4);
-        }
-        .ts-cell--empty {
-          color: var(--text3);
-          font-size: 16px;
-          font-weight: 400;
-          border-style: dashed;
-        }
-        .ts-cell--empty:hover {
-          color: var(--cyan);
-          border-style: solid;
-        }
-        .ts-cell--filled {
-          border-color: var(--border2);
-        }
-        .ts-cell--holiday {
-          width: 72px;
-          height: 48px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          border: 1px solid rgba(255,209,102,.25);
-          background: rgba(255,209,102,.06);
-        }
-        .ts-cell--leave {
-          width: 72px;
-          height: 48px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          border: 1px solid rgba(0,229,255,.2);
-          background: rgba(0,229,255,.05);
-        }
-
-        /* ── Dot statut (coin bas-droit) ── */
-        .ts-status-dot {
-          position: absolute;
-          bottom: 4px;
-          right: 4px;
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-        }
-
-        /* ── Popup overlay ── */
-        .ts-popup-fixed {
-          position: fixed;
-          z-index: 1000;
-        }
-      `}</style>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
 
       <div className="app-content">
         <StatRow stats={stats} />
 
         {/* Navigation semaine */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="week-nav" style={{ marginBottom: 20 }}>
           <button className="btn btn-ghost" onClick={prevWeek}>← {t('prevWeek')}</button>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>
+          <span className="week-label">
             {t('weekOf')} {monday.toLocaleDateString(locale === 'fr' ? 'fr' : 'en', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
           <button className="btn btn-ghost" onClick={nextWeek}>{t('nextWeek')} →</button>
@@ -632,42 +431,21 @@ export default function TimesheetsPage() {
           )}
         </div>
 
-        {loading && <p style={{ color: 'var(--text3)', fontSize: 12 }}>// loading…</p>}
-        {error   && <p style={{ color: 'var(--pink)' }}>{error}</p>}
+        {loading && <p className="ts-status-msg">// loading…</p>}
+        {error   && <p className="ts-status-msg ts-status-msg--error">{error}</p>}
 
-        {/* Légende */}
-        <div style={{
-          display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap',
-          fontSize: 10, color: 'var(--text3)',
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{
-              display: 'inline-block', width: 10, height: 10, borderRadius: 2,
-              background: 'rgba(0,229,255,.15)', border: '1px solid rgba(0,229,255,.3)',
-            }} />
-            Congé approuvé
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{
-              display: 'inline-block', width: 10, height: 10, borderRadius: 2,
-              background: 'rgba(255,209,102,.15)', border: '1px solid rgba(255,209,102,.3)',
-            }} />
-            Jour férié
-          </span>
-        </div>
+        <TimesheetLegend />
 
         {!consultantDataReady && (
           <Panel>
-            <div style={{ padding: 18, color: 'var(--text3)', fontSize: 12 }}>
-              // loading your profile & assignments…
-            </div>
+            <EmptyState message="// loading your profile & assignments…" />
           </Panel>
         )}
 
-        {/* Grille */}
+        {/* Grille CRA */}
         {consultantDataReady && (
           <Panel>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="table-wrap">
               <table className="ts-table">
                 <thead>
                   <tr>
@@ -678,8 +456,8 @@ export default function TimesheetsPage() {
                       const today   = dateStr === toISO(new Date())
                       return (
                         <th key={dateStr} style={{ textAlign: 'center', minWidth: 86 }}>
-                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text2)', fontSize: 10, fontWeight: 600 }}>{dow}</div>
-                          <div style={{ color: today ? 'var(--cyan)' : 'var(--text1)', fontSize: 12, fontWeight: 700 }}>{num}</div>
+                          <div className={today ? 'ts-th-dow ts-th-dow--today' : 'ts-th-dow'}>{dow}</div>
+                          <div className={today ? 'ts-th-num ts-th-num--today' : 'ts-th-num'}>{num}</div>
                         </th>
                       )
                     })}
@@ -706,14 +484,14 @@ export default function TimesheetsPage() {
                       <tr key={c.id}>
                         {/* Consultant */}
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div className="consultant-cell">
                             <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>{c.name}</div>
-                              <div style={{ fontSize: 10, color: 'var(--text3)' }}>
+                              <div className="ts-c-name">{c.name}</div>
+                              <div className="ts-c-meta">
                                 {c.role}
                                 {c.country_code && c.country_code !== companyCountry && (
-                                  <span style={{ marginLeft: 6, opacity: 0.6 }}>· {c.country_code}</span>
+                                  <span className="ts-c-country">· {c.country_code}</span>
                                 )}
                               </div>
                             </div>
@@ -722,26 +500,19 @@ export default function TimesheetsPage() {
 
                         {/* Cellules jours */}
                         {days.map(d => {
-                          const dateStr  = toISO(d)
-                          const key      = `${c.id}__${dateStr}`
-                          const entry    = lookup[key]
-                          const isOpen   = popup?.consultantId === c.id && popup?.date === dateStr
-
-                          // Overlay congé approuvé
+                          const dateStr      = toISO(d)
+                          const key          = `${c.id}__${dateStr}`
+                          const entry        = lookup[key]
+                          const isOpen       = popup?.consultantId === c.id && popup?.date === dateStr
                           const leaveOverlay = leaveOverlayMap[key]
+                          const holiday      = getHoliday(c.country_code, dateStr)
 
-                          // Jour férié selon pays du consultant (fallback company)
-                          const holiday = getHoliday(c.country_code, dateStr)
-
-                          // Règles d'édition
                           const entryIsDraft = !entry || entry.status === 'draft'
                           const adminCanEdit = isAdmin(role)
-                          // Un congé ou férié peut être écrasé par l'admin uniquement
                           const cellLocked   = (leaveOverlay || holiday) && !adminCanEdit
                           const canEditCell  = !cellLocked && (canEdit(role) || (isSelf && entryIsDraft))
                           const disabled     = (isConsultant && !isSelf) || cellLocked
 
-                          // Fond de cellule selon type
                           const cellBg = holiday
                             ? 'rgba(255,209,102,.08)'
                             : leaveOverlay
@@ -751,14 +522,9 @@ export default function TimesheetsPage() {
                           return (
                             <td
                               key={dateStr}
-                              style={{
-                                textAlign: 'center', position: 'relative',
-                                background: cellBg,
-                              }}
+                              style={{ textAlign: 'center', position: 'relative', background: cellBg }}
                             >
-                              {/* Contenu de la cellule */}
                               {holiday && !entry ? (
-                                // Jour férié sans saisie : badge non-cliquable (ou cliquable admin)
                                 adminCanEdit ? (
                                   <button
                                     className="ts-cell ts-cell--holiday"
@@ -778,7 +544,6 @@ export default function TimesheetsPage() {
                                   </div>
                                 )
                               ) : leaveOverlay && !entry ? (
-                                // Congé approuvé sans saisie : badge pré-rempli
                                 adminCanEdit ? (
                                   <button
                                     className="ts-cell ts-cell--leave"
@@ -798,13 +563,9 @@ export default function TimesheetsPage() {
                                   </div>
                                 )
                               ) : (
-                                // Cellule normale
                                 <button
                                   className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
-                                  style={{
-                                    color: valueColor(entry?.value),
-                                    opacity: disabled ? 0.4 : 1,
-                                  }}
+                                  style={{ color: valueColor(entry?.value), opacity: disabled ? 0.4 : 1 }}
                                   onClick={e => {
                                     if (disabled) return
                                     if (isOpen) { setPopup(null); return }
@@ -821,7 +582,6 @@ export default function TimesheetsPage() {
                                 </button>
                               )}
 
-                              {/* Popup */}
                               {isOpen && (
                                 <div className="ts-popup-fixed">
                                   <CellEditor
@@ -841,10 +601,7 @@ export default function TimesheetsPage() {
 
                         {/* Total semaine */}
                         <td style={{ textAlign: 'center' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
-                            color: weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text3)',
-                          }}>
+                          <span className="ts-week-total" style={{ color: weekTotal >= 5 ? 'var(--green)' : weekTotal > 0 ? 'var(--gold)' : 'var(--text2)' }}>
                             {weekTotal > 0 ? weekTotal.toFixed(1) : '—'}
                           </span>
                           {rowEntries.length > 0 && (
@@ -854,11 +611,11 @@ export default function TimesheetsPage() {
 
                         {/* Actions */}
                         <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                          <div className="ts-row-actions">
                             {hasDraft && (canEdit(role) || (isConsultant && isSelf)) && (
                               <button
-                                className="btn btn-ghost"
-                                style={{ fontSize: 10, padding: '2px 8px', color: 'var(--cyan)', whiteSpace: 'nowrap' }}
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--cyan)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleSubmitAll(c.id)}
                               >
                                 {t('actions.submit')}
@@ -866,8 +623,8 @@ export default function TimesheetsPage() {
                             )}
                             {hasSubmitted && isAdmin(role) && (
                               <button
-                                className="btn btn-ghost"
-                                style={{ fontSize: 10, padding: '2px 8px', color: 'var(--green)', whiteSpace: 'nowrap' }}
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--green)', whiteSpace: 'nowrap' }}
                                 onClick={() => handleApproveAll(c.id)}
                               >
                                 {t('actions.approve')}
@@ -881,11 +638,8 @@ export default function TimesheetsPage() {
 
                   {visibleConsultants.length === 0 && (
                     <tr>
-                      <td colSpan={days.length + 3} style={{
-                        textAlign: 'center', color: 'var(--text3)',
-                        fontSize: 12, padding: '32px 0',
-                      }}>
-                        // no consultants
+                      <td colSpan={days.length + 3}>
+                        <EmptyState message="// no consultants" />
                       </td>
                     </tr>
                   )}

@@ -15,6 +15,50 @@ export function daysUntil(iso: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+/** Retourne le lundi de la semaine contenant `d` */
+export function getMondayOf(d: Date): Date {
+  const date = new Date(d)
+  const day  = date.getDay()
+  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1))
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+/** YYYY-MM-DD */
+export function toISO(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
+/** Jours ouvrés d'une semaine à partir du lundi */
+export function getWeekDays(monday: Date): Date[] {
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+}
+
+/** Nombre de jours ouvrés entre deux dates ISO inclusives */
+export function countWorkingDays(start: string, end: string): number {
+  const s = new Date(start), e = new Date(end)
+  if (e < s) return 0
+  let count = 0
+  const cur = new Date(s)
+  while (cur <= e) {
+    const d = cur.getDay()
+    if (d !== 0 && d !== 6) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+export function fmtDay(d: Date) {
+  return {
+    dow: d.toLocaleDateString('en', { weekday: 'short' }),
+    num: d.toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // CURRENCY
 // ─────────────────────────────────────────────────────────────

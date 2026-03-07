@@ -248,6 +248,9 @@ button { font-family: 'JetBrains Mono', monospace; }
 .user-name  { font-size: 11px; font-weight: 600; color: var(--text); }
 .user-role  { font-size: 9px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
 
+.ts-status-msg            { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+.ts-status-msg--error     { color: var(--pink); }
+
 /* Barre de tri (sort buttons row) */
 .sort-bar {
   display: flex;
@@ -269,6 +272,20 @@ button { font-family: 'JetBrains Mono', monospace; }
   font-size: 11px;
   color: var(--gold);
 }
+
+/* Skeleton dans un panel */
+.skeleton-list           { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Actions inline dans une ligne de tableau */
+.row-actions             { display: flex; gap: 6px; }
+
+/* Chip deadline */
+.deadline-chip           { font-size: 10px; }
+.deadline-chip-label     { margin-left: 6px; opacity: 0.8; }
+
+/* Nom projet + tag interne */
+.project-name-cell       { display: flex; align-items: center; gap: 8px; }
+.project-ref             { font-size: 10px; color: var(--text2); margin-top: 2px; }
 
 /* ══════════════════════════════════════════════════════════════
    9. AVATAR
@@ -547,16 +564,246 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
 .occ-cell-pct { font-size: 11px; font-weight: 700; min-width: 36px; }
 
 
+/* ── timesheets CRA ── */
+
+/* Table */
+.ts-table                  { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ts-table th               { padding: 6px 8px; color: var(--text2); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--bg2); }
+.ts-table td               { padding: 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ts-table tbody tr:hover td { background: var(--bg3); }
+
+/* En-têtes jour */
+.ts-th-dow                 { font-size: 10px; font-weight: 600; color: var(--text2); }
+.ts-th-dow--today          { color: var(--cyan); }
+.ts-th-num                 { font-size: 12px; font-weight: 700; color: var(--text); }
+.ts-th-num--today          { color: var(--cyan); }
+
+/* Cellule standard */
+.ts-cell {
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  width: 72px; height: 48px; margin: 0 auto;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg3); cursor: pointer;
+  font-size: 14px; font-weight: 700;
+  transition: border-color .12s, background .12s;
+}
+.ts-cell:hover             { border-color: var(--cyan); background: var(--bg4); }
+.ts-cell--empty            { color: var(--text2); font-size: 16px; font-weight: 400; border-style: dashed; }
+.ts-cell--empty:hover      { color: var(--cyan); border-style: solid; }
+.ts-cell--filled           { border-color: var(--border2); }
+.ts-cell--holiday          { width: 72px; height: 48px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid rgba(255,209,102,.25); background: rgba(255,209,102,.06); }
+.ts-cell--leave            { width: 72px; height: 48px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid rgba(0,229,255,.2); background: rgba(0,229,255,.05); }
+
+/* Dot statut (coin bas-droit de la cellule) */
+.ts-status-dot             { position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; }
+
+/* Pill statut */
+.ts-pill                   { font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+.ts-pill--draft            { background: rgba(100,100,100,.2);  color: var(--text2); }
+.ts-pill--submitted        { background: rgba(255,209,102,.15); color: var(--gold); }
+.ts-pill--approved         { background: rgba(0,255,136,.12);   color: var(--green); }
+
+/* Badge leave / holiday dans les cellules */
+.ts-badge-wrap             { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ts-badge                  { font-size: 9px; font-weight: 700; letter-spacing: 1px; border-radius: 3px; padding: 1px 5px; }
+.ts-badge--leave           { color: var(--cyan);  background: rgba(0,229,255,.1);    border: 1px solid rgba(0,229,255,.25); }
+.ts-badge--holiday         { color: var(--gold);  background: rgba(255,209,102,.1);  border: 1px solid rgba(255,209,102,.25); max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-badge-sub              { font-size: 8px; color: var(--text2); letter-spacing: .5px; }
+.ts-badge-sub--holiday     { font-size: 7px; letter-spacing: .3px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+
+/* Légende */
+.ts-legend                 { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; font-size: 10px; color: var(--text2); }
+.ts-legend-item            { display: flex; align-items: center; gap: 4px; }
+.ts-legend-swatch          { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.ts-legend-swatch--leave   { background: rgba(0,229,255,.15);   border: 1px solid rgba(0,229,255,.3); }
+.ts-legend-swatch--holiday { background: rgba(255,209,102,.15); border: 1px solid rgba(255,209,102,.3); }
+
+/* Info consultant dans la ligne */
+.ts-c-name                 { font-size: 13px; font-weight: 600; color: var(--text); }
+.ts-c-meta                 { font-size: 10px; color: var(--text2); }
+.ts-c-country              { margin-left: 6px; opacity: 0.6; }
+
+/* Total semaine */
+.ts-week-total             { font-size: 14px; font-weight: 700; }
+
+/* Actions boutons (submit / approve) */
+.ts-row-actions            { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+
+/* Popup d'édition */
+.ts-popup {
+  position: fixed; z-index: 1000;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px; min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.55);
+}
+.ts-popup-fixed            { position: fixed; z-index: 1000; }
+.ts-popup-values           { display: flex; gap: 6px; margin-bottom: 10px; }
+.ts-popup-val {
+  flex: 1; padding: 6px 0; border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 700;
+  background: var(--bg3); color: var(--text2); border: 1px solid var(--border);
+  transition: all .1s;
+}
+.ts-popup-val--active      { background: var(--green); color: #000; border-color: var(--green); }
+.ts-popup-actions          { display: flex; gap: 6px; }
+.ts-popup-save {
+  flex: 1; background: var(--green); color: #000;
+  border: none; border-radius: 6px; padding: 6px 0;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.ts-popup-cancel {
+  flex: 1; background: var(--bg3); color: var(--text2);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 0; font-size: 11px; cursor: pointer;
+}
+.ts-popup-readonly-id      { font-size: 10px; color: var(--text2); margin-top: 8px; }
+.ts-popup-close {
+  margin-top: 10px; width: 100%;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text2);
+  font-size: 10px; padding: 5px 0; cursor: pointer;
+}
+
+/* ── Section 18 — Feature : projects ── */
+
+/* Team avatars empilés */
+.team-avatars            { display: flex; align-items: center; }
+.team-avatar             { width: 26px; height: 26px; border-radius: 50%; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-left: -8px; border: 2px solid var(--bg2); flex-shrink: 0; cursor: default; position: relative; }
+.team-avatars .team-avatar:first-child { margin-left: 0; }
+.team-avatar--overflow   { background: var(--bg4); color: var(--text2); }
+
+/* Drawer projet (panel fixe droite) */
+.project-drawer          { position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: var(--bg2); border-left: 1px solid var(--border); z-index: 200; padding: 28px; overflow-y: auto; box-shadow: -4px 0 20px var(--shadow); }
+.project-drawer-header   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.project-drawer-title-block { margin-bottom: 24px; }
+.project-drawer-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.project-drawer-name     { font-size: 22px; font-weight: 700; color: var(--cyan); letter-spacing: -0.5px; }
+.project-drawer-sub      { font-size: 11px; color: var(--text2); }
+.project-drawer-description { font-size: 12px; color: var(--text2); line-height: 1.6; padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.project-drawer-row      { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.project-drawer-row-label { color: var(--text2); }
+.project-drawer-row-value { color: var(--text); font-weight: 600; }
+.project-drawer-actions  { display: flex; gap: 8px; margin-top: 28px; }
+.project-drawer-delete   { margin-top: 8px; }
+
+/* Section équipe dans le drawer */
+.project-team-section    { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.project-team-header     { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.project-team-loading    { font-size: 11px; color: var(--text2); padding: 8px 0; }
+.project-team-member     { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.project-team-member:last-child { border-bottom: none; }
+.project-team-member-info { flex: 1; min-width: 0; }
+.project-team-member-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.project-team-member-role { font-size: 10px; color: var(--text2); margin-top: 1px; }
+.project-team-member-alloc { text-align: right; }
+.project-team-member-pct  { font-size: 11px; font-weight: 700; }
+.project-team-member-days { font-size: 9px; color: var(--text2); margin-top: 1px; }
+
+/* ══════════════════════════════════════════════════════════════
+   AJOUTS DASHBOARD MANAGER 
+══════════════════════════════════════════════════════════════ */
+
+.manager-pending-cra   { font-size: 11px; color: var(--gold); padding: 8px 0; }
+
+.manager-leave-list    { display: flex; flex-direction: column; }
+.manager-leave-row     { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.manager-leave-row:last-child { border-bottom: none; }
+.manager-leave-name    { color: var(--text); font-weight: 600; }
+.manager-leave-type    { color: var(--text2); margin-left: 8px; }
+.manager-leave-dates   { color: var(--text2); font-size: 10px; white-space: nowrap; }
 
 /* ══════════════════════════════════════════════════════════════
    19. DISPONIBILITÉS & AVAILABILITY CELLS
 ══════════════════════════════════════════════════════════════ */
-.avail-header    { display: grid; grid-template-columns: 140px repeat(5,1fr); gap: 4px; margin-bottom: 4px; }
-.avail-col-label { font-size: 9px; color: var(--text2); letter-spacing: 1px; text-align: center; padding: 4px; }
-.avail-row       { display: grid; grid-template-columns: 140px repeat(5,1fr); gap: 4px; margin-bottom: 4px; }
-.avail-name      { font-size: 11px; color: var(--text); padding: 10px 8px; display: flex; align-items: center; }
-.avail-cell      { border-radius: 3px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: filter 0.1s; }
-.avail-cell:hover { filter: brightness(0.92); }
+
+/* Navigation mois */
+.avail-nav              { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.avail-month-label      { font-size: 15px; font-weight: 700; color: var(--text); min-width: 160px; text-align: center; }
+
+/* Wrapper grille */
+.avail-grid-wrap        { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+
+/* En-tête ligne jours */
+.avail-head-row         { display: grid; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg2); z-index: 10; }
+.avail-head-label       { padding: 8px 14px; }
+.avail-head-cell        { padding: 6px 0; text-align: center; border-left: 1px solid var(--border); }
+.avail-head-cell--today   { background: rgba(0,255,136,0.06); }
+.avail-head-cell--weekend { background: var(--bg3); }
+.avail-head-dow         { font-size: 8px; color: var(--text2); letter-spacing: 1px; }
+.avail-head-cell--today .avail-head-dow   { color: var(--green); }
+.avail-head-cell--weekend .avail-head-dow { color: var(--border2); }
+.avail-head-num         { font-size: 10px; font-weight: 400; color: var(--text); }
+.avail-head-num--today  { font-weight: 700; color: var(--green); }
+.avail-head-cell--weekend .avail-head-num { color: var(--border2); }
+
+/* Ligne consultant */
+.avail-row              { display: grid; }
+.avail-name-cell        { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-right: 1px solid var(--border); }
+.avail-c-name           { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.avail-c-role           { font-size: 9px; color: var(--text2); margin-top: 1px; }
+
+/* Cellule disponibilité */
+.avail-cell {
+  border-left: 1px solid var(--border);
+  height: 44px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  border-top: 2px solid transparent;
+}
+.avail-cell--weekend   { background: var(--bg3); }
+.avail-cell--free      { background: transparent; }
+.avail-cell--leave     { background: rgba(255,209,102,0.12); border-top-color: rgba(255,209,102,0.4); }
+.avail-cell--overloaded { background: rgba(255,45,107,0.12);  border-top-color: rgba(255,45,107,0.6); }
+/* --project et --partial : background + borderTop via inline (palette dynamique) */
+
+.avail-cell--today     { outline: 1px solid var(--green); outline-offset: -1px; }
+.avail-cell--clickable { cursor: pointer; }
+
+/* Label nom du projet (texte dans la cellule) */
+.avail-cell-label {
+  position: absolute; left: 4px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+  /* color + maxWidth via inline (dynamiques) */
+}
+
+/* Icones dans les cellules */
+.avail-cell-icon        { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 9px; pointer-events: none; }
+.avail-cell-icon--leave   { color: var(--gold); }
+.avail-cell-icon--overload { color: var(--pink); }
+
+/* Bouton + (hover sur cellule libre) */
+.avail-cell-add {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--green);
+  opacity: 0; transition: opacity 0.15s;
+}
+.avail-cell--clickable:hover .avail-cell-add { opacity: 1; }
+
+/* Point "aujourd'hui" en bas de cellule */
+.avail-today-dot {
+  position: absolute; bottom: 3px; left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--green);
+}
+
+/* Légende */
+.avail-legend           { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+.avail-legend-item      { display: flex; align-items: center; gap: 7px; font-size: 10px; color: var(--text2); }
+.avail-swatch           { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+.avail-swatch--busy     { background: rgba(0,229,255,0.15);   border: 1px solid rgba(0,229,255,0.4); }
+.avail-swatch--partial  { background: rgba(255,209,102,0.12); border: 1px solid rgba(255,209,102,0.4); }
+.avail-swatch--leave    { background: rgba(255,209,102,0.12); border: 1px solid rgba(255,209,102,0.4); }
+.avail-swatch--overload { background: rgba(255,45,107,0.12);  border: 1px solid rgba(255,45,107,0.4); }
+.avail-swatch--free     { background: transparent;            border: 1px solid var(--border); }
+.avail-swatch--weekend  { background: var(--bg3);             border: 1px solid var(--border); }
+
 .ac-free         { background: var(--ac-free-bg);    color: var(--ac-free-c);    border: 1px solid var(--ac-free-b); }
 .ac-busy         { background: var(--ac-busy-bg);    color: var(--ac-busy-c);    border: 1px solid var(--ac-busy-b); }
 .ac-partial      { background: var(--ac-partial-bg); color: var(--ac-partial-c); border: 1px solid var(--ac-partial-b); }
@@ -567,6 +814,7 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
 .dispo-legend  { display: flex; gap: 20px; margin-bottom: 18px; padding: 10px 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; flex-wrap: wrap; }
 .legend-item   { display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--text2); }
 .legend-dot    { width: 10px; height: 10px; border-radius: 2px; }
+
 
 
 /* ══════════════════════════════════════════════════════════════

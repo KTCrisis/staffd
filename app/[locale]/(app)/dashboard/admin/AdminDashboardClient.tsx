@@ -10,6 +10,7 @@ import { useRouter }         from '@/lib/navigation'
 import { useLocale }         from 'next-intl'
 import { Topbar }            from '@/components/layout/Topbar'
 import { KpiCard, Panel }    from '@/components/ui'
+import { EmptyState }        from '@/components/ui/EmptyState'
 import { ConsultantItem }    from '@/components/consultants/ConsultantItem'
 import { ProjectRow }        from '@/components/projects/ProjectRow'
 import { ActivityFeed }      from '@/components/dashboard/ActivityFeed'
@@ -43,7 +44,6 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
-  // ── Calculs dérivés mémoïsés (ne se recalculent pas à chaque render) ──
   const activeProjects = useMemo(
     () => projects.filter(proj => proj.status === 'active').slice(0, 3),
     [projects]
@@ -61,7 +61,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
 
       <div className="app-content">
 
-        {/* ── KPIs globaux — plus de skeleton, données déjà là ── */}
+        {/* KPIs — données déjà là, pas de skeleton */}
         <div className="kpi-grid">
           <KpiCard
             label={t('kpi.activeConsultants')}
@@ -97,7 +97,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
           />
         </div>
 
-        {/* ── Projets actifs ── */}
+        {/* Projets actifs */}
         <Panel
           title={t('activeProjects')}
           action={{ label: t('seeAll'), onClick: () => router.push(p('/projects') as never) }}
@@ -105,12 +105,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
         >
           <div style={{ padding: '0 18px' }}>
             {activeProjects.length === 0 ? (
-              <div style={{
-                fontSize: 11, color: 'var(--text2)',
-                fontStyle: 'italic', padding: '12px 0',
-              }}>
-                // aucun projet actif
-              </div>
+              <EmptyState message="// aucun projet actif" />
             ) : (
               activeProjects.map(proj => (
                 <ProjectRow key={proj.id} project={proj} consultants={consultants} />
@@ -119,7 +114,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
           </div>
         </Panel>
 
-        {/* ── Consultants + Activité + Calendrier ── */}
+        {/* Consultants + Activité + Calendrier */}
         <div className="two-col">
           <Panel
             title={t('consultants')}
@@ -130,7 +125,7 @@ export function AdminDashboardClient({ consultants, projects, kpi, activity }: P
             ))}
           </Panel>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="dashboard-side">
             <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
               <ActivityFeed items={activity} />
             </Panel>

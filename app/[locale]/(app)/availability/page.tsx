@@ -7,6 +7,7 @@ import { isManager }           from '@/lib/auth'
 import { Topbar }              from '@/components/layout/Topbar'
 import { StatRow }             from '@/components/ui'
 import { Avatar }              from '@/components/ui/Avatar'
+import { EmptyState }          from '@/components/ui/EmptyState'
 import { useConsultants, useLeaveRequests, useAssignments } from '@/lib/data'
 import { AssignmentDrawer }    from '@/components/assignments/AssignmentDrawer'
 import type { Consultant }     from '@/types'
@@ -84,7 +85,6 @@ function buildGrid(
         continue
       }
 
-      // ── Congé ──
       const leave = leaveRequests.find(lr =>
         lr.consultantId === c.id &&
         lr.status !== 'refused' &&
@@ -96,7 +96,6 @@ function buildGrid(
         continue
       }
 
-      // ── Assignments ──
       const active = assignments.filter(a =>
         a.consultant_id === c.id &&
         (!a.start_date || dateStr >= a.start_date) &&
@@ -109,9 +108,9 @@ function buildGrid(
       if (totalAlloc > 100) {
         cells.push({ type: 'overloaded', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else if (totalAlloc >= 100) {
-        cells.push({ type: 'project', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
+        cells.push({ type: 'project',    projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else if (totalAlloc > 0) {
-        cells.push({ type: 'partial', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
+        cells.push({ type: 'partial',    projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       } else {
         cells.push({ type: 'free', isToday, isWeekend: false })
       }
@@ -119,6 +118,31 @@ function buildGrid(
 
     return { consultant: c, cells }
   })
+}
+
+// ══════════════════════════════════════════════════════════════
+// LÉGENDE
+// ══════════════════════════════════════════════════════════════
+
+function AvailabilityLegend({ tDisp }: { tDisp: any }) {
+  const items = [
+    { cls: 'avail-swatch--busy',     label: tDisp('legend.busy') + ' (100%)'  },
+    { cls: 'avail-swatch--partial',  label: tDisp('legend.partial') + ' (<100%)' },
+    { cls: 'avail-swatch--leave',    label: tDisp('legend.leave') + ' ✦'      },
+    { cls: 'avail-swatch--overload', label: '⚠ Overloaded (>100%)'            },
+    { cls: 'avail-swatch--free',     label: tDisp('legend.free')              },
+    { cls: 'avail-swatch--weekend',  label: tDisp('legend.weekend')           },
+  ]
+  return (
+    <div className="avail-legend">
+      {items.map(item => (
+        <div key={item.label} className="avail-legend-item">
+          <div className={`avail-swatch ${item.cls}`} />
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -132,14 +156,11 @@ export default function AvailabilityPage() {
   const { user } = useAuthContext()
   const now   = new Date()
 
-  // ── Vues par rôle ──────────────────────────────────────────
-  const teamAccess = isManager(user?.role) // admin + manager voient tout
-  // consultant ne voit que lui-même (filtré après chargement)
+  const teamAccess = isManager(user?.role)
 
   const [year,  setYear]  = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
 
-  // ── Drawer affectation rapide ──────────────────────────────
   const [assignTarget, setAssignTarget] = useState<{
     consultant: Consultant
     date:       string
@@ -156,15 +177,12 @@ export default function AvailabilityPage() {
   const goToday   = () => { setYear(now.getFullYear()); setMonth(now.getMonth()) }
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth()
 
-  // ── Filtrage par rôle ──────────────────────────────────────
   const visibleConsultants = useMemo(() => {
     const all = consultants ?? []
     if (teamAccess) return all
-    // consultant : ne voit que sa propre ligne
     return all.filter(c => c.user_id === user?.id)
   }, [consultants, teamAccess, user?.id])
 
-  // ── Grille ────────────────────────────────────────────────
   const grid = useMemo(() =>
     buildGrid(visibleConsultants, year, month, leaveRequests ?? [], assignments ?? []),
     [visibleConsultants, year, month, leaveRequests, assignments]
@@ -183,18 +201,19 @@ export default function AvailabilityPage() {
     }
   })
 
-  // ── Stats (admin + manager uniquement) ───────────────────
   const allList = consultants ?? []
   const stats = teamAccess ? [
-    { value: allList.filter(c => c.status === 'assigned').length,  label: tDisp('legend.busy'),    color: 'var(--cyan)' },
-    { value: allList.filter(c => c.status === 'available').length, label: tDisp('legend.free'),    color: 'var(--green)' },
-    { value: allList.filter(c => c.status === 'leave').length,     label: tDisp('legend.leave'),   color: 'var(--gold)' },
+    { value: allList.filter(c => c.status === 'assigned').length,  label: tDisp('legend.busy'),    color: 'var(--cyan)'   },
+    { value: allList.filter(c => c.status === 'available').length, label: tDisp('legend.free'),    color: 'var(--green)'  },
+    { value: allList.filter(c => c.status === 'leave').length,     label: tDisp('legend.leave'),   color: 'var(--gold)'   },
     { value: allList.filter(c => c.status === 'partial').length,   label: tDisp('legend.partial'), color: 'var(--purple)' },
   ] : []
 
-  // Mois et jours traduits
-  const months    = tNav.raw('months') as string[]
+  const months    = tNav.raw('months')    as string[]
   const daysShort = tDisp.raw('daysShort') as string[]
+
+  // Colonnes dynamiques — must stay inline (depend on daysInMonth)
+  const gridCols = `160px repeat(${daysInMonth}, 1fr)`
 
   return (
     <>
@@ -204,97 +223,66 @@ export default function AvailabilityPage() {
 
         {teamAccess && <StatRow stats={stats} />}
 
-        {/* ── Navigation mois ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+        {/* Navigation mois */}
+        <div className="avail-nav">
           <button className="btn btn-ghost btn-sm" onClick={prevMonth}>←</button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', minWidth: 160, textAlign: 'center' }}>
-            {months[month]} {year}
-          </span>
+          <span className="avail-month-label">{months[month]} {year}</span>
           <button className="btn btn-ghost btn-sm" onClick={nextMonth}>→</button>
           {!isCurrentMonth && (
-            <button className="btn btn-primary btn-sm" onClick={goToday} style={{ marginLeft: 8 }}>
+            <button className="btn btn-primary btn-sm" onClick={goToday}>
               {tDisp('today')}
             </button>
           )}
         </div>
 
-        {/* ── Grille ── */}
-        <div style={{
-          background: 'var(--bg2)',
-          border: '1px solid var(--border)',
-          borderRadius: 6,
-          overflow: 'hidden',
-        }}>
+        {/* Grille */}
+        <div className="avail-grid-wrap">
           {loading ? (
-            <div style={{ padding: '32px 20px', color: 'var(--text2)', fontSize: 12 }}>
-              {tDisp('noData')}
-            </div>
+            <EmptyState message={tDisp('noData')} />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="table-wrap">
               <div style={{ minWidth: daysInMonth * 28 + 160 }}>
 
                 {/* En-tête jours */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: `160px repeat(${daysInMonth}, 1fr)`,
-                  borderBottom: '1px solid var(--border)',
-                  position: 'sticky', top: 0,
-                  background: 'var(--bg2)', zIndex: 10,
-                }}>
-                  <div style={{ padding: '8px 14px', fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
-                    {tDisp('consultant')}
-                  </div>
+                <div className="avail-head-row" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="avail-head-label label-meta">{tDisp('consultant')}</div>
                   {headerDays.map(d => (
-                    <div key={d.num} style={{
-                      padding: '6px 0',
-                      textAlign: 'center',
-                      borderLeft: '1px solid var(--border)',
-                      background: d.isToday ? 'rgba(0,255,136,0.06)' : d.isWeekend ? 'var(--bg3)' : undefined,
-                    }}>
-                      <div style={{
-                        fontSize: 8,
-                        color: d.isToday ? 'var(--green)' : d.isWeekend ? 'var(--border2)' : 'var(--text2)',
-                        letterSpacing: 1,
-                      }}>
-                        {daysShort[(d.dow + 6) % 7]}
-                      </div>
-                      <div style={{
-                        fontSize: 10,
-                        fontWeight: d.isToday ? 700 : 400,
-                        color: d.isToday ? 'var(--green)' : d.isWeekend ? 'var(--border2)' : 'var(--text)',
-                      }}>
-                        {d.num}
-                      </div>
+                    <div
+                      key={d.num}
+                      className={[
+                        'avail-head-cell',
+                        d.isToday   ? 'avail-head-cell--today'   : '',
+                        d.isWeekend ? 'avail-head-cell--weekend' : '',
+                      ].join(' ')}
+                    >
+                      <div className="avail-head-dow">{daysShort[(d.dow + 6) % 7]}</div>
+                      <div className={`avail-head-num ${d.isToday ? 'avail-head-num--today' : ''}`}>{d.num}</div>
                     </div>
                   ))}
                 </div>
 
                 {/* Lignes consultants */}
                 {grid.map(({ consultant, cells }, rowIdx) => (
-                  <div key={consultant.id} style={{
-                    display: 'grid',
-                    gridTemplateColumns: `160px repeat(${daysInMonth}, 1fr)`,
-                    borderBottom: rowIdx < grid.length - 1 ? '1px solid var(--border)' : undefined,
-                  }}>
-                    {/* Nom */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '8px 14px',
-                      borderRight: '1px solid var(--border)',
-                    }}>
+                  <div
+                    key={consultant.id}
+                    className="avail-row"
+                    style={{
+                      gridTemplateColumns: gridCols,
+                      borderBottom: rowIdx < grid.length - 1 ? '1px solid var(--border)' : undefined,
+                    }}
+                  >
+                    {/* Nom consultant */}
+                    <div className="avail-name-cell">
                       <Avatar initials={consultant.initials} color={consultant.avatarColor} size="sm" />
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                          {consultant.name.split(' ')[0]}
-                        </div>
-                        <div style={{ fontSize: 9, color: 'var(--text2)', marginTop: 1 }}>
-                          {consultant.role}
-                        </div>
+                        <div className="avail-c-name">{consultant.name.split(' ')[0]}</div>
+                        <div className="avail-c-role">{consultant.role}</div>
                       </div>
                     </div>
 
-                    {/* Cellules */}
+                    {/* Cellules jours */}
                     {cells.map((cell, dayIdx) => {
+                      // Couleur palette projet — must stay inline (per-project dynamic)
                       const color = cell.projectId
                         ? getProjectColor(cell.projectId, projectColorMap)
                         : null
@@ -314,6 +302,12 @@ export default function AvailabilityPage() {
 
                       const showLabel = isSegmentStart && segmentLen >= 4 && cell.projectName
 
+                      // Bg + borderTop projet = palette dynamique → inline obligatoire
+                      // Autres types = classes CSS
+                      const projectStyle = (cell.type === 'project' || cell.type === 'partial') && color
+                        ? { background: color.bg, borderTop: `2px solid ${color.border}` }
+                        : {}
+
                       return (
                         <div
                           key={dayIdx}
@@ -322,9 +316,7 @@ export default function AvailabilityPage() {
                               ? cell.projectName
                               : cell.type === 'leave'
                               ? `${tDisp('legend.leave')}${cell.leaveType ? ` (${cell.leaveType})` : ''}`
-                              : cell.type === 'free'
-                              ? tDisp('legend.free')
-                              : undefined
+                              : cell.type === 'free' ? tDisp('legend.free') : undefined
                           }
                           onClick={
                             teamAccess && cell.type === 'free'
@@ -334,95 +326,48 @@ export default function AvailabilityPage() {
                                 }
                               : undefined
                           }
-                          style={{
-                            borderLeft: '1px solid var(--border)',
-                            height: 44,
-                            position: 'relative',
-                            overflow: 'hidden',
-                            cursor: teamAccess && cell.type === 'free' ? 'pointer' : 'default',
-                            background:
-                              cell.type === 'weekend'    ? 'var(--bg3)' :
-                              cell.type === 'leave'      ? 'rgba(255,209,102,0.12)' :
-                              cell.type === 'overloaded' ? 'rgba(255,45,107,0.12)' :
-                              cell.type === 'project'    ? (color?.bg ?? 'rgba(0,229,255,0.12)') :
-                              cell.type === 'partial'    ? (color?.bg ?? 'rgba(255,209,102,0.10)') :
-                              'transparent',
-                            borderTop:
-                              cell.type === 'project' || cell.type === 'partial'
-                                ? `2px solid ${color?.border ?? 'rgba(0,229,255,0.4)'}`
-                                : cell.type === 'overloaded'
-                                ? '2px solid rgba(255,45,107,0.6)'
-                                : cell.type === 'leave'
-                                ? '2px solid rgba(255,209,102,0.4)'
-                                : teamAccess && cell.type === 'free'
-                                ? '2px solid transparent'
-                                : '2px solid transparent',
-                            outline:       cell.isToday ? '1px solid var(--green)' : undefined,
-                            outlineOffset: -1,
-                          }}
+                          className={[
+                            'avail-cell',
+                            `avail-cell--${cell.type}`,
+                            cell.isToday ? 'avail-cell--today' : '',
+                            teamAccess && cell.type === 'free' ? 'avail-cell--clickable' : '',
+                          ].join(' ')}
+                          style={projectStyle}
                         >
                           {showLabel && (
-                            <div style={{
-                              position: 'absolute', left: 4, top: '50%',
-                              transform: 'translateY(-50%)',
-                              fontSize: 8, fontWeight: 700, letterSpacing: 0.5,
-                              color: color?.text ?? '#006064',
-                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                              maxWidth: segmentLen * 27 - 8, pointerEvents: 'none',
-                            }}>
+                            <div
+                              className="avail-cell-label"
+                              style={{
+                                // maxWidth dynamique (segmentLen × largeur cellule)
+                                maxWidth:  segmentLen * 27 - 8,
+                                color:     color?.text ?? '#006064',
+                              }}
+                            >
                               {cell.projectName}
                             </div>
                           )}
+
                           {cell.type === 'leave' && isSegmentStart && (
-                            <div style={{
-                              position: 'absolute', left: 4, top: '50%',
-                              transform: 'translateY(-50%)',
-                              fontSize: 9, color: 'var(--gold)', pointerEvents: 'none',
-                            }}>
-                              ✦
-                            </div>
+                            <span className="avail-cell-icon avail-cell-icon--leave">✦</span>
                           )}
+
                           {cell.type === 'overloaded' && isSegmentStart && (
-                            <div style={{
-                              position: 'absolute', left: 4, top: '50%',
-                              transform: 'translateY(-50%)',
-                              fontSize: 9, color: 'var(--pink)', pointerEvents: 'none',
-                            }}>
-                              ⚠
-                            </div>
+                            <span className="avail-cell-icon avail-cell-icon--overload">⚠</span>
                           )}
+
                           {teamAccess && cell.type === 'free' && (
-                            <div style={{
-                              position: 'absolute', inset: 0,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              opacity: 0, transition: 'opacity 0.15s',
-                              fontSize: 12, color: 'var(--green)',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                            onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
-                            >
-                              +
-                            </div>
+                            <span className="avail-cell-add">+</span>
                           )}
-                          {cell.isToday && (
-                            <div style={{
-                              position: 'absolute', bottom: 3, left: '50%',
-                              transform: 'translateX(-50%)',
-                              width: 4, height: 4, borderRadius: '50%',
-                              background: 'var(--green)',
-                            }} />
-                          )}
+
+                          {cell.isToday && <span className="avail-today-dot" />}
                         </div>
                       )
                     })}
                   </div>
                 ))}
 
-                {/* Empty state */}
                 {grid.length === 0 && (
-                  <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text2)', fontSize: 12 }}>
-                    {tDisp('noData')}
-                  </div>
+                  <EmptyState message={tDisp('noData')} />
                 )}
 
               </div>
@@ -430,29 +375,10 @@ export default function AvailabilityPage() {
           )}
         </div>
 
-        {/* ── Légende ── */}
-        <div style={{ display: 'flex', gap: 20, marginTop: 14, flexWrap: 'wrap' }}>
-          {[
-            { bg: 'rgba(0,229,255,0.15)',   border: 'rgba(0,229,255,0.4)',   label: tDisp('legend.busy') + ' (100%)' },
-            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: tDisp('legend.partial') + ' (<100%)' },
-            { bg: 'rgba(255,209,102,0.12)', border: 'rgba(255,209,102,0.4)', label: tDisp('legend.leave') + ' ✦' },
-            { bg: 'rgba(255,45,107,0.12)',  border: 'rgba(255,45,107,0.4)',  label: '⚠ Overloaded (>100%)' },
-            { bg: 'transparent',            border: 'var(--border)',          label: tDisp('legend.free') },
-            { bg: 'var(--bg3)',             border: 'var(--border)',          label: tDisp('legend.weekend') },
-          ].map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <div style={{
-                width: 14, height: 14, borderRadius: 2, flexShrink: 0,
-                background: item.bg, border: `1px solid ${item.border}`,
-              }} />
-              <span style={{ fontSize: 10, color: 'var(--text2)' }}>{item.label}</span>
-            </div>
-          ))}
-        </div>
+        <AvailabilityLegend tDisp={tDisp} />
 
       </div>
 
-      {/* ── Drawer affectation rapide ── */}
       {assignTarget && (
         <AssignmentDrawer
           consultant={assignTarget.consultant}
