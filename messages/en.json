@@ -121,6 +121,7 @@
     "noResults": "// no results",
     "now": "Now",
     "drawer": {
+      "progress": "Progress",
       "label": "// consultant profile",
       "close": "✕ Close",
       "status": "Status",
@@ -817,7 +818,9 @@
       "noMission": "No active assignment",
       "draftWarn": "⚠ draft not submitted",
       "weekDone": "✓ full week",
-      "rttLeft": "RTT: {count}d"
+      "rttLeft": "RTT: {count}d",
+      "invoices": "Invoices",
+      "invoicesSub": "see billing →"
     },
     "missions": {
       "label": "◧ My assignments",
@@ -1198,7 +1201,8 @@
       "paidBadge": "✓ paid {date}",
       "actions": {
         "preview": "preview",
-        "pdf": "PDF ↓"
+        "pdf": "PDF ↓",
+        "markPaid": "✓ paid"
       },
       "empty": "No invoices matching this filter."
     },

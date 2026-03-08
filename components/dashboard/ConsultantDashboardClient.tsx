@@ -109,10 +109,10 @@ export function ConsultantDashboardClient({
       </div>
 
       {/* KPIs */}
-      <div
-        className="kpi-grid"
-        style={{ gridTemplateColumns: `repeat(${isFreelance ? 3 : 4}, 1fr)`, marginBottom: 24 }}
-      >
+        <div
+          className="kpi-grid"
+          style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 24 }}
+        >
         <KpiCard
           label={t('kpi.missions')}
           value={myProjects.length}
@@ -133,12 +133,19 @@ export function ConsultantDashboardClient({
           accent={weekTotal >= 5 ? 'green' : weekTotal > 0 ? 'gold' : 'cyan'}
           sub={hasDraft ? t('kpi.draftWarn') : weekTotal >= 5 ? t('kpi.weekDone') : undefined}
         />
-        {!isFreelance && (
+        {!isFreelance ? (
           <KpiCard
             label={t('kpi.leaves')}
             value={me.leave_days_left ?? 0}
             accent="cyan"
             sub={t('kpi.rttLeft', { count: me.rtt_left ?? 0 })}
+          />
+        ) : (
+          <KpiCard
+            label={t('kpi.invoices')}
+            value="—"
+            accent="cyan"
+            sub={t('kpi.invoicesSub')}
           />
         )}
       </div>

@@ -4,6 +4,7 @@ import { useState }         from 'react'
 import { useRouter }        from 'next/navigation'
 import { useTranslations }  from 'next-intl'
 import { supabase }         from '@/lib/supabase'
+import { toISO }            from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -127,14 +128,9 @@ export function InvoiceList() {
   const router  = useRouter()
   const t       = useTranslations('invoices.list')
 
-  const [invoices, setInvoices] = useState<Invoice[]>(MOCK)
-  const [filter,   setFilter]   = useState<InvoiceStatus | 'all'>('all')
-
-  // Uncomment to load from Supabase:
-  // useEffect(() => {
-  //   supabase.from('invoice_list').select('*').order('invoice_date', { ascending: false })
-  //     .then(({ data }) => { if (data) setInvoices(data as Invoice[]) })
-  // }, [])
+  const [invoices,  setInvoices]  = useState<Invoice[]>(MOCK)
+  const [filter,    setFilter]    = useState<InvoiceStatus | 'all'>('all')
+  const [marking,   setMarking]   = useState<string | null>(null)
 
   const filtered = filter === 'all' ? invoices : invoices.filter(i => i.status === filter)
 
@@ -142,6 +138,35 @@ export function InvoiceList() {
   const totalPaid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
   const totalPending = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total_ttc, 0)
   const overdueCount = invoices.filter(i => i.is_overdue).length
+
+  // ── Mark as paid ──────────────────────────────────────────────
+  const handleMarkPaid = async (inv: Invoice) => {
+    setMarking(inv.id)
+    const today = toISO(new Date())
+    try {
+      // Optimistic update
+      setInvoices(prev => prev.map(i =>
+        i.id === inv.id
+          ? { ...i, status: 'paid' as InvoiceStatus, paid_at: today, is_overdue: false, days_overdue: null }
+          : i
+      ))
+
+      await supabase
+        .from('invoices')
+        .update({ status: 'paid', paid_at: today })
+        .eq('id', inv.id)
+    } catch {
+      // Rollback on error
+      setInvoices(prev => prev.map(i =>
+        i.id === inv.id ? inv : i
+      ))
+    } finally {
+      setMarking(null)
+    }
+  }
+
+  // ── Can mark as paid? ─────────────────────────────────────────
+  const canMarkPaid = (inv: Invoice) => inv.status === 'sent' || inv.status === 'overdue'
 
   return (
     <>
@@ -222,7 +247,6 @@ export function InvoiceList() {
             {filtered.map(inv => (
               <tr key={inv.id}>
 
-                {/* Number + source */}
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <span className="td-primary">{inv.invoice_number}</span>
@@ -233,22 +257,18 @@ export function InvoiceList() {
                   </div>
                 </td>
 
-                {/* Client */}
                 <td style={{ color: inv.client_name ? 'var(--text)' : 'var(--text2)' }}>
                   {inv.client_name ?? '—'}
                 </td>
 
-                {/* Project */}
                 <td style={{ color: inv.project_name ? 'var(--cyan)' : 'var(--text2)', fontSize: 11 }}>
                   {inv.project_name ?? '—'}
                 </td>
 
-                {/* Date */}
                 <td style={{ color: 'var(--text2)', fontSize: 11 }}>
                   {fmtDate(inv.invoice_date)}
                 </td>
 
-                {/* Due + overdue */}
                 <td>
                   {inv.due_date ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -275,7 +295,6 @@ export function InvoiceList() {
                   )}
                 </td>
 
-                {/* Amounts */}
                 <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>
                   {fmt(inv.subtotal)}
                 </td>
@@ -286,26 +305,36 @@ export function InvoiceList() {
                   {fmt(inv.total_ttc)}
                 </td>
 
-                {/* Status */}
                 <td><StatusBadge status={inv.status} /></td>
 
-                {/* Actions */}
+                {/* Actions — Mark as paid + preview + PDF */}
                 <td>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button style={{
-                      background: 'none', border: '1px solid var(--border)',
-                      color: 'var(--cyan)', fontSize: 9, padding: '3px 8px',
-                      borderRadius: 2, cursor: 'pointer',
-                      fontFamily: 'var(--font-mono, monospace)',
-                    }}>
-                      {t('actions.preview')}
-                    </button>
-                    <button style={{
-                      background: 'none', border: '1px solid var(--border)',
-                      color: 'var(--text2)', fontSize: 9, padding: '3px 8px',
-                      borderRadius: 2, cursor: 'pointer',
-                      fontFamily: 'var(--font-mono, monospace)',
-                    }}>
+                    {canMarkPaid(inv) && (
+                      <button
+                        onClick={() => handleMarkPaid(inv)}
+                        disabled={marking === inv.id}
+                        style={{
+                          background: 'rgba(0,255,136,.08)', border: '1px solid rgba(0,255,136,.3)',
+                          color: 'var(--green)', fontSize: 9, padding: '3px 8px',
+                          borderRadius: 2, cursor: 'pointer',
+                          fontFamily: 'var(--font-mono, monospace)', fontWeight: 700,
+                          opacity: marking === inv.id ? 0.5 : 1,
+                        }}
+                      >
+                        {marking === inv.id ? '···' : t('actions.markPaid')}
+                      </button>
+                    )}
+                    <button
+                      disabled
+                      title="Coming soon"
+                      style={{
+                        background: 'none', border: '1px solid var(--border)',
+                        color: 'var(--text2)', fontSize: 9, padding: '3px 8px',
+                        borderRadius: 2, cursor: 'not-allowed', opacity: 0.3,
+                        fontFamily: 'var(--font-mono, monospace)',
+                      }}
+                    >
                       {t('actions.pdf')}
                     </button>
                   </div>

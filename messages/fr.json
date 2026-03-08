@@ -818,7 +818,9 @@
       "noMission": "Aucune mission en cours",
       "draftWarn": "⚠ brouillon non soumis",
       "weekDone": "✓ semaine complète",
-      "rttLeft": "RTT : {count}j"
+      "rttLeft": "RTT : {count}j",
+      "invoices": "Factures",
+      "invoicesSub": "voir facturation →"
     },
     "missions": {
       "label": "◧ Mes missions",
@@ -1199,7 +1201,8 @@
       "paidBadge": "✓ payée le {date}",
       "actions": {
         "preview": "aperçu",
-        "pdf": "PDF ↓"
+        "pdf": "PDF ↓",
+        "markPaid": "✓ encaissé"
       },
       "empty": "Aucune facture ne correspond à ce filtre."
     },
