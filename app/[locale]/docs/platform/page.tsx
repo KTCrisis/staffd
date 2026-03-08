@@ -48,14 +48,15 @@ export default function PlatformDocsPage() {
               and independent firms</strong>. It centralises the full operational stack — from consultant
               availability to project profitability — in a single, role-aware interface.
             </p>
-            <Screenshot caption="Dashboard admin — KPIs, projets actifs, activité, calendrier" />
+            
+            <Screenshot src="/docs/dashboard-admin.png" caption="Dashboard admin — KPIs, projets actifs, activité, calendrier" />
             <FeatureGrid items={[
               { icon: '◉', title: 'Consultant management',    desc: 'Profiles, skills, status, occupancy, contract type (employee/freelance), and financial costs.' },
               { icon: '◧', title: 'Project & client tracking', desc: 'External and internal projects, client CRM, assignment management, and budget tracking.' },
               { icon: '⏱', title: 'Timesheets (CRA)',         desc: 'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
               { icon: '◷', title: 'Leave management',         desc: 'CP, RTT, unpaid, authorised absence — request, approve, and balance tracking.' },
               { icon: '▦', title: 'Planning & timeline',      desc: 'Weekly availability grid and monthly Gantt-style view across the team.' },
-              { icon: '◬', title: 'Financial tracking',       desc: 'TJM sold vs actual, gross margin per project, profitability per consultant.' },
+              { icon: '◬', title: 'Financial tracking',       desc: 'Daily Rate sold vs actual, gross margin per project, profitability per consultant.' },
             ]} />
             <Note color="var(--cyan)">
               ⬡ <strong>All data is multi-tenant and RLS-enforced.</strong> Each company{"'"}s data is
@@ -93,7 +94,7 @@ export default function PlatformDocsPage() {
               The consultant directory is the operational core of the platform. Each profile
               tracks availability, assignments, financial cost, and leave entitlements.
             </p>
-            <Screenshot caption="Consultants list — filtres, statuts, drawer profil" />
+            <Screenshot src="/docs/consultants-list.png" caption="Consultants — filtres, statuts, drawer profil" />
             <FeatureGrid items={[
               { icon: '◉', title: 'Employee profile',    desc: 'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
               { icon: '◧', title: 'Freelance profile',   desc: 'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
@@ -103,7 +104,7 @@ export default function PlatformDocsPage() {
             <Table
               headers={['Field', 'Employee', 'Freelance']}
               rows={[
-                ['Daily cost basis', 'Salary × (1 + charges%) ÷ days/yr', 'Billed TJM (or per-assignment override)'],
+                ['Daily cost basis', 'Salary × (1 + charges%) ÷ days/yr', 'Billed Rate (or per-assignment override)'],
                 ['Paid Leave / Flex Days', '✓ tracked', '— not applicable'],
                 ['Leave requests', 'Paid Leave, Flex Days, unpaid, auth. absence', 'Unpaid, auth. absence only'],
                 ['Profitability margin', 'Revenue − fully-loaded cost', 'Revenue − billed rate'],
@@ -126,8 +127,8 @@ export default function PlatformDocsPage() {
             <FeatureGrid items={[
               { icon: '◈', title: 'Client CRM',          desc: 'Client directory with sector, contact info, and linked projects. Revenue and active project counts per client.' },
               { icon: '◧', title: 'Project lifecycle',   desc: 'Draft → Active → On hold → Completed → Archived. Each status gates what actions are available.' },
-              { icon: '◉', title: 'Team assignments',    desc: 'Assign consultants with start/end dates and allocation %. Freelancers can have a per-assignment TJM override.' },
-              { icon: '◬', title: 'Financial envelope',  desc: 'TJM sold, days sold, total budget — visible to admins only. Used to calculate gross margin.' },
+              { icon: '◉', title: 'Team assignments',    desc: 'Assign consultants with start/end dates and allocation %. Freelancers can have a per-assignment daily rate override.' },
+              { icon: '◬', title: 'Financial envelope',  desc: 'Rate sold, days sold, total budget — visible to admins only. Used to calculate gross margin.' },
             ]} />
             <Table
               headers={['Status', 'Description', 'Visible in financials']}
@@ -141,7 +142,7 @@ export default function PlatformDocsPage() {
             />
             <Note color="var(--purple)">
               Consultants and freelancers can view their assigned projects (read-only) but cannot edit, archive, or delete.
-              Financial data (TJM, budget, days sold) is hidden for non-admin roles.
+              Financial data (Daily Rate, budget, days sold) is hidden for non-admin roles.
             </Note>
           </Section>
 
@@ -196,7 +197,7 @@ export default function PlatformDocsPage() {
               Two complementary views give a spatial sense of team availability and workload.
               Both are restricted to admin, manager, and super_admin roles.
             </p>
-            <Screenshot caption="Staffing grid — disponibilité mensuelle par consultant" />
+            <Screenshot src="/docs/staffing-grid.png" caption="Staffing — disponibilité mensuelle par consultant" />
             <FeatureGrid items={[
               { icon: '▦', title: 'Monthly availability',  desc: 'Row per consultant, column per day. Colour cells: free / on assignment / partial / leave / weekend. Hatch patterns distinguish leave from projects.' },
               { icon: '▬', title: 'Monthly timeline',      desc: 'Gantt-style view. Assignment bars span across days. Leave blocks appear as a separate layer. Manager sees only their team.' },
