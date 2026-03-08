@@ -4,7 +4,7 @@
 // components/settings/TeamTab.tsx
 // ══════════════════════════════════════════════════════════════
 
-import { useState, useEffect }  from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslations }      from 'next-intl'
 import { Avatar }               from '@/components/ui/Avatar'
 import {
@@ -20,27 +20,26 @@ import { SectionLabel, Skeleton, RoleBadge } from './shared'
 // ══════════════════════════════════════════════════════════════
 
 function TeamCard({
-  team, consultants, optimisticRemovedIds, onEdit, onDelete, onAddMember, onRemoveMember,
+  team, consultants, allTeamMemberIds, onEdit, onDelete, onAddMember, onRemoveMember,
 }: {
-  team:                 Team
-  consultants:          any[]
-  optimisticRemovedIds: Set<string>
-  onEdit:               (team: Team) => void
-  onDelete:             (team: Team) => void
-  onAddMember:          (teamId: string, consultantId: string) => void
-  onRemoveMember:       (consultantId: string, teamName: string, consultantName: string) => void
+  team:             Team
+  consultants:      any[]
+  /** Set de tous les ids déjà dans une équipe (optimiste inclus) — source de vérité unique */
+  allTeamMemberIds: Set<string>
+  onEdit:           (team: Team) => void
+  onDelete:         (team: Team) => void
+  onAddMember:      (teamId: string, consultantId: string) => void
+  onRemoveMember:   (consultantId: string, teamName: string, consultantName: string) => void
 }) {
   const t = useTranslations('settings.team.card')
   const [showAddMember,        setShowAddMember]        = useState(false)
   const [selectedConsultantId, setSelectedConsultantId] = useState('')
 
-  // Filtre les membres retirés de façon optimiste (avant le refresh DB)
-  const visibleMembers = team.members.filter(m => !optimisticRemovedIds.has(m.id))
-  const memberIds      = new Set(visibleMembers.map(m => m.id))
+  // Membres visibles = ceux dont l'id est encore dans allTeamMemberIds pour cette équipe
+  const visibleMembers = team.members.filter(m => allTeamMemberIds.has(m.id))
 
-  const available = consultants.filter(c =>
-    !memberIds.has(c.id) && !c.teamId
-  )
+  // Disponibles = consultants qui ne sont dans AUCUNE équipe
+  const available = consultants.filter(c => !allTeamMemberIds.has(c.id))
 
   const handleAdd = async () => {
     if (!selectedConsultantId) return
@@ -361,26 +360,44 @@ export function TeamTab({ companyId }: { companyId: string }) {
   const { data: teams,       loading: lT } = useTeams(refresh)
   const { data: consultants, loading: lC } = useConsultants(refresh)
 
+  // IDs retirés de façon optimiste — avant que le refresh DB ne revienne
   const [optimisticRemovedIds, setOptimisticRemovedIds] = useState<Set<string>>(new Set())
+  // IDs ajoutés de façon optimiste
+  const [optimisticAddedMap,   setOptimisticAddedMap]   = useState<Map<string, string>>(new Map()) // consultantId → teamId
 
-  const allConsultants = consultants ?? []
-  const allConsultantsOptimistic = allConsultants.map(c =>
-    optimisticRemovedIds.has(c.id) ? { ...c, teamId: undefined } : c
-  )
+  // ── Source de vérité unique : qui est dans quelle équipe ──────
+  // On part des données DB (teams[].members) et on applique les mutations optimistes.
+  // On n'utilise PAS c.teamId (champ du consultant) car il peut être stale après un remove.
+  const allTeamMemberIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const team of teams ?? []) {
+      for (const m of team.members) {
+        if (!optimisticRemovedIds.has(m.id)) ids.add(m.id)
+      }
+    }
+    // Ajouts optimistes
+    for (const [cId] of optimisticAddedMap) ids.add(cId)
+    return ids
+  }, [teams, optimisticRemovedIds, optimisticAddedMap])
 
+  // Réinitialise les sets optimistes une fois le refresh terminé
   useEffect(() => {
-    if (!lC && !lT) setOptimisticRemovedIds(new Set())
+    if (!lC && !lT) {
+      setOptimisticRemovedIds(new Set())
+      setOptimisticAddedMap(new Map())
+    }
   }, [lC, lT])
 
-  const managers = allConsultantsOptimistic.filter(c =>
+  const allConsultants = consultants ?? []
+
+  const managers = allConsultants.filter(c =>
     c.role?.toLowerCase().includes('manager') ||
     c.role?.toLowerCase().includes('lead') ||
     c.role?.toLowerCase().includes('directeur')
   )
 
   const teamCount  = (teams ?? []).length
-  const isUnassigned = (c: any) => !c.teamId
-  const unassigned = allConsultantsOptimistic.filter(isUnassigned).length
+  const unassigned = allConsultants.filter(c => !allTeamMemberIds.has(c.id)).length
 
   const handleRefresh = () => setRefresh(r => r + 1)
 
@@ -396,10 +413,17 @@ export function TeamTab({ companyId }: { companyId: string }) {
   const [removingMember, setRemovingMember] = useState(false)
 
   const handleAddMember = async (teamId: string, consultantId: string) => {
+    // Optimiste : marque le consultant comme assigné immédiatement
+    setOptimisticAddedMap(prev => new Map([...prev, [consultantId, teamId]]))
     try {
       await addTeamMember(teamId, consultantId)
       handleRefresh()
     } catch (e: any) {
+      setOptimisticAddedMap(prev => {
+        const next = new Map(prev)
+        next.delete(consultantId)
+        return next
+      })
       alert(e.message)
     }
   }
@@ -502,8 +526,8 @@ export function TeamTab({ companyId }: { companyId: string }) {
                 <TeamCard
                   key={team.id}
                   team={team}
-                  consultants={allConsultantsOptimistic}
-                  optimisticRemovedIds={optimisticRemovedIds}
+                  consultants={allConsultants}
+                  allTeamMemberIds={allTeamMemberIds}
                   onEdit={t => { setEditTarget(t); setShowForm(true) }}
                   onDelete={t => setConfirmDel(t)}
                   onAddMember={handleAddMember}
@@ -526,8 +550,8 @@ export function TeamTab({ companyId }: { companyId: string }) {
                 {t('unassignedWarning', { count: unassigned })}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {allConsultantsOptimistic
-                  .filter(isUnassigned)
+                {allConsultants
+                  .filter(c => !allTeamMemberIds.has(c.id))
                   .map(c => (
                     <div key={c.id} style={{
                       display: 'flex', alignItems: 'center', gap: 6,
