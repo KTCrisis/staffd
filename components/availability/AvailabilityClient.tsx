@@ -42,12 +42,12 @@ interface Props {
 // ── Couleurs projet ──────────────────────────────────────────
 
 const PROJECT_COLORS = [
-  { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064' },
-  { bg: 'rgba(0,255,136,0.15)',   border: 'rgba(0,255,136,0.48)',   text: '#1b5e20' },
-  { bg: 'rgba(179,136,255,0.16)', border: 'rgba(179,136,255,0.50)', text: '#4a148c' },
-  { bg: 'rgba(255,209,102,0.16)', border: 'rgba(255,209,102,0.50)', text: '#e65100' },
-  { bg: 'rgba(255,45,107,0.15)',  border: 'rgba(255,45,107,0.45)',  text: '#c62828' },
-  { bg: 'rgba(100,200,150,0.16)', border: 'rgba(100,200,150,0.50)', text: '#2e7d32' },
+  { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064' },   // cyan
+  { bg: 'rgba(0,255,136,0.15)',   border: 'rgba(0,255,136,0.48)',   text: '#1b5e20' },   // green
+  { bg: 'rgba(179,136,255,0.16)', border: 'rgba(179,136,255,0.50)', text: '#4a148c' },   // purple
+  { bg: 'rgba(255,171,64,0.16)',  border: 'rgba(255,171,64,0.50)',  text: '#bf360c' },   // orange (remplace gold)
+  { bg: 'rgba(77,182,172,0.16)',  border: 'rgba(77,182,172,0.50)',  text: '#004d40' },   // teal (remplace pink)
+  { bg: 'rgba(141,110,99,0.16)',  border: 'rgba(141,110,99,0.50)',  text: '#3e2723' },   // brown/warm (remplace sage)
 ]
 
 function getProjectColor(projectId: string, projectIndex: Map<string, number>) {
