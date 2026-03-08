@@ -224,7 +224,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
             {f.label}
           </button>
         ))}
-        {!readOnly && (                                                                   // ← AJOUT
+        {!readOnly && (                                                                   
           <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={openCreate}>
             {t('cta')}
           </button>
@@ -253,7 +253,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
                   <th>{t('table.team')}</th>
                   <th>{t('table.deadline')}</th>
                   <th>{t('table.status')}</th>
-                  {!readOnly && <th>{t('table.actions')}</th>}                            {/* ← AJOUT */}
+                  {!readOnly && <th>{t('table.actions')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -272,7 +272,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
                     <td><TeamAvatars team={p.team} /></td>
                     <td><DeadlineChip date={p.endDate} t={t} /></td>
                     <td><Badge variant={p.status as any} /></td>
-                    {!readOnly && (                                                       // ← AJOUT
+                    {!readOnly && (                                                      
                       <td onClick={e => e.stopPropagation()}>
                         <div className="row-actions">
                           <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
@@ -330,14 +330,36 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
               <span className="project-drawer-row-value">{row.value}</span>
             </div>
           ))}
+          
+          {(selected.progress ?? 0) > 0 && (
+            <div className="project-drawer-row" style={{ flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="project-drawer-row-label">{t('drawer.progress')}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--green)' }}>
+                  {selected.progress}%
+                </span>
+              </div>
+              <div style={{
+                width: '100%', height: 4, background: 'var(--border)',
+                borderRadius: 2, overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${selected.progress}%`, height: '100%',
+                  background: selected.progress! >= 75 ? 'var(--green)' : selected.progress! >= 40 ? 'var(--gold)' : 'var(--cyan)',
+                  borderRadius: 2, transition: 'width 0.3s',
+                }} />
+              </div>
+            </div>
+          )}
+
           <ProjectTeam
             project={selected}
             assignmentRefresh={assignmentRefresh}
             onAssign={() => setAssignOpen(true)}
             onRefresh={() => setAssignmentRefresh(r => r + 1)}
-            readOnly={readOnly}                                                           // ← AJOUT
+            readOnly={readOnly}                                                          
           />
-          {!readOnly && (                                                                 // ← AJOUT
+          {!readOnly && (                                                                 
             <>
               <div className="project-drawer-actions">
                 <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => openEdit(selected)}>
@@ -359,7 +381,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
         </div>
       )}
 
-      {!readOnly && assignOpen && selected && (                                           // ← AJOUT
+      {!readOnly && assignOpen && selected && (                                           
         <AssignmentModal
           project={selected as any}
           onClose={() => setAssignOpen(false)}
@@ -371,7 +393,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
         />
       )}
 
-      {!readOnly && formOpen && (                                                         // ← AJOUT
+      {!readOnly && formOpen && (                                                         
         <ProjectForm
           project={editProject as any}
           onClose={() => { setFormOpen(false); setEditProject(null) }}

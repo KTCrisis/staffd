@@ -18,10 +18,11 @@ function StatusPill({ status, t }: { status: string; t: any }) {
 }
 
 function LeavePill({ status }: { status: string }) {
+  const t   = useTranslations('statuses')
   const cls = status === 'approved' ? 'badge badge-approved'
             : status === 'pending'  ? 'badge badge-pending'
             : 'badge badge-leave'
-  return <span className={cls}>{status}</span>
+  return <span className={cls}>{t(status)}</span>
 }
 
 function CraCell({ d, ts, isToday }: {
@@ -73,6 +74,7 @@ export function ConsultantDashboardClient({
   monday       = toISO(new Date()),
 }: Props) {
   const t      = useTranslations('dashboardConsultant')
+  const tLeave = useTranslations('conges.types')
   const router = useRouter()
   const locale = useLocale()
 
@@ -226,7 +228,7 @@ export function ConsultantDashboardClient({
               {myLeaves.slice(0, 4).map(l => (
                 <div key={l.id} className="leave-row">
                   <span className="leave-row-info">
-                    {l.type} · {l.startDate} → {l.endDate}
+                    {tLeave(l.type)} · {l.startDate} → {l.endDate}
                   </span>
                   <LeavePill status={l.status} />
                 </div>

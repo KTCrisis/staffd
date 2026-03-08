@@ -121,6 +121,7 @@
     "noResults": "// aucun résultat",
     "now": "Maintenant",
     "drawer": {
+      "progress": "Avancement",
       "label": "// fiche consultant",
       "close": "✕ Fermer",
       "status": "Statut",
