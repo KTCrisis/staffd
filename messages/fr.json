@@ -836,8 +836,7 @@
     "cra": {
       "title": "CRA à valider",
       "empty": "✓ Aucun CRA en attente",
-      "pending": "{count} entrée(s) à approuver cette semaine",
-      "entries": "entrée|entrées"
+      "pending": "{count} entrées à valider cette semaine"
     },
     "leaves": {
       "title": "Demandes de congés",

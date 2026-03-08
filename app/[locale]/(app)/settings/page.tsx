@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   const role      = user?.app_metadata?.user_role as string | undefined
   const companyId = user?.app_metadata?.company_id as string | undefined
-  const isSA      = user?.app_metadata?.is_super_admin === true
+  const isSA      = role === 'super_admin'
 
   if (role !== 'admin' && !isSA) redirect('/dashboard')
 

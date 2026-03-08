@@ -836,8 +836,7 @@
     "cra": {
       "title": "Timesheets to approve",
       "empty": "✓ No pending timesheets",
-      "pending": "{count} {entries} to approve this week",
-      "entries": "entry|entries"
+      "pending": "{count} entries to approve this week"
     },
     "leaves": {
       "title": "Leave requests",
