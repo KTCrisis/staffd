@@ -21,11 +21,11 @@ export default async function AvailabilityPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const role       = user?.app_metadata?.user_role as string | undefined
-  const userId     = user?.id ?? null
+  const role      = user?.app_metadata?.user_role as string | undefined
+  const userId    = user?.id ?? null
+  const isSA      = user?.app_metadata?.is_super_admin === true
+  const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
   const teamAccess = role === 'super_admin' || role === 'admin' || role === 'manager'
-  const isSA       = user?.app_metadata?.is_super_admin === true
-  const companyId  = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,14 +35,32 @@ export default async function AvailabilityPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
-  let consultantsQ  = supabase.from('consultant_occupancy').select('*').order('name')
-  let leavesQ       = supabase.from('leave_requests').select('id, consultant_id, type, status, start_date, end_date').neq('status', 'refused')
-  let assignmentsQ  = supabase.from('assignments').select('*, projects(name)')
+  // ── Filtre manager via RPC ───────────────────────────────────
+  let managerConsultantIds: string[] | null = null
+  if (role === 'manager') {
+    const { data, error } = await supabase.rpc('my_team_consultant_ids')
+    managerConsultantIds = error ? [] : ((data as string[]) ?? [])
+  }
+
+  // ── Queries de base ──────────────────────────────────────────
+  let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
+  let leavesQ      = supabase.from('leave_requests').select('id, consultant_id, type, status, start_date, end_date').neq('status', 'refused')
+  let assignmentsQ = supabase.from('assignments').select('*, projects(name)')
 
   if (tenant) {
     consultantsQ = consultantsQ.eq('company_id', tenant)
     leavesQ      = leavesQ.eq('company_id', tenant)
     assignmentsQ = assignmentsQ.eq('company_id', tenant)
+  }
+
+  // Filtre manager : restreint aux membres de son équipe
+  if (managerConsultantIds && managerConsultantIds.length > 0) {
+    consultantsQ = consultantsQ.in('id', managerConsultantIds)
+    leavesQ      = leavesQ.in('consultant_id', managerConsultantIds)
+    assignmentsQ = assignmentsQ.in('consultant_id', managerConsultantIds)
+  } else if (managerConsultantIds?.length === 0) {
+    // Manager sans équipe → aucun résultat
+    consultantsQ = consultantsQ.eq('id', '00000000-0000-0000-0000-000000000000')
   }
 
   const [consultantsRes, leavesRes, assignmentsRes] = await Promise.all([
