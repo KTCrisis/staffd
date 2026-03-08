@@ -19,6 +19,7 @@ export default async function ManagerDashboardPage() {
 
   const { data: { user } } = await supabase.auth.getUser()
   const role = user?.app_metadata?.user_role as string | undefined
+  const isSA = user?.app_metadata?.is_super_admin === true
 
   const monday    = getMondayOf(new Date())
   const sunday    = new Date(monday)
@@ -97,7 +98,7 @@ export default async function ManagerDashboardPage() {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <ManagerDashboardClient
         consultants={consultants}
         leaveReqs={leaveReqs}

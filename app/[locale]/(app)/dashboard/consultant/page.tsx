@@ -25,6 +25,7 @@ export default async function DashboardConsultantPage() {
   // ── Identité ─────────────────────────────────────────────
   const { data: { user } } = await supabase.auth.getUser()
   const role        = user?.app_metadata?.user_role as string
+  const isSA = user?.app_metadata?.is_super_admin === true
   const isFreelance = role === 'freelance'
 
   // ── Trouver le profil consultant lié à ce user ───────────
@@ -115,7 +116,7 @@ export default async function DashboardConsultantPage() {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <ConsultantDashboardClient
         me={me}
         isFreelance={isFreelance}

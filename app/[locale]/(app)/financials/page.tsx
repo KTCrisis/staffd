@@ -43,7 +43,7 @@ export default async function FinancialsPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <FinancialsClient projects={projects ?? []} />
     </>
   )

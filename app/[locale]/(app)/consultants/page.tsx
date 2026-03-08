@@ -96,7 +96,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <ConsultantsClient
         consultants={consultants}
         userRole={role}

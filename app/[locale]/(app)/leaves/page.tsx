@@ -89,7 +89,7 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <LeavesClient
         requests={requests}
         consultants={consultants}
