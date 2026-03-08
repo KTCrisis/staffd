@@ -40,10 +40,6 @@ export function ManagerDashboardClient({
 }: Props) {
   const t      = useTranslations('dashboardManager')
   const router = useRouter()
-  const locale = useLocale()
-
-  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
-
   return (
     <div className="app-content">
 
@@ -71,7 +67,7 @@ export function ManagerDashboardClient({
         {/* Équipe */}
         <Panel
           title={t('team')}
-          action={{ label: t('teamSeeAll'), onClick: () => router.push(p('/consultants') as never) }}
+          action={{ label: t('teamSeeAll'), onClick: () => router.push('/consultants' as never) }}
         >
           {consultants.length === 0
             ? <EmptyState message="// no consultants" />
@@ -85,7 +81,7 @@ export function ManagerDashboardClient({
           <Panel
             title={t('cra.title')}
             action={kpi.pendingCra > 0
-              ? { label: t('cra.approve'), onClick: () => router.push(p('/timesheets') as never) }
+              ? { label: t('cra.approve'), onClick: () => router.push('/timesheets' as never) }
               : undefined
             }
           >
@@ -102,7 +98,7 @@ export function ManagerDashboardClient({
           <Panel
             title={t('leaves.title')}
             action={leaveReqs.length > 0
-              ? { label: t('leaves.approve'), onClick: () => router.push(p('/leaves') as never) }
+              ? { label: t('leaves.approve'), onClick: () => router.push('/leaves' as never) }
               : undefined
             }
           >

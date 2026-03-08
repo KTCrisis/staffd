@@ -41,10 +41,6 @@ export function AdminDashboardClient({
 }: Props) {
   const t      = useTranslations('dashboard')
   const router = useRouter()
-  const locale = useLocale()
-
-  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
-
   return (
     <div className="app-content">
 
@@ -82,7 +78,7 @@ export function AdminDashboardClient({
       {/* Projets actifs */}
       <Panel
         title={t('activeProjects')}
-        action={{ label: t('seeAll'), onClick: () => router.push(p('/projects') as never) }}
+        action={{ label: t('seeAll'), onClick: () => router.push('/projects' as never) }}
         noPadding
       >
         <div style={{ padding: '0 18px' }}>
@@ -100,7 +96,7 @@ export function AdminDashboardClient({
       <div className="two-col">
         <Panel
           title={t('consultants')}
-          action={{ label: t('seeAll'), onClick: () => router.push(p('/consultants') as never) }}
+          action={{ label: t('seeAll'), onClick: () => router.push('/consultants' as never) }}
         >
           {consultants.length === 0
             ? <EmptyState message="// no consultants" />

@@ -82,10 +82,6 @@ export function ConsultantDashboardClient({
   const t      = useTranslations('dashboardConsultant')
   const tLeave = useTranslations('conges.types')
   const router = useRouter()
-  const locale = useLocale()
-
-  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
-
   const pendingLeaves = myLeaves.filter(l => l.status === 'pending')
 
   const weekDays = useMemo(() => {
@@ -204,7 +200,7 @@ export function ConsultantDashboardClient({
             <button
               className="btn btn-ghost btn-sm"
               style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: 10 }}
-              onClick={() => router.push(p('/timesheets') as never)}
+              onClick={() => router.push('/timesheets' as never)}
             >
               {t('cra.goTo')}
             </button>
@@ -220,7 +216,7 @@ export function ConsultantDashboardClient({
             <button
               className="btn btn-ghost btn-sm"
               style={{ color: 'var(--green)', fontSize: 10 }}
-              onClick={() => router.push(p('/leaves') as never)}
+              onClick={() => router.push('/leaves' as never)}
             >
               {t('leaves.request')}
             </button>
@@ -264,7 +260,7 @@ export function ConsultantDashboardClient({
             <button
               className="btn btn-ghost btn-sm"
               style={{ color: 'var(--green)', fontSize: 10 }}
-              onClick={() => router.push(p('/invoices/new') as never)}
+              onClick={() => router.push('/invoices/new' as never)}
             >
               {t('invoices.create')}
             </button>
@@ -285,7 +281,7 @@ export function ConsultantDashboardClient({
             <button
               className="btn btn-ghost"
               style={{ width: '100%', borderColor: 'var(--cyan)', color: 'var(--cyan)' }}
-              onClick={() => router.push(p('/invoices') as never)}
+              onClick={() => router.push('/invoices' as never)}
             >
               {t('invoices.seeAll')}
             </button>
