@@ -3,6 +3,8 @@
 
 import { useMemo }         from 'react'
 import { useTranslations } from 'next-intl'
+import { useRouter }       from '@/lib/navigation'
+import { useLocale }       from 'next-intl'
 import { Panel }           from '@/components/ui/Panel'
 import { KpiCard }         from '@/components/ui/KpiCard'
 import { Avatar }          from '@/components/ui/Avatar'
@@ -70,7 +72,11 @@ export function ConsultantDashboardClient({
   hasDraft     = false,
   monday       = toISO(new Date()),
 }: Props) {
-  const t = useTranslations('dashboardConsultant')
+  const t      = useTranslations('dashboardConsultant')
+  const router = useRouter()
+  const locale = useLocale()
+
+  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   const pendingLeaves = myLeaves.filter(l => l.status === 'pending')
 
@@ -174,6 +180,13 @@ export function ConsultantDashboardClient({
           <div className="cra-footer">
             {t('cra.total')} <span className="cra-total">{weekTotal}j</span>
             {hasDraft && <span className="cra-draft-warn">{t('cra.draft')}</span>}
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: 10 }}
+              onClick={() => router.push(p('/timesheets') as never)}
+            >
+              {t('cra.goTo')}
+            </button>
           </div>
         </Panel>
       </div>
@@ -181,7 +194,16 @@ export function ConsultantDashboardClient({
       {/* Congés — salariés uniquement */}
       {!isFreelance && (
         <Panel>
-          <div className="panel-section-label">{t('leaves.label')}</div>
+          <div className="panel-section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {t('leaves.label')}
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--green)', fontSize: 10 }}
+              onClick={() => router.push(p('/leaves') as never)}
+            >
+              {t('leaves.request')}
+            </button>
+          </div>
           <div className="leave-counters">
             {[
               { label: t('leaves.cp'),      value: me.leave_days_left ?? 0, total: me.leave_days_total ?? 25, color: 'var(--green)' },

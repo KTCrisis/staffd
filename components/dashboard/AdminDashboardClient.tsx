@@ -48,14 +48,13 @@ export function AdminDashboardClient({
   return (
     <div className="app-content">
 
-      {/* KPIs */}
+      {/* KPIs — sans trends fake */}
       <div className="kpi-grid">
         <KpiCard
           label={t('kpi.activeConsultants')}
           value={kpi.activeConsultants}
           valueSuffix={`/${kpi.totalConsultants}`}
           accent="green"
-          trend={{ label: t('trends.up'), direction: 'up' }}
           progress={kpi.totalConsultants > 0
             ? Math.round((kpi.activeConsultants / kpi.totalConsultants) * 100)
             : 0}
@@ -64,21 +63,18 @@ export function AdminDashboardClient({
           label={t('kpi.activeProjects')}
           value={kpi.activeProjects}
           accent="cyan"
-          trend={{ label: t('trends.stable'), direction: 'flat' }}
           progress={projectProgress}
         />
         <KpiCard
           label={t('kpi.pendingLeaves')}
           value={kpi.pendingLeaves}
           accent="pink"
-          trend={{ label: t('trends.warning'), direction: 'down' }}
         />
         <KpiCard
           label={t('kpi.occupancyRate')}
           value={kpi.occupancyRate}
           valueSuffix="%"
           accent="gold"
-          trend={{ label: t('trends.occupancy'), direction: 'up' }}
           progress={kpi.occupancyRate}
         />
       </div>

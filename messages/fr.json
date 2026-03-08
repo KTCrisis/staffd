@@ -827,10 +827,12 @@
     "cra": {
       "label": "⏱ CRA — semaine courante",
       "total": "Total :",
-      "draft": "⚠ à soumettre"
+      "draft": "⚠ à soumettre",
+      "goTo": "voir CRAs →"
     },
     "leaves": {
       "label": "◷ Mes congés",
+      "request": "+ demander →",
       "cp": "CP restants",
       "rtt": "RTT restants",
       "pending": "En attente",
@@ -847,14 +849,17 @@
       "occupancy": "Taux d'occupation"
     },
     "team": "Mon équipe",
+    "teamSeeAll": "voir tout →",
     "cra": {
       "title": "CRA à valider",
       "empty": "✓ Aucun CRA en attente",
-      "pending": "{count} entrées à valider cette semaine"
+      "pending": "{count} entrées à valider cette semaine",
+      "approve": "approuver →"
     },
     "leaves": {
       "title": "Demandes de congés",
-      "empty": "✓ Aucune demande en attente"
+      "empty": "✓ Aucune demande en attente",
+      "approve": "approuver →"
     },
     "activity": "Activité récente",
     "calendar": "Calendrier"

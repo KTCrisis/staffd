@@ -827,12 +827,14 @@
     "cra": {
       "label": "⏱ CRA — current week",
       "total": "Total:",
-      "draft": "⚠ to submit"
+      "draft": "⚠ to submit",
+      "goTo": "see timesheets →"
     },
     "leaves": {
       "label": "◷ My time off",
+      "request": "+ request →",
       "cp": "Days left",
-      "rtt": "RTT left",
+      "rtt": "Flex days left",
       "pending": "Pending",
       "empty": "// no leave request"
     }
@@ -847,14 +849,17 @@
       "occupancy": "Occupancy rate"
     },
     "team": "My team",
+    "teamSeeAll": "see all →",
     "cra": {
       "title": "Timesheets to approve",
       "empty": "✓ No pending timesheets",
-      "pending": "{count} entries to approve this week"
+      "pending": "{count} entries to approve this week",
+      "approve": "approve →"
     },
     "leaves": {
       "title": "Leave requests",
-      "empty": "✓ No pending requests"
+      "empty": "✓ No pending requests",
+      "approve": "approve →"
     },
     "activity": "Recent activity",
     "calendar": "Calendar"

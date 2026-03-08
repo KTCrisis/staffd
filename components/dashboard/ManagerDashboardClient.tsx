@@ -2,6 +2,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { useRouter }       from '@/lib/navigation'
+import { useLocale }       from 'next-intl'
 import { KpiCard, Panel }  from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ConsultantItem }  from '@/components/consultants/ConsultantItem'
@@ -36,7 +38,11 @@ export function ManagerDashboardClient({
   activity    = [],
   kpi         = DEFAULT_KPI,
 }: Props) {
-  const t = useTranslations('dashboardManager')
+  const t      = useTranslations('dashboardManager')
+  const router = useRouter()
+  const locale = useLocale()
+
+  const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
   return (
     <div className="app-content">
@@ -63,7 +69,10 @@ export function ManagerDashboardClient({
       <div className="two-col">
 
         {/* Équipe */}
-        <Panel title={t('team')}>
+        <Panel
+          title={t('team')}
+          action={{ label: t('teamSeeAll'), onClick: () => router.push(p('/consultants') as never) }}
+        >
           {consultants.length === 0
             ? <EmptyState message="// no consultants" />
             : consultants.map(c => <ConsultantItem key={c.id} consultant={c} />)
@@ -73,7 +82,13 @@ export function ManagerDashboardClient({
         <div className="dashboard-side">
 
           {/* CRA en attente */}
-          <Panel title={t('cra.title')}>
+          <Panel
+            title={t('cra.title')}
+            action={kpi.pendingCra > 0
+              ? { label: t('cra.approve'), onClick: () => router.push(p('/timesheets') as never) }
+              : undefined
+            }
+          >
             {kpi.pendingCra === 0 ? (
               <EmptyState message={t('cra.empty')} />
             ) : (
@@ -84,7 +99,13 @@ export function ManagerDashboardClient({
           </Panel>
 
           {/* Congés en attente */}
-          <Panel title={t('leaves.title')}>
+          <Panel
+            title={t('leaves.title')}
+            action={leaveReqs.length > 0
+              ? { label: t('leaves.approve'), onClick: () => router.push(p('/leaves') as never) }
+              : undefined
+            }
+          >
             {leaveReqs.length === 0 ? (
               <EmptyState message={t('leaves.empty')} />
             ) : (
