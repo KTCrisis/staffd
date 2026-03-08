@@ -66,6 +66,15 @@ export interface CompanySettings {
   hr_settings:      HRSettings
 }
 
+const HR_DEFAULTS: HRSettings = {
+  country_code:            'FR',
+  default_cp:              25,
+  default_rtt:             10,
+  working_days_per_year:   218,
+  cra_submission_deadline: 5,
+  leave_auto_approve:      false,
+}
+
 // ──────────────────────────────────────────────────────────────
 // HOOK — QUERY
 // ──────────────────────────────────────────────────────────────
@@ -77,20 +86,18 @@ export function useCompanySettings(dep?: number) {
       .from('companies')
       .select('id, name, slug, mode, billing_settings, ai_settings, hr_settings')
     if (activeTenantId) q = q.eq('id', activeTenantId)
-    const { data, error } = await q.single()
+
+    // maybeSingle() retourne null proprement au lieu d'un 406
+    // quand la session n'est pas encore prête (JWT absent → RLS = 0 lignes)
+    const { data, error } = await q.maybeSingle()
     if (error) throw new Error(error.message)
+    if (!data)  throw new Error('Company not found')
+
     return {
       ...data,
       billing_settings: (data.billing_settings ?? {}) as BillingSettings,
       ai_settings:      (data.ai_settings      ?? {}) as AISettings,
-      hr_settings:      (data.hr_settings       ?? {
-        country_code:            'FR',
-        default_cp:              25,
-        default_rtt:             10,
-        working_days_per_year:   218,
-        cra_submission_deadline: 5,
-        leave_auto_approve:      false,
-      }) as HRSettings,
+      hr_settings:      { ...HR_DEFAULTS, ...(data.hr_settings ?? {}) } as HRSettings,
     } as CompanySettings
   }, [dep, activeTenantId])
 }

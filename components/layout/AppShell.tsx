@@ -45,9 +45,11 @@ export default async function AppShell({ children }: { children: ReactNode }) {
           userEmail={userEmail}
           companyMode={companyMode}
         />
-        <main className="main-content">
-          {children}
-        </main>
+        <div className="app-main">
+          <main className="app-content">
+            {children}
+          </main>
+        </div>
       </div>
     </AuthProvider>
   )
