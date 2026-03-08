@@ -21,16 +21,13 @@ type NavItem = {
 }
 
 const GROUP_COLORS: Record<string, string> = {
-  overview: 'var(--text2)',
   team:     'var(--cyan)',
-  activity: 'var(--green)',
   projects: 'var(--purple)',
   finance:  'var(--gold)',
-  admin:    'var(--text2)',
   agents:   'var(--pink)',
 }
 
-// ── Props — injectées depuis le layout server ─────────────────
+// ── Props ─────────────────────────────────────────────────────
 
 interface SidebarProps {
   userRole:    string
@@ -98,13 +95,16 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
-  // ── Nav ───────────────────────────────────────────────────
+  // ── Nav — 4 groupes au lieu de 7 ─────────────────────────
   const NAV = [
+
+    // ── Dashboard seul, sans label de groupe ─────────────────
     {
-      group: t('overview'), key: 'overview',
+      group: '', key: 'overview',
       items: [{ label: t('dashboard'), icon: '⬡', href: p('/dashboard') }],
     },
 
+    // ── Équipe + Activité fusionnés ───────────────────────────
     ...(!isSolo ? [{
       group: t('team'), key: 'team',
       items: [
@@ -116,14 +116,17 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
           label: t('conges'), icon: '◷', href: p('/leaves'),
           badge: isAdminOrManager && pendingCount > 0 ? pendingCount : undefined,
         }] : []),
+        { label: t('timesheets'), icon: '⏱', href: p('/timesheets') },
       ],
-    }] : []),
+    }] : [
+      // mode solo : juste CRAs
+      {
+        group: t('activity'), key: 'team',
+        items: [{ label: t('timesheets'), icon: '⏱', href: p('/timesheets') }],
+      },
+    ]),
 
-    {
-      group: t('activity'), key: 'activity',
-      items: [{ label: t('timesheets'), icon: '⏱', href: p('/timesheets') }],
-    },
-
+    // ── Projets ───────────────────────────────────────────────
     ...(!isConsultantOnly || isSolo ? [{
       group: t('projects'), key: 'projects',
       items: [
@@ -134,6 +137,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       ],
     }] : []),
 
+    // ── Finance + Admin + Agents fusionnés ────────────────────
     ...(isAdminOrManager || isSolo || isFreelance ? [{
       group: t('finance'), key: 'finance',
       items: [
@@ -141,18 +145,14 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
         ] : []),
-        { label: t('invoices'), icon: '◉', href: p('/invoices') },
+        { label: t('invoices'),   icon: '◉', href: p('/invoices')  },
+        ...((isSuperAdmin || isAdmin || isSolo) ? [
+          { label: t('parametres'), icon: '◎', href: p('/settings') },
+        ] : []),
+        ...(isSuperAdmin || isAdmin ? [
+          { label: t('agenticAI'), icon: '◬', href: p('/ai'), glow: true } as NavItem,
+        ] : []),
       ],
-    }] : []),
-
-    ...((isSuperAdmin || isAdmin || isSolo) ? [{
-      group: t('admin'), key: 'admin',
-      items: [{ label: t('parametres'), icon: '◎', href: p('/settings') }],
-    }] : []),
-
-    ...(isSuperAdmin || isAdmin ? [{
-      group: t('agents'), key: 'agents',
-      items: [{ label: t('agenticAI'), icon: '◬', href: p('/ai'), glow: true } as NavItem],
     }] : []),
   ]
 
@@ -193,14 +193,15 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       <nav className="sidebar-nav">
         {NAV.map(group => (
           <div key={group.key} className="nav-group">
-            {!collapsed && (
+            {/* Label de groupe — masqué si vide (dashboard) ou si collapsed */}
+            {!collapsed && group.group && (
               <div className="nav-group-label" style={{ color: GROUP_COLORS[group.key] ?? 'var(--text2)' }}>
                 {group.group}
               </div>
             )}
             {group.items.map(item => {
               const isActive = pathname.includes(item.href.replace(`/${locale}`, ''))
-              const accent   = GROUP_COLORS[group.key] ?? 'var(--text2)'
+              const accent   = GROUP_COLORS[group.key] ?? 'var(--green)'
               return (
                 <Link key={item.href} href={item.href}
                   className={`nav-item ${isActive ? 'active' : ''}`}
