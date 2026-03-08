@@ -179,12 +179,11 @@ export function ProjectsClient({ projects = [], error }: Props) {
     (filter === 'all' || p.status === filter) &&
     (showInternal || !p.isInternal)
   )
-
   const stats = [
-    { value: projects.filter(p => p.status === 'active').length,    label: t('stats.active'),    color: 'var(--green)' },
-    { value: projects.filter(p => p.status === 'draft').length,     label: t('stats.draft'),     color: 'var(--cyan)'  },
-    { value: projects.filter(p => p.status === 'on_hold').length,   label: t('stats.onHold'),    color: 'var(--gold)'  },
-    { value: projects.filter(p => p.status === 'completed').length, label: t('stats.completed'), color: 'var(--text2)' },
+    { value: visible.filter(p => p.status === 'active').length,    label: t('stats.active'),    color: 'var(--green)' },
+    { value: visible.filter(p => p.status === 'draft').length,     label: t('stats.draft'),     color: 'var(--cyan)'  },
+    { value: visible.filter(p => p.status === 'on_hold').length,   label: t('stats.onHold'),    color: 'var(--gold)'  },
+    { value: visible.filter(p => p.status === 'completed').length, label: t('stats.completed'), color: 'var(--text2)' },
   ]
 
   function openCreate() { setEditProject(null); setSelected(null); setFormOpen(true) }
@@ -226,7 +225,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
           onClick={() => setShowInternal(v => !v)}
           title={t('filters.toggleInternal') ?? 'Projets internes'}
         >
-          ◧ {t('filters.internal') ?? 'Internes'}
+          ◧ Internal
         </button>
       </div>
 
