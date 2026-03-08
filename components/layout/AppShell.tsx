@@ -22,8 +22,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
   const userRole  = (user.app_metadata?.user_role ?? 'viewer') as string
   const userEmail = user.email ?? ''
   const companyId = user.app_metadata?.company_id as string | undefined
-  const isSA      = user.app_metadata?.is_super_admin === true
-
+  const isSA      = userRole === 'super_admin'  
   let companyMode: 'solo' | 'team' | null = null
 
   if (isSA) {
@@ -33,7 +32,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
       .from('companies')
       .select('mode')
       .eq('id', companyId)
-      .single()
+      .maybeSingle()                           
     companyMode = (data?.mode as 'solo' | 'team') ?? 'team'
   }
 
@@ -46,9 +45,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
           companyMode={companyMode}
         />
         <div className="app-main">
-          <main className="app-content">
-            {children}
-          </main>
+          {children}
         </div>
       </div>
     </AuthProvider>
