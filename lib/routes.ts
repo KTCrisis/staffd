@@ -45,7 +45,7 @@ export const ROUTES = {
   TIMESHEETS:  '/timesheets',
   AVAILABILITY:'/availability',
   TIMELINE:    '/timeline',
-  BIDS:        '/bids',
+
 
   // ────────────────────────────────────────────────────────────
   // FINANCE (admin uniquement)
@@ -53,7 +53,8 @@ export const ROUTES = {
 
   FINANCIALS:   '/financials',
   PROFITABILITY:'/profitability',
-
+  BIDS:        '/bids',
+  
   // ────────────────────────────────────────────────────────────
   // FACTURES
   // ────────────────────────────────────────────────────────────
