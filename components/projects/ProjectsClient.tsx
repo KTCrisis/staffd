@@ -83,13 +83,14 @@ function TeamAvatars({ team }: { team?: ProjectTeamMember[] }) {
   )
 }
 
-// ── ProjectTeam — garde useProjectAssignments (drawer interactif) ──
+// ── ProjectTeam ──────────────────────────────────────────────
 
-function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
+function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh, readOnly }: {  // ← readOnly
   project:           Project
   assignmentRefresh: number
   onAssign:          () => void
   onRefresh:         () => void
+  readOnly?:         boolean                                                            // ← AJOUT
 }) {
   const t = useTranslations('assignments')
   const { data: assignments, loading } = useProjectAssignments(project.id, assignmentRefresh)
@@ -107,9 +108,11 @@ function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
     <div className="project-team-section">
       <div className="project-team-header">
         <span className="label-meta">{t('team')}</span>
-        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--green)' }} onClick={onAssign}>
-          + {t('assign')}
-        </button>
+        {!readOnly && (                                                                  // ← AJOUT
+          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--green)' }} onClick={onAssign}>
+            + {t('assign')}
+          </button>
+        )}
       </div>
       {loading && <div className="project-team-loading">{t('loading')}</div>}
       {!loading && !(assignments ?? []).length && <EmptyState message={t('noAssignments')} />}
@@ -134,10 +137,12 @@ function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
               </div>
             )}
           </div>
-          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--pink)', padding: '3px 8px' }}
-            onClick={() => handleRemove(a.id)} disabled={removing === a.id} title={t('remove')}>
-            ✕
-          </button>
+          {!readOnly && (                                                                // ← AJOUT
+            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--pink)', padding: '3px 8px' }}
+              onClick={() => handleRemove(a.id)} disabled={removing === a.id} title={t('remove')}>
+              ✕
+            </button>
+          )}
         </div>
       ))}
     </div>
@@ -149,13 +154,16 @@ function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh }: {
 interface Props {
   projects?: Project[]
   error?:    string | null
+  userRole?: string                                                                      // ← AJOUT
 }
 
 // ── Composant principal ───────────────────────────────────────
 
-export function ProjectsClient({ projects = [], error }: Props) {
+export function ProjectsClient({ projects = [], error, userRole }: Props) {               // ← userRole
   const t      = useTranslations('projects')
   const router = useRouter()
+
+  const readOnly = userRole === 'consultant' || userRole === 'freelance'                  // ← AJOUT
 
   const [assignmentRefresh, setAssignmentRefresh] = useState(0)
   const [filter,            setFilter]            = useState<FilterValue>('all')
@@ -216,12 +224,14 @@ export function ProjectsClient({ projects = [], error }: Props) {
             {f.label}
           </button>
         ))}
-        <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={openCreate}>
-          {t('cta')}
-        </button>
+        {!readOnly && (                                                                   // ← AJOUT
+          <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={openCreate}>
+            {t('cta')}
+          </button>
+        )}
         <button
           className={`btn ${showInternal ? 'btn-primary' : 'btn-ghost'}`}
-          style={{ color: showInternal ? undefined : 'var(--text2)', fontSize: 10 }}
+          style={{ color: showInternal ? undefined : 'var(--text2)', fontSize: 10, marginLeft: readOnly ? 'auto' : undefined }}
           onClick={() => setShowInternal(v => !v)}
         >
           ◧ {t('filters.toggleInternal')}
@@ -243,7 +253,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
                   <th>{t('table.team')}</th>
                   <th>{t('table.deadline')}</th>
                   <th>{t('table.status')}</th>
-                  <th>{t('table.actions')}</th>
+                  {!readOnly && <th>{t('table.actions')}</th>}                            {/* ← AJOUT */}
                 </tr>
               </thead>
               <tbody>
@@ -262,21 +272,23 @@ export function ProjectsClient({ projects = [], error }: Props) {
                     <td><TeamAvatars team={p.team} /></td>
                     <td><DeadlineChip date={p.endDate} t={t} /></td>
                     <td><Badge variant={p.status as any} /></td>
-                    <td onClick={e => e.stopPropagation()}>
-                      <div className="row-actions">
-                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
-                          {t('actions.edit')}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--gold)' }}
-                          onClick={() => handleArchive(p)} disabled={archiving}>
-                          {t('actions.archive')}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--pink)' }}
-                          onClick={() => handleDelete(p)} disabled={deleting}>
-                          {t('actions.delete')}
-                        </button>
-                      </div>
-                    </td>
+                    {!readOnly && (                                                       // ← AJOUT
+                      <td onClick={e => e.stopPropagation()}>
+                        <div className="row-actions">
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>
+                            {t('actions.edit')}
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--gold)' }}
+                            onClick={() => handleArchive(p)} disabled={archiving}>
+                            {t('actions.archive')}
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--pink)' }}
+                            onClick={() => handleDelete(p)} disabled={deleting}>
+                            {t('actions.delete')}
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -285,7 +297,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
         )}
       </Panel>
 
-      {/* Drawer */}
+      {/* Drawer — lecture seule pour consultant */}
       {selected && !formOpen && (
         <div className="project-drawer">
           <div className="project-drawer-header">
@@ -323,26 +335,31 @@ export function ProjectsClient({ projects = [], error }: Props) {
             assignmentRefresh={assignmentRefresh}
             onAssign={() => setAssignOpen(true)}
             onRefresh={() => setAssignmentRefresh(r => r + 1)}
+            readOnly={readOnly}                                                           // ← AJOUT
           />
-          <div className="project-drawer-actions">
-            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => openEdit(selected)}>
-              {t('drawer.edit')}
-            </button>
-            <button className="btn btn-ghost" style={{ flex: 1, color: 'var(--gold)' }}
-              onClick={() => handleArchive(selected)} disabled={archiving}>
-              {t('drawer.archive')}
-            </button>
-          </div>
-          <div className="project-drawer-delete">
-            <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--pink)' }}
-              onClick={() => handleDelete(selected)} disabled={deleting}>
-              {t('drawer.delete')}
-            </button>
-          </div>
+          {!readOnly && (                                                                 // ← AJOUT
+            <>
+              <div className="project-drawer-actions">
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => openEdit(selected)}>
+                  {t('drawer.edit')}
+                </button>
+                <button className="btn btn-ghost" style={{ flex: 1, color: 'var(--gold)' }}
+                  onClick={() => handleArchive(selected)} disabled={archiving}>
+                  {t('drawer.archive')}
+                </button>
+              </div>
+              <div className="project-drawer-delete">
+                <button className="btn btn-ghost" style={{ width: '100%', color: 'var(--pink)' }}
+                  onClick={() => handleDelete(selected)} disabled={deleting}>
+                  {t('drawer.delete')}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {assignOpen && selected && (
+      {!readOnly && assignOpen && selected && (                                           // ← AJOUT
         <AssignmentModal
           project={selected as any}
           onClose={() => setAssignOpen(false)}
@@ -354,7 +371,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
         />
       )}
 
-      {formOpen && (
+      {!readOnly && formOpen && (                                                         // ← AJOUT
         <ProjectForm
           project={editProject as any}
           onClose={() => { setFormOpen(false); setEditProject(null) }}
