@@ -49,12 +49,11 @@ export default function PlatformDocsPage() {
               availability to project profitability — in a single, role-aware interface.
             </p>
             
-            <Screenshot src="/docs/dashboard-admin.png" caption="Dashboard admin — KPIs, projets actifs, activité, calendrier" />
             <FeatureGrid items={[
               { icon: '◉', title: 'Consultant management',    desc: 'Profiles, skills, status, occupancy, contract type (employee/freelance), and financial costs.' },
               { icon: '◧', title: 'Project & client tracking', desc: 'External and internal projects, client CRM, assignment management, and budget tracking.' },
               { icon: '⏱', title: 'Timesheets (CRA)',         desc: 'Weekly time entry with draft/submit/approve workflow, per project, per consultant.' },
-              { icon: '◷', title: 'Leave management',         desc: 'CP, RTT, unpaid, authorised absence — request, approve, and balance tracking.' },
+              { icon: '◷', title: 'Leave management',         desc: 'Paid Leaves, flex days, unpaid, authorised absence — request, approve, and balance tracking.' },
               { icon: '▦', title: 'Planning & timeline',      desc: 'Weekly availability grid and monthly Gantt-style view across the team.' },
               { icon: '◬', title: 'Financial tracking',       desc: 'Daily Rate sold vs actual, gross margin per project, profitability per consultant.' },
             ]} />
@@ -94,7 +93,6 @@ export default function PlatformDocsPage() {
               The consultant directory is the operational core of the platform. Each profile
               tracks availability, assignments, financial cost, and leave entitlements.
             </p>
-            <Screenshot src="/docs/consultants-list.png" caption="Consultants — filtres, statuts, drawer profil" />
             <FeatureGrid items={[
               { icon: '◉', title: 'Employee profile',    desc: 'Gross salary, employer charges (%), working days/year → actual daily cost calculated automatically.' },
               { icon: '◧', title: 'Freelance profile',   desc: 'Billed daily rate with per-assignment override. No paid leave or flex-day entitlements.' },
@@ -172,19 +170,19 @@ export default function PlatformDocsPage() {
           <Section id="leaves" label="Leave management" icon="◷" color="var(--green)">
             <p>
               The leave module handles request submission, manager approval, and balance tracking.
-              Freelancers are redirected — CP and RTT are not available.
+              Freelancers are redirected — Paid leaves and flex days are not available.
             </p>
             <FeatureGrid items={[
               { icon: '◈', title: 'Leave request',      desc: 'Consultant selects type, dates, and submits. Working days calculated automatically (weekends + holidays excluded).' },
               { icon: '◎', title: 'Approval workflow',  desc: 'Manager/admin sees pending requests with impact warnings. One-click approve or refuse.' },
-              { icon: '◧', title: 'Balance tracking',   desc: 'CP and RTT balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
+              { icon: '◧', title: 'Balance tracking',   desc: 'Paid leaves and flex days balances displayed per consultant with a visual bar. Depletes automatically on approval.' },
               { icon: '▲', title: 'Impact warning',     desc: 'System flags if an approved leave overlaps with an active project assignment.' },
             ]} />
             <Table
               headers={['Type', 'Available to', 'Duration']}
               rows={[
-                ['Paid leave (CP)',       'Employee only', 'Custom — calculated in working days'],
-                ['Flex days (RTT)',       'Employee only', 'Custom — from RTT balance'],
+                ['Paid leave ',       'Employee only', 'Custom — calculated in working days'],
+                ['Flex days ',       'Employee only', 'Custom — from flex days balance'],
                 ['Unpaid leave',          'All',           'Custom'],
                 ['Authorised absence',    'All',           'Fixed by legal motif (bereavement, marriage…)'],
               ]}
@@ -197,7 +195,6 @@ export default function PlatformDocsPage() {
               Two complementary views give a spatial sense of team availability and workload.
               Both are restricted to admin, manager, and super_admin roles.
             </p>
-            <Screenshot src="/docs/staffing-grid.png" caption="Staffing — disponibilité mensuelle par consultant" />
             <FeatureGrid items={[
               { icon: '▦', title: 'Monthly availability',  desc: 'Row per consultant, column per day. Colour cells: free / on assignment / partial / leave / weekend. Hatch patterns distinguish leave from projects.' },
               { icon: '▬', title: 'Monthly timeline',      desc: 'Gantt-style view. Assignment bars span across days. Leave blocks appear as a separate layer. Manager sees only their team.' },
@@ -265,7 +262,7 @@ margin_pct   = gross_margin / revenue × 100
               headers={['Role', 'Scope', 'Key permissions']}
               rows={[
                 ['consultant',  'Own data only', 'View assignments, submit timesheets, request leave, view project list (read-only)'],
-                ['freelance',   'Own data only', 'All consultant + create/view own invoices. No CP/RTT. Dashboard shows invoice KPIs.'],
+                ['freelance',   'Own data only', 'All consultant + create/view own invoices. No PTO/flex days. Dashboard shows invoice KPIs.'],
                 ['manager',     'Team',          'View team, approve timesheets & leave, manage assignments, team-filtered planning views'],
                 ['admin',       'Company',       'Full CRUD, financial views, invoices, invite consultants, settings'],
                 ['super_admin', 'All tenants',   'Cross-tenant access via OrgSwitcher, company management'],
