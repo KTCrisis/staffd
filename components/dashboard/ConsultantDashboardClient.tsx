@@ -52,6 +52,10 @@ interface LeaveItem {
 interface TimesheetItem {
   id: string; date: string; value: number; status: string; projectId: string
 }
+interface InvoiceStats {
+  total: number; draft: number; sent: number; paid: number; overdue: number
+}
+
 interface Props {
   me:            any
   isFreelance?:  boolean
@@ -61,6 +65,7 @@ interface Props {
   weekTotal?:    number
   hasDraft?:     boolean
   monday?:       string
+  invoiceStats?: InvoiceStats | null
 }
 
 export function ConsultantDashboardClient({
@@ -72,6 +77,7 @@ export function ConsultantDashboardClient({
   weekTotal    = 0,
   hasDraft     = false,
   monday       = toISO(new Date()),
+  invoiceStats = null,
 }: Props) {
   const t      = useTranslations('dashboardConsultant')
   const tLeave = useTranslations('conges.types')
@@ -143,9 +149,15 @@ export function ConsultantDashboardClient({
         ) : (
           <KpiCard
             label={t('kpi.invoices')}
-            value="—"
-            accent="cyan"
-            sub={t('kpi.invoicesSub')}
+            value={invoiceStats?.total ?? 0}
+            accent={invoiceStats?.overdue ? 'pink' : invoiceStats?.sent ? 'cyan' : 'green'}
+            sub={
+              invoiceStats?.overdue
+                ? t('kpi.invoicesOverdue', { count: invoiceStats.overdue })
+                : invoiceStats?.sent
+                ? t('kpi.invoicesPending', { count: invoiceStats.sent })
+                : t('kpi.invoicesSub')
+            }
           />
         )}
       </div>
@@ -244,7 +256,42 @@ export function ConsultantDashboardClient({
           )}
         </Panel>
       )}
-
+      {/* Factures — freelance uniquement */}
+      {isFreelance && (
+        <Panel>
+          <div className="panel-section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {t('invoices.label')}
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--green)', fontSize: 10 }}
+              onClick={() => router.push(p('/invoices/new') as never)}
+            >
+              {t('invoices.create')}
+            </button>
+          </div>
+          <div className="leave-counters">
+            {[
+              { label: t('kpi.invoicesDraft'),   value: invoiceStats?.draft ?? 0,   color: 'var(--text2)' },
+              { label: t('kpi.invoicesSent'),    value: invoiceStats?.sent ?? 0,    color: 'var(--cyan)'  },
+              { label: t('kpi.invoicesPaid'),    value: invoiceStats?.paid ?? 0,    color: 'var(--green)' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="leave-counter">
+                <div className="leave-counter-label">{label}</div>
+                <div className="leave-counter-value" style={{ color }}>{value}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ width: '100%', borderColor: 'var(--cyan)', color: 'var(--cyan)' }}
+              onClick={() => router.push(p('/invoices') as never)}
+            >
+              {t('invoices.seeAll')}
+            </button>
+          </div>
+        </Panel>
+      )}
     </div>
   )
 }

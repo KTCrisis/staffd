@@ -820,7 +820,17 @@
       "weekDone": "✓ semaine complète",
       "rttLeft": "RTT : {count}j",
       "invoices": "Factures",
-      "invoicesSub": "voir facturation →"
+      "invoicesSub": "tout à jour",
+      "invoicesPending": "{count} en attente",
+      "invoicesOverdue": "{count} en retard",
+      "invoicesDraft": "Brouillon",
+      "invoicesSent": "Envoyées",
+      "invoicesPaid": "Payées"
+    },
+    "invoices": {
+      "label": "◉ Mes factures",
+      "create": "+ nouvelle facture →",
+      "seeAll": "voir les factures →"
     },
     "missions": {
       "label": "◧ Mes missions",

@@ -820,7 +820,17 @@
       "weekDone": "✓ full week",
       "rttLeft": "RTT: {count}d",
       "invoices": "Invoices",
-      "invoicesSub": "see billing →"
+      "invoicesSub": "all good",
+      "invoicesPending": "{count} awaiting payment",
+      "invoicesOverdue": "{count} overdue",
+      "invoicesDraft": "Draft",
+      "invoicesSent": "Sent",
+      "invoicesPaid": "Paid"
+    },
+    "invoices": {
+      "label": "◉ My invoices",
+      "create": "+ new invoice →",
+      "seeAll": "see all invoices →"
     },
     "missions": {
       "label": "◧ My assignments",

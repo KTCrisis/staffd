@@ -13,7 +13,6 @@ export default async function DashboardConsultantPage() {
 
   const isFreelance = role === 'freelance'
 
-  // ── Trouver le profil consultant lié à ce user ───────────
   const { data: meData } = await supabase
     .from('consultant_occupancy')
     .select('*')
@@ -44,7 +43,7 @@ export default async function DashboardConsultantPage() {
   const mondayISO = toISO(monday)
   const sundayISO = toISO(sunday)
 
-  const [projectsRes, leavesRes, timesheetsRes] = await Promise.all([
+  const [projectsRes, leavesRes, timesheetsRes, invoicesRes] = await Promise.all([
     supabase
       .from('assignments')
       .select('project_id, projects(id, name, status)')
@@ -64,6 +63,14 @@ export default async function DashboardConsultantPage() {
       .eq('consultant_id', me.id)
       .gte('date', mondayISO)
       .lte('date', sundayISO),
+
+    // Factures freelance — compteur par statut
+    isFreelance
+      ? supabase
+          .from('invoices')
+          .select('id, status')
+          .eq('consultant_id', me.id)
+      : Promise.resolve({ data: null }),
   ])
 
   const myProjects = (projectsRes.data ?? [])
@@ -90,6 +97,16 @@ export default async function DashboardConsultantPage() {
   const weekTotal = myTimesheets.reduce((s: number, ts: { value?: number }) => s + (ts.value ?? 0), 0)
   const hasDraft  = myTimesheets.some((ts: { status?: string; value?: number }) => ts.status === 'draft' && (ts.value ?? 0) > 0)
 
+  // Compteurs factures freelance
+  const invoicesList = invoicesRes.data ?? []
+  const invoiceStats = isFreelance ? {
+    total:   invoicesList.length,
+    draft:   invoicesList.filter((i: any) => i.status === 'draft').length,
+    sent:    invoicesList.filter((i: any) => i.status === 'sent').length,
+    paid:    invoicesList.filter((i: any) => i.status === 'paid').length,
+    overdue: invoicesList.filter((i: any) => i.status === 'overdue').length,
+  } : null
+
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
@@ -102,6 +119,7 @@ export default async function DashboardConsultantPage() {
         weekTotal={weekTotal}
         hasDraft={hasDraft}
         monday={mondayISO}
+        invoiceStats={invoiceStats}
       />
     </>
   )
