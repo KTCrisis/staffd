@@ -31,8 +31,8 @@
     "search": "Search...",
     "sync": "↻ Sync",
     "new": "+ New",
-    "themeLight": "☀ Light",
-    "themeDark": "☾ Dark"
+    "themeLight": "☀",
+    "themeDark": "☾"
   },
   "dashboard": {
     "title": "Dashboard",
