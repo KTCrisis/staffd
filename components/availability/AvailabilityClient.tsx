@@ -261,7 +261,7 @@ export function AvailabilityClient({
                           </div>
                         )}
                         {cell.type === 'leave'      && isSegmentStart && <span className="avail-cell-icon avail-cell-icon--leave">✦</span>}
-                        {cell.type === 'overloaded' && isSegmentStart && <span className="avail-cell-icon avail-cell-icon--overload">⚠</span>}
+                        {cell.type === 'overloaded' && <span className="avail-cell-icon avail-cell-icon--overload">⚠</span>}
                         {teamAccess && cell.type === 'free'            && <span className="avail-cell-add">+</span>}
                         {cell.isToday && <span className="avail-today-dot" />}
                       </div>
