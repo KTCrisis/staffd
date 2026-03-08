@@ -4,21 +4,19 @@ import { useTheme }        from './ThemeProvider'
 import { LangSwitcher }    from './LangSwitcher'
 import { OrgSwitcher }     from './OrgSwitcher'
 import { useTranslations } from 'next-intl'
-import { useAuthContext }  from './AuthProvider'
 
 interface TopbarProps {
-  title:      string
-  breadcrumb: string
-  ctaLabel?:  string
-  onCta?:     () => void
+  title:        string
+  breadcrumb:   string
+  isSuperAdmin?: boolean
+  companyName?:  string
+  ctaLabel?:    string
+  onCta?:       () => void
 }
 
-export function Topbar({ title, breadcrumb, ctaLabel, onCta }: TopbarProps) {
+export function Topbar({ title, breadcrumb, isSuperAdmin, companyName, ctaLabel, onCta }: TopbarProps) {
   const { theme, toggle } = useTheme()
   const t = useTranslations('topbar')
-  const { user, companyName } = useAuthContext()
-
-  const isSuperAdmin = user?.role === 'super_admin'
 
   return (
     <div className="topbar">

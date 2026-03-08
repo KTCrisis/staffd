@@ -12,22 +12,22 @@
 
 import { useState }          from 'react'
 import { useTranslations }   from 'next-intl'
-import { useAuthContext }    from '@/components/layout/AuthProvider'
+
 import { useProjects, createAssignment } from '@/lib/data'
 import { Avatar }            from '@/components/ui/Avatar'
 import type { Consultant }   from '@/types'
 
 interface Props {
   consultant:  Consultant
-  defaultDate: string        // date cliquée dans la grille (YYYY-MM-DD)
+  defaultDate: string
+  companyId:   string
   onClose:     () => void
   onSaved:     () => void
 }
 
-export function AssignmentDrawer({ consultant, defaultDate, onClose, onSaved }: Props) {
+export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('assignments')
   const tS   = useTranslations('staffing')
-  const { user } = useAuthContext()
 
   const { data: projects } = useProjects()
 
@@ -58,9 +58,6 @@ export function AssignmentDrawer({ consultant, defaultDate, onClose, onSaved }: 
     if (!startDate)  { setError(t('errorStartDate')); return }
     if (!endDate)    { setError(t('errorEndDate'));    return }
     if (endDate < startDate) { setError(tS('errors.dateOrder')); return }
-
-    const companyId = user?.companyId
-    if (!companyId) { setError('No company context'); return }
 
     setSaving(true)
     setError(null)

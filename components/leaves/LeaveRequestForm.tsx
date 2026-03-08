@@ -2,7 +2,6 @@
 
 import { useState, useEffect }  from 'react'
 import { useTranslations }      from 'next-intl'
-import { useAuthContext }        from '@/components/layout/AuthProvider'
 import { createLeaveRequest }    from '@/lib/data'
 import { ABSENCE_MOTIFS }        from '@/types'
 import { supabase }              from '@/lib/supabase'
@@ -11,6 +10,7 @@ import type { ContractType }     from '@/lib/data'
 type LeaveType = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
 
 interface Props {
+  userId:  string
   onClose: () => void
   onSaved: () => void
 }
@@ -31,10 +31,9 @@ function countWorkingDays(start: string, end: string, holidays: Set<string> = ne
   return count
 }
 
-export function LeaveRequestForm({ onClose, onSaved }: Props) {
+export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
   const t       = useTranslations('conges')
   const tCommon = useTranslations('common')
-  const { user } = useAuthContext()
 
   const [loading,        setLoading]        = useState(false)
   const [error,          setError]          = useState<string | null>(null)
@@ -52,13 +51,13 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
 
   // ── Fetch contract_type + country_code du consultant connecté ─────────
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
     const fetchProfile = async () => {
       try {
         const { data } = await supabase
           .from('consultants')
           .select('contract_type, country_code, company_id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .single()
         const ct = (data?.contract_type ?? 'employee') as ContractType
         setContractType(ct)
@@ -91,7 +90,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
       }
     }
     fetchProfile()
-  }, [user?.id])
+  }, [userId])
 
   // ── Types disponibles selon contract_type ────────────────────────────
   const allTypes: { value: LeaveType; label: string }[] = [
@@ -147,7 +146,7 @@ export function LeaveRequestForm({ onClose, onSaved }: Props) {
       const { data: consultant, error: cErr } = await supabase
         .from('consultants')
         .select('id, company_id, leave_days_total, leave_days_taken, rtt_total, rtt_taken, contract_type')
-        .eq('user_id', user!.id)
+        .eq('user_id', userId)
         .single()
 
       if (cErr || !consultant) {

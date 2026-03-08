@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslations }              from 'next-intl'
-import { useAuthContext }               from '@/components/layout/AuthProvider'
 import { createConsultant, updateConsultant, useCompanySettings } from '@/lib/data'
 import type { Consultant }              from '@/types'
 import type { ContractType }            from '@/lib/data'
@@ -26,6 +25,7 @@ const COUNTRIES = [
 
 interface Props {
   consultant?: Consultant
+  companyId?:  string
   onClose:     () => void
   onSaved:     () => void
 }
@@ -48,9 +48,8 @@ function calcTjmCoutReel(
   return tjmFallback ?? null
 }
 
-export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
+export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('consultantForm')
-  const { user } = useAuthContext()
   const { data: companyData } = useCompanySettings()
   const companyCountry = (companyData?.hr_settings as any)?.country_code ?? 'FR'
 
@@ -156,7 +155,7 @@ export function ConsultantForm({ consultant, onClose, onSaved }: Props) {
       if (isEdit) {
         await updateConsultant(consultant!.id, payload)
       } else {
-        await createConsultant({ ...payload, company_id: user?.companyId ?? undefined })
+        await createConsultant({ ...payload, company_id: companyId })
       }
 
       onSaved()
