@@ -157,7 +157,10 @@
       "confirm": "✕ Confirmer",
       "cancel": "Annuler"
     },
-    "deleteBtn": "✕ Supprimer"
+    "deleteBtn": "✕ Supprimer",
+    "costLabels": {
+      "charged": "Facturé"
+    }
   },
   "conges": {
     "title": "Congés",
@@ -374,7 +377,7 @@
       "draft": "Brouillon",
       "on_hold": "En pause",
       "completed": "Terminés",
-      "toggleInternal": "Interne"
+      "internal": "Interne"
     },
     "stats": {
       "active": "Actifs",

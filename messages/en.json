@@ -157,7 +157,10 @@
       "confirm": "✕ Confirm",
       "cancel": "Cancel"
     },
-    "deleteBtn": "✕ Delete"
+    "deleteBtn": "✕ Delete",
+    "costLabels": {
+      "charged": "Charged"
+    }
   },
   "conges": {
     "title": "Time Off",
@@ -374,7 +377,7 @@
       "draft": "Draft",
       "on_hold": "On hold",
       "completed": "Completed",
-      "toggleInternal": "Internal"
+      "internal": "Internal"
     },
     "stats": {
       "active": "Active",
