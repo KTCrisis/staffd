@@ -377,7 +377,7 @@
       "draft": "Draft",
       "on_hold": "On hold",
       "completed": "Completed",
-      "internal": "Internal"
+      "toggleInternal": "Internal"
     },
     "stats": {
       "active": "Active",
@@ -537,6 +537,9 @@
       "draft": "Draft",
       "completed": "Completed"
     },
+    "filters":{
+      "toggleInternal": "Internal"
+      },
     "consultant": "Consultant",
     "months": [
       "January",

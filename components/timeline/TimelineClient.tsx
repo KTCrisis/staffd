@@ -140,7 +140,7 @@ export function TimelineClient({
           style={{ marginLeft: 'auto', color: showInternal ? undefined : 'var(--text2)', fontSize: 10 }}
           onClick={() => setShowInternal(v => !v)}
         >
-          ◧ {t('filters.internal')}
+          ◧ {t('filters.toggleInternal')}
         </button>
       </div>
 

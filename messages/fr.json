@@ -377,7 +377,7 @@
       "draft": "Brouillon",
       "on_hold": "En pause",
       "completed": "Terminés",
-      "internal": "Interne"
+      "toggleInternal": "Interne"
     },
     "stats": {
       "active": "Actifs",
@@ -537,6 +537,9 @@
       "draft": "Brouillon",
       "completed": "Terminé"
     },
+    "filters":{
+      "toggleInternal": "Interne"
+      },
     "consultant": "Consultant",
     "months": [
       "Janvier",
