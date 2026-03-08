@@ -1,7 +1,6 @@
 // app/[locale]/(app)/availability/page.tsx
 
-import { cookies }            from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { getPageAuth }        from '@/lib/auth/page-auth'
 import { getTranslations }    from 'next-intl/server'
 import { Topbar }             from '@/components/layout/Topbar'
 import { AvailabilityClient } from '@/components/availability/AvailabilityClient'
@@ -11,29 +10,12 @@ interface Props {
 }
 
 export default async function AvailabilityPage({ searchParams }: Props) {
-  const { tenant }  = await searchParams
-  const t           = await getTranslations('staffing')
-  const cookieStore = await cookies()
+  const { tenant } = await searchParams
+  const t          = await getTranslations('staffing')
+  const { role, isSA, userId, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
 
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
-  const userId    = user?.id ?? null
-  const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
+  const companyId  = (tenant ?? authCompanyId ?? '') as string
   const teamAccess = role === 'super_admin' || role === 'admin' || role === 'manager'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
 
   // ── Filtre manager via RPC ───────────────────────────────────
   let managerConsultantIds: string[] | null = null
@@ -53,20 +35,16 @@ export default async function AvailabilityPage({ searchParams }: Props) {
     assignmentsQ = assignmentsQ.eq('company_id', tenant)
   }
 
-  // Filtre manager : restreint aux membres de son équipe
   if (managerConsultantIds && managerConsultantIds.length > 0) {
     consultantsQ = consultantsQ.in('id', managerConsultantIds)
     leavesQ      = leavesQ.in('consultant_id', managerConsultantIds)
     assignmentsQ = assignmentsQ.in('consultant_id', managerConsultantIds)
   } else if (managerConsultantIds?.length === 0) {
-    // Manager sans équipe → aucun résultat
     consultantsQ = consultantsQ.eq('id', '00000000-0000-0000-0000-000000000000')
   }
 
   const [consultantsRes, leavesRes, assignmentsRes] = await Promise.all([
-    consultantsQ,
-    leavesQ,
-    assignmentsQ,
+    consultantsQ, leavesQ, assignmentsQ,
   ])
 
   const consultants   = consultantsRes.data ?? []
@@ -82,13 +60,13 @@ export default async function AvailabilityPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <AvailabilityClient
         consultants={consultants}
         leaveRequests={leaveRequests}
         assignments={assignments}
         teamAccess={teamAccess}
-        userId={userId}
+        userId={userId ?? null}
         companyId={companyId}
       />
     </>

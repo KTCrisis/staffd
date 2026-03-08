@@ -1,44 +1,21 @@
 // app/[locale]/(app)/consultants/page.tsx
 
-import { cookies }            from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
-import { getTranslations }    from 'next-intl/server'
-import { Topbar }             from '@/components/layout/Topbar'
-import { ConsultantsClient }  from '@/components/consultants/ConsultantsClient'
-import type { Consultant }    from '@/types'
+import { getPageAuth }       from '@/lib/auth/page-auth'
+import { getTranslations }   from 'next-intl/server'
+import { Topbar }            from '@/components/layout/Topbar'
+import { ConsultantsClient } from '@/components/consultants/ConsultantsClient'
+import type { Consultant }   from '@/types'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
 }
 
 export default async function ConsultantsPage({ searchParams }: Props) {
-  const { tenant }  = await searchParams
-  const t           = await getTranslations('consultants')
-  const cookieStore = await cookies()
-
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
-  const userId    = user?.id
-  const companyId = user?.app_metadata?.company_id as string | undefined
-
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+  const { tenant } = await searchParams
+  const t          = await getTranslations('consultants')
+  const { role, isSA, userId, companyId, companyName, supabase } = await getPageAuth(tenant)
 
   // ── Filtre manager : récupère l'id de son équipe ─────────────
-  // teams.manager_id référence consultants(id), pas auth.users(id).
-  // Il faut d'abord trouver le consultant lié au user, puis son équipe.
   let managerTeamId: string | null = null
   if (role === 'manager' && userId) {
     const { data: consultantData } = await supabase
@@ -61,7 +38,6 @@ export default async function ConsultantsPage({ searchParams }: Props) {
   let query = supabase.from('consultant_occupancy').select('*')
   if (tenant)         query = query.eq('company_id', tenant)
   if (managerTeamId)  query = query.eq('team_id', managerTeamId)
-  // manager sans équipe → liste vide (eq sur null ne retourne rien)
   else if (role === 'manager') query = query.eq('id', '00000000-0000-0000-0000-000000000000')
 
   const { data } = await query.order('name')
@@ -97,7 +73,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <ConsultantsClient
         consultants={consultants}
         userRole={role}

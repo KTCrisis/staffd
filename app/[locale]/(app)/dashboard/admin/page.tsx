@@ -1,7 +1,6 @@
 // app/[locale]/(app)/dashboard/admin/page.tsx
 
-import { cookies }              from 'next/headers'
-import { createServerClient }   from '@supabase/ssr'
+import { getPageAuth }          from '@/lib/auth/page-auth'
 import { getTranslations }      from 'next-intl/server'
 import { Topbar }               from '@/components/layout/Topbar'
 import { AdminDashboardClient } from '@/components/dashboard/AdminDashboardClient'
@@ -11,26 +10,9 @@ interface Props {
 }
 
 export default async function AdminDashboardPage({ searchParams }: Props) {
-  const { tenant }  = await searchParams
-  const t           = await getTranslations('dashboard')
-  const cookieStore = await cookies()
-
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+  const { tenant } = await searchParams
+  const t          = await getTranslations('dashboard')
+  const { isSA, companyName, supabase } = await getPageAuth(tenant)
 
   let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
   let projectsQ    = supabase.from('projects').select('id, name, status, client_name, progress, tjm_vendu, start_date, end_date').neq('status', 'archived').order('status')
@@ -72,7 +54,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <AdminDashboardClient
         consultants={consultants}
         activeProjects={projects.filter((p: any) => p.status === 'active').slice(0, 3)}

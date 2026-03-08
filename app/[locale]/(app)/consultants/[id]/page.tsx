@@ -1,39 +1,22 @@
 // app/[locale]/(app)/consultants/[id]/page.tsx
 
-import { cookies }            from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
-import { getTranslations }    from 'next-intl/server'
-import { notFound }           from 'next/navigation'
-import { Topbar }             from '@/components/layout/Topbar'
-import { ConsultantDetailClient } from '@/components/consultants/ConsultantDetailClient'
+import { getPageAuth }            from '@/lib/auth/page-auth'
+import { getTranslations }        from 'next-intl/server'
+import { notFound }                from 'next/navigation'
+import { Topbar }                  from '@/components/layout/Topbar'
+import { ConsultantDetailClient }  from '@/components/consultants/ConsultantDetailClient'
 
 interface Props {
-  params:      Promise<{ id: string }>
+  params:       Promise<{ id: string }>
   searchParams: Promise<{ tenant?: string }>
 }
 
 export default async function ConsultantDetailPage({ params, searchParams }: Props) {
   const [{ id }, { tenant }] = await Promise.all([params, searchParams])
-  const t           = await getTranslations('consultants')
-  const cookieStore = await cookies()
+  const t = await getTranslations('consultants')
+  const { role, isSA, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
 
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role      = user?.app_metadata?.user_role as string | undefined
-  const isSA      = role === 'super_admin'
-  const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+  const companyId = (tenant ?? authCompanyId ?? '') as string
 
   const [consultantRes, assignmentsRes, profitabilityRes] = await Promise.all([
     supabase
@@ -108,6 +91,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
         title={consultant.name}
         breadcrumb={`// ${t('breadcrumb')} / ${consultant.name}`}
         isSuperAdmin={isSA}
+        companyName={companyName}
       />
       <ConsultantDetailClient
         consultant={consultant}

@@ -1,25 +1,14 @@
 // app/[locale]/(app)/dashboard/manager/page.tsx
 
-import { cookies }                from 'next/headers'
-import { createServerClient }     from '@supabase/ssr'
+import { getPageAuth }            from '@/lib/auth/page-auth'
 import { getTranslations }        from 'next-intl/server'
 import { Topbar }                 from '@/components/layout/Topbar'
 import { ManagerDashboardClient } from '@/components/dashboard/ManagerDashboardClient'
 import { getMondayOf }            from '@/lib/utils'
 
 export default async function ManagerDashboardPage() {
-  const t           = await getTranslations('dashboardManager')
-  const cookieStore = await cookies()
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = user?.app_metadata?.is_super_admin === true
+  const t = await getTranslations('dashboardManager')
+  const { role, isSA, companyName, supabase } = await getPageAuth()
 
   const monday    = getMondayOf(new Date())
   const sunday    = new Date(monday)
@@ -98,7 +87,7 @@ export default async function ManagerDashboardPage() {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <ManagerDashboardClient
         consultants={consultants}
         leaveReqs={leaveReqs}

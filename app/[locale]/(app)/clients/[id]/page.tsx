@@ -1,7 +1,6 @@
 // app/[locale]/(app)/clients/[id]/page.tsx
 
-import { cookies }            from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { getPageAuth }        from '@/lib/auth/page-auth'
 import { getTranslations }    from 'next-intl/server'
 import { notFound }           from 'next/navigation'
 import { Topbar }             from '@/components/layout/Topbar'
@@ -14,25 +13,8 @@ interface Props {
 
 export default async function ClientDetailPage({ params, searchParams }: Props) {
   const [{ id }, { tenant }] = await Promise.all([params, searchParams])
-  const t           = await getTranslations('clients')
-  const cookieStore = await cookies()
-
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+  const t = await getTranslations('clients')
+  const { isSA, companyName, supabase } = await getPageAuth(tenant)
 
   const [clientRes, projectsRes] = await Promise.all([
     supabase.from('clients').select('*').eq('id', id).single(),
@@ -67,7 +49,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   return (
     <>
-      <Topbar title={client.name} breadcrumb={`${t('breadcrumb')} / ${client.name}`} />
+      <Topbar title={client.name} breadcrumb={`${t('breadcrumb')} / ${client.name}`} isSuperAdmin={isSA} companyName={companyName} />
       <ClientDetailClient client={client} projects={projects} />
     </>
   )

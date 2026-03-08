@@ -1,45 +1,29 @@
 // app/[locale]/(app)/dashboard/consultant/page.tsx
-// ── Server Component ─────────────────────────────────────────
-// Avant : 4 hooks + useMemo pour filtrer "me" depuis toute la liste → waterfall
-// Après : getUser() server-side → requêtes ciblées sur ce consultant uniquement
 
-import { cookies }                 from 'next/headers'
-import { createServerClient }      from '@supabase/ssr'
-import { getTranslations }         from 'next-intl/server'
-import { Topbar }                  from '@/components/layout/Topbar'
-import { Panel }                   from '@/components/ui/Panel'
-import { EmptyState }              from '@/components/ui/EmptyState'
-import { ConsultantDashboardClient } from '@/components/dashboard/ConsultantDashboardClient'
-import { getMondayOf, toISO }      from '@/lib/utils'
+import { getPageAuth }                  from '@/lib/auth/page-auth'
+import { getTranslations }              from 'next-intl/server'
+import { Topbar }                       from '@/components/layout/Topbar'
+import { Panel }                        from '@/components/ui/Panel'
+import { ConsultantDashboardClient }    from '@/components/dashboard/ConsultantDashboardClient'
+import { getMondayOf, toISO }           from '@/lib/utils'
 
 export default async function DashboardConsultantPage() {
-  const t           = await getTranslations('dashboardConsultant')
-  const cookieStore = await cookies()
+  const t = await getTranslations('dashboardConsultant')
+  const { role, isSA, userId, companyName, supabase } = await getPageAuth()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
-
-  // ── Identité ─────────────────────────────────────────────
-  const { data: { user } } = await supabase.auth.getUser()
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
   const isFreelance = role === 'freelance'
 
   // ── Trouver le profil consultant lié à ce user ───────────
   const { data: meData } = await supabase
     .from('consultant_occupancy')
     .select('*')
-    .eq('user_id', user!.id)
+    .eq('user_id', userId!)
     .single()
 
-  // Compte non lié — afficher message sans fetch supplémentaire
   if (!meData) {
     return (
       <>
-        <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+        <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
         <div className="app-content">
           <Panel>
             <div className="cons-unlinked">
@@ -55,23 +39,18 @@ export default async function DashboardConsultantPage() {
 
   const me = meData
 
-  // ── Promise.all : 3 requêtes ciblées en parallèle ────────
-  // Plus de fetch de toute la liste + filtre client-side
-  // Chaque requête est scopée à ce consultant uniquement (+ RLS)
   const monday    = getMondayOf(new Date())
   const sunday    = new Date(monday); sunday.setDate(monday.getDate() + 6)
   const mondayISO = toISO(monday)
   const sundayISO = toISO(sunday)
 
   const [projectsRes, leavesRes, timesheetsRes] = await Promise.all([
-    // Projets actifs via assignments
     supabase
       .from('assignments')
       .select('project_id, projects(id, name, status)')
       .eq('consultant_id', me.id)
       .or('end_date.is.null,end_date.gte.' + toISO(new Date())),
 
-    // Congés de ce consultant
     supabase
       .from('leave_requests')
       .select('id, type, status, start_date, end_date')
@@ -79,7 +58,6 @@ export default async function DashboardConsultantPage() {
       .order('start_date', { ascending: false })
       .limit(10),
 
-    // Timesheets de la semaine courante
     supabase
       .from('timesheets')
       .select('id, date, value, status, project_id')
@@ -88,7 +66,6 @@ export default async function DashboardConsultantPage() {
       .lte('date', sundayISO),
   ])
 
-  // ── Normalisation ────────────────────────────────────────
   const myProjects = (projectsRes.data ?? [])
     .map((a: any) => a.projects)
     .filter(Boolean)
@@ -110,13 +87,12 @@ export default async function DashboardConsultantPage() {
     projectId: ts.project_id,
   }))
 
-  // ── Stats semaine calculées côté serveur ─────────────────
-  const weekTotal = myTimesheets.reduce((s, ts) => s + (ts.value ?? 0), 0)
-  const hasDraft  = myTimesheets.some(ts => ts.status === 'draft' && (ts.value ?? 0) > 0)
+  const weekTotal = myTimesheets.reduce((s: number, ts: { value?: number }) => s + (ts.value ?? 0), 0)
+  const hasDraft  = myTimesheets.some((ts: { status?: string; value?: number }) => ts.status === 'draft' && (ts.value ?? 0) > 0)
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <ConsultantDashboardClient
         me={me}
         isFreelance={isFreelance}

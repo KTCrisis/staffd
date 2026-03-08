@@ -1,39 +1,18 @@
 // app/[locale]/(app)/leaves/page.tsx
 
-import { cookies }            from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
-import { getTranslations }    from 'next-intl/server'
-import { Topbar }             from '@/components/layout/Topbar'
-import { LeavesClient }       from '@/components/leaves/LeavesClient'
+import { getPageAuth }     from '@/lib/auth/page-auth'
+import { getTranslations } from 'next-intl/server'
+import { Topbar }          from '@/components/layout/Topbar'
+import { LeavesClient }    from '@/components/leaves/LeavesClient'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
 }
 
 export default async function LeavesPage({ searchParams }: Props) {
-  const { tenant }  = await searchParams
-  const t           = await getTranslations('conges')
-  const cookieStore = await cookies()
-
-  const { data: { user } } = await createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  ).auth.getUser()
-
-  const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = role === 'super_admin'
-  const userId    = user?.id
-  const companyId = user?.app_metadata?.company_id as string | undefined
-
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    isSA
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY!
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+  const { tenant } = await searchParams
+  const t          = await getTranslations('conges')
+  const { role, isSA, userId, companyId, companyName, supabase } = await getPageAuth(tenant)
 
   // ── Filtre manager via RPC ───────────────────────────────────
   let teamIds: string[] | null = null
@@ -90,7 +69,7 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <LeavesClient
         requests={requests}
         consultants={consultants}
