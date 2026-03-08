@@ -12,7 +12,30 @@ interface Props {
 export default async function ProjectsPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('projects')
-  const { isSA, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, userId, companyName, supabase } = await getPageAuth(tenant)
+
+  const isConsultantOnly = role === 'consultant' || role === 'freelance'
+
+  // ── Consultant/freelance : récupérer ses project_ids via assignments ──
+  let myProjectIds: string[] | null = null
+  if (isConsultantOnly && userId) {
+    const { data: meData } = await supabase
+      .from('consultants')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (meData?.id) {
+      const { data: assignments } = await supabase
+        .from('assignments')
+        .select('project_id')
+        .eq('consultant_id', meData.id)
+
+      myProjectIds = (assignments ?? []).map((a: any) => a.project_id)
+    } else {
+      myProjectIds = [] // pas de profil lié → aucun projet
+    }
+  }
 
   let query = supabase
     .from('projects')
@@ -28,6 +51,15 @@ export default async function ProjectsPage({ searchParams }: Props) {
 
   if (tenant) query = query.eq('company_id', tenant)
 
+  // Consultant : limiter aux projets assignés
+  if (myProjectIds !== null) {
+    if (myProjectIds.length === 0) {
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+    } else {
+      query = query.in('id', myProjectIds)
+    }
+  }
+
   const { data, error } = await query
 
   const projects = (data ?? []).map((p: any) => ({
@@ -40,9 +72,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
     client:      p.client       ?? null,
     startDate:   p.start_date   ?? null,
     endDate:     p.end_date     ?? null,
-    tjmVendu:    p.tjm_vendu    ?? null,
-    joursVendus: p.jours_vendus ?? null,
-    budgetTotal: p.budget_total ?? null,
+    tjmVendu:    isConsultantOnly ? null : (p.tjm_vendu ?? null),  // masquer TJM
+    joursVendus: isConsultantOnly ? null : (p.jours_vendus ?? null),
+    budgetTotal: isConsultantOnly ? null : (p.budget_total ?? null),
     isInternal:  p.is_internal  ?? false,
     progress:    p.progress     ?? 0,
     team: (p.assignments ?? [])

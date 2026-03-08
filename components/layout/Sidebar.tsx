@@ -127,15 +127,19 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
     ]),
 
     // ── Projets ───────────────────────────────────────────────
-    ...(!isConsultantOnly || isSolo ? [{
+    {
       group: t('projects'), key: 'projects',
       items: [
-        { label: t('projets'),      icon: '◧', href: p('/projects') },
-        { label: t('clients'),      icon: '◉', href: p('/clients')  },
-        { label: t('appelsOffres'), icon: '◬', href: p('/bids')     },
-        ...(!isSolo ? [{ label: t('timeline'), icon: '▤', href: p('/timeline') }] : []),
+        { label: t('projets'), icon: '◧', href: p('/projects') },
+        ...(!isConsultantOnly ? [
+          { label: t('clients'),      icon: '◉', href: p('/clients')  },
+          { label: t('appelsOffres'), icon: '◬', href: p('/bids')     },
+        ] : []),
+        ...(!isConsultantOnly && !isSolo ? [
+          { label: t('timeline'), icon: '▤', href: p('/timeline') },
+        ] : []),
       ],
-    }] : []),
+    },
 
     // ── Finance — managers exclus ─────────────────────────────
     ...(isSuperAdmin || isAdmin || isSolo || isFreelance ? [{
