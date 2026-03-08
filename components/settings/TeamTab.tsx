@@ -20,22 +20,26 @@ import { SectionLabel, Skeleton, RoleBadge } from './shared'
 // ══════════════════════════════════════════════════════════════
 
 function TeamCard({
-  team, consultants, onEdit, onDelete, onAddMember, onRemoveMember,
+  team, consultants, optimisticRemovedIds, onEdit, onDelete, onAddMember, onRemoveMember,
 }: {
-  team:           Team
-  consultants:    any[]
-  onEdit:         (team: Team) => void
-  onDelete:       (team: Team) => void
-  onAddMember:    (teamId: string, consultantId: string) => void
-  onRemoveMember: (consultantId: string, teamName: string, consultantName: string) => void
+  team:                 Team
+  consultants:          any[]
+  optimisticRemovedIds: Set<string>
+  onEdit:               (team: Team) => void
+  onDelete:             (team: Team) => void
+  onAddMember:          (teamId: string, consultantId: string) => void
+  onRemoveMember:       (consultantId: string, teamName: string, consultantName: string) => void
 }) {
   const t = useTranslations('settings.team.card')
   const [showAddMember,        setShowAddMember]        = useState(false)
   const [selectedConsultantId, setSelectedConsultantId] = useState('')
 
-  const memberIds = new Set(team.members.map(m => m.id))
+  // Filtre les membres retirés de façon optimiste (avant le refresh DB)
+  const visibleMembers = team.members.filter(m => !optimisticRemovedIds.has(m.id))
+  const memberIds      = new Set(visibleMembers.map(m => m.id))
+
   const available = consultants.filter(c =>
-    !memberIds.has(c.id) && !(c as any).teamId
+    !memberIds.has(c.id) && !c.teamId
   )
 
   const handleAdd = async () => {
@@ -63,7 +67,7 @@ function TeamCard({
             fontSize: 14, color: 'var(--cyan)',
           }}>◈</div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{team.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{team.name}</div>
             {team.description && (
               <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 2 }}>{team.description}</div>
             )}
@@ -107,7 +111,7 @@ function TeamCard({
         {team.managerId ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Avatar initials={team.managerInitials ?? '??'} color={(team.managerAvatarColor ?? 'green') as any} size="sm" />
-            <span style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>{team.managerName}</span>
+            <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{team.managerName}</span>
           </div>
         ) : (
           <span style={{ fontSize: 11, color: 'var(--text2)', fontStyle: 'italic' }}>
@@ -125,13 +129,13 @@ function TeamCard({
           {t('membersLabel')}
         </div>
 
-        {team.members.length === 0 ? (
+        {visibleMembers.length === 0 ? (
           <div style={{ fontSize: 11, color: 'var(--text2)', fontStyle: 'italic', marginBottom: 10 }}>
             {t('emptyMembers')}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-            {team.members.map(member => (
+            {visibleMembers.map(member => (
               <div key={member.id} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '8px 10px', borderRadius: 3,
@@ -375,7 +379,8 @@ export function TeamTab({ companyId }: { companyId: string }) {
   )
 
   const teamCount  = (teams ?? []).length
-  const unassigned = allConsultantsOptimistic.filter(c => !(c as any).teamId && c.role !== 'admin').length
+  const isUnassigned = (c: any) => !c.teamId
+  const unassigned = allConsultantsOptimistic.filter(isUnassigned).length
 
   const handleRefresh = () => setRefresh(r => r + 1)
 
@@ -498,6 +503,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
                   key={team.id}
                   team={team}
                   consultants={allConsultantsOptimistic}
+                  optimisticRemovedIds={optimisticRemovedIds}
                   onEdit={t => { setEditTarget(t); setShowForm(true) }}
                   onDelete={t => setConfirmDel(t)}
                   onAddMember={handleAddMember}
@@ -521,7 +527,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {allConsultantsOptimistic
-                  .filter(c => !(c as any).teamId && c.contractType !== undefined)
+                  .filter(isUnassigned)
                   .map(c => (
                     <div key={c.id} style={{
                       display: 'flex', alignItems: 'center', gap: 6,
@@ -565,7 +571,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>
               // {tDel('header')}
             </div>
-            <div style={{ fontSize: 13, color: '#fff', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, color: 'var(--text)', marginBottom: 8 }}>
               {tDel('title', { name: confirmDel.name })}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 24 }}>
@@ -608,7 +614,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>
               // {tRem('header')}
             </div>
-            <div style={{ fontSize: 13, color: '#fff', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, color: 'var(--text)', marginBottom: 8 }}>
               {tRem('title', { consultant: confirmRemoveMember.consultantName })}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 24 }}>
