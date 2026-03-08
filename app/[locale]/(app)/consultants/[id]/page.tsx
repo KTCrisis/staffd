@@ -23,8 +23,8 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const userRole  = user?.app_metadata?.user_role as string | undefined
-  const isSA      = user?.app_metadata?.is_super_admin === true
+  const role      = user?.app_metadata?.user_role as string | undefined
+  const isSA      = role === 'super_admin'
   const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   const supabase = createServerClient(
@@ -35,7 +35,6 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
-  // Fetch consultant + assignments en parallèle
   const [consultantRes, assignmentsRes, profitabilityRes] = await Promise.all([
     supabase
       .from('consultant_occupancy')
@@ -52,8 +51,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
       .eq('consultant_id', id)
       .order('start_date', { ascending: false }),
 
-    // Vue financière — disponible seulement si admin/super_admin
-    (userRole === 'admin' || isSA)
+    (role === 'admin' || isSA)
       ? supabase
           .from('consultant_profitability')
           .select('*')
@@ -109,12 +107,13 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
       <Topbar
         title={consultant.name}
         breadcrumb={`// ${t('breadcrumb')} / ${consultant.name}`}
+        isSuperAdmin={isSA}
       />
       <ConsultantDetailClient
         consultant={consultant}
         assignments={assignments}
         profitability={profitability}
-        userRole={userRole}
+        userRole={role}
         companyId={companyId}
       />
     </>

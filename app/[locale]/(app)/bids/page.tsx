@@ -23,9 +23,9 @@ export default async function BidsPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const role      = user?.app_metadata?.user_role as string | undefined
+  const role = user?.app_metadata?.user_role as string | undefined
+  const isSA = role === 'super_admin'
   const userId    = user?.id ?? null
-  const isSA      = user?.app_metadata?.is_super_admin === true
   const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   return (

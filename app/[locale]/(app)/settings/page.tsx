@@ -17,9 +17,10 @@ export default async function SettingsPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const role      = user?.app_metadata?.user_role as string | undefined
+  const role = user?.app_metadata?.user_role as string | undefined
+  const isSA = role === 'super_admin'
   const companyId = user?.app_metadata?.company_id as string | undefined
-  const isSA      = role === 'super_admin'
+
 
   if (role !== 'admin' && !isSA) redirect('/dashboard')
 

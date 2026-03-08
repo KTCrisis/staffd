@@ -22,16 +22,14 @@ export default async function TimesheetsPage({ searchParams }: Props) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  const userRole  = user?.app_metadata?.user_role as string | undefined
+  const role      = user?.app_metadata?.user_role as string | undefined
+  const isSA      = role === 'super_admin'
   const userId    = user?.id
   const companyId = user?.app_metadata?.company_id as string | undefined
-  const isSA = user?.app_metadata?.is_super_admin === true
-  
+
   // ── Filtre manager : récupère l'id de son équipe ─────────────
-  // teams.manager_id référence consultants(id), pas auth.users(id).
   let managerTeamId: string | null = null
-  if (userRole === 'manager' && userId) {
+  if (role === 'manager' && userId) {
     const { data: consultantData } = await supabase
       .from('consultants')
       .select('id')
@@ -52,7 +50,7 @@ export default async function TimesheetsPage({ searchParams }: Props) {
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <TimesheetsClient
-        userRole={userRole}
+        userRole={role}
         userId={userId}
         companyId={companyId}
         tenant={tenant}

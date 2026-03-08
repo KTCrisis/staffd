@@ -23,7 +23,7 @@ export default async function FinancialsPage({ searchParams }: Props) {
   ).auth.getUser()
 
   const role = user?.app_metadata?.user_role as string | undefined
-  const isSA = user?.app_metadata?.is_super_admin === true
+  const isSA = role === 'super_admin'
 
   // Guard serveur — plus besoin du useEffect client
   if (role !== 'admin' && !isSA) redirect('/dashboard')
