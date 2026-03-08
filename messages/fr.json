@@ -1061,6 +1061,8 @@
     "yesterday": "hier · {time}"
   },
   "invoices": {
+  "title": "Factures",
+  "breadcrumb": "// facturation",   
     "form": {
       "title": "Nouvelle facture",
       "breadcrumb": "// factures / nouvelle",

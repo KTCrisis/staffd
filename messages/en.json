@@ -1061,6 +1061,8 @@
     "yesterday": "yesterday · {time}"
   },
   "invoices": {
+  "title": "Invoices",
+  "breadcrumb": "// billing",    
     "form": {
       "title": "New invoice",
       "breadcrumb": "// invoices / new",
