@@ -159,6 +159,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
 
   const [assignmentRefresh, setAssignmentRefresh] = useState(0)
   const [filter,            setFilter]            = useState<FilterValue>('all')
+  const [showInternal,      setShowInternal]      = useState(false)
   const [selected,          setSelected]          = useState<Project | null>(null)
   const [formOpen,          setFormOpen]          = useState(false)
   const [editProject,       setEditProject]       = useState<Project | null>(null)
@@ -174,7 +175,10 @@ export function ProjectsClient({ projects = [], error }: Props) {
     { label: t('filters.completed'), value: 'completed' },
   ]
 
-  const visible = projects.filter(p => filter === 'all' || p.status === filter)
+  const visible = projects.filter(p =>
+    (filter === 'all' || p.status === filter) &&
+    (showInternal || !p.isInternal)
+  )
 
   const stats = [
     { value: projects.filter(p => p.status === 'active').length,    label: t('stats.active'),    color: 'var(--green)' },
@@ -215,6 +219,14 @@ export function ProjectsClient({ projects = [], error }: Props) {
         ))}
         <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={openCreate}>
           {t('cta')}
+        </button>
+        <button
+          className={`btn ${showInternal ? 'btn-primary' : 'btn-ghost'}`}
+          style={{ color: showInternal ? undefined : 'var(--text2)', fontSize: 10 }}
+          onClick={() => setShowInternal(v => !v)}
+          title={t('filters.toggleInternal') ?? 'Projets internes'}
+        >
+          ◧ {t('filters.internal') ?? 'Internes'}
         </button>
       </div>
 

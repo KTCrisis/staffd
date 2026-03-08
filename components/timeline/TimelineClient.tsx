@@ -63,6 +63,7 @@ export function TimelineClient({
 
   const [year,  setYear]  = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
+  const [showInternal, setShowInternal] = useState(false)
 
   const prevMonth      = () => month === 0  ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)
   const nextMonth      = () => month === 11 ? (setMonth(0),  setYear(y => y + 1)) : setMonth(m => m + 1)
@@ -94,6 +95,7 @@ export function TimelineClient({
   const visibleProjects = useMemo(() =>
     projects
       .filter(p => p.status !== 'archived')
+      .filter(p => showInternal || !p.isInternal)
       .sort((a, b) => {
         if (!a.startDate) return 1
         if (!b.startDate) return -1
@@ -133,6 +135,13 @@ export function TimelineClient({
         {!isCurrentMonth && (
           <button className="btn btn-primary btn-sm" onClick={goToday}>{t('today')}</button>
         )}
+        <button
+          className={`btn btn-sm ${showInternal ? 'btn-primary' : 'btn-ghost'}`}
+          style={{ marginLeft: 'auto', color: showInternal ? undefined : 'var(--text2)', fontSize: 10 }}
+          onClick={() => setShowInternal(v => !v)}
+        >
+          ◧ {t('filters.internal') ?? 'Internes'}
+        </button>
       </div>
 
       <div className="avail-grid-wrap">

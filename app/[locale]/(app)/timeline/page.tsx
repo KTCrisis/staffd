@@ -35,7 +35,7 @@ export default async function TimelinePage({ searchParams }: Props) {
   let projectsQ = supabase
     .from('projects')
     .select(`
-      id, name, status, start_date, end_date, client_name,
+      id, name, status, start_date, end_date, client_name, is_internal,
       assignments ( consultant_id, consultants ( id, name, initials, avatar_color ) )
     `)
     .neq('status', 'archived')
@@ -68,6 +68,7 @@ export default async function TimelinePage({ searchParams }: Props) {
     startDate:  p.start_date,
     endDate:    p.end_date,
     clientName: p.client_name,
+    isInternal: p.is_internal ?? false,
     team: (p.assignments ?? [])
       .map((a: any) => a.consultants)
       .filter(Boolean)
