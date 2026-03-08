@@ -225,7 +225,7 @@ export function ProjectsClient({ projects = [], error }: Props) {
           onClick={() => setShowInternal(v => !v)}
           title={t('filters.toggleInternal') ?? 'Projets internes'}
         >
-          ◧ Internal
+          ◧ {t('filters.internal')}
         </button>
       </div>
 

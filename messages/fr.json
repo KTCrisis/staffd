@@ -373,7 +373,8 @@
       "active": "Actifs",
       "draft": "Brouillon",
       "on_hold": "En pause",
-      "completed": "Terminés"
+      "completed": "Terminés",
+      "toggleInternal": "Interne"
     },
     "stats": {
       "active": "Actifs",
