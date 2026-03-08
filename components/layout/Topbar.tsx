@@ -6,12 +6,12 @@ import { OrgSwitcher }     from './OrgSwitcher'
 import { useTranslations } from 'next-intl'
 
 interface TopbarProps {
-  title:        string
-  breadcrumb:   string
+  title:         string
+  breadcrumb:    string
   isSuperAdmin?: boolean
   companyName?:  string
-  ctaLabel?:    string
-  onCta?:       () => void
+  ctaLabel?:     string
+  onCta?:        () => void
 }
 
 export function Topbar({ title, breadcrumb, isSuperAdmin, companyName, ctaLabel, onCta }: TopbarProps) {
@@ -26,9 +26,7 @@ export function Topbar({ title, breadcrumb, isSuperAdmin, companyName, ctaLabel,
       </div>
 
       <div className="topbar-actions">
-        <input className="search-input" type="text" placeholder={t('search')} />
-
-        {/* Tenant badge — OrgSwitcher pour super_admin, badge statique pour les autres */}
+        {/* Tenant : OrgSwitcher pour super_admin, badge statique pour les autres */}
         {isSuperAdmin
           ? <OrgSwitcher />
           : companyName && (
