@@ -36,16 +36,24 @@ export default async function ConsultantsPage({ searchParams }: Props) {
   )
 
   // ── Filtre manager : récupère l'id de son équipe ─────────────
-  // consultants.team_id est synchro automatiquement via trigger → pas besoin
-  // de passer par team_members, on filtre directement sur team_id.
+  // teams.manager_id référence consultants(id), pas auth.users(id).
+  // Il faut d'abord trouver le consultant lié au user, puis son équipe.
   let managerTeamId: string | null = null
   if (role === 'manager' && userId) {
-    const { data: teamData } = await supabase
-      .from('teams')
+    const { data: consultantData } = await supabase
+      .from('consultants')
       .select('id')
-      .eq('manager_id', userId)
+      .eq('user_id', userId)
       .maybeSingle()
-    managerTeamId = teamData?.id ?? null
+
+    if (consultantData?.id) {
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('manager_id', consultantData.id)
+        .maybeSingle()
+      managerTeamId = teamData?.id ?? null
+    }
   }
 
   // ── Fetch consultants ────────────────────────────────────────

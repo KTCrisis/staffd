@@ -28,14 +28,23 @@ export default async function TimesheetsPage({ searchParams }: Props) {
   const companyId = user?.app_metadata?.company_id as string | undefined
 
   // ── Filtre manager : récupère l'id de son équipe ─────────────
+  // teams.manager_id référence consultants(id), pas auth.users(id).
   let managerTeamId: string | null = null
   if (userRole === 'manager' && userId) {
-    const { data: teamData } = await supabase
-      .from('teams')
+    const { data: consultantData } = await supabase
+      .from('consultants')
       .select('id')
-      .eq('manager_id', userId)
+      .eq('user_id', userId)
       .maybeSingle()
-    managerTeamId = teamData?.id ?? null
+
+    if (consultantData?.id) {
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('manager_id', consultantData.id)
+        .maybeSingle()
+      managerTeamId = teamData?.id ?? null
+    }
   }
 
   return (
