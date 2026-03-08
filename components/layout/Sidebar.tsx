@@ -137,7 +137,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       ],
     }] : []),
 
-    // ── Finance + Admin + Agents fusionnés ────────────────────
+    // ── Finance ───────────────────────────────────────────────
     ...(isAdminOrManager || isSolo || isFreelance ? [{
       group: t('finance'), key: 'finance',
       items: [
@@ -145,10 +145,15 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
         ] : []),
-        { label: t('invoices'),   icon: '◉', href: p('/invoices')  },
-        ...((isSuperAdmin || isAdmin || isSolo) ? [
-          { label: t('parametres'), icon: '◎', href: p('/settings') },
-        ] : []),
+        { label: t('invoices'), icon: '◉', href: p('/invoices') },
+      ],
+    }] : []),
+
+    // ── Admin + Agents ────────────────────────────────────────
+    ...(isSuperAdmin || isAdmin || isSolo ? [{
+      group: t('admin'), key: 'agents',
+      items: [
+        { label: t('parametres'), icon: '◎', href: p('/settings') },
         ...(isSuperAdmin || isAdmin ? [
           { label: t('agenticAI'), icon: '◬', href: p('/ai'), glow: true } as NavItem,
         ] : []),
