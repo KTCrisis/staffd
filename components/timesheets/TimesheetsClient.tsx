@@ -31,10 +31,14 @@ interface HolidayEntry { date: string; localName: string }
 type HolidayMap = Record<string, HolidayEntry[]>
 
 interface Props {
-  userRole?:  string
-  userId?:    string
-  companyId?: string
-  tenant?:    string
+  userRole?:      string
+  userId?:        string
+  companyId?:     string
+  tenant?:        string
+  /** Si défini, restreint la vue aux IDs listés (usage manager).
+   *  null = pas de restriction (admin/super_admin).
+   *  []   = manager sans équipe, rien à afficher. */
+  teamMemberIds?: string[] | null
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -164,7 +168,13 @@ function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }:
 // COMPOSANT PRINCIPAL
 // ══════════════════════════════════════════════════════════════
 
-export function TimesheetsClient({ userRole, userId, companyId, tenant }: Props) {
+export function TimesheetsClient({
+  userRole,
+  userId,
+  companyId,
+  tenant,
+  teamMemberIds,   // ← destructuré ici, c'était le bug
+}: Props) {
   const t      = useTranslations('timesheets')
   const locale = useLocale()
 
@@ -277,12 +287,22 @@ export function TimesheetsClient({ userRole, userId, companyId, tenant }: Props)
 
   const visibleConsultants = useMemo(() => {
     if (!consultantsLoaded) return []
-    if (role === 'consultant') {
+
+    // Consultant / freelance → uniquement sa propre ligne
+    if (role === 'consultant' || role === 'freelance') {
       if (!currentUserId) return []
       return consultantsSafe.filter(c => c.user_id === currentUserId)
     }
+
+    // Manager → uniquement les membres de son équipe
+    if (role === 'manager' && teamMemberIds != null) {
+      const ids = new Set(teamMemberIds)
+      return consultantsSafe.filter(c => ids.has(c.id))
+    }
+
+    // Admin / super_admin → tout
     return consultantsSafe
-  }, [consultantsLoaded, consultantsSafe, role, currentUserId])
+  }, [consultantsLoaded, consultantsSafe, role, currentUserId, teamMemberIds])
 
   const handleSave = useCallback(async (consultantId: string, date: string, value: number, projectId: string) => {
     const key = `${consultantId}__${date}`

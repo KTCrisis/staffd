@@ -23,6 +23,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
   ).auth.getUser()
 
   const role      = user?.app_metadata?.user_role  as string | undefined
+  const userId    = user?.id
   const companyId = user?.app_metadata?.company_id as string | undefined
   const isSA      = user?.app_metadata?.is_super_admin === true
 
@@ -35,8 +36,30 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
+  // ── Filtre manager : uniquement les membres de son équipe ───
+  // On récupère d'abord les IDs membres de l'équipe gérée par ce user.
+  let teamMemberIds: string[] | null = null
+  if (role === 'manager' && userId) {
+    const { data: teamData } = await supabase
+      .from('teams')
+      .select('id, team_members!inner(consultant_id)')
+      .eq('manager_id', userId)
+      .maybeSingle()
+
+    if (teamData) {
+      teamMemberIds = (teamData.team_members as { consultant_id: string }[])
+        .map(m => m.consultant_id)
+    } else {
+      // Manager sans équipe assignée → liste vide (pas accès à tout)
+      teamMemberIds = []
+    }
+  }
+
+  // ── Fetch consultants ────────────────────────────────────────
   let query = supabase.from('consultant_occupancy').select('*')
-  if (tenant) query = query.eq('company_id', tenant)  // filtre super_admin
+  if (tenant)         query = query.eq('company_id', tenant)  // filtre super_admin
+  if (teamMemberIds)  query = query.in('id', teamMemberIds.length ? teamMemberIds : ['__none__'])
+
   const { data } = await query.order('name')
 
   const consultants: Consultant[] = (data ?? []).map((r: any) => ({
@@ -65,6 +88,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     joursTravailles:  r.jours_travailles ?? null,
     country_code:     r.country_code     ?? null,
     user_id:          r.user_id          ?? null,
+    teamId:           r.team_id          ?? null,
   }))
 
   return (
