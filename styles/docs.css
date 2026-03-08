@@ -1,0 +1,232 @@
+/* ══════════════════════════════════════════════════════════════
+   styles/docs.css
+   Styles partagés pour /docs, /docs/platform, /docs/ai
+   Importé dans le layout docs — plus de <style> inline
+══════════════════════════════════════════════════════════════ */
+
+/* ── Grid background ──────────────────────────────────────── */
+.doc-grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px; opacity: 0.3;
+}
+
+/* ── Nav ──────────────────────────────────────────────────── */
+.doc-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 40px;
+  background: rgba(6,10,6,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(4px);
+}
+.doc-nav-logo {
+  font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
+  text-decoration: none;
+}
+.doc-nav-logo .s { color: #fff; }
+.doc-nav-logo .d { color: var(--green); }
+.doc-nav-tag {
+  font-size: 9px; color: var(--text2); letter-spacing: 3px;
+  text-transform: uppercase; margin-left: 16px;
+}
+.doc-nav-links {
+  display: flex; gap: 28px; list-style: none; align-items: center;
+}
+.doc-nav-links a {
+  color: var(--text2); text-decoration: none; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s;
+}
+.doc-nav-links a:hover { color: var(--green); }
+.doc-nav-links a.active { color: var(--cyan); }
+.doc-nav-links a.active-ai { color: var(--pink); }
+.doc-nav-cta {
+  background: var(--green) !important; color: #060a06 !important;
+  padding: 6px 16px !important; border-radius: 2px; font-weight: 700 !important;
+}
+.doc-nav-demo {
+  background: none !important; color: var(--cyan) !important;
+  padding: 6px 16px !important; border-radius: 2px; font-weight: 700 !important;
+  border: 1px solid rgba(0,229,255,0.3) !important;
+  transition: all 0.2s;
+}
+.doc-nav-demo:hover {
+  background: rgba(0,229,255,0.08) !important;
+  border-color: rgba(0,229,255,0.5) !important;
+}
+
+/* ── Layout ───────────────────────────────────────────────── */
+.doc-layout {
+  display: flex; gap: 60; align-items: flex-start;
+  padding-top: 70px; max-width: 1100px;
+  margin: 0 auto; padding: 70px 40px 80px;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.doc-sidebar {
+  width: 220px; flex-shrink: 0; position: sticky; top: 80px;
+  height: calc(100vh - 100px); overflow-y: auto; padding-right: 20px;
+}
+.doc-sidebar-label {
+  font-size: 9px; letter-spacing: 3px; color: var(--text2);
+  text-transform: uppercase; margin-bottom: 16px;
+}
+.doc-sidebar-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 3px; margin-bottom: 2px;
+  text-decoration: none; font-size: 11px;
+  border-left: 2px solid transparent;
+  color: var(--text2); transition: all 0.15s;
+}
+.doc-sidebar-link:hover { color: var(--cyan); background: rgba(0,229,255,0.05); }
+.doc-sidebar-link--active {
+  background: rgba(0,229,255,0.08);
+  border-left-color: var(--cyan);
+  color: var(--cyan);
+}
+.doc-sidebar-link--active-ai {
+  background: rgba(255,45,107,0.08);
+  border-left-color: var(--pink);
+  color: var(--pink);
+}
+.doc-sidebar-link--active-ai:hover { color: var(--pink); background: rgba(255,45,107,0.05); }
+.doc-sidebar-icon { font-size: 12px; opacity: 0.7; }
+.doc-sidebar-cross {
+  margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+.doc-sidebar-cross a {
+  display: block; padding: 10px 12px; border-radius: 3px;
+  text-decoration: none; font-size: 10px; letter-spacing: 1px;
+}
+
+/* ── Section ──────────────────────────────────────────────── */
+.doc-section {
+  margin-bottom: 80px; scroll-margin-top: 90px;
+}
+.doc-section-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 32px;
+}
+.doc-section-icon { font-size: 24px; }
+.doc-section-id {
+  font-size: 9px; color: var(--text2); letter-spacing: 3px;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.doc-section-title {
+  font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -1px;
+}
+
+/* ── Feature grid ─────────────────────────────────────────── */
+.doc-features {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 12px; margin-bottom: 24px;
+}
+.doc-feature {
+  padding: 18px 20px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px;
+}
+.doc-feature-icon { font-size: 18px; margin-bottom: 10px; }
+.doc-feature-title { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.doc-feature-desc { font-size: 11px; color: var(--text2); line-height: 1.7; }
+
+/* ── Code block ───────────────────────────────────────────── */
+.doc-code {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 16px 20px; font-size: 11px;
+  color: var(--cyan); overflow-x: auto; line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+/* ── Table ─────────────────────────────────────────────────── */
+.doc-table-wrap { overflow-x: auto; margin-bottom: 24px; }
+.doc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.doc-table th {
+  text-align: left; padding: 8px 16px;
+  background: var(--bg2); color: var(--text2);
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.doc-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  color: var(--text2); font-weight: 400;
+}
+.doc-table td:first-child { color: #fff; font-weight: 700; }
+
+/* ── Note ──────────────────────────────────────────────────── */
+.doc-note {
+  padding: 12px 16px; border-radius: 4px; margin-bottom: 24px;
+  font-size: 11px; color: var(--text2); line-height: 1.7;
+}
+
+/* ── Screenshot placeholder ───────────────────────────────── */
+.doc-screenshot {
+  width: 100%; aspect-ratio: 16/9; border-radius: 6px;
+  margin-bottom: 24px; overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.doc-screenshot img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.doc-screenshot-placeholder {
+  font-size: 10px; color: var(--text2); letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.doc-screenshot-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 8px 16px; font-size: 9px; letter-spacing: 1px;
+  color: var(--text2); background: rgba(6,10,6,0.85);
+  text-transform: uppercase;
+}
+
+/* ── Demo CTA banner ──────────────────────────────────────── */
+.doc-demo-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 28px; margin-bottom: 40px;
+  background: rgba(0,229,255,0.04);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 6px;
+}
+.doc-demo-banner-text {
+  font-size: 12px; color: var(--text); line-height: 1.6;
+}
+.doc-demo-banner-text strong { color: var(--cyan); }
+.doc-demo-banner-creds {
+  display: flex; gap: 12px; margin-top: 8px;
+}
+.doc-demo-banner-cred {
+  font-size: 9px; padding: 3px 10px; border-radius: 2px;
+  background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);
+  color: var(--cyan); letter-spacing: 1px;
+}
+.doc-demo-banner-btn {
+  background: var(--cyan); color: #060a06; border: none;
+  padding: 10px 24px; border-radius: 3px; font-size: 11px;
+  font-weight: 700; cursor: pointer; letter-spacing: 1px;
+  font-family: var(--font); text-decoration: none;
+  white-space: nowrap;
+}
+.doc-demo-banner-btn:hover { opacity: 0.9; }
+
+/* ── Prose ─────────────────────────────────────────────────── */
+.doc-layout p {
+  color: var(--text2); font-size: 12px; line-height: 1.9;
+  margin-bottom: 16px;
+}
+.doc-layout strong { color: #fff; font-weight: 700; }
+.doc-layout code {
+  color: var(--cyan); font-family: inherit;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .doc-nav { padding: 16px 20px; }
+  .doc-nav-links { display: none; }
+  .doc-layout { flex-direction: column !important; padding: 70px 20px 60px; }
+  .doc-sidebar { width: 100% !important; position: static !important; height: auto !important; }
+  .doc-features { grid-template-columns: 1fr; }
+  .doc-demo-banner { flex-direction: column; gap: 16px; text-align: center; }
+}
