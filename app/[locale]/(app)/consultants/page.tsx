@@ -27,7 +27,6 @@ export default async function ConsultantsPage({ searchParams }: Props) {
   const companyId = user?.app_metadata?.company_id as string | undefined
   const isSA      = user?.app_metadata?.is_super_admin === true
 
-  // super_admin → service role key pour bypass RLS
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     isSA
@@ -36,29 +35,25 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
-  // ── Filtre manager : uniquement les membres de son équipe ───
-  // On récupère d'abord les IDs membres de l'équipe gérée par ce user.
-  let teamMemberIds: string[] | null = null
+  // ── Filtre manager : récupère l'id de son équipe ─────────────
+  // consultants.team_id est synchro automatiquement via trigger → pas besoin
+  // de passer par team_members, on filtre directement sur team_id.
+  let managerTeamId: string | null = null
   if (role === 'manager' && userId) {
     const { data: teamData } = await supabase
       .from('teams')
-      .select('id, team_members!inner(consultant_id)')
+      .select('id')
       .eq('manager_id', userId)
       .maybeSingle()
-
-    if (teamData) {
-      teamMemberIds = (teamData.team_members as { consultant_id: string }[])
-        .map(m => m.consultant_id)
-    } else {
-      // Manager sans équipe assignée → liste vide (pas accès à tout)
-      teamMemberIds = []
-    }
+    managerTeamId = teamData?.id ?? null
   }
 
   // ── Fetch consultants ────────────────────────────────────────
   let query = supabase.from('consultant_occupancy').select('*')
-  if (tenant)         query = query.eq('company_id', tenant)  // filtre super_admin
-  if (teamMemberIds)  query = query.in('id', teamMemberIds.length ? teamMemberIds : ['__none__'])
+  if (tenant)         query = query.eq('company_id', tenant)
+  if (managerTeamId)  query = query.eq('team_id', managerTeamId)
+  // manager sans équipe → liste vide (eq sur null ne retourne rien)
+  else if (role === 'manager') query = query.eq('id', '00000000-0000-0000-0000-000000000000')
 
   const { data } = await query.order('name')
 

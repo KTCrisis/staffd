@@ -27,18 +27,15 @@ export default async function TimesheetsPage({ searchParams }: Props) {
   const userId    = user?.id
   const companyId = user?.app_metadata?.company_id as string | undefined
 
-  // ── Filtre manager : uniquement les membres de son équipe ───
-  let teamMemberIds: string[] | null = null
+  // ── Filtre manager : récupère l'id de son équipe ─────────────
+  let managerTeamId: string | null = null
   if (userRole === 'manager' && userId) {
     const { data: teamData } = await supabase
       .from('teams')
-      .select('id, team_members!inner(consultant_id)')
+      .select('id')
       .eq('manager_id', userId)
       .maybeSingle()
-
-    teamMemberIds = teamData
-      ? (teamData.team_members as { consultant_id: string }[]).map(m => m.consultant_id)
-      : [] // manager sans équipe → liste vide
+    managerTeamId = teamData?.id ?? null
   }
 
   return (
@@ -49,7 +46,7 @@ export default async function TimesheetsPage({ searchParams }: Props) {
         userId={userId}
         companyId={companyId}
         tenant={tenant}
-        teamMemberIds={teamMemberIds}
+        managerTeamId={managerTeamId}
       />
     </>
   )

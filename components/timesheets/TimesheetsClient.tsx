@@ -38,7 +38,7 @@ interface Props {
   /** Si défini, restreint la vue aux IDs listés (usage manager).
    *  null = pas de restriction (admin/super_admin).
    *  []   = manager sans équipe, rien à afficher. */
-  teamMemberIds?: string[] | null
+  managerTeamId?: string | null
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -173,7 +173,7 @@ export function TimesheetsClient({
   userId,
   companyId,
   tenant,
-  teamMemberIds,   // ← destructuré ici, c'était le bug
+  managerTeamId,
 }: Props) {
   const t      = useTranslations('timesheets')
   const locale = useLocale()
@@ -294,15 +294,15 @@ export function TimesheetsClient({
       return consultantsSafe.filter(c => c.user_id === currentUserId)
     }
 
-    // Manager → uniquement les membres de son équipe
-    if (role === 'manager' && teamMemberIds != null) {
-      const ids = new Set(teamMemberIds)
-      return consultantsSafe.filter(c => ids.has(c.id))
+    // Manager → uniquement les membres de son équipe (filtrés par team_id)
+    if (role === 'manager') {
+      if (!managerTeamId) return []
+      return consultantsSafe.filter(c => (c as any).teamId === managerTeamId)
     }
 
     // Admin / super_admin → tout
     return consultantsSafe
-  }, [consultantsLoaded, consultantsSafe, role, currentUserId, teamMemberIds])
+  }, [consultantsLoaded, consultantsSafe, role, currentUserId, managerTeamId])
 
   const handleSave = useCallback(async (consultantId: string, date: string, value: number, projectId: string) => {
     const key = `${consultantId}__${date}`
