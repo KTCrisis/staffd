@@ -34,7 +34,16 @@ export default async function LeavesPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
-  let requestsQ    = supabase
+  // ── Filtre manager via RPC ───────────────────────────────────
+  let teamIds: string[] | null = null
+  if (role === 'manager') {
+    const { data, error } = await supabase.rpc('my_team_consultant_ids')
+    teamIds = error ? [] : ((data as string[]) ?? [])
+  }
+
+  const noMatch = '00000000-0000-0000-0000-000000000000'
+
+  let requestsQ = supabase
     .from('leave_requests')
     .select('*, consultants(name, avatar_color, initials)')
     .order('start_date', { ascending: false })
@@ -50,20 +59,30 @@ export default async function LeavesPage({ searchParams }: Props) {
     consultantsQ = consultantsQ.eq('company_id', tenant)
   }
 
+  if (teamIds !== null) {
+    if (teamIds.length === 0) {
+      requestsQ    = requestsQ.eq('consultant_id', noMatch)    as typeof requestsQ
+      consultantsQ = consultantsQ.eq('id',         noMatch)    as typeof consultantsQ
+    } else {
+      requestsQ    = requestsQ.in('consultant_id', teamIds)    as typeof requestsQ
+      consultantsQ = consultantsQ.in('id',         teamIds)    as typeof consultantsQ
+    }
+  }
+
   const [requestsRes, consultantsRes] = await Promise.all([requestsQ, consultantsQ])
 
   const requests = (requestsRes.data ?? []).map((r: any) => ({
-    id:            r.id,
-    consultantId:  r.consultant_id,
-    consultantName: r.consultants?.name ?? null,
-    avatarColor:   r.consultants?.avatar_color ?? 'green',
-    initials:      r.consultants?.initials ?? '??',
-    type:          r.type,
-    status:        r.status,
-    startDate:     r.start_date,
-    endDate:       r.end_date,
-    days:          r.days ?? null,
-    note:          r.note ?? null,
+    id:             r.id,
+    consultantId:   r.consultant_id,
+    consultantName: r.consultants?.name        ?? null,
+    avatarColor:    r.consultants?.avatar_color ?? 'green',
+    initials:       r.consultants?.initials     ?? '??',
+    type:           r.type,
+    status:         r.status,
+    startDate:      r.start_date,
+    endDate:        r.end_date,
+    days:           r.days  ?? null,
+    note:           r.note  ?? null,
   }))
 
   const consultants = consultantsRes.data ?? []

@@ -95,7 +95,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
-  // ── Nav — 4 groupes au lieu de 7 ─────────────────────────
+  // ── Nav ───────────────────────────────────────────────────
   const NAV = [
 
     // ── Dashboard seul, sans label de groupe ─────────────────
@@ -137,8 +137,8 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       ],
     }] : []),
 
-    // ── Finance ───────────────────────────────────────────────
-    ...(isAdminOrManager || isSolo || isFreelance ? [{
+    // ── Finance — managers exclus ─────────────────────────────
+    ...(isSuperAdmin || isAdmin || isSolo || isFreelance ? [{
       group: t('finance'), key: 'finance',
       items: [
         ...(isSuperAdmin || isAdmin || isSolo ? [
@@ -198,7 +198,6 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       <nav className="sidebar-nav">
         {NAV.map(group => (
           <div key={group.key} className="nav-group">
-            {/* Label de groupe — masqué si vide (dashboard) ou si collapsed */}
             {!collapsed && group.group && (
               <div className="nav-group-label" style={{ color: GROUP_COLORS[group.key] ?? 'var(--text2)' }}>
                 {group.group}
