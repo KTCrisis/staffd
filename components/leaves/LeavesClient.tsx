@@ -146,6 +146,7 @@ export function LeavesClient({
 
       {showForm && (
         <LeaveRequestForm
+          userId={userId ?? ''}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); router.refresh() }}
         />

@@ -354,6 +354,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
 
       {showForm && (
         <ConsultantForm
+          companyId={companyId}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); router.refresh() }}
         />
@@ -361,6 +362,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
       {editTarget && (
         <ConsultantForm
           consultant={editTarget}
+          companyId={companyId}
           onClose={() => setEditTarget(null)}
           onSaved={() => { setEditTarget(null); router.refresh() }}
         />

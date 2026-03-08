@@ -152,6 +152,7 @@ export function ClientDetailClient({ client, projects = [] }: Props) {
       {formOpen && (
         <ClientForm
           client={client as any}
+          companyId={client.companyId}
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false)

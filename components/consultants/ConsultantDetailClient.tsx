@@ -54,6 +54,7 @@ interface Props {
   assignments?:  Assignment[]
   profitability?: any
   userRole?:     string
+  companyId?:    string
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -93,7 +94,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 // ── Composant ─────────────────────────────────────────────────
 
-export function ConsultantDetailClient({ consultant: c, assignments = [], profitability, userRole }: Props) {
+export function ConsultantDetailClient({ consultant: c, assignments = [], profitability, userRole, companyId }: Props) {
   const t       = useTranslations('consultants')
   const router  = useRouter()
 
@@ -328,6 +329,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
       {showForm && (
         <ConsultantForm
           consultant={c as any}
+          companyId={companyId}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); router.refresh() }}
         />

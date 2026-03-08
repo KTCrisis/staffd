@@ -23,8 +23,9 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const userRole = user?.app_metadata?.user_role as string | undefined
-  const isSA     = user?.app_metadata?.is_super_admin === true
+  const userRole  = user?.app_metadata?.user_role as string | undefined
+  const isSA      = user?.app_metadata?.is_super_admin === true
+  const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -114,6 +115,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
         assignments={assignments}
         profitability={profitability}
         userRole={userRole}
+        companyId={companyId}
       />
     </>
   )
