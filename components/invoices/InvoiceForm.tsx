@@ -3,7 +3,6 @@
 import { useState, useEffect }  from 'react'
 import { useRouter }             from 'next/navigation'
 import { useTranslations }       from 'next-intl'
-import { Topbar }                from '@/components/layout/Topbar'
 import { supabase }              from '@/lib/supabase'
 import { InvoicePreview }        from '@/components/invoices/InvoicePreview'
 import type { InvoiceLineItem, BillingSettings } from '@/components/invoices/InvoicePreview'
@@ -287,8 +286,6 @@ export function InvoiceForm() {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
-
       <div style={{ display: 'flex', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
 
         {/* ── LEFT — Form ───────────────────────────────────────────────── */}

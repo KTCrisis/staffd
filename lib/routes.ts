@@ -89,9 +89,11 @@ import type { UserRole } from './auth/roles'
 
 export function dashboardForRole(role?: UserRole): string {
   switch (role) {
+    case 'freelance':                        
+    case 'consultant': return ROUTES.DASHBOARD.CONSULTANT
+    case 'manager':    return ROUTES.DASHBOARD.MANAGER
     case 'super_admin':
-    case 'admin':     return ROUTES.DASHBOARD.ADMIN
-    case 'manager':   return ROUTES.DASHBOARD.MANAGER
-    default:          return ROUTES.DASHBOARD.CONSULTANT
+    case 'admin':      return ROUTES.DASHBOARD.ADMIN
+    default:           return ROUTES.DASHBOARD.CONSULTANT
   }
 }

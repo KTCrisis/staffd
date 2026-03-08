@@ -2,8 +2,10 @@
 
 import { getPageAuth }     from '@/lib/auth/page-auth'
 import { getTranslations } from 'next-intl/server'
+import { redirect }        from 'next/navigation'
 import { Topbar }          from '@/components/layout/Topbar'
 import { TimelineClient }  from '@/components/timeline/TimelineClient'
+import { canEdit }         from '@/lib/auth/roles'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -12,7 +14,18 @@ interface Props {
 export default async function TimelinePage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('timeline')
-  const { isSA, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, companyName, supabase } = await getPageAuth(tenant)
+
+  if (!canEdit(role)) redirect('/dashboard')
+
+  // ── Filtre manager via RPC ───────────────────────────────────
+  let teamIds: string[] | null = null
+  if (role === 'manager') {
+    const { data, error } = await supabase.rpc('my_team_consultant_ids')
+    teamIds = error ? [] : ((data as string[]) ?? [])
+  }
+
+  const noMatch = '00000000-0000-0000-0000-000000000000'
 
   let projectsQ = supabase
     .from('projects')
@@ -39,23 +52,47 @@ export default async function TimelinePage({ searchParams }: Props) {
     leavesQ      = leavesQ.eq('company_id', tenant)
   }
 
+  // Manager : filtrer consultants et congés par équipe
+  // Projets : on garde tous les projets du tenant mais on filtre l'affichage équipe côté client
+  if (teamIds !== null) {
+    if (teamIds.length === 0) {
+      consultantsQ = consultantsQ.eq('id',           noMatch) as typeof consultantsQ
+      leavesQ      = leavesQ.eq('consultant_id',     noMatch) as typeof leavesQ
+    } else {
+      consultantsQ = consultantsQ.in('id',           teamIds) as typeof consultantsQ
+      leavesQ      = leavesQ.in('consultant_id',     teamIds) as typeof leavesQ
+    }
+  }
+
   const [projectsRes, consultantsRes, leavesRes] = await Promise.all([
     projectsQ, consultantsQ, leavesQ,
   ])
 
-  const projects = (projectsRes.data ?? []).map((p: any) => ({
-    id:         p.id,
-    name:       p.name,
-    status:     p.status,
-    startDate:  p.start_date,
-    endDate:    p.end_date,
-    clientName: p.client_name,
-    isInternal: p.is_internal ?? false,
-    team: (p.assignments ?? [])
+  const teamConsultantIds = teamIds ? new Set(teamIds) : null
+
+  const projects = (projectsRes.data ?? []).map((p: any) => {
+    const allTeam = (p.assignments ?? [])
       .map((a: any) => a.consultants)
       .filter(Boolean)
-      .filter((c: any, i: number, arr: any[]) => arr.findIndex(x => x.id === c.id) === i),
-  }))
+      .filter((c: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === c.id) === i)
+
+    // Manager : ne montrer que les consultants de son équipe dans le projet
+    const team = teamConsultantIds
+      ? allTeam.filter((c: any) => teamConsultantIds.has(c.id))
+      : allTeam
+
+    return {
+      id:         p.id,
+      name:       p.name,
+      status:     p.status,
+      startDate:  p.start_date,
+      endDate:    p.end_date,
+      clientName: p.client_name,
+      isInternal: p.is_internal ?? false,
+      team,
+    }
+  }).filter((p: any) => !teamConsultantIds || p.team.length > 0)
+  // Manager : exclure les projets sans aucun membre de son équipe
 
   const consultants = consultantsRes.data ?? []
 
