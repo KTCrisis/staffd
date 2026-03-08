@@ -6,4 +6,3 @@
 
 export * from './roles'
 export * from './client'
-export { getPageAuth, type PageAuth } from './page-auth'
