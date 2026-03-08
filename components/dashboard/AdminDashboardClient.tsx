@@ -3,13 +3,13 @@
 
 import { useTranslations } from 'next-intl'
 import { useRouter }       from '@/lib/navigation'
-import { useLocale }       from 'next-intl'
 import { KpiCard, Panel }  from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ConsultantItem }  from '@/components/consultants/ConsultantItem'
 import { ProjectRow }      from '@/components/projects/ProjectRow'
 import { ActivityFeed }    from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }    from '@/components/dashboard/MiniCalendar'
+import type { CalendarEvent } from '@/components/dashboard/MiniCalendar'
 
 interface KpiData {
   activeConsultants: number
@@ -25,6 +25,7 @@ interface Props {
   activity?:        any[]
   kpi?:             KpiData
   projectProgress?: number
+  calendarEvents?:  CalendarEvent[]
 }
 
 const DEFAULT_KPI: KpiData = {
@@ -38,13 +39,15 @@ export function AdminDashboardClient({
   activity        = [],
   kpi             = DEFAULT_KPI,
   projectProgress = 0,
+  calendarEvents  = [],
 }: Props) {
   const t      = useTranslations('dashboard')
   const router = useRouter()
+
   return (
     <div className="app-content">
 
-      {/* KPIs — sans trends fake */}
+      {/* KPIs */}
       <div className="kpi-grid">
         <KpiCard
           label={t('kpi.activeConsultants')}
@@ -109,7 +112,7 @@ export function AdminDashboardClient({
             <ActivityFeed items={activity} />
           </Panel>
           <Panel title={t('calendar')}>
-            <MiniCalendar />
+            <MiniCalendar events={calendarEvents} />
           </Panel>
         </div>
       </div>

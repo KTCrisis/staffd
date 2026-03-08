@@ -3,12 +3,12 @@
 
 import { useTranslations } from 'next-intl'
 import { useRouter }       from '@/lib/navigation'
-import { useLocale }       from 'next-intl'
 import { KpiCard, Panel }  from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ConsultantItem }  from '@/components/consultants/ConsultantItem'
 import { ActivityFeed }    from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }    from '@/components/dashboard/MiniCalendar'
+import type { CalendarEvent } from '@/components/dashboard/MiniCalendar'
 
 interface LeaveReq {
   id: string; status: string; type: string
@@ -25,6 +25,7 @@ interface Props {
   leaveReqs?:   LeaveReq[]
   activity?:    any[]
   kpi?:         KpiData
+  calendarEvents?: CalendarEvent[]
 }
 
 const DEFAULT_KPI: KpiData = {
@@ -37,6 +38,7 @@ export function ManagerDashboardClient({
   leaveReqs   = [],
   activity    = [],
   kpi         = DEFAULT_KPI,
+  calendarEvents = []
 }: Props) {
   const t      = useTranslations('dashboardManager')
   const router = useRouter()
@@ -126,7 +128,7 @@ export function ManagerDashboardClient({
 
           {/* Calendrier */}
           <Panel title={t('calendar')}>
-            <MiniCalendar />
+            <MiniCalendar events={calendarEvents} />
           </Panel>
 
         </div>
