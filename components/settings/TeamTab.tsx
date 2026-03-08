@@ -35,8 +35,11 @@ function TeamCard({
   const [showAddMember,        setShowAddMember]        = useState(false)
   const [selectedConsultantId, setSelectedConsultantId] = useState('')
 
-  // Membres visibles = ceux dont l'id est encore dans allTeamMemberIds pour cette équipe
-  const visibleMembers = team.members.filter(m => allTeamMemberIds.has(m.id))
+  // Membres visibles = ceux dont l'id est encore dans allTeamMemberIds pour cette équipe,
+  // et qui ne sont pas le manager (le manager a sa propre section dédiée)
+  const visibleMembers = team.members.filter(m =>
+    allTeamMemberIds.has(m.id) && m.id !== team.managerId
+  )
 
   // Disponibles = consultants qui ne sont dans AUCUNE équipe
   const available = consultants.filter(c => !allTeamMemberIds.has(c.id))
