@@ -83,6 +83,20 @@
     "noActiveProjects": "// aucun projet actif",
     "calEvent": "Événement"
   },
+    "statuses": {
+    "available": "Disponible",
+    "assigned": "En mission",
+    "leave": "En congé",
+    "partial": "Partiel",
+    "pending": "En attente",
+    "approved": "Approuvé",
+    "refused": "Refusé",
+    "draft": "Brouillon",
+    "active": "En cours",
+    "on_hold": "En pause",
+    "completed": "Terminé",
+    "archived": "Archivé"
+  },
   "consultants": {
     "title": "Consultants",
     "breadcrumb": "// équipe",

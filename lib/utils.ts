@@ -114,30 +114,6 @@ export function isCibleAlert(tjmCible: number | null, tjmCout: number | null): b
   return (tjmCible - tjmCout) / tjmCible * 100 < 10
 }
 
-// ─────────────────────────────────────────────────────────────
-// STATUS LABELS
-// ─────────────────────────────────────────────────────────────
-
-export const STATUS_LABELS: Record<ConsultantStatus, string> = {
-  available: 'Disponible',
-  assigned:  'En mission',
-  leave:     'Congé',
-  partial:   'Partiel',
-}
-
-export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-  draft:     'Brouillon',
-  active:    'En cours',
-  on_hold:   'En pause',
-  completed: 'Terminé',
-  archived:  'Archivé',
-}
-
-export const LEAVE_STATUS_LABELS: Record<LeaveStatus, string> = {
-  pending:  'En attente',
-  approved: 'Approuvé',
-  refused:  'Refusé',
-}
 
 // ─────────────────────────────────────────────────────────────
 // STATUS COLORS
