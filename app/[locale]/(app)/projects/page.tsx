@@ -91,7 +91,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
-      <ProjectsClient projects={projects} error={error?.message ?? null} />
+      <ProjectsClient projects={projects} error={error?.message ?? null} userRole={role} />
     </>
   )
 }
