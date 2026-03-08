@@ -1,16 +1,17 @@
+// components/layout/Sidebar.tsx
 'use client'
 
-import Link                from 'next/link'
-import { usePathname }     from 'next/navigation'
+import Link               from 'next/link'
+import { usePathname }    from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useAuthContext }  from '@/components/layout/AuthProvider'
-import { signOut }         from '@/lib/auth'
-import { useRouter }       from '@/lib/navigation'
+import { signOut }        from '@/lib/auth'
+import { useRouter }      from '@/lib/navigation'
 import { useEffect, useState } from 'react'
 import type React from 'react'
-import { supabase }        from '@/lib/supabase'
+import { supabase }       from '@/lib/supabase'
 
-// ── Type item nav ────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────
+
 type NavItem = {
   label: string
   icon:  string
@@ -19,34 +20,43 @@ type NavItem = {
   glow?: boolean
 }
 
-// ── Couleur accent par groupe ────────────────────────────────
 const GROUP_COLORS: Record<string, string> = {
-  overview:  'var(--text2)',
-  team:      'var(--cyan)',
-  activity:  'var(--green)',
-  projects:  'var(--purple)',
-  finance:   'var(--gold)',
-  admin:     'var(--text2)',
-  agents:    'var(--pink)',
+  overview: 'var(--text2)',
+  team:     'var(--cyan)',
+  activity: 'var(--green)',
+  projects: 'var(--purple)',
+  finance:  'var(--gold)',
+  admin:    'var(--text2)',
+  agents:   'var(--pink)',
 }
 
-export function Sidebar() {
+// ── Props — injectées depuis le layout server ─────────────────
+
+interface SidebarProps {
+  userRole:    string
+  userEmail:   string
+  companyMode: 'solo' | 'team' | null
+}
+
+// ── Composant ─────────────────────────────────────────────────
+
+export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
   const pathname = usePathname()
   const locale   = useLocale()
   const t        = useTranslations('nav')
-  const { user, companyMode } = useAuthContext()
+  const router   = useRouter()
+
   const isSolo = companyMode === 'solo'
-  const router = useRouter()
 
   const [collapsed, setCollapsed] = useState(false)
   const [command,   setCommand]   = useState('')
 
   // ── Rôles ────────────────────────────────────────────────
-  const isSuperAdmin     = user?.role === 'super_admin'
-  const isAdmin          = user?.role === 'admin'
-  const isManager        = user?.role === 'manager'
-  const isConsultant     = user?.role === 'consultant'
-  const isFreelance      = user?.role === 'freelance'
+  const isSuperAdmin     = userRole === 'super_admin'
+  const isAdmin          = userRole === 'admin'
+  const isManager        = userRole === 'manager'
+  const isConsultant     = userRole === 'consultant'
+  const isFreelance      = userRole === 'freelance'
   const isAdminOrManager = isSuperAdmin || isAdmin || isManager
   const isConsultantOnly = isConsultant || isFreelance
 
@@ -57,11 +67,9 @@ export function Sidebar() {
     isFreelance  ? 'Freelance'   :
     isConsultant ? 'Consultant'  : 'Viewer'
 
-  const initials = user?.email
-    ? user.email.slice(0, 2).toUpperCase()
-    : '??'
+  const initials = userEmail ? userEmail.slice(0, 2).toUpperCase() : '??'
 
-  // ── Badge congés pending ─────────────────────────────────
+  // ── Badge congés pending (realtime) ──────────────────────
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
@@ -90,15 +98,11 @@ export function Sidebar() {
 
   const p = (path: string) => locale === 'en' ? path : `/${locale}${path}`
 
-  // ══════════════════════════════════════════════════════════
-  // NAV
-  // ══════════════════════════════════════════════════════════
+  // ── Nav ───────────────────────────────────────────────────
   const NAV = [
     {
       group: t('overview'), key: 'overview',
-      items: [
-        { label: t('dashboard'), icon: '⬡', href: p('/dashboard') },
-      ],
+      items: [{ label: t('dashboard'), icon: '⬡', href: p('/dashboard') }],
     },
 
     ...(!isSolo ? [{
@@ -117,20 +121,16 @@ export function Sidebar() {
 
     {
       group: t('activity'), key: 'activity',
-      items: [
-        { label: t('timesheets'), icon: '⏱', href: p('/timesheets') },
-      ],
+      items: [{ label: t('timesheets'), icon: '⏱', href: p('/timesheets') }],
     },
 
     ...(!isConsultantOnly || isSolo ? [{
       group: t('projects'), key: 'projects',
       items: [
-        { label: t('projets'),      icon: '◧', href: p('/projects')  },
-        { label: t('clients'),      icon: '◉', href: p('/clients')   },
-        { label: t('appelsOffres'), icon: '◬', href: p('/bids')      },
-        ...(!isSolo ? [
-          { label: t('timeline'), icon: '▤', href: p('/timeline') },
-        ] : []),
+        { label: t('projets'),      icon: '◧', href: p('/projects') },
+        { label: t('clients'),      icon: '◉', href: p('/clients')  },
+        { label: t('appelsOffres'), icon: '◬', href: p('/bids')     },
+        ...(!isSolo ? [{ label: t('timeline'), icon: '▤', href: p('/timeline') }] : []),
       ],
     }] : []),
 
@@ -147,34 +147,25 @@ export function Sidebar() {
 
     ...((isSuperAdmin || isAdmin || isSolo) ? [{
       group: t('admin'), key: 'admin',
-      items: [
-        { label: t('parametres'), icon: '◎', href: p('/settings') },
-      ],
+      items: [{ label: t('parametres'), icon: '◎', href: p('/settings') }],
     }] : []),
 
     ...(isSuperAdmin || isAdmin ? [{
       group: t('agents'), key: 'agents',
-      items: [{
-        label: t('agenticAI'), icon: '◬', href: p('/ai'),
-        glow: true,
-      } as NavItem],
+      items: [{ label: t('agenticAI'), icon: '◬', href: p('/ai'), glow: true } as NavItem],
     }] : []),
   ]
 
-  // ══════════════════════════════════════════════════════════
-  // RENDER
-  // ══════════════════════════════════════════════════════════
+  // ── Render ────────────────────────────────────────────────
   return (
     <aside
       className="sidebar"
       style={{
-        width:      collapsed ? 52 : undefined,
-        minWidth:   collapsed ? 52 : undefined,
-        overflow:   'hidden',
-        transition: 'width 0.2s ease, min-width 0.2s ease',
+        width: collapsed ? 52 : undefined, minWidth: collapsed ? 52 : undefined,
+        overflow: 'hidden', transition: 'width 0.2s ease, min-width 0.2s ease',
       }}
     >
-      {/* ── Logo + collapse toggle ── */}
+      {/* Logo + collapse */}
       <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 8 }}>
         {!collapsed && (
           <div>
@@ -198,7 +189,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* ── Nav ── */}
+      {/* Nav */}
       <nav className="sidebar-nav">
         {NAV.map(group => (
           <div key={group.key} className="nav-group">
@@ -211,9 +202,7 @@ export function Sidebar() {
               const isActive = pathname.includes(item.href.replace(`/${locale}`, ''))
               const accent   = GROUP_COLORS[group.key] ?? 'var(--text2)'
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
+                <Link key={item.href} href={item.href}
                   className={`nav-item ${isActive ? 'active' : ''}`}
                   title={collapsed ? item.label : undefined}
                   style={isActive ? { color: accent, borderLeftColor: accent } : undefined}
@@ -225,8 +214,7 @@ export function Sidebar() {
                     <>
                       {item.glow
                         ? <span className="nav-label-glow">{item.label}</span>
-                        : item.label
-                      }
+                        : item.label}
                       {item.badge && <span className="nav-badge">{item.badge}</span>}
                     </>
                   )}
@@ -247,14 +235,12 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── Command bar AI ── */}
+      {/* Command bar AI */}
       {!collapsed && (isSuperAdmin || isAdmin) && (
         <div style={{ padding: '0 16px', marginBottom: 12 }}>
           <div style={{
-            background: 'rgba(255,45,107,0.05)',
-            border: '1px solid rgba(255,45,107,0.2)',
-            borderRadius: 4, padding: '8px 12px',
-            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'rgba(255,45,107,0.05)', border: '1px solid rgba(255,45,107,0.2)',
+            borderRadius: 4, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <span style={{ color: 'var(--pink)', fontSize: 10, fontWeight: 'bold' }}>&gt;_</span>
             <input
@@ -263,8 +249,7 @@ export function Sidebar() {
               placeholder={t('askAgent')}
               style={{
                 background: 'none', border: 'none', outline: 'none',
-                color: '#fff', fontSize: 11, width: '100%',
-                fontFamily: 'var(--font)',
+                color: '#fff', fontSize: 11, width: '100%', fontFamily: 'var(--font)',
               }}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
@@ -277,7 +262,7 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <div className="sidebar-footer">
         <div className="user-card" style={{ justifyContent: collapsed ? 'center' : undefined }}>
           <div className="avatar av-green" style={{ width: 32, height: 32, fontSize: 11, flexShrink: 0 }}>
@@ -287,7 +272,7 @@ export function Sidebar() {
             <>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 110 }}>
-                  {user?.email ?? '—'}
+                  {userEmail}
                 </div>
                 <div className="user-role">{roleLabel}</div>
               </div>
@@ -317,8 +302,7 @@ export function Sidebar() {
         }
         .nav-label-glow {
           animation: shimmer-ai 3s ease-in-out infinite;
-          font-weight: 600;
-          letter-spacing: 0.3px;
+          font-weight: 600; letter-spacing: 0.3px;
         }
       `}</style>
     </aside>
