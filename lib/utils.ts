@@ -26,9 +26,11 @@ export function getMondayOf(d: Date): Date {
 
 /** YYYY-MM-DD */
 export function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  const y   = d.getFullYear()
+  const m   = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
-
 /** Jours ouvrés d'une semaine à partir du lundi */
 export function getWeekDays(monday: Date): Date[] {
   return Array.from({ length: 5 }, (_, i) => {
