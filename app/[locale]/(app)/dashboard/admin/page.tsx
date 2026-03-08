@@ -71,7 +71,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <AdminDashboardClient
         consultants={consultants}
         activeProjects={projects.filter((p: any) => p.status === 'active').slice(0, 3)}

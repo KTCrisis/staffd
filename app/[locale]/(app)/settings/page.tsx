@@ -25,7 +25,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <SettingsClient
         userRole={role}
         companyId={companyId ?? ''}

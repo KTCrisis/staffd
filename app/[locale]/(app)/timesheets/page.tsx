@@ -26,7 +26,8 @@ export default async function TimesheetsPage({ searchParams }: Props) {
   const userRole  = user?.app_metadata?.user_role as string | undefined
   const userId    = user?.id
   const companyId = user?.app_metadata?.company_id as string | undefined
-
+  const isSA = user?.app_metadata?.is_super_admin === true
+  
   // ── Filtre manager : récupère l'id de son équipe ─────────────
   // teams.manager_id référence consultants(id), pas auth.users(id).
   let managerTeamId: string | null = null
@@ -49,7 +50,7 @@ export default async function TimesheetsPage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <TimesheetsClient
         userRole={userRole}
         userId={userId}

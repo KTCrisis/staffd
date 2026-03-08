@@ -88,7 +88,7 @@ export default async function TimelinePage({ searchParams }: Props) {
 
   return (
     <>
-      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
+      <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} />
       <TimelineClient
         projects={projects}
         consultants={consultants}
