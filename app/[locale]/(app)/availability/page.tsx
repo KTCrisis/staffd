@@ -25,6 +25,7 @@ export default async function AvailabilityPage({ searchParams }: Props) {
   const userId     = user?.id ?? null
   const teamAccess = role === 'super_admin' || role === 'admin' || role === 'manager'
   const isSA       = user?.app_metadata?.is_super_admin === true
+  const companyId  = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,6 +71,7 @@ export default async function AvailabilityPage({ searchParams }: Props) {
         assignments={assignments}
         teamAccess={teamAccess}
         userId={userId}
+        companyId={companyId}
       />
     </>
   )

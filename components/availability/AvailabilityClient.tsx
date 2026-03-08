@@ -36,6 +36,7 @@ interface Props {
   assignments?:   any[]
   teamAccess?:    boolean
   userId?:        string | null
+  companyId?:     string
 }
 
 // ── Couleurs projet ──────────────────────────────────────────
@@ -132,6 +133,7 @@ export function AvailabilityClient({
   assignments   = [],
   teamAccess    = false,
   userId        = null,
+  companyId     = '',
 }: Props) {
   const t     = useTranslations('staffing')
   const tDisp = useTranslations('disponibilites')
@@ -279,6 +281,7 @@ export function AvailabilityClient({
         <AssignmentDrawer
           consultant={assignTarget.consultant}
           defaultDate={assignTarget.date}
+          companyId={companyId}
           onClose={() => setAssignTarget(null)}
           onSaved={() => setAssignTarget(null)}
         />

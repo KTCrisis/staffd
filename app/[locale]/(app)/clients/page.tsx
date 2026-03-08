@@ -21,7 +21,8 @@ export default async function ClientsPage({ searchParams }: Props) {
     { cookies: { getAll: () => cookieStore.getAll() } }
   ).auth.getUser()
 
-  const isSA = user?.app_metadata?.is_super_admin === true
+  const isSA      = user?.app_metadata?.is_super_admin === true
+  const companyId = (tenant ?? user?.app_metadata?.company_id ?? '') as string
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,7 +58,7 @@ export default async function ClientsPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} />
-      <ClientsClient clients={clients} />
+      <ClientsClient clients={clients} companyId={companyId} />
     </>
   )
 }

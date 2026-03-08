@@ -19,10 +19,11 @@ import type { Client }     from '@/types'
 type FilterValue = 'all' | typeof SECTORS[number]
 
 interface Props {
-  clients?: Client[]
+  clients?:   Client[]
+  companyId?: string
 }
 
-export function ClientsClient({ clients = [] }: Props) {
+export function ClientsClient({ clients = [], companyId = '' }: Props) {
   const t      = useTranslations('clients')
   const router = useRouter()
 
@@ -168,11 +169,12 @@ export function ClientsClient({ clients = [] }: Props) {
       {formOpen && (
         <ClientForm
           client={editClient}
+          companyId={companyId}
           onClose={() => { setFormOpen(false); setEditClient(null) }}
           onSaved={() => {
             setFormOpen(false)
             setEditClient(null)
-            router.refresh() // re-déclenche le Server Component
+            router.refresh()
           }}
         />
       )}
