@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     'Professional Services SaaS',
     'Digital Services SaaS',
     'Design Agency SaaS',
-    'Marketing Agency SaaS',    
+    'Marketing Agency SaaS',
     'MCP staffing',
     'consultant management',
   ],
@@ -25,8 +25,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
-      <Toaster />
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   )
 }

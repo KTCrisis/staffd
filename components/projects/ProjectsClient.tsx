@@ -223,7 +223,6 @@ export function ProjectsClient({ projects = [], error }: Props) {
           className={`btn ${showInternal ? 'btn-primary' : 'btn-ghost'}`}
           style={{ color: showInternal ? undefined : 'var(--text2)', fontSize: 10 }}
           onClick={() => setShowInternal(v => !v)}
-          title={t('filters.toggleInternal') ?? 'Projets internes'}
         >
           ◧ {t('filters.toggleInternal')}
         </button>

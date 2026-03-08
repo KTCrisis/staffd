@@ -31,8 +31,8 @@ export default function LoginPage() {
     <div className="login-root">
 
       {/* Décors */}
-      <div className="login-grid"   aria-hidden />
-      <div className="login-glow"   aria-hidden />
+      <div className="login-grid"      aria-hidden />
+      <div className="login-glow"      aria-hidden />
       <div className="login-scanlines" aria-hidden />
 
       {/* Card */}
@@ -50,12 +50,13 @@ export default function LoginPage() {
         {/* Auth required */}
         <div className="login-auth-tag">Authentication required</div>
 
-        {/* Champs */}
-        <div className="login-fields">
+        {/* Champs — vraie balise <form> pour password managers + autocomplétion */}
+        <form className="login-fields" onSubmit={handleSubmit} noValidate>
 
           <div>
-            <label className="login-label">Email</label>
+            <label className="login-label" htmlFor="login-email">Email</label>
             <input
+              id="login-email"
               type="email"
               className="login-input"
               value={email}
@@ -67,7 +68,7 @@ export default function LoginPage() {
 
           <div>
             <div className="login-pwd-header">
-              <label className="login-label">Password</label>
+              <label className="login-label" htmlFor="login-password">Password</label>
               <button
                 type="button"
                 className="login-toggle-pwd"
@@ -77,13 +78,13 @@ export default function LoginPage() {
               </button>
             </div>
             <input
+              id="login-password"
               type={showPwd ? 'text' : 'password'}
               className="login-input"
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
               autoComplete="current-password"
-              onKeyDown={e => e.key === 'Enter' && handleSubmit(e as unknown as FormEvent)}
             />
           </div>
 
@@ -94,8 +95,8 @@ export default function LoginPage() {
 
           {/* Submit */}
           <button
+            type="submit"
             className="login-submit"
-            onClick={handleSubmit}
             disabled={loading || !email || !password}
             style={{ opacity: (!email || !password) ? 0.5 : 1 }}
           >
@@ -106,7 +107,7 @@ export default function LoginPage() {
             ) : '→ Sign in'}
           </button>
 
-        </div>
+        </form>
 
         {/* Footer */}
         <div className="login-footer">
