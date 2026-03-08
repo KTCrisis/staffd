@@ -104,8 +104,8 @@ export default function PlatformDocsPage() {
               headers={['Field', 'Employee', 'Freelance']}
               rows={[
                 ['Daily cost basis', 'Salary × (1 + charges%) ÷ days/yr', 'Billed TJM (or per-assignment override)'],
-                ['CP / RTT', '✓ tracked', '— not applicable'],
-                ['Leave requests', 'CP, RTT, unpaid, auth. absence', 'Unpaid, auth. absence only'],
+                ['Paid Leave / Flex Days', '✓ tracked', '— not applicable'],
+                ['Leave requests', 'Paid Leave, Flex Days, unpaid, auth. absence', 'Unpaid, auth. absence only'],
                 ['Profitability margin', 'Revenue − fully-loaded cost', 'Revenue − billed rate'],
               ]}
             />

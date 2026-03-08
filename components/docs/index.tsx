@@ -198,12 +198,10 @@ export function DemoBanner() {
       <div>
         <div className="doc-demo-banner-text">
           <strong>Try staff7 live</strong> — explore the platform with pre-loaded demo data.
-          Switch between admin, manager, and consultant views.
+          Switch between admin, manager, freelance, consultant or solo views.
         </div>
         <div className="doc-demo-banner-creds">
-          <span className="doc-demo-banner-cred">admin · demo1@staff7.art</span>
-          <span className="doc-demo-banner-cred">manager · flux7art+alice@gmail.com</span>
-          <span className="doc-demo-banner-cred">consultant · flux7art+emma@gmail.com</span>
+          <span className="doc-demo-banner-cred">Request admin account</span>
         </div>
       </div>
       <Link href="/login?demo=admin" className="doc-demo-banner-btn">
