@@ -7,7 +7,7 @@ import { actionAgent, executeAction } from './action-agent'
 
 // Mots-clés qui suggèrent une intention d'action (pré-filtre cheap)
 // Le vrai tool calling kimi confirme ou infirme ensuite.
-const ACTION_KEYWORDS = /\b(approve|refuse|reject|assign|update|cancel|set status|mark as|valider|refuser|affecter|annuler)\b/i
+const ACTION_KEYWORDS = /\b(approv|refuse|reject|assign|update|cancel|set status|mark as|valid|refus|affect|annul|accept|confirm|approuv)/i
 
 // ── Auth helper ──────────────────────────────────────────────
 function extractRole(token: string): string | null {

@@ -8,10 +8,19 @@ import { approveLeave, refuseLeave } from './actions/leave'
 import { updateProjectStatus }       from './actions/project'
 
 const ACTION_SYSTEM_PROMPT = `You are an action executor for Staffd, a PSA platform.
-The user wants to perform a write operation (approve, refuse, update, assign).
-Extract the exact action and parameters from the user message.
-Use the provided tools — never respond with plain text.
-If parameters are ambiguous or missing, still call the best matching tool with what you have.`
+The user wants to perform a write operation.
+
+Available operations:
+- approve_leave: approve a pending leave request
+- refuse_leave: refuse a pending leave request (with optional reason)
+- update_project_status: change project status (active|on_hold|completed|draft)
+
+Instructions:
+- Extract the action and parameters from the user message.
+- Always call the matching tool — never respond with plain text.
+- Match consultant names flexibly (first name, last name, or both).
+- If a leave_id is provided, include it. Otherwise the system finds the latest pending request.
+- If parameters are ambiguous, still call the best matching tool with what you have.`
 
 // ── Exécute le tool call après confirmation ──────────────────
 export async function executeAction(
