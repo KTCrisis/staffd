@@ -290,7 +290,7 @@ export default function DocsIndexPage() {
         {/* Footer */}
         <div className="doc-footer">
           <span style={{ fontSize:10, color:'var(--text2)', letterSpacing:2 }}>
-            <Staff7 /> · cloudflare · supabase · ollama · open beta 2026
+            <Staff7 /> open beta 2026
           </span>
           <div style={{ display:'flex', gap:10 }}>
             <Link href="/login" style={{ fontSize:10, letterSpacing:2, color:'var(--text2)', padding:'8px 16px', border:'1px solid var(--border)', borderRadius:2, textDecoration:'none', textTransform:'uppercase' }}>
