@@ -6,6 +6,7 @@ import { useTranslations }       from 'next-intl'
 import { supabase }              from '@/lib/supabase'
 import { InvoicePreview }        from '@/components/invoices/InvoicePreview'
 import type { InvoiceLineItem, BillingSettings } from '@/components/invoices/InvoicePreview'
+import { toISO, addDays }  from '@/lib/utils'
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ export function InvoiceForm() {
   const [projectId,     setProjectId]     = useState('')
   const [projectName,   setProjectName]   = useState('')
   const [consultantId,  setConsultantId]  = useState('')
-  const [invoiceDate,   setInvoiceDate]   = useState(new Date().toISOString().slice(0, 10))
+  const [invoiceDate,   setInvoiceDate]   = useState(toISO(new Date()))
   const [paymentTerms,  setPaymentTerms]  = useState(30)
   const [tvaRate,       setTvaRate]       = useState(20)
   const [notes,         setNotes]         = useState('')
@@ -124,7 +125,7 @@ export function InvoiceForm() {
   const [saving,      setSaving]      = useState(false)
 
   const dueDate = invoiceDate
-    ? new Date(new Date(invoiceDate).getTime() + paymentTerms * 86400000).toISOString().slice(0, 10)
+    ? toISO(addDays(new Date(invoiceDate), paymentTerms))
     : ''
 
   const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unit_price, 0)

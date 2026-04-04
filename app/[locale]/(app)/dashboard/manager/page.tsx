@@ -4,7 +4,7 @@ import { getPageAuth }            from '@/lib/auth/page-auth'
 import { getTranslations }        from 'next-intl/server'
 import { Topbar }                 from '@/components/layout/Topbar'
 import { ManagerDashboardClient } from '@/components/dashboard/ManagerDashboardClient'
-import { getMondayOf }            from '@/lib/utils'
+import { getMondayOf, toISO }     from '@/lib/utils'
 import type { CalendarEvent }     from '@/components/dashboard/MiniCalendar'
 
 interface Props {
@@ -19,8 +19,8 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
   const monday    = getMondayOf(new Date())
   const sunday    = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
-  const mondayISO = monday.toISOString().slice(0, 10)
-  const sundayISO = sunday.toISOString().slice(0, 10)
+  const mondayISO = toISO(monday)
+  const sundayISO = toISO(sunday)
 
   let teamIds: string[] | null = null
   if (role === 'manager') {

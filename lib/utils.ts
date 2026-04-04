@@ -31,6 +31,13 @@ export function toISO(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
+/** Add days to a date (DST-safe — uses calendar arithmetic, not ms) */
+export function addDays(d: Date, n: number): Date {
+  const r = new Date(d)
+  r.setDate(r.getDate() + n)
+  return r
+}
+
 /** Jours ouvrés d'une semaine à partir du lundi */
 export function getWeekDays(monday: Date): Date[] {
   return Array.from({ length: 5 }, (_, i) => {

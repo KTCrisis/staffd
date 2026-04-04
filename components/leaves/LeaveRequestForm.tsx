@@ -6,6 +6,7 @@ import { createLeaveRequest }    from '@/lib/data'
 import { ABSENCE_MOTIFS }        from '@/types'
 import { supabase }              from '@/lib/supabase'
 import type { ContractType }     from '@/lib/data'
+import { toISO }                 from '@/lib/utils'
 
 type LeaveType = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
 
@@ -24,7 +25,7 @@ function countWorkingDays(start: string, end: string, holidays: Set<string> = ne
   const cur = new Date(s)
   while (cur <= e) {
     const day     = cur.getDay()
-    const dateStr = cur.toISOString().slice(0, 10)
+    const dateStr = toISO(cur)
     if (day !== 0 && day !== 6 && !holidays.has(dateStr)) count++
     cur.setDate(cur.getDate() + 1)
   }
@@ -118,10 +119,10 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
         while (added < selectedMotif.days - 1) {
           d.setDate(d.getDate() + 1)
           const dow     = d.getDay()
-          const dateStr = d.toISOString().slice(0, 10)
+          const dateStr = toISO(d)
           if (dow !== 0 && dow !== 6 && !holidays.has(dateStr)) added++
         }
-        return d.toISOString().split('T')[0]
+        return toISO(d)
       })()
     : form.end_date
 

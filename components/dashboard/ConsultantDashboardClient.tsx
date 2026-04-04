@@ -86,7 +86,7 @@ export function ConsultantDashboardClient({
 
   const weekDays = useMemo(() => {
     const base = new Date(monday + 'T00:00:00')
-    return Array.from({ length: 5 }, (_, i) => new Date(base.getTime() + i * 86400000))
+    return Array.from({ length: 5 }, (_, i) => { const d = new Date(base); d.setDate(d.getDate() + i); return d })
   }, [monday])
 
   const occRate   = me?.occupancy_rate ?? 0

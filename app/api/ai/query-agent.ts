@@ -108,8 +108,10 @@ async function fetchContext(cmd: string, url: string, userToken: string): Promis
       const mon = new Date()
       mon.setDate(mon.getDate() - (mon.getDay() === 0 ? 6 : mon.getDay() - 1))
       mon.setHours(0, 0, 0, 0)
-      const from = mon.toISOString().slice(0, 10)
-      const to   = new Date(mon.getTime() + 4 * 86400000).toISOString().slice(0, 10)
+      const _iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      const fri = new Date(mon); fri.setDate(fri.getDate() + 4)
+      const from = _iso(mon)
+      const to   = _iso(fri)
       const [consultants, timesheets] = await Promise.all([
         q('consultant_occupancy', 'id,name,role,contract_type'),
         q('timesheets', 'consultant_id,date,value,status', `date=gte.${from}&date=lte.${to}`),

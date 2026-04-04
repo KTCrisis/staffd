@@ -7,6 +7,7 @@
 import { useActiveTenant } from '../tenant-context'
 import { supabase }        from '../supabase'
 import { useSupabase }     from './core'
+import { toISO, addDays }  from '../utils'
 
 // ──────────────────────────────────────────────────────────────
 // TYPES
@@ -49,8 +50,8 @@ function toTimesheet(row: Record<string, unknown>): Timesheet {
 
 export function useTimesheets(monday: Date) {
   const { activeTenantId } = useActiveTenant()
-  const from = monday.toISOString().slice(0, 10)
-  const to   = new Date(monday.getTime() + 4 * 86_400_000).toISOString().slice(0, 10)
+  const from = toISO(monday)
+  const to   = toISO(addDays(monday, 4))
   return useSupabase(async () => {
     let q = supabase.from('timesheets').select('*').gte('date', from).lte('date', to).order('date')
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
@@ -79,7 +80,7 @@ export function useApprovedLeavesForWeek(weekStart: string, weekEnd: string) {
       const start = new Date(row.start_date as string)
       const end   = new Date(row.end_date   as string)
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().slice(0, 10)
+        const dateStr = toISO(d)
         if (dateStr >= weekStart && dateStr <= weekEnd) {
           overlays.push({
             consultantId: row.consultant_id as string,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { toISO }           from '@/lib/utils'
 
 // ── Shared types (exported for InvoiceForm) ──────────────────────────────────
 
@@ -57,7 +58,7 @@ export function InvoicePreview({
   const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unit_price, 0)
   const tvaAmount = subtotal * tvaRate / 100
   const total     = subtotal + tvaAmount
-  const today     = invoiceDate || new Date().toISOString().slice(0, 10)
+  const today     = invoiceDate || toISO(new Date())
 
   const tableHeaders = [
     { key: 'description', align: 'left'  },
