@@ -20,8 +20,8 @@ export function useSupabase<T>(fetcher: () => Promise<T>, deps: unknown[] = []) 
     setLoading(true)
     setError(null)
     fetcher()
-      .then(d  => { if (!cancelled) { setData(d);          setError(null)    } })
-      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
+      .then(d  => { if (!cancelled) { setData(d);    setError(null)      } })
+      .catch(e => { if (!cancelled) { setData(null); setError(e.message) } })
       .finally(()=> { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps

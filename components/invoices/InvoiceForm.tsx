@@ -7,6 +7,7 @@ import { supabase }              from '@/lib/supabase'
 import { InvoicePreview }        from '@/components/invoices/InvoicePreview'
 import type { InvoiceLineItem, BillingSettings } from '@/components/invoices/InvoicePreview'
 import { toISO, addDays }  from '@/lib/utils'
+import { useActiveTenant } from '@/lib/tenant-context'
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
@@ -95,6 +96,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export function InvoiceForm() {
   const router = useRouter()
+  const { activeTenantId } = useActiveTenant()
   const t      = useTranslations('invoices.form')
   const MONTHS = t.raw('months') as string[]
 
@@ -136,20 +138,32 @@ export function InvoiceForm() {
     ? MONTHS[importMonth] + ' ' + importYear
     : ''
 
-  // Load reference data
+  // Load reference data (scoped by tenant)
   useEffect(() => {
-    Promise.all([
-      supabase.from('clients').select('id,name').order('name'),
-      supabase.from('projects').select('id,name,client_id,tjm_vendu').eq('status', 'active'),
-      supabase.from('consultants').select('id,name,tjm_cout_reel').order('name'),
-      supabase.from('companies').select('billing_settings').single(),
-    ]).then(([cl, pr, co, comp]) => {
+    let cancelled = false
+    const tid = activeTenantId
+
+    let clQ = supabase.from('clients').select('id,name').order('name')
+    let prQ = supabase.from('projects').select('id,name,client_id,tjm_vendu').eq('status', 'active')
+    let coQ = supabase.from('consultants').select('id,name,tjm_cout_reel').order('name')
+    const cpQ = supabase.from('companies').select('billing_settings').single()
+
+    if (tid) {
+      clQ = clQ.eq('company_id', tid)
+      prQ = prQ.eq('company_id', tid)
+      coQ = coQ.eq('company_id', tid)
+    }
+
+    Promise.all([clQ, prQ, coQ, cpQ]).then(([cl, pr, co, comp]) => {
+      if (cancelled) return
       if (cl.data)   setClients(cl.data)
       if (pr.data)   setProjects(pr.data)
       if (co.data)   setConsultants(co.data)
       if (comp.data?.billing_settings) setBilling(comp.data.billing_settings)
     })
-  }, [])
+
+    return () => { cancelled = true }
+  }, [activeTenantId])
 
   // ── Import depuis timesheet ──────────────────────────────────────────────
 
@@ -264,7 +278,7 @@ export function InvoiceForm() {
 
       if (error || !inv) throw error
 
-      await supabase.from('invoice_lines').insert(
+      const { error: linesErr } = await supabase.from('invoice_lines').insert(
         lines.filter(l => l.description).map((l, i) => ({
           invoice_id:  inv.id,
           company_id:  company.id,
@@ -276,8 +290,11 @@ export function InvoiceForm() {
           sort_order:  i,
         }))
       )
+      if (linesErr) throw linesErr
 
       router.push('/invoices')
+    } catch (e: any) {
+      alert(e?.message || 'Failed to save invoice')
     } finally {
       setSaving(false)
     }

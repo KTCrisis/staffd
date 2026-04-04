@@ -90,29 +90,5 @@ export const TOOLS = [
       },
     },
   },
-  {
-    type: 'function',
-    function: {
-      name:        'assign_consultant',
-      description: 'Assign a consultant to a project with an allocation percentage',
-      parameters:  {
-        type:       'object',
-        properties: {
-          consultant_name: {
-            type:        'string',
-            description: 'Full name of the consultant',
-          },
-          project_name: {
-            type:        'string',
-            description: 'Name of the project',
-          },
-          allocation: {
-            type:        'number',
-            description: 'Allocation percentage (0-100), default 100',
-          },
-        },
-        required: ['consultant_name', 'project_name'],
-      },
-    },
-  },
+  // assign_consultant — removed until handler is implemented (assignement.ts is empty)
 ] as const

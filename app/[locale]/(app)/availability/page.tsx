@@ -35,12 +35,15 @@ export default async function AvailabilityPage({ searchParams }: Props) {
     assignmentsQ = assignmentsQ.eq('company_id', tenant)
   }
 
+  const noMatch = '00000000-0000-0000-0000-000000000000'
   if (managerConsultantIds && managerConsultantIds.length > 0) {
     consultantsQ = consultantsQ.in('id', managerConsultantIds)
     leavesQ      = leavesQ.in('consultant_id', managerConsultantIds)
     assignmentsQ = assignmentsQ.in('consultant_id', managerConsultantIds)
   } else if (managerConsultantIds?.length === 0) {
-    consultantsQ = consultantsQ.eq('id', '00000000-0000-0000-0000-000000000000')
+    consultantsQ = consultantsQ.eq('id', noMatch)
+    leavesQ      = leavesQ.eq('consultant_id', noMatch)
+    assignmentsQ = assignmentsQ.eq('consultant_id', noMatch)
   }
 
   const [consultantsRes, leavesRes, assignmentsRes] = await Promise.all([
