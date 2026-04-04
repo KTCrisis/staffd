@@ -13,12 +13,14 @@ const headers = {
 
 export async function updateProjectStatus(
   projectName: string,
-  status:      'active' | 'on_hold' | 'completed' | 'draft'
+  status:      'active' | 'on_hold' | 'completed' | 'draft',
+  companyId:   string | null,
 ): Promise<ActionResult> {
   try {
-    // Trouver le projet par nom
+    // Trouver le projet par nom — scoped by company_id
+    const companyFilter = companyId ? `&company_id=eq.${companyId}` : ''
     const pRes = await fetch(
-      `${supabaseUrl}/rest/v1/projects?name=ilike.*${encodeURIComponent(projectName)}*&select=id,name,status,company_id&limit=1`,
+      `${supabaseUrl}/rest/v1/projects?name=ilike.*${encodeURIComponent(projectName)}*${companyFilter}&select=id,name,status,company_id&limit=1`,
       { headers }
     )
     const projects = await pRes.json()

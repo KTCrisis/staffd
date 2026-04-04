@@ -25,20 +25,22 @@ Instructions:
 // ── Exécute le tool call après confirmation ──────────────────
 export async function executeAction(
   actionName: string,
-  params:     Record<string, string>
+  params:     Record<string, string>,
+  companyId:  string | null,
 ): Promise<{ success: boolean; message: string }> {
 
   switch (actionName) {
     case 'approve_leave':
-      return approveLeave(params.consultant_name, params.leave_id)
+      return approveLeave(params.consultant_name, companyId, params.leave_id)
 
     case 'refuse_leave':
-      return refuseLeave(params.consultant_name, params.leave_id, params.reason)
+      return refuseLeave(params.consultant_name, companyId, params.leave_id, params.reason)
 
     case 'update_project_status':
       return updateProjectStatus(
         params.project_name,
-        params.status as 'active' | 'on_hold' | 'completed' | 'draft'
+        params.status as 'active' | 'on_hold' | 'completed' | 'draft',
+        companyId,
       )
 
     default:
@@ -94,6 +96,20 @@ export async function actionAgent(
       new ReadableStream({
         start(c) {
           c.enqueue(sseEvt({ text: `⚠ Cannot reach Ollama: ${String(e)}` }))
+          c.enqueue(done)
+          c.close()
+        },
+      }),
+      { headers }
+    )
+  }
+
+  if (!ollamaRes.ok) {
+    const errText = await ollamaRes.text().catch(() => 'Unknown error')
+    return new Response(
+      new ReadableStream({
+        start(c) {
+          c.enqueue(sseEvt({ text: `⚠ Ollama error (${ollamaRes.status}): ${errText.slice(0, 200)}` }))
           c.enqueue(done)
           c.close()
         },

@@ -2,6 +2,7 @@
 // Orchestrateur — route vers QueryAgent ou ActionAgent selon le message.
 // NB: pas de "export const runtime = 'edge'" — incompatible avec @supabase/supabase-js sur Cloudflare.
 
+import { createClient } from '@supabase/supabase-js'
 import { queryAgent }              from './query-agent'
 import { actionAgent, executeAction } from './action-agent'
 
@@ -9,13 +10,27 @@ import { actionAgent, executeAction } from './action-agent'
 // Le vrai tool calling kimi confirme ou infirme ensuite.
 const ACTION_KEYWORDS = /\b(approv|refuse|reject|assign|update|cancel|set status|mark as|valid|refus|affect|annul|accept|confirm|approuv)/i
 
-// ── Auth helper ──────────────────────────────────────────────
-function extractRole(token: string): string | null {
+// ── Auth helper — server-side JWT verification via Supabase ──
+async function verifyUser(token: string): Promise<{
+  role: string | null
+  companyId: string | null
+  userId: string | null
+}> {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload?.app_metadata?.user_role ?? null
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    )
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) return { role: null, companyId: null, userId: null }
+    return {
+      role:      user.app_metadata?.user_role ?? null,
+      companyId: user.app_metadata?.company_id ?? null,
+      userId:    user.id,
+    }
   } catch {
-    return null
+    return { role: null, companyId: null, userId: null }
   }
 }
 
@@ -48,7 +63,7 @@ export async function POST(req: Request): Promise<Response> {
     }}), { headers })
   }
 
-  const role = extractRole(userToken)
+  const { role, companyId } = await verifyUser(userToken)
   if (role !== 'admin' && role !== 'super_admin') {
     return new Response(new ReadableStream({ start(c) {
       c.enqueue(sse('⚠ Accès refusé — console réservée aux administrateurs.')); c.enqueue(done); c.close()
@@ -72,15 +87,21 @@ export async function POST(req: Request): Promise<Response> {
   return queryAgent(body, userToken, apiKey, model, host)
 }
 
-// ── POST /api/ai/execute — exécution après confirmation UI ───
+// ── PUT /api/ai — exécution après confirmation UI ────────────
 // Appelé par le frontend quand l'user clique "Confirm" sur ActionConfirm.
 export async function PUT(req: Request): Promise<Response> {
   const authHeader = req.headers.get('Authorization') ?? ''
   const userToken  = authHeader.replace('Bearer ', '').trim()
-  const role       = extractRole(userToken)
+  const { role, companyId } = await verifyUser(userToken)
 
   if (role !== 'admin' && role !== 'super_admin') {
     return new Response(JSON.stringify({ success: false, message: 'Unauthorized' }), {
+      status: 403, headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  if (!companyId && role !== 'super_admin') {
+    return new Response(JSON.stringify({ success: false, message: 'No company associated' }), {
       status: 403, headers: { 'Content-Type': 'application/json' }
     })
   }
@@ -89,7 +110,7 @@ export async function PUT(req: Request): Promise<Response> {
   try { body = await req.json() }
   catch { return new Response('Bad request', { status: 400 }) }
 
-  const result = await executeAction(body.action, body.params)
+  const result = await executeAction(body.action, body.params, companyId)
 
   return new Response(JSON.stringify(result), {
     headers: { 'Content-Type': 'application/json' }

@@ -14,21 +14,23 @@ const headers = {
 }
 
 // ── Helper — trouve la leave request pending d'un consultant ─
-async function findPendingLeave(consultantName: string, leaveId?: string) {
-  // Si on a l'ID direct, on l'utilise
+// companyId scopes all queries to the caller's tenant.
+async function findPendingLeave(consultantName: string, companyId: string | null, leaveId?: string) {
+  // Si on a l'ID direct, on l'utilise (still scoped via consultant's company_id)
   if (leaveId) {
+    const companyFilter = companyId ? `&consultants.company_id=eq.${companyId}` : ''
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveId}&status=eq.pending&select=id,consultant_id,type,start_date,end_date,days`,
+      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveId}&status=eq.pending&select=id,consultant_id,type,start_date,end_date,days,consultants!inner(company_id)${companyFilter}`,
       { headers }
     )
     const rows = await res.json()
     return rows?.[0] ?? null
   }
 
-  // Sinon on cherche par nom de consultant
-  // 1. Trouver le consultant
+  // Sinon on cherche par nom de consultant — scoped by company_id
+  const companyFilter = companyId ? `&company_id=eq.${companyId}` : ''
   const cRes = await fetch(
-    `${supabaseUrl}/rest/v1/consultants?name=ilike.*${encodeURIComponent(consultantName)}*&select=id,name`,
+    `${supabaseUrl}/rest/v1/consultants?name=ilike.*${encodeURIComponent(consultantName)}*${companyFilter}&select=id,name`,
     { headers }
   )
   const consultants = await cRes.json()
@@ -48,10 +50,11 @@ async function findPendingLeave(consultantName: string, leaveId?: string) {
 // ── approve_leave ─────────────────────────────────────────────
 export async function approveLeave(
   consultantName: string,
+  companyId: string | null,
   leaveId?: string
 ): Promise<ActionResult> {
   try {
-    const leave = await findPendingLeave(consultantName, leaveId)
+    const leave = await findPendingLeave(consultantName, companyId, leaveId)
 
     if (!leave) {
       return {
@@ -109,11 +112,12 @@ export async function approveLeave(
 // ── refuse_leave ──────────────────────────────────────────────
 export async function refuseLeave(
   consultantName: string,
+  companyId: string | null,
   leaveId?:       string,
   reason?:        string
 ): Promise<ActionResult> {
   try {
-    const leave = await findPendingLeave(consultantName, leaveId)
+    const leave = await findPendingLeave(consultantName, companyId, leaveId)
 
     if (!leave) {
       return {
