@@ -16,7 +16,7 @@ export default async function DashboardConsultantPage() {
   const { data: meData } = await supabase
     .from('consultant_occupancy')
     .select('*')
-    .eq('user_id', userId!)
+    .eq('user_id', userId ?? '')
     .single()
 
   if (!meData) {

@@ -201,7 +201,7 @@ export function TimesheetsClient({
   const { data: companyData }                  = useCompanySettings()
   const { data: approvedLeaves }               = useApprovedLeavesForWeek(weekStart, weekEnd)
 
-  const consultantsSafe   = consultants ?? []
+  const consultantsSafe   = useMemo(() => consultants ?? [], [consultants])
   const consultantsLoaded = Array.isArray(consultants)
   const projectsLoaded    = projectsMap != null
 
@@ -231,7 +231,7 @@ export function TimesheetsClient({
       for (const [cc, entries] of results) map[cc] = entries
       setHolidayMap(map)
     })
-  }, [companyCountry, consultantsSafe, monday.getFullYear()])
+  }, [companyCountry, consultantsSafe, weekStart])
 
   const getHoliday = useCallback((consultantCountry: string | null | undefined, dateStr: string): HolidayEntry | undefined => {
     const cc = consultantCountry ?? companyCountry

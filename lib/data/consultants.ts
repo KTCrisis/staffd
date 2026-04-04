@@ -147,7 +147,7 @@ export function useConsultantProjectsMap() {
     let q = supabase
       .from('assignments')
       .select('consultant_id, projects!inner ( id, name, status )')
-    if (activeTenantId) q = (q as any).eq('company_id', activeTenantId)
+    if (activeTenantId) q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
 

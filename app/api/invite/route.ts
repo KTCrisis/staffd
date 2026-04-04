@@ -43,6 +43,12 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Missing fields' }, { status: 400 })
   }
 
+  // Verify companyId matches the caller's company (prevent cross-tenant invite)
+  const callerCompanyId = user.app_metadata?.company_id
+  if (callerCompanyId && companyId && callerCompanyId !== companyId) {
+    return Response.json({ error: 'Cannot invite to a different company' }, { status: 403 })
+  }
+
   // 2. Vérifier si un user Auth existe déjà avec cet email
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
   const existingUser = existingUsers?.users?.find(u => u.email === email)

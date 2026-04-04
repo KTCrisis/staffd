@@ -20,7 +20,8 @@ export default async function FinancialsPage({ searchParams }: Props) {
   let query = supabase.from('project_financials').select('*')
   if (tenant) query = query.eq('company_id', tenant)
 
-  const { data: projects } = await query
+  const { data: projects, error } = await query
+  if (error) console.error('Financials query error:', error.message)
 
   return (
     <>

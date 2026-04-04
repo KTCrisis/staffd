@@ -32,6 +32,11 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
     consultantsQ, projectsQ, leavesQ, activityQ,
   ])
 
+  if (consultantsRes.error) console.error('Admin dashboard consultants:', consultantsRes.error.message)
+  if (projectsRes.error)    console.error('Admin dashboard projects:', projectsRes.error.message)
+  if (leavesRes.error)      console.error('Admin dashboard leaves:', leavesRes.error.message)
+  if (activityRes.error)    console.error('Admin dashboard activity:', activityRes.error.message)
+
   const consultants   = consultantsRes.data ?? []
   const projects      = projectsRes.data    ?? []
   const activity      = activityRes.data    ?? []

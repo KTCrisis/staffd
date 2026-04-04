@@ -53,6 +53,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
   // ── Fetch contract_type + country_code du consultant connecté ─────────
   useEffect(() => {
     if (!userId) return
+    let cancelled = false
     const fetchProfile = async () => {
       try {
         const { data } = await supabase
@@ -60,6 +61,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
           .select('contract_type, country_code, company_id')
           .eq('user_id', userId)
           .single()
+        if (cancelled) return
         const ct = (data?.contract_type ?? 'employee') as ContractType
         setContractType(ct)
         if (ct === 'freelance') {
@@ -75,22 +77,25 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
             .single()
           cc = (company?.hr_settings as any)?.country_code ?? 'FR'
         }
+        if (cancelled) return
         const resolvedCC = cc ?? 'FR'
         setCountryCode(resolvedCC)
 
         const year = new Date().getFullYear()
         const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${resolvedCC}`)
         const hData = await r.json()
+        if (cancelled) return
         if (Array.isArray(hData)) {
           setHolidays(new Set(hData.map((h: { date: string }) => h.date)))
         }
       } catch (_) {
         // profil non trouvé — on garde les défauts employee
       } finally {
-        setLoadingProfile(false)
+        if (!cancelled) setLoadingProfile(false)
       }
     }
     fetchProfile()
+    return () => { cancelled = true }
   }, [userId])
 
   // ── Types disponibles selon contract_type ────────────────────────────

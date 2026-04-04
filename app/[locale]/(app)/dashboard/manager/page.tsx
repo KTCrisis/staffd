@@ -63,6 +63,11 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
     consultantsQ, leavesQ, timesheetsQ, activityQ,
   ])
 
+  if (consultantsRes.error) console.error('Manager dashboard consultants:', consultantsRes.error.message)
+  if (leavesRes.error)      console.error('Manager dashboard leaves:', leavesRes.error.message)
+  if (timesheetsRes.error)  console.error('Manager dashboard timesheets:', timesheetsRes.error.message)
+  if (activityRes.error)    console.error('Manager dashboard activity:', activityRes.error.message)
+
   const consultants = consultantsRes.data ?? []
   const activity    = activityRes.data    ?? []
 
