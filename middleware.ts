@@ -44,10 +44,10 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // ── 4. Session requise ────────────────────────────────────
-  const { data: { session } } = await supabase.auth.getSession()
+  // ── 4. Session requise (getUser verifies JWT server-side) ──
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     const localePrefix = pathname.startsWith('/fr') ? '/fr' : ''
     const loginUrl     = new URL(`${localePrefix}/login`, request.url)
     loginUrl.searchParams.set('redirectTo', pathname)
@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── 5. Guards de routes par rôle (depuis roles.ts) ────────
-  const role = session.user.app_metadata?.user_role as string | undefined
+  const role = user.app_metadata?.user_role as string | undefined
 
   for (const guard of ROUTE_GUARDS) {
     const isGuarded = guard.segments.some(segment =>
