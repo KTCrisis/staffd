@@ -43,3 +43,4 @@ next-env.d.ts
 
 staffd-notes.md
 .dev.vars
+.claude/
