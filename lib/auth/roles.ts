@@ -53,7 +53,7 @@ export const ROUTE_GUARDS: Array<{
 }> = [
   {
     // Finances, paramètres, IA → admin uniquement
-    segments: ['financials', 'profitability', 'settings', 'ai'],
+    segments: ['financials', 'profitability', 'simulator', 'settings', 'ai'],
     check:    isAdmin,
     redirect: '/dashboard',
   },

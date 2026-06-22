@@ -20,6 +20,7 @@
     "appelsOffres": "Appels d'offres",
     "financials": "Finances",
     "profitability": "Rentabilité",
+    "simulator": "Simu embauche",
     "invoices": "Factures",
     "agenticAI": "IA agentique",
     "logout": "Déconnexion",
@@ -673,6 +674,46 @@
     },
     "restricted": "// accès restreint — admin uniquement",
     "cibleGap": "cible {cible}€ · coût {cout}€"
+  },
+  "simulator": {
+    "title": "Simulateur d'embauche",
+    "breadcrumb": "// salaire proposable — admin uniquement",
+    "adminBadge": "🔒 Outil de cadrage — Admin uniquement",
+    "intro": "Saisis le TJM vendu et ta marge cible pour obtenir le salaire ou le tarif maximum que tu peux proposer.",
+    "inputs": {
+      "title": "Entrées",
+      "tjmVendu": "TJM vendu (€/j)",
+      "tjmVenduHint": "Ce que le client paie par jour",
+      "margeCible": "Marge cible (%)",
+      "margeCibleHint": "Marge brute que tu veux conserver",
+      "chargesPct": "Charges patronales (%)",
+      "chargesPctHint": "Standard FR ≈ 42 %",
+      "joursTravailles": "Jours travaillés / an",
+      "joursTravaillesHint": "Standard FR : 218 jours"
+    },
+    "kpi": {
+      "coutJour": "Coût/jour max",
+      "brutAnnuel": "Brut annuel max",
+      "brutMensuel": "Brut mensuel max",
+      "tjmFreelance": "TJM freelance max"
+    },
+    "employee": {
+      "title": "Salarié",
+      "note": "Salarié : salaire annuel brut chargé maximum pour tenir la marge cible."
+    },
+    "freelance": {
+      "title": "Freelance",
+      "note": "Freelance : TJM maximum à payer pour tenir la marge cible."
+    },
+    "details": {
+      "title": "Détail & méthode"
+    },
+    "formula": {
+      "title": "Comment c'est calculé",
+      "line1": "Coût/jour max = TJM vendu × (1 − marge)",
+      "line2": "Brut annuel max = coût/jour max × jours travaillés ÷ (1 + charges)"
+    },
+    "invalid": "Saisis un TJM vendu et une marge inférieure à 100 % pour démarrer."
   },
   "consultantForm": {
     "titleCreate": "// nouveau consultant",
