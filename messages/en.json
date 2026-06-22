@@ -20,6 +20,7 @@
     "appelsOffres": "Bids / RFPs",
     "financials": "Finances",
     "profitability": "Profitability",
+    "simulator": "Hiring sim",
     "invoices": "Invoices",
     "agenticAI": "Agentic AI",
     "logout": "Log out",
@@ -673,6 +674,46 @@
     },
     "restricted": "// restricted access — admins only",
     "cibleGap": "target {cible}€ · cost {cout}€"
+  },
+  "simulator": {
+    "title": "Hiring simulator",
+    "breadcrumb": "// proposable salary — admin only",
+    "adminBadge": "🔒 Planning tool — Admin only",
+    "intro": "Enter the daily rate sold and your target margin to get the maximum salary or rate you can offer.",
+    "inputs": {
+      "title": "Inputs",
+      "tjmVendu": "Daily rate sold (€/d)",
+      "tjmVenduHint": "What the client pays per day",
+      "margeCible": "Target margin (%)",
+      "margeCibleHint": "Gross margin you want to keep",
+      "chargesPct": "Employer charges (%)",
+      "chargesPctHint": "FR standard ≈ 42%",
+      "joursTravailles": "Working days / year",
+      "joursTravaillesHint": "FR standard: 218 days"
+    },
+    "kpi": {
+      "coutJour": "Max daily cost",
+      "brutAnnuel": "Max gross salary / year",
+      "brutMensuel": "Max gross / month",
+      "tjmFreelance": "Max freelance rate"
+    },
+    "employee": {
+      "title": "Employee",
+      "note": "Employee: maximum fully-loaded annual salary to stay at the target margin."
+    },
+    "freelance": {
+      "title": "Freelance",
+      "note": "Freelance: maximum daily rate to pay to stay at the target margin."
+    },
+    "details": {
+      "title": "Details & method"
+    },
+    "formula": {
+      "title": "How it's computed",
+      "line1": "Max daily cost = rate sold × (1 − margin)",
+      "line2": "Max gross / year = max daily cost × working days ÷ (1 + charges)"
+    },
+    "invalid": "Enter a daily rate sold and a margin below 100% to start."
   },
   "consultantForm": {
     "titleCreate": "// new consultant",

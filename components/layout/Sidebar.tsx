@@ -148,6 +148,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
         ...(isSuperAdmin || isAdmin || isSolo ? [
           { label: t('financials'),    icon: '$', href: p('/financials')    },
           { label: t('profitability'), icon: '◈', href: p('/profitability') },
+          { label: t('simulator'),     icon: '∿', href: p('/simulator')     },
         ] : []),
         { label: t('invoices'), icon: '◉', href: p('/invoices') },
       ],
