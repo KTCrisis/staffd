@@ -58,10 +58,12 @@ Extensions de `companies` :
 
 ```
 companies
-  + entity_type      : 'holding' | 'filiale' | 'sasu'   (défaut conserve le comportement actuel)
+  + entity_type       : 'company' | 'holding' | 'filiale' | 'sasu'   (défaut 'company' = comportement actuel)
   + parent_company_id : uuid null  (arbre opérationnel)
-  + group_id          : uuid       (scoping RLS au niveau groupe)
+  + group_id          : uuid null  (scoping RLS au niveau groupe)
 ```
+
+**Le groupe est implicite (option A, décidé 2026-06-22)** : `group_id` pointe vers l'id du holding racine ; le groupe est le set des sociétés partageant ce `group_id`, sans table dédiée. La config de groupe (politique de distribution, commission par défaut) vivra dans les settings jsonb du holding. Voir l'alternative B en section 10.
 
 Nouvelle table :
 
@@ -201,5 +203,6 @@ Harnais de test minimal à poser dans la foulée : au moins un test RLS (un util
 * Politique de distribution (`taux_de_distribution`) : plancher conditionnel, dérogation à majorité qualifiée.
 * Pool d'equity consultants : prix d'entrée, taille réservée.
 * Éligibilité mère-fille des participations directes en filiale : à valider avec l'expert-comptable.
+* **Groupe explicite (option B, reporté)** : promouvoir le groupe en table `groups` first-class (id, nom, config) au lieu de l'implicite via `group_id` = id du holding (option A retenue au lancement). À reconsidérer si/quand la phase 4 réclame une config de groupe que les settings du holding ne portent pas proprement. Migration additive le moment venu, pas bloquante.
 
 Ces décisions relèvent du pacte d'associés et de l'atelier du 10/07, pas du code. Le modèle ci-dessus les accueille comme des paramètres, pas comme des hypothèses figées.
