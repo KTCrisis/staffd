@@ -1723,4 +1723,20 @@ update consultants set user_id = (select id from auth.users where email = 'flux7
 --   consultant A : flux7art+emma@gmail.com      (NexDigital  — Emma Petit)     ← à créer
 --   consultant B : flux7art+tom@gmail.com       (AgenceCreative — Tom Vasseur) ← à créer
 --   freelance    : flux7art+david@gmail.com     (NexDigital  — David Mora)
+
+-- ============================================================
+-- GRANTS rôles PostgREST (privilèges de TABLE, distincts de la RLS)
+-- ============================================================
+-- Sans ces grants, anon/authenticated/service_role n'ont que les privilèges
+-- par défaut (TRUNCATE/REFERENCES/TRIGGER) et l'API renvoie « permission denied ».
+-- La RLS reste la barrière d'accès aux LIGNES ; ici ce sont les droits de table.
+-- (Le dashboard Supabase les pose automatiquement ; un schéma appliqué en SQL brut
+--  doit les déclarer explicitement.)
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all routines  in schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant all on routines  to anon, authenticated, service_role;
 --   solo         : flux7art+marc@gmail.com      (Marc Dupont, mode solo)
