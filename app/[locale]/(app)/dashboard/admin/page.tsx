@@ -2,6 +2,7 @@
 
 import { getPageAuth }          from '@/lib/auth/page-auth'
 import { getTranslations }      from 'next-intl/server'
+import { redirect }             from 'next/navigation'
 import { Topbar }               from '@/components/layout/Topbar'
 import { AdminDashboardClient } from '@/components/dashboard/AdminDashboardClient'
 import type { CalendarEvent }   from '@/components/dashboard/MiniCalendar'
@@ -13,7 +14,10 @@ interface Props {
 export default async function AdminDashboardPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('dashboard')
-  const { isSA, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
+
+  // Guard serveur — réservé admin/super_admin (le middleware ne couvre pas /dashboard/*)
+  if (role !== 'admin' && !isSA) redirect('/dashboard')
 
   // ── Queries principales ────────────────────────────────────
   let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
