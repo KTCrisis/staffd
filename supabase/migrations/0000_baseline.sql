@@ -65,7 +65,11 @@ create table if not exists companies (
   billing_settings jsonb default '{}'::jsonb,  -- siret, tva, iban, mentions légales, préfixe
   ai_settings      jsonb default '{}'::jsonb,  -- ollama_endpoint, ollama_model, agents_enabled, mcp_tools
   hr_settings      jsonb default '{}'::jsonb,  -- country_code, default_cp, default_rtt, working_days, cra_deadline
-  created_at       timestamptz default now()
+  -- Typage léger d'entité + hiérarchie opérationnelle (business units). PSA pur :
+  -- pas de graphe de capital ici (ownership/dividendes vivront dans le cockpit groupe).
+  entity_type       text not null default 'company' check (entity_type in ('company','holding','filiale','sasu')),
+  parent_company_id uuid references companies(id) on delete set null,
+  created_at        timestamptz default now()
 );
 
 create table if not exists clients (
@@ -360,7 +364,11 @@ $$;
 -- on cherche un consultant de sa company sans user_id et on le lie automatiquement.
 -- Condition : company.mode = 'solo' AND role = 'admin' AND consultant.user_id IS NULL
 create or replace function auto_link_solo_consultant()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
 declare
   v_company_id  uuid;
   v_role        text;
@@ -377,28 +385,28 @@ begin
   end if;
 
   -- Vérifier que la company est en mode solo
-  select mode into v_mode from companies where id = v_company_id;
+  select mode into v_mode from public.companies where id = v_company_id;
   if v_mode <> 'solo' then
     return new;
   end if;
 
   -- Trouver le premier consultant sans user_id dans cette company
   select id into v_consultant
-  from consultants
+  from public.consultants
   where company_id = v_company_id
     and user_id is null
   order by created_at
   limit 1;
 
   if v_consultant is not null then
-    update consultants
+    update public.consultants
       set user_id = new.id
       where id = v_consultant;
   end if;
 
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 -- Trigger sur INSERT (nouveau compte) et UPDATE (mise à jour app_metadata)
 create or replace trigger on_auth_user_solo_link
@@ -408,32 +416,41 @@ create or replace trigger on_auth_user_solo_link
 -- ── Helper : ids des consultants de l'équipe du manager connecté ────────────
 -- Utilisé dans la RLS leave_requests pour scoper la vue manager à son équipe
 create or replace function my_team_consultant_ids()
-returns uuid[] as $$
+returns uuid[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
   select array(
     select tm.consultant_id
-    from team_members tm
-    join teams t on t.id = tm.team_id
+    from public.team_members tm
+    join public.teams t on t.id = tm.team_id
     where t.manager_id in (
-      select id from consultants where user_id = auth.uid()
+      select id from public.consultants where user_id = auth.uid()
     )
   )
-$$ language sql stable security definer;
+$$;
 
 -- ── Trigger : sync consultants.team_id depuis team_members ──────────────────
 -- Maintient une dénormalisation pour accès rapide sans jointure supplémentaire
 create or replace function sync_consultant_team_id()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
 begin
   if tg_op = 'insert' or tg_op = 'update' then
-    update consultants set team_id = new.team_id where id = new.consultant_id;
+    update public.consultants set team_id = new.team_id where id = new.consultant_id;
     return new;
   elsif tg_op = 'delete' then
-    update consultants set team_id = null where id = old.consultant_id;
+    update public.consultants set team_id = null where id = old.consultant_id;
     return old;
   end if;
   return null;
 end;
-$$ language plpgsql security definer;
+$$;
 
 create trigger trg_sync_consultant_team_id
   after insert or update or delete on team_members
@@ -879,14 +896,12 @@ create policy "invoices_update" on invoices for update
     or (company_id = my_company_id() and my_role() = 'freelance' and status = 'draft'
         and consultant_id in (select id from consultants where user_id = auth.uid()))
   )
-  -- WITH CHECK : valide le nouvel état de la ligne
-  -- Sans ça, PostgreSQL réapplique USING sur la nouvelle ligne
-  -- → un freelance pourrait auto-valider en passant status='sent'/'paid'
-  -- Freelance : peut modifier librement ses propres factures (admin contrôle les transitions)
+  -- WITH CHECK : la branche freelance impose status='draft' pour empêcher
+  -- l'auto-validation (passage à sent/paid). Les transitions restent admin/manager.
   with check (
     is_super_admin()
     or (company_id = my_company_id() and my_role() in ('admin','manager'))
-    or (company_id = my_company_id() and my_role() = 'freelance'
+    or (company_id = my_company_id() and my_role() = 'freelance' and status = 'draft'
         and consultant_id in (select id from consultants where user_id = auth.uid()))
   );
 create policy "invoices_delete" on invoices for delete using (
