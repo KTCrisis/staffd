@@ -70,12 +70,33 @@ serveur via `getPageAuth` + supabase, puis passent en props). La dette n'est don
 - eslint ignore `.open-next/**` + `.wrangler/**` (le lint redevient un signal utile).
 - `window.supabase` retiré.
 
-### Phase 1 — Fondation
-- **Types Supabase générés** (`supabase gen types typescript`) + clients typés
-  `<Database>`. Effet cascade : supprime ~188 `any`, ancre le snake_case sur le schéma,
-  type les mappers, fait remonter les divergences à la compilation.
-- **Harnais de tests** : Vitest (fonctions de calcul) + tests RLS (seed deux tenants,
-  JWT par rôle) pour verrouiller l'isolation multi-tenant.
+### Phase 1 — Fondation (EN COURS)
+- **Types Supabase générés (FAIT)** : `types/supabase.ts` (committé), régénérable via
+  `npm run db:types` (= `supabase gen types typescript --local`). Stack Supabase local
+  via Docker (`supabase init` → `config.toml`, `supabase start`) applique l'init 0000.
+- **Harnais de tests unitaires (FAIT)** : Vitest configuré (`vitest.config.ts`, scripts
+  `test`/`test:watch`), 19 tests verts. Logique du simulateur extraite en fonction pure
+  testable (`lib/simulator.ts` + `lib/simulator.test.ts`), `lib/utils.test.ts`.
+- **Clients typés `<Database>` (REPORTÉ Phase 2)** : le flip a été tenté et fait remonter
+  ~10 vrais problèmes (voir Phase 2). Reverté pour garder l'arbre vert ; le typage est
+  prêt, le flip se fait avec les corrections.
+- **Tests RLS d'intégration (À FAIRE)** : seed deux tenants + JWT par rôle contre le
+  Supabase local, pour verrouiller l'isolation multi-tenant avant la Phase 4.
+
+### Phase 2 — Consolidation types + correctness
+**Worklist issue du flip `<Database>` (tsc, 2026-06-23) — vrais problèmes révélés :**
+- **BUG** `components/invoices/InvoiceForm.tsx:161` : lit `tjm_cout_reel` sur la TABLE
+  `consultants`, or cette colonne n'existe que sur la vue `consultant_occupancy`.
+- `InvoiceForm.tsx:160-162,257` : types locaux `Project`/`Consultant`/`BillingSettings`
+  divergents de la forme DB (`client_id: string | null` ignoré ; `company_id` absent du
+  type d'insert invoices ; `BillingSettings` vs `Json`/jsonb).
+- `components/leaves/LeaveRequestForm.tsx:169,180` : `leave_days_total`/`leave_days_taken`
+  nullables non gérés.
+- `lib/data/leaves.ts:87,92` : `consultant_id` string|null passé en string.
+- `lib/data/settings.ts:100,121` : `BillingSettings` vs `Json` (spread + cast jsonb).
+
+Puis : dédupliquer les types divergents dans `types/index.ts`, corriger les warnings
+react-hooks, passe correctness (calculs, transitions, agrégats).
 
 ### Phase 2 — Consolidation types + correctness
 - Dédupliquer les types divergents dans `types/index.ts`.

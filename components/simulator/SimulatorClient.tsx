@@ -7,11 +7,10 @@ import { Panel }              from '@/components/ui/Panel'
 import { KpiCard }            from '@/components/ui/KpiCard'
 import { AdminBadge }         from '@/components/ui/AdminBadge'
 import { fmt, fmtTjm, getMargeColor } from '@/lib/utils'
+import { computeProposableSalary } from '@/lib/simulator'
 
-// Le salaire proposable est l'inversion de la vue `consultant_profitability` :
-//   coût/jour max  = tjmVendu × (1 − margeCible)
-//   brut annuel max = coût/jour max × joursTravaillés / (1 + chargesPct)
-// Calcul 100% client, aucune écriture, aucun changement de schéma (phase 1).
+// Le salaire proposable est l'inversion de la vue `consultant_profitability`.
+// La logique de calcul vit dans lib/simulator.ts (pure, testée). Ici : juste l'UI.
 
 const DEFAULT_MARGIN  = 30   // % — marge cible
 const DEFAULT_CHARGES = 42   // % — charges patronales (standard FR)
@@ -28,18 +27,10 @@ export function SimulatorClient({ defaultWorkingDays = 218 }: Props) {
   const [charges,  setCharges]  = useState<number>(DEFAULT_CHARGES)
   const [jours,    setJours]    = useState<number>(defaultWorkingDays)
 
-  const r = useMemo(() => {
-    const valid = tjmVendu > 0 && marge >= 0 && marge < 100 && jours > 0 && charges >= 0
-    if (!valid) return null
-    const coutJourMax = tjmVendu * (1 - marge / 100)
-    const brutAnnuel  = coutJourMax * jours / (1 + charges / 100)
-    return {
-      coutJourMax,
-      brutAnnuel,
-      brutMensuel:  brutAnnuel / 12,
-      tjmFreelance: coutJourMax,
-    }
-  }, [tjmVendu, marge, charges, jours])
+  const r = useMemo(
+    () => computeProposableSalary({ tjmVendu, marge, charges, jours }),
+    [tjmVendu, marge, charges, jours],
+  )
 
   const margeColor = getMargeColor(marge)
 

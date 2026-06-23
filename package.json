@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:types": "supabase gen types typescript --local > types/supabase.ts",
     "pages:build": "rm -rf .next .open-next && next build && npx @opennextjs/cloudflare@latest build && cp -r .open-next/assets/* .open-next/ && mkdir -p .open-next/public && cp -r .open-next/assets/* .open-next/public/ && cp .open-next/worker.js .open-next/_worker.js",
     "preview": "npm run pages:build && wrangler pages dev"
   },
@@ -26,7 +29,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "supabase": "^2.107.0",
     "typescript": "^5",
+    "vitest": "^4.1.9",
     "wrangler": "^4.69.0"
   }
 }
