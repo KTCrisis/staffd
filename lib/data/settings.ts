@@ -7,6 +7,7 @@
 import { useActiveTenant } from '../tenant-context'
 import { supabase }        from '../supabase'
 import { useSupabase }     from './core'
+import type { Json }       from '@/types/supabase'
 
 // ──────────────────────────────────────────────────────────────
 // TYPES
@@ -97,7 +98,7 @@ export function useCompanySettings(dep?: number) {
       ...data,
       billing_settings: (data.billing_settings ?? {}) as BillingSettings,
       ai_settings:      (data.ai_settings      ?? {}) as AISettings,
-      hr_settings:      { ...HR_DEFAULTS, ...(data.hr_settings ?? {}) } as HRSettings,
+      hr_settings:      { ...HR_DEFAULTS, ...((data.hr_settings ?? {}) as Partial<HRSettings>) } as HRSettings,
     } as CompanySettings
   }, [dep, activeTenantId])
 }
@@ -118,7 +119,7 @@ export async function updateCompanySettings(payload: {
   if (payload.billing_settings) {
     const { error } = await supabase.rpc('merge_billing_settings', {
       p_company_id: companyId,
-      p_patch:      payload.billing_settings,
+      p_patch:      payload.billing_settings as unknown as Json,
     })
     if (error) throw new Error(error.message)
   }
@@ -142,7 +143,7 @@ export async function updateAISettings(payload: {
 
   const { error } = await supabase.rpc('merge_ai_settings', {
     p_company_id: companyId,
-    p_patch:      payload.ai_settings,
+    p_patch:      payload.ai_settings as unknown as Json,
   })
   if (error) throw new Error(error.message)
 }

@@ -82,16 +82,18 @@ export async function approveLeave(id: string) {
     .eq('id', id)
   if (error) throw new Error(error.message)
 
-  if (req?.type === 'CP') {
-    await supabase.rpc('increment_leave_taken', {
-      p_consultant_id: req.consultant_id,
-      p_days:          req.days,
-    })
-  } else if (req?.type === 'RTT') {
-    await supabase.rpc('increment_rtt_taken', {
-      p_consultant_id: req.consultant_id,
-      p_days:          req.days,
-    })
+  if (req?.consultant_id) {
+    if (req.type === 'CP') {
+      await supabase.rpc('increment_leave_taken', {
+        p_consultant_id: req.consultant_id,
+        p_days:          req.days,
+      })
+    } else if (req.type === 'RTT') {
+      await supabase.rpc('increment_rtt_taken', {
+        p_consultant_id: req.consultant_id,
+        p_days:          req.days,
+      })
+    }
   }
 }
 

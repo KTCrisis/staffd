@@ -84,19 +84,21 @@ serveur via `getPageAuth` + supabase, puis passent en props). La dette n'est don
   Supabase local, pour verrouiller l'isolation multi-tenant avant la Phase 4.
 
 ### Phase 2 — Consolidation types + correctness
-**Worklist issue du flip `<Database>` (tsc, 2026-06-23) — vrais problèmes révélés :**
-- **BUG** `components/invoices/InvoiceForm.tsx:161` : lit `tjm_cout_reel` sur la TABLE
-  `consultants`, or cette colonne n'existe que sur la vue `consultant_occupancy`.
-- `InvoiceForm.tsx:160-162,257` : types locaux `Project`/`Consultant`/`BillingSettings`
-  divergents de la forme DB (`client_id: string | null` ignoré ; `company_id` absent du
-  type d'insert invoices ; `BillingSettings` vs `Json`/jsonb).
-- `components/leaves/LeaveRequestForm.tsx:169,180` : `leave_days_total`/`leave_days_taken`
-  nullables non gérés.
-- `lib/data/leaves.ts:87,92` : `consultant_id` string|null passé en string.
-- `lib/data/settings.ts:100,121` : `BillingSettings` vs `Json` (spread + cast jsonb).
 
-Puis : dédupliquer les types divergents dans `types/index.ts`, corriger les warnings
-react-hooks, passe correctness (calculs, transitions, agrégats).
+**Flip `<Database>` FAIT (2026-06-23)** : clients browser + serveur typés. Les 12 erreurs
+tsc révélées corrigées, dont le vrai BUG : `InvoiceForm` lisait `tjm_cout_reel` sur la
+TABLE `consultants` (colonne inexistante) → corrigé vers la vue `consultant_occupancy`.
+Aussi : nullabilité (`LeaveRequestForm` leave_days, `leaves.ts` consultant_id), casts
+jsonb (`settings.ts` RPC, `InvoiceForm` emitter_snapshot), coercion des colonnes de vue
+(nullables en types générés). tsc 0, 19 tests unitaires + 6 RLS verts.
+
+**Reste Phase 2 (incrémental, non bloquant) :**
+- Réduire les ~188 `no-explicit-any` : refactorer les 6 mappers `lib/data` (de
+  `Record<string,unknown>` + `as` vers les Row types générés) et les `(row: any)`.
+- Dédupliquer les types métier divergents dans `types/index.ts` (`Consultant` ×3,
+  `Project` ×4, `Client` ×3, `KpiData` ×2, `ContractType`/`LeaveType`/`BillingSettings`).
+- Corriger les warnings react-hooks (`set-state-in-effect`, `exhaustive-deps`).
+- Passe correctness (calculs, transitions de statut, agrégats dashboard).
 
 ### Phase 2 — Consolidation types + correctness
 - Dédupliquer les types divergents dans `types/index.ts`.

@@ -3,6 +3,7 @@
 
 import { cookies }            from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import type { Database }      from '@/types/supabase'
 import type { UserRole }      from './roles'
 
 export interface PageAuth {
@@ -18,7 +19,7 @@ export interface PageAuth {
 export async function getPageAuth(tenant?: string): Promise<PageAuth> {
   const cookieStore = await cookies()
 
-  const anonClient = createServerClient(
+  const anonClient = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll: () => cookieStore.getAll() } }
@@ -33,7 +34,7 @@ export async function getPageAuth(tenant?: string): Promise<PageAuth> {
 
   // Super admin → service_role pour bypass RLS
   const supabase = isSA
-    ? createServerClient(
+    ? createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { cookies: { getAll: () => cookieStore.getAll() } }

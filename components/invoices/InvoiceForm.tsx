@@ -8,12 +8,13 @@ import { InvoicePreview }        from '@/components/invoices/InvoicePreview'
 import type { InvoiceLineItem, BillingSettings } from '@/components/invoices/InvoicePreview'
 import { toISO, addDays }  from '@/lib/utils'
 import { useActiveTenant } from '@/lib/tenant-context'
+import type { Json }       from '@/types/supabase'
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
 interface Client     { id: string; name: string }
-interface Project    { id: string; name: string; client_id: string; tjm_vendu?: number }
-interface Consultant { id: string; name: string; tjm_cout_reel?: number }
+interface Project    { id: string; name: string; client_id: string | null; tjm_vendu?: number | null }
+interface Consultant { id: string; name: string; tjm_cout_reel?: number | null }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -145,7 +146,9 @@ export function InvoiceForm() {
 
     let clQ = supabase.from('clients').select('id,name').order('name')
     let prQ = supabase.from('projects').select('id,name,client_id,tjm_vendu').eq('status', 'active')
-    let coQ = supabase.from('consultants').select('id,name,tjm_cout_reel').order('name')
+    // tjm_cout_reel est une colonne calculée de la VUE consultant_occupancy,
+    // pas de la table consultants (révélé par le typage <Database>).
+    let coQ = supabase.from('consultant_occupancy').select('id,name,tjm_cout_reel').order('name')
     const cpQ = supabase.from('companies').select('billing_settings').single()
 
     if (tid) {
@@ -158,8 +161,12 @@ export function InvoiceForm() {
       if (cancelled) return
       if (cl.data)   setClients(cl.data)
       if (pr.data)   setProjects(pr.data)
-      if (co.data)   setConsultants(co.data)
-      if (comp.data?.billing_settings) setBilling(comp.data.billing_settings)
+      // La vue consultant_occupancy a ses colonnes typées nullables ; on coerce
+      // (un consultant sans id n'a pas de sens pour le sélecteur).
+      if (co.data)   setConsultants(
+        co.data.filter(c => c.id != null).map(c => ({ id: c.id!, name: c.name ?? '', tjm_cout_reel: c.tjm_cout_reel })),
+      )
+      if (comp.data?.billing_settings) setBilling(comp.data.billing_settings as unknown as BillingSettings)
     })
 
     return () => { cancelled = true }
@@ -272,7 +279,7 @@ export function InvoiceForm() {
         source_period_end:   sourceType === 'timesheet' ? importYear + '-' + month + '-' + lastDay : null,
         notes:               notes || null,
         payment_terms:       paymentTerms,
-        emitter_snapshot:    billing,
+        emitter_snapshot:    billing as unknown as Json,
         client_snapshot:     clientName ? { name: clientName, address: clientAddress } : null,
       }).select().single()
 

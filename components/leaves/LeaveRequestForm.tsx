@@ -155,7 +155,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
         .eq('user_id', userId)
         .single()
 
-      if (cErr || !consultant) {
+      if (cErr || !consultant || !consultant.company_id) {
         setError(t('errors.noProfile'))
         return
       }
@@ -166,7 +166,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
       }
 
       if (form.type === 'CP') {
-        const remaining = consultant.leave_days_total - consultant.leave_days_taken
+        const remaining = (consultant.leave_days_total ?? 0) - (consultant.leave_days_taken ?? 0)
         if (days > remaining) { setError(t('errors.notEnoughCP', { remaining })); return }
       }
 
