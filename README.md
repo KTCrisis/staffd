@@ -17,7 +17,7 @@ staff7 is built for:
 - **Independent freelancers** via a solo mode — same platform, simplified interface, no team overhead
 - **Multi-tenant deployments** — each company gets a fully isolated workspace, making it suitable for resellers or white-label use
 
-Core modules: `consultants` · `projects` · `clients` · `timesheets` · `leaves` · `availability` · `timeline` · `financials`
+Core modules: `consultants` · `projects` · `clients` · `timesheets` · `leaves` · `availability` · `timeline` · `financials` · `profitability` · `invoices` · `simulator`
 
 **AI-ready by default.** An agentic console powered by Ollama gives you natural language access to live data — staffing, margins, timesheets, leave requests — without leaving the app. Runs locally or in the cloud; your data stays in your infrastructure.
 
@@ -29,7 +29,7 @@ This is a working product in active development.
 
 | Layer | Tech |
 |---|---|
-| Frontend | Next.js 15 · Tailwind CSS · next-intl (EN/FR) |
+| Frontend | Next.js 16 · React 19 · Tailwind CSS · next-intl (EN/FR) |
 | Backend / DB | Supabase (PostgreSQL + RLS + RPC) |
 | Auth | Supabase Auth — roles in `app_metadata` |
 | AI | Ollama (local/cloud) via SSE streaming |
@@ -61,8 +61,9 @@ npm install
 cp .env.example .env.local
 # Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# 3. Database
-# Run staffd-bootstrap.sql against your Supabase project
+# 3. Database — single consolidated init
+# Apply supabase/migrations/0000_baseline.sql to your Supabase project
+# (e.g. `supabase db reset` on a fresh project, or run the SQL directly)
 
 # 4. Run
 npm run dev
@@ -76,15 +77,18 @@ npm run dev
 app/
   [locale]/
     (app)/        # Authenticated routes
-    (public)/     # /login, /docs
+    login/, docs/ # Public routes
   api/ai/         # SSE streaming route — Ollama proxy
+  api/invite/     # Tenant-scoped consultant invitation (service_role)
 components/
   layout/         # Sidebar, Topbar, AuthProvider
   ui/             # Design system primitives
 lib/
-  auth.ts         # Role helpers (isAdmin, canEdit, canViewFinancials…)
-  data.ts         # Supabase hooks and mutations
+  auth/           # Role helpers + server/page guards (isAdmin, canEdit…)
+  data/           # Supabase hooks and mutations (per-domain modules)
   navigation.ts   # Typed router wrapper
+supabase/
+  migrations/     # 0000_baseline.sql — single consolidated init
 ```
 
 ---

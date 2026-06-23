@@ -1,6 +1,16 @@
 # Plan : staffd vers cockpit de groupe connectd
 
-Document de conception. Rédigé le 2026-06-22. Statut : en design, rien décidé côté code.
+Document de conception. Rédigé le 2026-06-22.
+
+> **Statut révisé 2026-06-23 — décision d'architecture.** staffd **reste un PSA pur**.
+> Le cockpit de groupe (graphe de capital `ownership`, roll-up de dividendes, RLS à
+> deux axes) ne sera **pas** fusionné dans staffd mais construit comme un **contexte
+> borné séparé** qui lira le P&L par entité exposé par staffd. Raison : formes de
+> données, cadence d'écriture, utilisateurs et cycles de vie distincts ; la matrice
+> RLS à deux axes est le symptôme d'une frontière mal coupée. Ce document est conservé
+> comme **base de conception du cockpit séparé**, pas comme plan de modification de
+> staffd. Ce qui reste côté staffd : `entity_type` + `parent_company_id` (business
+> units). Ce qui part au cockpit : `ownership`, `group_id`, dividendes, vue fondateur.
 
 ## 1. Objectif
 
@@ -123,16 +133,16 @@ Un fondateur lit le résultat d'une filiale qu'il ne gère pas (parce qu'il en d
 
 **Vigilance sécurité** : cette phase rouvre la couche RLS récemment durcie (commits JWT/tenant-scoping, `getUser()` server-side, correctifs data layer). À traiter au scalpel, avec revue dédiée et tests RLS.
 
-### 5.1 Confidentialité par rôle à fermer dans ce remaniement (audit 2026-06-23)
+### 5.1 Confidentialité par rôle — à fermer côté staffd (audit 2026-06-23)
 
-Deux fuites intra-tenant restent ouvertes, volontairement reportées ici plutôt que migrées maintenant : on ne touche au modèle de données qu'une fois, en même temps que la RLS de groupe.
+Deux fuites intra-tenant restent ouvertes. Note 2026-06-23 : staffd étant désormais PSA pur (cf. bannière en tête), ce ne sont plus des sujets « groupe » mais des **défauts PSA de base**, à corriger côté staffd en **mono-axe** (admin/manager vs reste), indépendamment du cockpit.
 
 * **Salaires et TJM lisibles par tout le tenant.** `consultants_select` n'a aucun gate de rôle ; les vues `consultant_occupancy` / `consultant_profitability` (security_invoker) en héritent. Un consultant qui ouvre ses feuilles de temps (`useConsultants` → `consultant_occupancy`) reçoit déjà `salaire_annuel_brut`, `tjm`, `tjm_cout_reel` de ses collègues.
 * **Coordonnées bancaires lisibles par tout le tenant.** `companies_select` ouvre la table à tous les rôles ; `billing_settings` contient IBAN/BIC/SIRET. Mais `companies.name` est lu par tous (badge topbar), donc on ne peut pas verrouiller la table entière.
 
-Contrainte structurante : la RLS Postgres est **row-level, pas column-level**. Masquer une colonne selon le rôle impose de la déplacer, pas de retoucher une policy (masquer seulement dans les vues laisserait la lecture brute ouverte, d'autant que la clé anon est publique et `window.supabase` exposé). Approche retenue pour le bundle : sortir les colonnes sensibles vers des tables sœurs scopées (`consultant_financials` admin/manager, `company_settings` admin), les vues les ramènent par LEFT JOIN (NULL pour les non-privilégiés). Câblage en lockstep avec les writes du data layer le jour de l'application.
+Contrainte structurante : la RLS Postgres est **row-level, pas column-level**. Masquer une colonne selon le rôle impose de la déplacer, pas de retoucher une policy (masquer seulement dans les vues laisserait la lecture brute ouverte, d'autant que la clé anon est publique et `window.supabase` exposé). Approche retenue : sortir les colonnes sensibles vers des tables sœurs scopées (`consultant_financials` admin/manager, `company_settings` admin), les vues les ramènent par LEFT JOIN (NULL pour les non-privilégiés). Câblage en lockstep avec les writes du data layer.
 
-Déjà traité hors bundle (applicatif, pas schéma) : isolation tenant des deux endpoints service_role `/api/invite` et `/api/ai` (commit `fix: isolation tenant sur les endpoints service_role`).
+Déjà corrigé (audit 2026-06-23, sur main) : isolation tenant des deux endpoints service_role `/api/invite` et `/api/ai` (#1/#2) ; facture freelance non auto-validable (#6) ; guards `/dashboard/admin` et `/dashboard/manager` (#7) ; `search_path` figé sur les fonctions SECURITY DEFINER (#8). Reste ouvert : #4/#5 ci-dessus.
 
 ## 6. Calculs
 
