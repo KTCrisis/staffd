@@ -2,6 +2,7 @@
 
 import { getPageAuth }            from '@/lib/auth/page-auth'
 import { getTranslations }        from 'next-intl/server'
+import { redirect }               from 'next/navigation'
 import { Topbar }                 from '@/components/layout/Topbar'
 import { ManagerDashboardClient } from '@/components/dashboard/ManagerDashboardClient'
 import { getMondayOf, toISO }     from '@/lib/utils'
@@ -15,6 +16,9 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t = await getTranslations('dashboardManager')
   const { role, isSA, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
+
+  // Guard serveur — réservé manager/admin/super_admin (le middleware ne couvre pas /dashboard/*)
+  if (!isSA && role !== 'admin' && role !== 'manager') redirect('/dashboard')
 
   const monday    = getMondayOf(new Date())
   const sunday    = new Date(monday)
