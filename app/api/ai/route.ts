@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<Response> {
     }}), { headers })
   }
 
-  const { role, companyId } = await verifyUser(userToken)
+  const { role } = await verifyUser(userToken)
   if (role !== 'admin' && role !== 'super_admin') {
     return new Response(new ReadableStream({ start(c) {
       c.enqueue(sse('⚠ Accès refusé — console réservée aux administrateurs.')); c.enqueue(done); c.close()
@@ -100,8 +100,13 @@ export async function PUT(req: Request): Promise<Response> {
     })
   }
 
-  if (!companyId && role !== 'super_admin') {
-    return new Response(JSON.stringify({ success: false, message: 'No company associated' }), {
+  // Toute action s'exécute en service_role (RLS contournée) : le scoping tenant
+  // repose donc entièrement sur companyId. On l'exige non-null y compris pour un
+  // super_admin — sinon le filtre tenant des actions devient vide et l'action
+  // (recherche floue par nom) frappe un enregistrement d'un tenant arbitraire.
+  // Un super_admin doit avoir un contexte de company actif pour agir.
+  if (!companyId) {
+    return new Response(JSON.stringify({ success: false, message: 'No active company context — select a company before running actions.' }), {
       status: 403, headers: { 'Content-Type': 'application/json' }
     })
   }

@@ -16,11 +16,11 @@ export async function updateProjectStatus(
   status:      'active' | 'on_hold' | 'completed' | 'draft',
   companyId:   string | null,
 ): Promise<ActionResult> {
+  if (!companyId) return { success: false, message: 'No active company context.' }
   try {
-    // Trouver le projet par nom — scoped by company_id
-    const companyFilter = companyId ? `&company_id=eq.${companyId}` : ''
+    // Trouver le projet par nom — scoped au tenant (service_role contourne la RLS).
     const pRes = await fetch(
-      `${supabaseUrl}/rest/v1/projects?name=ilike.*${encodeURIComponent(projectName)}*${companyFilter}&select=id,name,status,company_id&limit=1`,
+      `${supabaseUrl}/rest/v1/projects?name=ilike.*${encodeURIComponent(projectName)}*&company_id=eq.${companyId}&select=id,name,status,company_id&limit=1`,
       { headers }
     )
     const projects = await pRes.json()

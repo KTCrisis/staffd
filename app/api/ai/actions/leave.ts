@@ -14,23 +14,28 @@ const headers = {
 }
 
 // ── Helper — trouve la leave request pending d'un consultant ─
-// companyId scopes all queries to the caller's tenant.
-async function findPendingLeave(consultantName: string, companyId: string | null, leaveId?: string) {
-  // Si on a l'ID direct, on l'utilise (still scoped via consultant's company_id)
+// companyId (non-null, garanti par l'appelant) scope toutes les requêtes au
+// tenant de l'appelant. Service_role contourne la RLS : ce filtre EST la barrière.
+async function findPendingLeave(consultantName: string, companyId: string, leaveId?: string) {
+  // Si on a l'ID direct, on l'utilise (scoped via le company_id du consultant)
   if (leaveId) {
-    const companyFilter = companyId ? `&consultants.company_id=eq.${companyId}` : ''
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveId}&status=eq.pending&select=id,consultant_id,type,start_date,end_date,days,consultants!inner(company_id)${companyFilter}`,
+      `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveId}&status=eq.pending&select=id,consultant_id,type,start_date,end_date,days,consultants!inner(company_id)&consultants.company_id=eq.${companyId}`,
       { headers }
     )
     const rows = await res.json()
-    return rows?.[0] ?? null
+    const row  = rows?.[0]
+    if (!row) return null
+    // Défense en profondeur : le filtre embarqué PostgREST sur une relation est
+    // fragile (dépend de la version). On revérifie le tenant côté JS avant d'agir.
+    const owner = Array.isArray(row.consultants) ? row.consultants[0]?.company_id : row.consultants?.company_id
+    if (owner !== companyId) return null
+    return row
   }
 
   // Sinon on cherche par nom de consultant — scoped by company_id
-  const companyFilter = companyId ? `&company_id=eq.${companyId}` : ''
   const cRes = await fetch(
-    `${supabaseUrl}/rest/v1/consultants?name=ilike.*${encodeURIComponent(consultantName)}*${companyFilter}&select=id,name`,
+    `${supabaseUrl}/rest/v1/consultants?name=ilike.*${encodeURIComponent(consultantName)}*&company_id=eq.${companyId}&select=id,name`,
     { headers }
   )
   const consultants = await cRes.json()
@@ -53,6 +58,7 @@ export async function approveLeave(
   companyId: string | null,
   leaveId?: string
 ): Promise<ActionResult> {
+  if (!companyId) return { success: false, message: 'No active company context.' }
   try {
     const leave = await findPendingLeave(consultantName, companyId, leaveId)
 
@@ -116,6 +122,7 @@ export async function refuseLeave(
   leaveId?:       string,
   reason?:        string
 ): Promise<ActionResult> {
+  if (!companyId) return { success: false, message: 'No active company context.' }
   try {
     const leave = await findPendingLeave(consultantName, companyId, leaveId)
 

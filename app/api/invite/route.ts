@@ -32,21 +32,44 @@ export async function POST(req: Request) {
   
   const { data: { user } } = await supabase.auth.getUser()
   const role = user?.app_metadata?.user_role
-  
-  if (!user || !['admin', 'manager'].includes(role)) {
+
+  if (!user || !['admin', 'manager', 'super_admin'].includes(role)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  
-  const { consultantId, email, companyId } = await req.json()
+
+  const { consultantId, email, companyId: bodyCompanyId } = await req.json()
   if (!consultantId || !email) {
     return Response.json({ error: 'Missing fields' }, { status: 400 })
   }
 
-  // Verify companyId matches the caller's company (prevent cross-tenant invite)
-  const callerCompanyId = user.app_metadata?.company_id
-  if (callerCompanyId && companyId && callerCompanyId !== companyId) {
+  // La company cible vient du JWT de l'appelant, JAMAIS du client (cette route
+  // écrit en service_role, qui contourne la RLS). Un admin/manager ne peut inviter
+  // que dans sa propre company ; seul un super_admin (sans company) peut viser une
+  // company explicite passée dans le body.
+  const callerCompanyId = user.app_metadata?.company_id ?? null
+  const isSuperAdmin    = role === 'super_admin'
+  const targetCompanyId = isSuperAdmin ? (bodyCompanyId ?? null) : callerCompanyId
+
+  if (!targetCompanyId) {
+    return Response.json({ error: 'No target company' }, { status: 400 })
+  }
+  if (!isSuperAdmin && bodyCompanyId && bodyCompanyId !== callerCompanyId) {
     return Response.json({ error: 'Cannot invite to a different company' }, { status: 403 })
+  }
+
+  // Le consultant ciblé DOIT appartenir à la company cible. Sans cette vérif, un
+  // consultantId arbitraire d'un autre tenant serait lié via service_role.
+  const { data: consultant, error: consultantErr } = await supabaseAdmin
+    .from('consultants')
+    .select('id, company_id')
+    .eq('id', consultantId)
+    .single()
+  if (consultantErr || !consultant) {
+    return Response.json({ error: 'Consultant not found' }, { status: 404 })
+  }
+  if (consultant.company_id !== targetCompanyId) {
+    return Response.json({ error: 'Consultant belongs to another company' }, { status: 403 })
   }
 
   // 2. Vérifier si un user Auth existe déjà avec cet email
@@ -56,13 +79,19 @@ export async function POST(req: Request) {
   let userId: string
 
   if (existingUser) {
-    // Déjà un compte — juste mettre à jour les metadata
+    // Ne pas détourner un compte déjà rattaché à une AUTRE company.
+    const existingCompany = existingUser.app_metadata?.company_id ?? null
+    if (existingCompany && existingCompany !== targetCompanyId) {
+      return Response.json({ error: 'This email already belongs to another company' }, { status: 409 })
+    }
+    // Compte de la même company (ou non rattaché) — on lie sans jamais
+    // dégrader/élever le rôle existant (préserve un rôle déjà attribué).
     userId = existingUser.id
     await supabaseAdmin.auth.admin.updateUserById(userId, {
       app_metadata: {
         ...existingUser.app_metadata,
-        user_role: 'consultant',
-        company_id: companyId,
+        user_role: existingUser.app_metadata?.user_role ?? 'consultant',
+        company_id: targetCompanyId,
       }
     })
   } else {
@@ -70,7 +99,7 @@ export async function POST(req: Request) {
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
     data: {
         user_role: 'consultant',
-        company_id: companyId,
+        company_id: targetCompanyId,
     }
     })
     if (error) {
@@ -80,7 +109,7 @@ export async function POST(req: Request) {
     userId = data.user.id
   }
 
-  // 4. Lier le user_id au consultant
+  // 4. Lier le user_id au consultant (appartenance déjà validée ci-dessus)
   const { error: updateError } = await supabaseAdmin
     .from('consultants')
     .update({ user_id: userId })
