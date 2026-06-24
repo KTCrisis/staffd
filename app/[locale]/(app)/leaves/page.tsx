@@ -52,12 +52,8 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   const [requestsRes, consultantsRes] = await Promise.all([requestsQ, consultantsQ])
 
-  // `note` n'est pas une colonne de leave_requests (la table porte `motif`) :
-  // la lecture `r.note ?? null` retombait déjà sur null. On la déclare optionnelle
-  // pour préserver ce comportement à l'identique, sans toucher la logique.
   type RequestRow = Tables<'leave_requests'> & {
     consultants: Pick<Tables<'consultants'>, 'name' | 'avatar_color' | 'initials'> | null
-    note?: string | null
   }
   const requests = ((requestsRes.data ?? []) as RequestRow[]).map((r) => ({
     id:             r.id,
@@ -69,8 +65,9 @@ export default async function LeavesPage({ searchParams }: Props) {
     status:         r.status,
     startDate:      r.start_date,
     endDate:        r.end_date,
-    days:           r.days  ?? null,
-    note:           r.note  ?? null,
+    days:           r.days           ?? null,
+    motif:          r.motif          ?? null,
+    impactWarning:  r.impact_warning ?? null,
   }))
 
   const consultants = consultantsRes.data ?? []

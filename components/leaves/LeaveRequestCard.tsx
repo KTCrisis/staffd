@@ -3,6 +3,7 @@
 import type { LeaveRequest } from '@/types'
 import { Badge }             from '@/components/ui'
 import { useTranslations }   from 'next-intl'
+import { formatDate }        from '@/lib/utils'
 
 interface LeaveRequestCardProps {
   request:    LeaveRequest
@@ -13,8 +14,10 @@ interface LeaveRequestCardProps {
 export function LeaveRequestCard({ request, onApprove, onRefuse }: LeaveRequestCardProps) {
   const t       = useTranslations('conges')
   const tCommon = useTranslations('common')
-  const start   = new Date(request.startDate).toLocaleDateString()
-  const end     = new Date(request.endDate).toLocaleDateString()
+  // formatDate force la locale fr-FR -> rendu serveur == rendu client (évite
+  // l'erreur d'hydratation que `toLocaleDateString()` sans locale provoquait).
+  const start   = formatDate(request.startDate)
+  const end     = formatDate(request.endDate)
 
   return (
     <div className="conge-card">
@@ -44,6 +47,10 @@ export function LeaveRequestCard({ request, onApprove, onRefuse }: LeaveRequestC
           <Badge variant={request.status} />
         )}
       </div>
+
+      {request.motif && (
+        <div className="conge-meta">{request.motif}</div>
+      )}
 
       {request.impactWarning && (
         <div className="conge-impact">⚠ {request.impactWarning}</div>

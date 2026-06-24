@@ -25,7 +25,8 @@ interface LeaveRow {
   startDate:      string
   endDate:        string
   days:           number | null
-  note:           string | null
+  motif:          string | null
+  impactWarning:  string | null
 }
 
 interface Props {
