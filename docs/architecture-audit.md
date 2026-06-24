@@ -92,13 +92,27 @@ Aussi : nullabilité (`LeaveRequestForm` leave_days, `leaves.ts` consultant_id),
 jsonb (`settings.ts` RPC, `InvoiceForm` emitter_snapshot), coercion des colonnes de vue
 (nullables en types générés). tsc 0, 19 tests unitaires + 6 RLS verts.
 
-**Reste Phase 2 (incrémental, non bloquant) :**
-- Réduire les ~188 `no-explicit-any` : refactorer les 6 mappers `lib/data` (de
-  `Record<string,unknown>` + `as` vers les Row types générés) et les `(row: any)`.
-- Dédupliquer les types métier divergents dans `types/index.ts` (`Consultant` ×3,
-  `Project` ×4, `Client` ×3, `KpiData` ×2, `ContractType`/`LeaveType`/`BillingSettings`).
-- Corriger les warnings react-hooks (`set-state-in-effect`, `exhaustive-deps`).
-- Passe correctness (calculs, transitions de statut, agrégats dashboard).
+**`no-explicit-any` : 188 -> 0 (FAIT).** Couche `lib/` + composants + pages + routes IA
+typés (client `<Database>`, casts concrets, inférence). eslint global 237 -> 48.
+Dédup : vrais doublons fusionnés (`KpiData`, `ActivityFeedItem`) ; les `Consultant`/
+`Project` "dupliqués" se sont avérés des **view-models distincts** (snake_case de vue vs
+camelCase domaine) — légitimement séparés, canoniques importés pour les casts.
+
+**Reste Phase 2 (à faire avec l'app lancée) :**
+- **Warnings react-hooks** (`set-state-in-effect` ×3-4, `exhaustive-deps` ×4,
+  `preserve-manual-memoization`, `purity` Date.now) : comportementaux, à corriger en
+  vérifiant le runtime (risque boucles/flashs). Fichiers : ThemeProvider, HRTab,
+  TimelineClient, TimesheetsClient, BidsClient.
+- **Passe correctness** — bugs latents révélés par le typage, à confirmer/corriger :
+  - `leaves/page.tsx` lit une colonne `note` qui n'existe pas (la table a `motif`) →
+    toujours `null`. Bug probable.
+  - `AssignmentDrawer` / `ConsultantDetailClient` : mismatch `country_code` (snake) vs
+    `countryCode` (camel) ; le drawer reçoit une ligne de vue (snake) mais lit camelCase
+    → champs `undefined`. Affichage drawer potentiellement incomplet.
+  - `consultants/page.tsx` lit `current_project`/`available_from`/`country_code` absents
+    de la vue `consultant_occupancy`.
+- Petits restes eslint : `jsx-no-comment-textnodes` (×17, commentaires `//` dans du JSX),
+  `no-unused-vars` (×~15).
 
 ### Phase 2 — Consolidation types + correctness
 - Dédupliquer les types divergents dans `types/index.ts`.
