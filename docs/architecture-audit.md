@@ -118,9 +118,9 @@ deps), TimesheetsClient (dep holidays + setState-in-effect justifiés), ThemePro
   #4/#5** (évite un re-apply isolé).
 - `available_from` : champ affiché sans colonne source → décision produit (l'implémenter
   ou retirer l'affichage).
-- Cosmétique eslint : `jsx-no-comment-textnodes` ×17 (les `// {x}` style terminal qui
-  s'affichent littéralement — voulu mais eslint error), `no-unused-vars` ×15,
-  `static-components` ×1 (5 composants imbriqués dans BidsClient **mock**), img ×1.
+- Cosmétique eslint : NETTOYÉ. **eslint global 237 → 2.** Reste seulement
+  `static-components` ×1 (5 composants imbriqués dans BidsClient **mock**, refacto
+  faible valeur) et `no-img-element` ×1 (docs ; swap `<img>`→`next/image` à part).
 
 ### Phase 2 — Consolidation types + correctness
 - Dédupliquer les types divergents dans `types/index.ts`.
