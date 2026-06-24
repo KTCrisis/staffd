@@ -98,21 +98,29 @@ Dédup : vrais doublons fusionnés (`KpiData`, `ActivityFeedItem`) ; les `Consul
 `Project` "dupliqués" se sont avérés des **view-models distincts** (snake_case de vue vs
 camelCase domaine) — légitimement séparés, canoniques importés pour les casts.
 
-**Reste Phase 2 (à faire avec l'app lancée) :**
-- **Warnings react-hooks** (`set-state-in-effect` ×3-4, `exhaustive-deps` ×4,
-  `preserve-manual-memoization`, `purity` Date.now) : comportementaux, à corriger en
-  vérifiant le runtime (risque boucles/flashs). Fichiers : ThemeProvider, HRTab,
-  TimelineClient, TimesheetsClient, BidsClient.
-- **Passe correctness** — bugs latents révélés par le typage, à confirmer/corriger :
-  - `leaves/page.tsx` lit une colonne `note` qui n'existe pas (la table a `motif`) →
-    toujours `null`. Bug probable.
-  - `AssignmentDrawer` / `ConsultantDetailClient` : mismatch `country_code` (snake) vs
-    `countryCode` (camel) ; le drawer reçoit une ligne de vue (snake) mais lit camelCase
-    → champs `undefined`. Affichage drawer potentiellement incomplet.
-  - `consultants/page.tsx` lit `current_project`/`available_from`/`country_code` absents
-    de la vue `consultant_occupancy`.
-- Petits restes eslint : `jsx-no-comment-textnodes` (×17, commentaires `//` dans du JSX),
-  `no-unused-vars` (×~15).
+**Warnings react-hooks comportementaux : FAIT (app lancée, vérifié).** BidsClient
+(Date.now impur → useState lazy), HRTab (useCallback), TimelineClient (now stable +
+deps), TimesheetsClient (dep holidays + setState-in-effect justifiés), ThemeProvider
+(restore localStorage justifié). Les `preserve-manual-memoization` ont disparu.
+
+**Passe correctness : 3 bugs latents (révélés par le typage) CORRIGÉS et vérifiés :**
+- `leaves` : lisait la colonne fantôme `note` (table = `motif`) → motif jamais affiché
+  + l'avertissement d'impact jamais alimenté. Câblé. **Bonus** : bug d'hydratation des
+  dates (toLocaleDateString sans locale, SSR≠client) corrigé via `formatDate`.
+- `drawer d'affectation` : recevait une ligne de vue snake_case → `occupancyRate`
+  undefined → ligne d'occupation + alerte de surcharge cassées. Mappé proprement.
+- `consultants` : projet courant lisait la colonne fantôme `current_project` → toujours
+  « — » → dérivé de `project_names[0]`.
+
+**Reste (différé, documenté) :**
+- Exposer `country_code` dans la vue `consultant_occupancy` (+ aligner camel/snake)
+  pour afficher le pays dans le détail consultant → **à bundler avec la phase schéma
+  #4/#5** (évite un re-apply isolé).
+- `available_from` : champ affiché sans colonne source → décision produit (l'implémenter
+  ou retirer l'affichage).
+- Cosmétique eslint : `jsx-no-comment-textnodes` ×17 (les `// {x}` style terminal qui
+  s'affichent littéralement — voulu mais eslint error), `no-unused-vars` ×15,
+  `static-components` ×1 (5 composants imbriqués dans BidsClient **mock**), img ×1.
 
 ### Phase 2 — Consolidation types + correctness
 - Dédupliquer les types divergents dans `types/index.ts`.
