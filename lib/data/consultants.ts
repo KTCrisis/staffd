@@ -126,18 +126,21 @@ export function useProjectAssignments(projectId: string, dep?: number) {
       .eq('project_id', projectId)
       .order('created_at')
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      id:           row.id as string,
-      consultantId: row.consultant_id as string,
-      projectId:    row.project_id as string,
-      allocation:   row.allocation as number,
-      startDate:    row.start_date as string | undefined,
-      endDate:      row.end_date as string | undefined,
-      name:         row.consultants?.name ?? '',
-      initials:     row.consultants?.initials ?? '',
-      role:         row.consultants?.role ?? '',
-      avatarColor:  row.consultants?.avatar_color ?? 'green',
-    } satisfies AssignmentWithConsultant))
+    return (data ?? []).map(row => {
+      const c = row.consultants as { name: string; initials: string; role: string; avatar_color: string } | null
+      return {
+        id:           row.id,
+        consultantId: row.consultant_id ?? '',
+        projectId:    row.project_id ?? '',
+        allocation:   row.allocation ?? 0,
+        startDate:    row.start_date ?? undefined,
+        endDate:      row.end_date ?? undefined,
+        name:         c?.name ?? '',
+        initials:     c?.initials ?? '',
+        role:         c?.role ?? '',
+        avatarColor:  c?.avatar_color ?? 'green',
+      } satisfies AssignmentWithConsultant
+    })
   }, [projectId, dep])
 }
 

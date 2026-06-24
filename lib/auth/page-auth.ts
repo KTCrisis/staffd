@@ -3,11 +3,12 @@
 
 import { cookies }            from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import type { User }          from '@supabase/supabase-js'
 import type { Database }      from '@/types/supabase'
 import type { UserRole }      from './roles'
 
 export interface PageAuth {
-  user:        any
+  user:        User | null
   role:        UserRole | undefined
   isSA:        boolean
   userId:      string | undefined

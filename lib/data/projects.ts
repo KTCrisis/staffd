@@ -52,7 +52,7 @@ function toProject(row: Record<string, unknown>): Project {
     joursVendus:    row.jours_vendus as number | undefined,
     isInternal:     (row.is_internal as boolean) ?? false,
     companyId:      row.company_id as string | undefined,
-    team:           (row.team as any[]) ?? [],
+    team:           (row.team as Project['team']) ?? [],
   }
 }
 
@@ -72,15 +72,16 @@ export function useProjects(dep?: number, includeArchived = false) {
     if (activeTenantId)   q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => {
-      const team = (row.assignments as any[])
-        .map((a: any) => a.consultants)
-        .filter(Boolean)
-        .map((c: any) => ({
-          id: c.id as string, name: c.name as string,
-          initials: c.initials as string, avatarColor: c.avatar_color as string,
+    type AssignmentRow = { consultants: { id: string; name: string; initials: string; avatar_color: string } | null }
+    return (data ?? []).map(row => {
+      const assignments = (row.assignments ?? []) as AssignmentRow[]
+      const team = assignments
+        .map(a => a.consultants)
+        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+        .map(c => ({
+          id: c.id, name: c.name, initials: c.initials, avatarColor: c.avatar_color,
         }))
-      return toProject({ ...row, consultant_ids: team.map((c: any) => c.id), team })
+      return toProject({ ...row, consultant_ids: team.map(c => c.id), team })
     })
   }, [dep, includeArchived, activeTenantId])
 }

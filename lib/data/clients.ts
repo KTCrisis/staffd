@@ -55,11 +55,14 @@ export function useClients(dep?: number) {
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toClient({
-      ...row,
-      active_projects: (row.projects as any[]).filter((p: any) => p.status === 'active').length,
-      total_projects:  (row.projects as any[]).length,
-    }))
+    return (data ?? []).map(row => {
+      const projects = (row.projects ?? []) as { status: string }[]
+      return toClient({
+        ...row,
+        active_projects: projects.filter(p => p.status === 'active').length,
+        total_projects:  projects.length,
+      })
+    })
   }, [dep, activeTenantId])
 }
 
@@ -82,10 +85,10 @@ export function useClientProjects(clientId: string, dep?: number) {
       .eq('client_id', clientId)
       .order('end_date', { ascending: false })
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      ...row,
-      consultant_ids: (row.assignments as { consultant_id: string }[]).map((a: any) => a.consultant_id),
-    }))
+    return (data ?? []).map(row => {
+      const assignments = (row.assignments ?? []) as { consultant_id: string }[]
+      return { ...row, consultant_ids: assignments.map(a => a.consultant_id) }
+    })
   }, [clientId, dep])
 }
 

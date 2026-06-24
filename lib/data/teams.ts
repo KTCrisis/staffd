@@ -54,17 +54,17 @@ export function useTeams(dep?: number) {
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any): Team => ({
-      id:                 row.id,
-      companyId:          row.company_id,
-      name:               row.name,
+    return (data ?? []).map((row): Team => ({
+      id:                 row.id ?? '',
+      companyId:          row.company_id ?? '',
+      name:               row.name ?? '',
       description:        row.description ?? null,
       managerId:          row.manager_id ?? null,
       managerName:        row.manager_name ?? null,
       managerInitials:    row.manager_initials ?? null,
       managerAvatarColor: row.manager_avatar_color ?? null,
-      members:            (row.members as TeamMember[]) ?? [],
-      createdAt:          row.created_at,
+      members:            (row.members as unknown as TeamMember[]) ?? [],
+      createdAt:          row.created_at ?? '',
     }))
   }, [dep, activeTenantId])
 }

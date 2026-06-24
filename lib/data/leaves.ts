@@ -32,7 +32,7 @@ function toLeaveRequest(row: Record<string, unknown>): LeaveRequest {
 // HOOKS — QUERIES
 // ──────────────────────────────────────────────────────────────
 
-export function useLeaveRequests(dep?: any) {
+export function useLeaveRequests(dep?: number) {
   const { activeTenantId } = useActiveTenant()
   return useSupabase(async () => {
     let q = supabase
@@ -42,7 +42,7 @@ export function useLeaveRequests(dep?: any) {
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => toLeaveRequest({
+    return (data ?? []).map(row => toLeaveRequest({
       ...row,
       consultant_name: (row.consultants as { name: string } | null)?.name ?? '',
     }))

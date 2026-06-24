@@ -32,16 +32,16 @@ export function useKpi(): { data: KpiData | null; loading: boolean; error: strin
     const consultants  = consultantsRes.data ?? []
     const projects     = projectsRes.data    ?? []
     const leaves       = leavesRes.data      ?? []
-    const active       = consultants.filter((c: any) => c.status !== 'leave')
+    const active       = consultants.filter(c => c.status !== 'leave')
     const avgOccupancy = active.length
-      ? Math.round(active.reduce((s: any, c: any) => s + (c.occupancy_rate ?? 0), 0) / active.length)
+      ? Math.round(active.reduce((s, c) => s + (c.occupancy_rate ?? 0), 0) / active.length)
       : 0
 
     return {
       activeConsultants: active.length,
       totalConsultants:  consultants.length,
-      activeProjects:    projects.filter((p: any) => p.status === 'active').length,
-      pendingLeaves:     leaves.filter((l: any) => l.status === 'pending').length,
+      activeProjects:    projects.filter(p => p.status === 'active').length,
+      pendingLeaves:     leaves.filter(l => l.status === 'pending').length,
       occupancyRate:     avgOccupancy,
     } satisfies KpiData
   }, [activeTenantId])
@@ -58,12 +58,12 @@ export function useActivity(limit = 10) {
     if (activeTenantId) q = q.eq('company_id', activeTenantId)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    return (data ?? []).map((row: any) => ({
-      id:      row.id as string,
+    return (data ?? []).map(row => ({
+      id:      row.id,
       type:    row.type as ActivityItem['type'],
-      message: row.message as string,
-      time:    row.created_at as string,
-      read:    row.read as boolean,
+      message: row.message,
+      time:    row.created_at ?? '',
+      read:    row.read ?? false,
     } satisfies ActivityItem))
   }, [limit, activeTenantId])
 }
