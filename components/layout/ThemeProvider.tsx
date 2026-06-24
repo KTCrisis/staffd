@@ -22,9 +22,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('staffd-theme', theme)
   }, [theme])
 
-  // Restore persisted theme on mount
+  // Restore persisted theme on mount. setState-in-effect est intentionnel ici :
+  // localStorage n'existe pas côté serveur, donc on ne peut pas lire la valeur
+  // dans l'initialiseur useState. (Le « no-flash » complet = script inline dans
+  // le <head>, amélioration séparée.)
   useEffect(() => {
     const saved = localStorage.getItem('staffd-theme') as Theme | null
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'light' || saved === 'dark') setTheme(saved)
   }, [])
 

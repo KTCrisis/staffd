@@ -102,12 +102,15 @@ export function BidsClient({ userRole }: Props) {
 
   const [selected, setSelected] = useState<Bid | null>(null)
   const [filter,   setFilter]   = useState<BidStatus | 'all'>('all')
+  // `now` capturé une fois (lazy init) : évite l'appel impur Date.now() dans le
+  // corps de rendu (règle react-hooks/purity).
+  const [now] = useState(() => Date.now())
 
   const visible = MOCK_BIDS.filter(b => filter === 'all' || b.status === filter)
   const wonBids = MOCK_BIDS.filter(b => b.status === 'won')
 
   function daysLeft(deadline: string): { label: string; color: string } {
-    const diff = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)
+    const diff = Math.ceil((new Date(deadline).getTime() - now) / 86400000)
     if (diff < 0)   return { label: t('deadline.expired'), color: 'var(--text2)' }
     if (diff === 0) return { label: t('deadline.today'),   color: 'var(--pink)'  }
     if (diff <= 7)  return { label: `${diff}j`,            color: 'var(--pink)'  }

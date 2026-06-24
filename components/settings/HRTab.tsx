@@ -4,7 +4,7 @@
 // components/settings/HRTab.tsx
 // ══════════════════════════════════════════════════════════════
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslations }    from 'next-intl'
 import { useActiveTenant }    from '@/lib/tenant-context'
 import { useCompanySettings, updateHRSettings } from '@/lib/data'
@@ -57,7 +57,7 @@ export function HRTab() {
 
   const companyId = activeTenantId ?? companyData?.id
 
-  const fetchActivityTypes = async () => {
+  const fetchActivityTypes = useCallback(async () => {
     if (!companyId) return
     setActivityLoading(true)
     const { data, error } = await supabase
@@ -69,9 +69,9 @@ export function HRTab() {
       .order('name')
     setActivityLoading(false)
     if (!error) setActivityTypes(data ?? [])
-  }
+  }, [companyId])
 
-  useEffect(() => { fetchActivityTypes() }, [companyId])
+  useEffect(() => { fetchActivityTypes() }, [fetchActivityTypes])
 
   const handleAddActivity = async () => {
     const name = newActivityName.trim()

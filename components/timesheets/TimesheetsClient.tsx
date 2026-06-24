@@ -118,7 +118,12 @@ function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }:
   const [val,  setVal]  = useState(entry?.value ?? 0)
   const [proj, setProj] = useState(entry?.projectId ?? projects[0]?.id ?? '')
 
+  // Sync de l'état d'édition local sur la cellule sélectionnée (changement de prop
+  // `entry`). setState-in-effect intentionnel : on resynchronise sans remonter le
+  // composant (qui ferait perdre le focus).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setVal(entry?.value ?? 0) },            [entry?.value])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setProj(entry?.projectId ?? projects[0]?.id ?? '') }, [entry?.projectId, projects])
 
   useEffect(() => {
@@ -233,7 +238,8 @@ export function TimesheetsClient({
       for (const [cc, entries] of results) map[cc] = entries
       setHolidayMap(map)
     })
-  }, [companyCountry, consultantsSafe, weekStart])
+    // `monday` est du state stable ; l'effet n'utilise que son année.
+  }, [companyCountry, consultantsSafe, monday])
 
   const getHoliday = useCallback((consultantCountry: string | null | undefined, dateStr: string): HolidayEntry | undefined => {
     const cc = consultantCountry ?? companyCountry
@@ -257,6 +263,8 @@ export function TimesheetsClient({
   const [localEntries, setLocalEntries] = useState<Record<string, Timesheet>>({})
   const [popup, setPopup] = useState<{ consultantId: string; date: string; x: number; y: number } | null>(null)
 
+  // Reset de l'état optimiste + fermeture du popup quand on change de semaine.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setLocalEntries({}); setPopup(null) }, [weekStart])
 
   useEffect(() => {

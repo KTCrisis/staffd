@@ -92,7 +92,9 @@ export function TimelineClient({
   leaveRequests = [],
 }: Props) {
   const t   = useTranslations('timeline')
-  const now = new Date()
+  // `now` figé au montage : évite `new Date()` impur dans le rendu et le rend
+  // stable pour les deps de useMemo.
+  const [now] = useState(() => new Date())
 
   // t.raw() — fallback obligatoire
   const months    = (t.raw('months') as string[] | undefined) ?? MONTHS_FB
@@ -120,7 +122,7 @@ export function TimelineClient({
         isWeekend: d.getDay() === 0 || d.getDay() === 6,
       }
     }),
-    [year, month, daysInMonth]
+    [year, month, daysInMonth, now]
   )
 
   const consultantMap = useMemo(() => {
@@ -146,7 +148,7 @@ export function TimelineClient({
     { value: visibleProjects.filter(p => p.status === 'on_hold').length,   label: t('stats.onHold'),    color: 'var(--gold)'  },
     { value: visibleProjects.filter(p => p.status === 'draft').length,     label: t('stats.draft'),     color: 'var(--text2)' },
     { value: visibleProjects.filter(p => p.status === 'completed').length, label: t('stats.completed'), color: 'var(--green)' },
-  ], [visibleProjects])
+  ], [visibleProjects, t])
 
   function buildProjectCells(project: TimelineProject): DayCell[] {
     return headerDays.map(d => {
