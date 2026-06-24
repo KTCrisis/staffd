@@ -4,6 +4,7 @@ import { getPageAuth }        from '@/lib/auth/page-auth'
 import { getTranslations }    from 'next-intl/server'
 import { Topbar }             from '@/components/layout/Topbar'
 import { AvailabilityClient } from '@/components/availability/AvailabilityClient'
+import type { Tables }        from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -51,7 +52,8 @@ export default async function AvailabilityPage({ searchParams }: Props) {
   ])
 
   const consultants   = consultantsRes.data ?? []
-  const leaveRequests = (leavesRes.data ?? []).map((l: any) => ({
+  type LeaveRow = Pick<Tables<'leave_requests'>, 'id' | 'consultant_id' | 'type' | 'status' | 'start_date' | 'end_date'>
+  const leaveRequests = ((leavesRes.data ?? []) as LeaveRow[]).map((l) => ({
     id:           l.id,
     consultantId: l.consultant_id,
     type:         l.type,

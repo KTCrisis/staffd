@@ -10,8 +10,14 @@ import { KpiCard }         from '@/components/ui/KpiCard'
 import { Avatar }          from '@/components/ui/Avatar'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { toISO }           from '@/lib/utils'
+import type { AvatarColor } from '@/types'
+import type { Database }   from '@/types/supabase'
 
-function StatusPill({ status, t }: { status: string; t: any }) {
+type ConsultantOccupancy = Database['public']['Views']['consultant_occupancy']['Row']
+type MyProject = { id: string; name: string | null; status: string | null }
+type Translator = ReturnType<typeof useTranslations>
+
+function StatusPill({ status, t }: { status: string; t: Translator }) {
   const key   = ['assigned','available','partial','leave'].includes(status) ? status : null
   const label = key ? t(`statuses.${key}`) : status
   return <span className={`cons-status cons-status--${key ?? 'default'}`}>{label}</span>
@@ -57,9 +63,9 @@ interface InvoiceStats {
 }
 
 interface Props {
-  me:            any
+  me:            ConsultantOccupancy
   isFreelance?:  boolean
-  myProjects?:   any[]
+  myProjects?:   MyProject[]
   myLeaves?:     LeaveItem[]
   myTimesheets?: TimesheetItem[]
   weekTotal?:    number
@@ -99,7 +105,7 @@ export function ConsultantDashboardClient({
 
       {/* Profil */}
       <div className="cons-profile">
-        <Avatar initials={me.initials} color={me.avatar_color} size="lg" />
+        <Avatar initials={me.initials as string} color={me.avatar_color as AvatarColor} size="lg" />
         <div className="cons-profile-info">
           <div className="cons-profile-name">{me.name}</div>
           <div className="cons-profile-role">
@@ -121,7 +127,7 @@ export function ConsultantDashboardClient({
           accent="cyan"
           sub={myProjects.length === 0
             ? t('kpi.noMission')
-            : myProjects.map((p: any) => p.name).join(', ')
+            : myProjects.map(p => p.name).join(', ')
           }
         />
         <KpiCard
@@ -166,7 +172,7 @@ export function ConsultantDashboardClient({
             <EmptyState message={t('missions.empty')} />
           ) : (
             <div className="mission-list">
-              {myProjects.map((project: any) => (
+              {myProjects.map(project => (
                 <div key={project.id} className="mission-item">
                   <div>
                     <div className="mission-name">{project.name}</div>

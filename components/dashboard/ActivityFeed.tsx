@@ -10,8 +10,11 @@ const DOT_COLOR: Record<ActivityItem['type'], string> = {
   alert:      'var(--gold)',
 }
 
+// Supporte item.time (camelCase legacy) ET item.created_at (Supabase snake_case)
+export type ActivityFeedItem = ActivityItem & { created_at?: string | null }
+
 interface ActivityFeedProps {
-  items?: ActivityItem[]
+  items?: ActivityFeedItem[]
 }
 
 export function ActivityFeed({ items = [] }: ActivityFeedProps) {
@@ -59,8 +62,7 @@ export function ActivityFeed({ items = [] }: ActivityFeedProps) {
               className="notif-text"
               dangerouslySetInnerHTML={{ __html: item.message }}
             />
-            {/* Supporte item.time (camelCase legacy) ET item.created_at (Supabase snake_case) */}
-            <div className="notif-time">{formatTime((item as any).time ?? (item as any).created_at)}</div>
+            <div className="notif-time">{formatTime(item.time ?? item.created_at ?? undefined)}</div>
           </div>
         </div>
       ))}

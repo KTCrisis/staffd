@@ -10,6 +10,8 @@ import { StatRow }            from '@/components/ui'
 import { Avatar }             from '@/components/ui/Avatar'
 import { EmptyState }         from '@/components/ui/EmptyState'
 import { toISO }              from '@/lib/utils'
+import type { ProjectStatus, AvatarColor } from '@/types'
+import type { Tables }        from '@/types/supabase'
 
 // ── Fallbacks t.raw() ────────────────────────────────────────
 const MONTHS_FB = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -26,7 +28,7 @@ const STATUS_COLOR: Record<string, { bg: string; border: string; text: string; d
   completed: { bg: 'rgba(0,255,136,0.12)',   border: 'rgba(0,255,136,0.40)',   text: '#1b5e20', dot: '#00ff88' },
 }
 
-function TimelineLegend({ t }: { t: any }) {
+function TimelineLegend({ t }: { t: ReturnType<typeof useTranslations> }) {
   return (
     <div className="avail-legend">
       {Object.entries(STATUS_COLOR).map(([status, c]) => (
@@ -43,10 +45,45 @@ function TimelineLegend({ t }: { t: any }) {
   )
 }
 
+// Membre d'équipe : ligne consultant jointe (snake_case) avec alias camelCase
+// éventuel selon la source.
+interface TimelineTeamMember {
+  id:           string
+  name:         string | null
+  initials:     string | null
+  avatar_color?: string | null
+  avatarColor?:  string | null
+}
+
+// Projet remappé côté page (camelCase) + équipe résolue.
+interface TimelineProject {
+  id:          string
+  name:        string | null
+  status:      ProjectStatus | string | null
+  startDate:   string | null
+  endDate:     string | null
+  clientName:  string | null
+  isInternal:  boolean
+  team:        TimelineTeamMember[]
+}
+
+// Sous-ensemble de la vue `consultant_occupancy` projeté par la requête.
+type TimelineConsultant = Pick<Tables<'consultant_occupancy'>, 'id' | 'name' | 'initials' | 'avatar_color' | 'status'>
+
+// Demande de congé remappée côté page (camelCase).
+interface TimelineLeave {
+  id:           string
+  consultantId: string | null
+  type:         string | null
+  status:       string | null
+  startDate:    string | null
+  endDate:      string | null
+}
+
 interface Props {
-  projects?:      any[]
-  consultants?:   any[]
-  leaveRequests?: any[]
+  projects?:      TimelineProject[]
+  consultants?:   TimelineConsultant[]
+  leaveRequests?: TimelineLeave[]
 }
 
 export function TimelineClient({
@@ -87,8 +124,8 @@ export function TimelineClient({
   )
 
   const consultantMap = useMemo(() => {
-    const m: Record<string, any> = {}
-    consultants.forEach(c => { m[c.id] = c })
+    const m: Record<string, TimelineConsultant> = {}
+    consultants.forEach(c => { m[c.id as string] = c })
     return m
   }, [consultants])
 
@@ -111,7 +148,7 @@ export function TimelineClient({
     { value: visibleProjects.filter(p => p.status === 'completed').length, label: t('stats.completed'), color: 'var(--green)' },
   ], [visibleProjects])
 
-  function buildProjectCells(project: any): DayCell[] {
+  function buildProjectCells(project: TimelineProject): DayCell[] {
     return headerDays.map(d => {
       const date    = new Date(year, month, d.num)
       const isToday = d.isToday
@@ -166,10 +203,13 @@ export function TimelineClient({
             {/* Lignes projets */}
             {visibleProjects.map((project, rowIdx) => {
               const cells = buildProjectCells(project)
-              const color = STATUS_COLOR[project.status] ?? STATUS_COLOR.draft
-              const team  = (project.team ?? [])
-                .map((m: any) => consultantMap[m.id] ?? m)
-                .filter(Boolean)
+              const color = STATUS_COLOR[project.status as string] ?? STATUS_COLOR.draft
+              const team: TimelineTeamMember[] = (project.team ?? []).map((m): TimelineTeamMember => {
+                const c = consultantMap[m.id]
+                return c
+                  ? { id: m.id, name: c.name, initials: c.initials, avatar_color: c.avatar_color }
+                  : m
+              })
 
               const firstActive = cells.findIndex(c => c.type === 'active')
               const lastActive  = cells.map(c => c.type).lastIndexOf('active')
@@ -193,11 +233,11 @@ export function TimelineClient({
                     )}
                     {team.length > 0 && (
                       <div className="tl-team-avatars">
-                        {team.slice(0, 5).map((c: any, i: number) => (
-                          <div key={c.id ?? i} title={c.name} className="tl-team-avatar-wrap" style={{ zIndex: team.length - i }}>
+                        {team.slice(0, 5).map((c, i) => (
+                          <div key={c.id ?? i} title={c.name ?? undefined} className="tl-team-avatar-wrap" style={{ zIndex: team.length - i }}>
                             <Avatar
-                              initials={c.initials}
-                              color={c.avatarColor ?? c.avatar_color ?? 'green'}
+                              initials={c.initials ?? ''}
+                              color={(c.avatarColor ?? c.avatar_color ?? 'green') as AvatarColor}
                               size="sm"
                             />
                           </div>
@@ -217,7 +257,7 @@ export function TimelineClient({
                     return (
                       <div
                         key={dayIdx}
-                        title={cell.type === 'active' ? `${project.name}${team.length ? ' · ' + team.map((c: any) => (c.name ?? '').split(' ')[0]).join(', ') : ''}` : undefined}
+                        title={cell.type === 'active' ? `${project.name}${team.length ? ' · ' + team.map((c) => (c.name ?? '').split(' ')[0]).join(', ') : ''}` : undefined}
                         className={['tl-cell', `tl-cell--${cell.type}`, cell.isToday ? 'tl-cell--today' : ''].join(' ')}
                         style={projectStyle}
                       >

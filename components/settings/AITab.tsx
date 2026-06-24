@@ -70,8 +70,8 @@ export function AITab() {
         companyId: activeTenantId ?? undefined,
       })
       setRefresh(r => r + 1)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setSaving(false)
     }
@@ -213,7 +213,7 @@ export function AITab() {
                 border: `1px solid ${tool.color}40`,
                 background: `${tool.color}10`,
               }}>
-                {t(`status${tool.status.charAt(0).toUpperCase()}${tool.status.slice(1)}` as any)}
+                {t(`status${tool.status.charAt(0).toUpperCase()}${tool.status.slice(1)}` as Parameters<typeof t>[0])}
               </span>
             </div>
           ))}
@@ -241,7 +241,7 @@ export function AITab() {
                   —
                 </div>
                 <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
-                  {t(stat.labelKey as any)}
+                  {t(stat.labelKey as Parameters<typeof t>[0])}
                 </div>
               </div>
             ))}

@@ -27,6 +27,8 @@ import { getMondayOf, toISO, getWeekDays, fmtDay } from '@/lib/utils'
 
 type TSStatus = 'draft' | 'submitted' | 'approved'
 
+type TFunc = ReturnType<typeof useTranslations<'timesheets'>>
+
 interface HolidayEntry { date: string; localName: string }
 type HolidayMap = Record<string, HolidayEntry[]>
 
@@ -61,7 +63,7 @@ function Pill({ status }: { status: TSStatus }) {
   return <span className={`ts-pill ts-pill--${status}`}>{status}</span>
 }
 
-function LeaveBadge({ type, t }: { type: string; t: any }) {
+function LeaveBadge({ type, t }: { type: string; t: TFunc }) {
   const short: Record<string, string> = {
     'CP': 'CP', 'RTT': 'RTT', 'Sans solde': 'SLD', 'Absence autorisée': 'ABS',
   }
@@ -73,7 +75,7 @@ function LeaveBadge({ type, t }: { type: string; t: any }) {
   )
 }
 
-function HolidayBadge({ name, t }: { name: string; t: any }) {
+function HolidayBadge({ name, t }: { name: string; t: TFunc }) {
   return (
     <div className="ts-badge-wrap">
       <div className="ts-badge ts-badge--holiday">{t('holiday.badge')}</div>
@@ -82,7 +84,7 @@ function HolidayBadge({ name, t }: { name: string; t: any }) {
   )
 }
 
-function TimesheetLegend({ t }: { t: any }) {
+function TimesheetLegend({ t }: { t: TFunc }) {
   return (
     <div className="ts-legend">
       <div className="ts-legend-item">
@@ -109,7 +111,7 @@ function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }:
   canEditEntry: boolean
   x:            number
   y:            number
-  t:            any
+  t:            TFunc
   onSave:       (value: number, projectId: string) => void
   onClose:      () => void
 }) {
@@ -206,7 +208,7 @@ export function TimesheetsClient({
   const projectsLoaded    = projectsMap != null
 
   const companyCountry = useMemo(
-    () => (companyData?.hr_settings as any)?.country_code ?? 'FR',
+    () => companyData?.hr_settings?.country_code ?? 'FR',
     [companyData]
   )
 
@@ -297,7 +299,7 @@ export function TimesheetsClient({
     // Manager → uniquement les membres de son équipe (filtrés par team_id)
     if (role === 'manager') {
       if (!managerTeamId) return []
-      return consultantsSafe.filter(c => (c as any).teamId === managerTeamId)
+      return consultantsSafe.filter(c => c.teamId === managerTeamId)
     }
 
     // Admin / super_admin → tout

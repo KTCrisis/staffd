@@ -103,8 +103,8 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
       onSaved()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as { message: string }).message)
     } finally {
       setSaving(false)
     }

@@ -117,7 +117,7 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
 
 interface Props {
   companyId?:   string
-  consultants?: any[]
+  consultants?: Consultant[]
   userRole?:    string
 }
 
@@ -198,7 +198,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
   }
 
   const drawerRows = selected ? [
-    { label: t('drawer.status'),    value: <Badge variant={selected.status as any} /> },
+    { label: t('drawer.status'),    value: <Badge variant={selected.status} /> },
     { label: t('drawer.project'),   value: selected.currentProject ?? '—' },
     { label: t('drawer.available'), value: selected.availableFrom
         ? new Date(selected.availableFrom).toLocaleDateString()

@@ -6,9 +6,17 @@ import { redirect }             from 'next/navigation'
 import { Topbar }               from '@/components/layout/Topbar'
 import { AdminDashboardClient } from '@/components/dashboard/AdminDashboardClient'
 import type { CalendarEvent }   from '@/components/dashboard/MiniCalendar'
+import type { Tables }          from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
+}
+
+// Réponse de l'API publique date.nager.at (externe, non typée par le SDK Supabase)
+interface NagerHoliday {
+  date:      string
+  localName: string
+  name:      string
 }
 
 export default async function AdminDashboardPage({ searchParams }: Props) {
@@ -41,18 +49,22 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   if (leavesRes.error)      console.error('Admin dashboard leaves:', leavesRes.error.message)
   if (activityRes.error)    console.error('Admin dashboard activity:', activityRes.error.message)
 
-  const consultants   = consultantsRes.data ?? []
-  const projects      = projectsRes.data    ?? []
+  type AdminProjectRow = Pick<
+    Tables<'projects'>,
+    'id' | 'name' | 'status' | 'client_name' | 'progress' | 'tjm_vendu' | 'start_date' | 'end_date'
+  >
+  const consultants   = (consultantsRes.data ?? []) as Tables<'consultant_occupancy'>[]
+  const projects      = (projectsRes.data    ?? []) as AdminProjectRow[]
   const activity      = activityRes.data    ?? []
   const pendingLeaves = (leavesRes.data ?? []).length
 
-  const active       = consultants.filter((c: any) => c.status !== 'leave')
+  const active       = consultants.filter((c) => c.status !== 'leave')
   const avgOccupancy = active.length
-    ? Math.round(active.reduce((s: number, c: any) => s + (c.occupancy_rate ?? 0), 0) / active.length)
+    ? Math.round(active.reduce((s, c) => s + (c.occupancy_rate ?? 0), 0) / active.length)
     : 0
 
   const totalProjects   = projects.length
-  const activeCount     = projects.filter((p: any) => p.status === 'active').length
+  const activeCount     = projects.filter((p) => p.status === 'active').length
   const projectProgress = totalProjects > 0 ? Math.round((activeCount / totalProjects) * 100) : 0
 
   const kpi = {
@@ -79,14 +91,14 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
       .eq('id', companyForCal)
       .maybeSingle()
 
-    const countryCode = (comp?.hr_settings as any)?.country_code ?? 'FR'
+    const countryCode = (comp?.hr_settings as { country_code?: string } | null)?.country_code ?? 'FR'
     const calYear     = now.getFullYear()
 
     try {
       const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${calYear}/${countryCode}`)
       if (res.ok) {
-        const data = await res.json()
-        holidays = (data ?? []).map((h: any) => ({
+        const data = await res.json() as NagerHoliday[] | null
+        holidays = (data ?? []).map((h) => ({
           date:  h.date,
           type:  'holiday' as const,
           label: h.localName ?? h.name,
@@ -107,7 +119,10 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
   const { data: leaveEventsData } = await leaveEventsQ
 
-  const leaveEvents: CalendarEvent[] = (leaveEventsData ?? []).flatMap((l: any) => {
+  type LeaveCalRow = Pick<Tables<'leave_requests'>, 'start_date' | 'end_date' | 'type'> & {
+    consultants: Pick<Tables<'consultants'>, 'name'> | null
+  }
+  const leaveEvents: CalendarEvent[] = ((leaveEventsData ?? []) as LeaveCalRow[]).flatMap((l) => {
     const evts: CalendarEvent[] = []
     const start = new Date(l.start_date + 'T00:00:00')
     const end   = new Date(l.end_date + 'T00:00:00')
@@ -125,9 +140,9 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
   // Deadlines projets du mois
   const deadlineEvents: CalendarEvent[] = projects
-    .filter((p: any) => p.end_date && p.end_date >= monthStart && p.end_date <= monthEnd)
-    .map((p: any) => ({
-      date:  p.end_date,
+    .filter((p) => p.end_date && p.end_date >= monthStart && p.end_date <= monthEnd)
+    .map((p) => ({
+      date:  p.end_date as string,
       type:  'deadline' as const,
       label: p.name,
     }))
@@ -139,9 +154,12 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
+      {/* Le client attend Consultant[]/Project[] (camelCase) mais reçoit les lignes
+          brutes de la vue/table (snake_case) : dette de type préexistante, masquée
+          par `any`. Pont type-only via `unknown`, aucune valeur runtime modifiée. */}
       <AdminDashboardClient
-        consultants={consultants}
-        activeProjects={projects.filter((p: any) => p.status === 'active').slice(0, 3)}
+        consultants={consultants as unknown as React.ComponentProps<typeof AdminDashboardClient>['consultants']}
+        activeProjects={projects.filter((p) => p.status === 'active').slice(0, 3) as unknown as React.ComponentProps<typeof AdminDashboardClient>['activeProjects']}
         activity={activity}
         kpi={kpi}
         projectProgress={projectProgress}

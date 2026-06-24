@@ -6,6 +6,7 @@ import { Topbar }                       from '@/components/layout/Topbar'
 import { Panel }                        from '@/components/ui/Panel'
 import { ConsultantDashboardClient }    from '@/components/dashboard/ConsultantDashboardClient'
 import { getMondayOf, toISO }           from '@/lib/utils'
+import type { Tables }                   from '@/types/supabase'
 
 export default async function DashboardConsultantPage() {
   const t = await getTranslations('dashboardConsultant')
@@ -73,12 +74,15 @@ export default async function DashboardConsultantPage() {
       : Promise.resolve({ data: null }),
   ])
 
-  const myProjects = (projectsRes.data ?? [])
-    .map((a: any) => a.projects)
-    .filter(Boolean)
-    .filter((p: any) => p.status === 'active')
+  type ProjectBrief = Pick<Tables<'projects'>, 'id' | 'name' | 'status'>
+  type AssignmentWithProject = { project_id: string | null; projects: ProjectBrief | null }
+  const myProjects = ((projectsRes.data ?? []) as AssignmentWithProject[])
+    .map((a) => a.projects)
+    .filter((p): p is ProjectBrief => Boolean(p))
+    .filter((p) => p.status === 'active')
 
-  const myLeaves = (leavesRes.data ?? []).map((l: any) => ({
+  type MyLeaveRow = Pick<Tables<'leave_requests'>, 'id' | 'type' | 'status' | 'start_date' | 'end_date'>
+  const myLeaves = ((leavesRes.data ?? []) as MyLeaveRow[]).map((l) => ({
     id:        l.id,
     type:      l.type,
     status:    l.status,
@@ -86,7 +90,8 @@ export default async function DashboardConsultantPage() {
     endDate:   l.end_date,
   }))
 
-  const myTimesheets = (timesheetsRes.data ?? []).map((ts: any) => ({
+  type MyTimesheetRow = Pick<Tables<'timesheets'>, 'id' | 'date' | 'value' | 'status' | 'project_id'>
+  const myTimesheets = ((timesheetsRes.data ?? []) as MyTimesheetRow[]).map((ts) => ({
     id:        ts.id,
     date:      ts.date,
     value:     ts.value,
@@ -94,17 +99,18 @@ export default async function DashboardConsultantPage() {
     projectId: ts.project_id,
   }))
 
-  const weekTotal = myTimesheets.reduce((s: number, ts: { value?: number }) => s + (ts.value ?? 0), 0)
-  const hasDraft  = myTimesheets.some((ts: { status?: string; value?: number }) => ts.status === 'draft' && (ts.value ?? 0) > 0)
+  const weekTotal = myTimesheets.reduce((s, ts) => s + (ts.value ?? 0), 0)
+  const hasDraft  = myTimesheets.some((ts) => ts.status === 'draft' && (ts.value ?? 0) > 0)
 
   // Compteurs factures freelance
-  const invoicesList = invoicesRes.data ?? []
+  type InvoiceStatusRow = Pick<Tables<'invoices'>, 'id' | 'status'>
+  const invoicesList = (invoicesRes.data ?? []) as InvoiceStatusRow[]
   const invoiceStats = isFreelance ? {
     total:   invoicesList.length,
-    draft:   invoicesList.filter((i: any) => i.status === 'draft').length,
-    sent:    invoicesList.filter((i: any) => i.status === 'sent').length,
-    paid:    invoicesList.filter((i: any) => i.status === 'paid').length,
-    overdue: invoicesList.filter((i: any) => i.status === 'overdue').length,
+    draft:   invoicesList.filter((i) => i.status === 'draft').length,
+    sent:    invoicesList.filter((i) => i.status === 'sent').length,
+    paid:    invoicesList.filter((i) => i.status === 'paid').length,
+    overdue: invoicesList.filter((i) => i.status === 'overdue').length,
   } : null
 
   return (
@@ -115,7 +121,7 @@ export default async function DashboardConsultantPage() {
         isFreelance={isFreelance}
         myProjects={myProjects}
         myLeaves={myLeaves}
-        myTimesheets={myTimesheets}
+        myTimesheets={myTimesheets as React.ComponentProps<typeof ConsultantDashboardClient>['myTimesheets']}
         weekTotal={weekTotal}
         hasDraft={hasDraft}
         monday={mondayISO}

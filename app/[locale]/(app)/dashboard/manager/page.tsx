@@ -7,9 +7,17 @@ import { Topbar }                 from '@/components/layout/Topbar'
 import { ManagerDashboardClient } from '@/components/dashboard/ManagerDashboardClient'
 import { getMondayOf, toISO }     from '@/lib/utils'
 import type { CalendarEvent }     from '@/components/dashboard/MiniCalendar'
+import type { Tables }            from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
+}
+
+// Réponse de l'API publique date.nager.at (externe, non typée par le SDK Supabase)
+interface NagerHoliday {
+  date:      string
+  localName: string
+  name:      string
 }
 
 export default async function ManagerDashboardPage({ searchParams }: Props) {
@@ -72,10 +80,13 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
   if (timesheetsRes.error)  console.error('Manager dashboard timesheets:', timesheetsRes.error.message)
   if (activityRes.error)    console.error('Manager dashboard activity:', activityRes.error.message)
 
-  const consultants = consultantsRes.data ?? []
+  const consultants = (consultantsRes.data ?? []) as Tables<'consultant_occupancy'>[]
   const activity    = activityRes.data    ?? []
 
-  const leaveReqs = (leavesRes.data ?? []).map((l: any) => ({
+  type ManagerLeaveRow = Pick<Tables<'leave_requests'>, 'id' | 'status' | 'type' | 'start_date' | 'end_date'> & {
+    consultants: Pick<Tables<'consultants'>, 'name'> | null
+  }
+  const leaveReqs = ((leavesRes.data ?? []) as ManagerLeaveRow[]).map((l) => ({
     id:             l.id,
     status:         l.status,
     type:           l.type,
@@ -84,11 +95,12 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
     consultantName: l.consultants?.name ?? '—',
   }))
 
-  const available  = consultants.filter((c: any) => c.status === 'available').length
-  const assigned   = consultants.filter((c: any) => c.status === 'assigned').length
-  const pendingCra = (timesheetsRes.data ?? []).filter((ts: any) => ts.status === 'submitted').length
+  type ManagerTimesheetRow = Pick<Tables<'timesheets'>, 'id' | 'status' | 'consultant_id' | 'date'>
+  const available  = consultants.filter((c) => c.status === 'available').length
+  const assigned   = consultants.filter((c) => c.status === 'assigned').length
+  const pendingCra = ((timesheetsRes.data ?? []) as ManagerTimesheetRow[]).filter((ts) => ts.status === 'submitted').length
   const avgOcc     = consultants.length
-    ? Math.round(consultants.reduce((s: number, c: any) => s + (c.occupancy_rate ?? 0), 0) / consultants.length)
+    ? Math.round(consultants.reduce((s, c) => s + (c.occupancy_rate ?? 0), 0) / consultants.length)
     : 0
 
   const kpi = {
@@ -116,12 +128,12 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
       .eq('id', companyForCal)
       .maybeSingle()
 
-    const countryCode = (comp?.hr_settings as any)?.country_code ?? 'FR'
+    const countryCode = (comp?.hr_settings as { country_code?: string } | null)?.country_code ?? 'FR'
     try {
       const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${now.getFullYear()}/${countryCode}`)
       if (res.ok) {
-        const data = await res.json()
-        holidays = (data ?? []).map((h: any) => ({
+        const data = await res.json() as NagerHoliday[] | null
+        holidays = (data ?? []).map((h) => ({
           date:  h.date,
           type:  'holiday' as const,
           label: h.localName ?? h.name,
@@ -144,7 +156,10 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
 
   const { data: leaveCalData } = await leaveCalQ
 
-  const leaveEvents: CalendarEvent[] = (leaveCalData ?? []).flatMap((l: any) => {
+  type LeaveCalRow = Pick<Tables<'leave_requests'>, 'start_date' | 'end_date' | 'type'> & {
+    consultants: Pick<Tables<'consultants'>, 'name'> | null
+  }
+  const leaveEvents: CalendarEvent[] = ((leaveCalData ?? []) as LeaveCalRow[]).flatMap((l) => {
     const evts: CalendarEvent[] = []
     const start = new Date(l.start_date + 'T00:00:00')
     const end   = new Date(l.end_date + 'T00:00:00')
@@ -165,8 +180,11 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
+      {/* Le client attend Consultant[] (camelCase) mais reçoit les lignes brutes de
+          la vue (snake_case) : dette de type préexistante, masquée par `any`.
+          Pont type-only via `unknown`, aucune valeur runtime modifiée. */}
       <ManagerDashboardClient
-        consultants={consultants}
+        consultants={consultants as unknown as React.ComponentProps<typeof ManagerDashboardClient>['consultants']}
         leaveReqs={leaveReqs}
         activity={activity}
         kpi={kpi}

@@ -150,8 +150,8 @@ export function HRTab() {
         companyId: activeTenantId ?? undefined,
       })
       setRefresh(r => r + 1)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setSaving(false)
     }

@@ -5,6 +5,7 @@ import { getTranslations }   from 'next-intl/server'
 import { Topbar }            from '@/components/layout/Topbar'
 import { ConsultantsClient } from '@/components/consultants/ConsultantsClient'
 import type { Consultant }   from '@/types'
+import type { Tables }        from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -42,7 +43,15 @@ export default async function ConsultantsPage({ searchParams }: Props) {
 
   const { data } = await query.order('name')
 
-  const consultants: Consultant[] = (data ?? []).map((r: any) => ({
+  // La vue consultant_occupancy n'expose pas current_project/available_from/
+  // country_code : ces lectures retombaient déjà sur leur fallback (`?? ...`).
+  // On les déclare optionnelles pour préserver ce comportement sans masquer le reste.
+  type OccupancyRow = Tables<'consultant_occupancy'> & {
+    current_project?: string | null
+    available_from?:  string | null
+    country_code?:    string | null
+  }
+  const consultants = ((data ?? []) as OccupancyRow[]).map((r) => ({
     id:               r.id,
     companyId:        r.company_id,
     name:             r.name,
@@ -75,7 +84,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <ConsultantsClient
-        consultants={consultants}
+        consultants={consultants as Consultant[]}
         userRole={role}
         companyId={companyId}
       />

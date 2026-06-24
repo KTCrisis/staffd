@@ -13,6 +13,7 @@ import {
   addTeamMember, removeTeamMember,
 } from '@/lib/data'
 import type { Team }            from '@/lib/data'
+import type { Consultant, AvatarColor } from '@/types'
 import { SectionLabel, Skeleton, RoleBadge } from './shared'
 
 // ══════════════════════════════════════════════════════════════
@@ -23,7 +24,7 @@ function TeamCard({
   team, consultants, allTeamMemberIds, onEdit, onDelete, onAddMember, onRemoveMember,
 }: {
   team:             Team
-  consultants:      any[]
+  consultants:      Consultant[]
   /** Set de tous les ids déjà dans une équipe (optimiste inclus) — source de vérité unique */
   allTeamMemberIds: Set<string>
   onEdit:           (team: Team) => void
@@ -112,7 +113,7 @@ function TeamCard({
         </span>
         {team.managerId ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Avatar initials={team.managerInitials ?? '??'} color={(team.managerAvatarColor ?? 'green') as any} size="sm" />
+            <Avatar initials={team.managerInitials ?? '??'} color={(team.managerAvatarColor ?? 'green') as AvatarColor} size="sm" />
             <span style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{team.managerName}</span>
           </div>
         ) : (
@@ -144,7 +145,7 @@ function TeamCard({
                 background: 'var(--bg3)', border: '1px solid var(--border)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Avatar initials={member.initials} color={(member.avatar_color ?? 'green') as any} size="sm" />
+                  <Avatar initials={member.initials} color={(member.avatar_color ?? 'green') as AvatarColor} size="sm" />
                   <div>
                     <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{member.name}</div>
                     <div style={{ fontSize: 10, color: 'var(--text2)' }}>{member.role}</div>
@@ -229,7 +230,7 @@ function TeamForm({
   initial, managers, companyId, onSave, onClose,
 }: {
   initial?:  Team | null
-  managers:  any[]
+  managers:  Consultant[]
   companyId: string
   onSave:    () => void
   onClose:   () => void
@@ -258,8 +259,8 @@ function TeamForm({
       }
       onSave()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setSaving(false)
     }
@@ -421,13 +422,13 @@ export function TeamTab({ companyId }: { companyId: string }) {
     try {
       await addTeamMember(teamId, consultantId)
       handleRefresh()
-    } catch (e: any) {
+    } catch (e) {
       setOptimisticAddedMap(prev => {
         const next = new Map(prev)
         next.delete(consultantId)
         return next
       })
-      alert(e.message)
+      alert((e as Error).message)
     }
   }
 
@@ -443,13 +444,13 @@ export function TeamTab({ companyId }: { companyId: string }) {
     try {
       await removeTeamMember(confirmRemoveMember.consultantId)
       handleRefresh()
-    } catch (e: any) {
+    } catch (e) {
       setOptimisticRemovedIds(prev => {
         const next = new Set(prev)
         next.delete(confirmRemoveMember.consultantId)
         return next
       })
-      alert(e.message)
+      alert((e as Error).message)
     } finally {
       setRemovingMember(false)
     }
@@ -462,8 +463,8 @@ export function TeamTab({ companyId }: { companyId: string }) {
       await deleteTeam(confirmDel.id)
       setConfirmDel(null)
       handleRefresh()
-    } catch (e: any) {
-      alert(e.message)
+    } catch (e) {
+      alert((e as Error).message)
     } finally {
       setDeleting(false)
     }
@@ -492,7 +493,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
                 {s.value}
               </div>
               <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginTop: 4 }}>
-                {t(s.labelKey as any)}
+                {t(s.labelKey as Parameters<typeof t>[0])}
               </div>
             </div>
           ))}

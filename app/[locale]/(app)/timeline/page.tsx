@@ -6,6 +6,7 @@ import { redirect }        from 'next/navigation'
 import { Topbar }          from '@/components/layout/Topbar'
 import { TimelineClient }  from '@/components/timeline/TimelineClient'
 import { canEdit }         from '@/lib/auth/roles'
+import type { Tables }     from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -70,15 +71,23 @@ export default async function TimelinePage({ searchParams }: Props) {
 
   const teamConsultantIds = teamIds ? new Set(teamIds) : null
 
-  const projects = (projectsRes.data ?? []).map((p: any) => {
+  type TimelineConsultant = Pick<Tables<'consultants'>, 'id' | 'name' | 'initials' | 'avatar_color'>
+  type TimelineProjectRow = Pick<
+    Tables<'projects'>,
+    'id' | 'name' | 'status' | 'start_date' | 'end_date' | 'client_name' | 'is_internal'
+  > & {
+    assignments: { consultant_id: string | null; consultants: TimelineConsultant | null }[]
+  }
+
+  const projects = ((projectsRes.data ?? []) as TimelineProjectRow[]).map((p) => {
     const allTeam = (p.assignments ?? [])
-      .map((a: any) => a.consultants)
-      .filter(Boolean)
-      .filter((c: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === c.id) === i)
+      .map((a) => a.consultants)
+      .filter((c): c is TimelineConsultant => Boolean(c))
+      .filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i)
 
     // Manager : ne montrer que les consultants de son équipe dans le projet
     const team = teamConsultantIds
-      ? allTeam.filter((c: any) => teamConsultantIds.has(c.id))
+      ? allTeam.filter((c) => teamConsultantIds.has(c.id))
       : allTeam
 
     return {
@@ -91,12 +100,13 @@ export default async function TimelinePage({ searchParams }: Props) {
       isInternal: p.is_internal ?? false,
       team,
     }
-  }).filter((p: any) => !teamConsultantIds || p.team.length > 0)
+  }).filter((p) => !teamConsultantIds || p.team.length > 0)
   // Manager : exclure les projets sans aucun membre de son équipe
 
   const consultants = consultantsRes.data ?? []
 
-  const leaveRequests = (leavesRes.data ?? []).map((l: any) => ({
+  type TimelineLeaveRow = Pick<Tables<'leave_requests'>, 'id' | 'consultant_id' | 'type' | 'status' | 'start_date' | 'end_date'>
+  const leaveRequests = ((leavesRes.data ?? []) as TimelineLeaveRow[]).map((l) => ({
     id:           l.id,
     consultantId: l.consultant_id,
     type:         l.type,

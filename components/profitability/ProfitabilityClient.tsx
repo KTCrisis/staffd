@@ -11,7 +11,11 @@ import { EmptyState }          from '@/components/ui/EmptyState'
 import { MargeLegend }         from '@/components/ui/MargeLegend'
 import { ProgressBar }         from '@/components/ui/ProgressBar'
 import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert } from '@/lib/utils'
-import type { AvatarColor }    from '@/types'
+import type { AvatarColor, ContractType } from '@/types'
+import type { Tables }         from '@/types/supabase'
+
+// Ligne de la vue SQL `consultant_profitability` (snake_case, lecture seule)
+type ProfitabilityRow = Tables<'consultant_profitability'>
 
 // ── Composants locaux ─────────────────────────────────────────
 
@@ -24,7 +28,7 @@ function MargeBadge({ pct }: { pct: number }) {
   )
 }
 
-function ContractBadge({ type, tCons }: { type: 'employee' | 'freelance'; tCons: any }) {
+function ContractBadge({ type, tCons }: { type: ContractType; tCons: ReturnType<typeof useTranslations> }) {
   return (
     <span className={`contract-badge contract-badge-${type}`}>
       {tCons(type === 'freelance' ? 'contractType.freelance' : 'contractType.employee')}
@@ -32,7 +36,7 @@ function ContractBadge({ type, tCons }: { type: 'employee' | 'freelance'; tCons:
   )
 }
 
-function CibleGap({ tjmCible, tjmCout, t }: { tjmCible: number | null; tjmCout: number | null; t: any }) {
+function CibleGap({ tjmCible, tjmCout, t }: { tjmCible: number | null; tjmCout: number | null; t: ReturnType<typeof useTranslations> }) {
   if (!tjmCible || !tjmCout) return <span style={{ color: 'var(--text2)', fontSize: 10 }}>—</span>
   const gap    = tjmCible - tjmCout
   const gapPct = Math.round(gap / tjmCible * 100)
@@ -49,7 +53,7 @@ function CibleGap({ tjmCible, tjmCout, t }: { tjmCible: number | null; tjmCout: 
 type SortKey = 'ca_genere' | 'marge_brute' | 'occupancy_rate' | 'marge_pct'
 
 interface Props {
-  consultants?: any[]
+  consultants?: ProfitabilityRow[]
   error?:       string | null
 }
 
@@ -66,18 +70,18 @@ export function ProfitabilityClient({ consultants = [], error }: Props) {
   ]
 
   const sorted = useMemo(() =>
-    [...consultants].sort((a, b) => ((b as any)[sort] ?? 0) - ((a as any)[sort] ?? 0)),
+    [...consultants].sort((a, b) => ((b[sort] ?? 0) - (a[sort] ?? 0))),
     [consultants, sort]
   )
 
-  const totalCA    = sorted.reduce((s, c: any) => s + (c.ca_genere    ?? 0), 0)
-  const totalMarge = sorted.reduce((s, c: any) => s + (c.marge_brute  ?? 0), 0)
+  const totalCA    = sorted.reduce((s, c) => s + (c.ca_genere    ?? 0), 0)
+  const totalMarge = sorted.reduce((s, c) => s + (c.marge_brute  ?? 0), 0)
   const avgOcc     = sorted.length
-    ? Math.round(sorted.reduce((s, c: any) => s + (c.occupancy_rate ?? 0), 0) / sorted.length) : 0
+    ? Math.round(sorted.reduce((s, c) => s + (c.occupancy_rate ?? 0), 0) / sorted.length) : 0
   const avgMarge   = sorted.length
-    ? Math.round(sorted.reduce((s, c: any) => s + (c.marge_pct ?? 0), 0) / sorted.length) : 0
+    ? Math.round(sorted.reduce((s, c) => s + (c.marge_pct ?? 0), 0) / sorted.length) : 0
 
-  const alertCible = sorted.filter((c: any) => isCibleAlert(c.tjm_cible, c.tjm_cout)).length
+  const alertCible = sorted.filter((c) => isCibleAlert(c.tjm_cible, c.tjm_cout)).length
 
   return (
     <div className="app-content">
@@ -134,7 +138,7 @@ export function ProfitabilityClient({ consultants = [], error }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.map((c: any, i: number) => {
+                  {sorted.map((c, i) => {
                     const occ    = c.occupancy_rate ?? 0
                     const mPct   = c.marge_pct      ?? 0
                     const mColor = getMargeColor(mPct)
@@ -144,12 +148,12 @@ export function ProfitabilityClient({ consultants = [], error }: Props) {
                         <td>
                           <div className="consultant-cell">
                             <span className="consultant-cell-rank">#{i + 1}</span>
-                            <Avatar initials={c.initials} color={(c.avatar_color ?? 'green') as AvatarColor} size="sm" />
+                            <Avatar initials={c.initials ?? ''} color={(c.avatar_color ?? 'green') as AvatarColor} size="sm" />
                             <div className="consultant-cell-info">
                               <div className="td-primary">{c.name}</div>
                               <div className="consultant-cell-meta">
                                 <span style={{ fontSize: 9, color: 'var(--text2)' }}>{c.role}</span>
-                                <ContractBadge type={c.contract_type ?? 'employee'} tCons={tCons} />
+                                <ContractBadge type={(c.contract_type ?? 'employee') as ContractType} tCons={tCons} />
                               </div>
                             </div>
                           </div>

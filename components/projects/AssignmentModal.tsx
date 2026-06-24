@@ -114,8 +114,8 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
       })
       onSaved()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as { message: string }).message)
     } finally {
       setSaving(false)
     }

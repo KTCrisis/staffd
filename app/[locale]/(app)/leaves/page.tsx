@@ -4,6 +4,7 @@ import { getPageAuth }     from '@/lib/auth/page-auth'
 import { getTranslations } from 'next-intl/server'
 import { Topbar }          from '@/components/layout/Topbar'
 import { LeavesClient }    from '@/components/leaves/LeavesClient'
+import type { Tables }     from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -51,7 +52,14 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   const [requestsRes, consultantsRes] = await Promise.all([requestsQ, consultantsQ])
 
-  const requests = (requestsRes.data ?? []).map((r: any) => ({
+  // `note` n'est pas une colonne de leave_requests (la table porte `motif`) :
+  // la lecture `r.note ?? null` retombait déjà sur null. On la déclare optionnelle
+  // pour préserver ce comportement à l'identique, sans toucher la logique.
+  type RequestRow = Tables<'leave_requests'> & {
+    consultants: Pick<Tables<'consultants'>, 'name' | 'avatar_color' | 'initials'> | null
+    note?: string | null
+  }
+  const requests = ((requestsRes.data ?? []) as RequestRow[]).map((r) => ({
     id:             r.id,
     consultantId:   r.consultant_id,
     consultantName: r.consultants?.name        ?? null,
@@ -71,7 +79,7 @@ export default async function LeavesPage({ searchParams }: Props) {
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <LeavesClient
-        requests={requests}
+        requests={requests as React.ComponentProps<typeof LeavesClient>['requests']}
         consultants={consultants}
         userRole={role}
         userId={userId}

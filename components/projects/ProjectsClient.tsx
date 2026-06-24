@@ -14,6 +14,7 @@ import {
   archiveProject, deleteProject, deleteAssignment,
 } from '@/lib/data'
 import { daysUntil, countWorkingDays } from '@/lib/utils'
+import type { ProjectStatus, Project as CanonicalProject } from '@/types'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -118,22 +119,22 @@ function ProjectTeam({ project, assignmentRefresh, onAssign, onRefresh, readOnly
       {!loading && !(assignments ?? []).length && <EmptyState message={t('noAssignments')} />}
       {!loading && (assignments ?? []).map(a => (
         <div key={a.id} className="project-team-member">
-          <div className={`avatar ${AVATAR_CSS[(a as any).avatarColor ?? 'green'] ?? 'av-green'}`}
+          <div className={`avatar ${AVATAR_CSS[a.avatarColor ?? 'green'] ?? 'av-green'}`}
             style={{ width: 30, height: 30, fontSize: 10, flexShrink: 0 }}>
-            {(a as any).initials}
+            {a.initials}
           </div>
           <div className="project-team-member-info">
-            <div className="project-team-member-name">{(a as any).name}</div>
-            <div className="project-team-member-role">{(a as any).role}</div>
+            <div className="project-team-member-name">{a.name}</div>
+            <div className="project-team-member-role">{a.role}</div>
           </div>
           <div className="project-team-member-alloc">
             <div className="project-team-member-pct"
-              style={{ color: (a as any).allocation === 100 ? 'var(--green)' : 'var(--gold)' }}>
-              {(a as any).allocation}%
+              style={{ color: a.allocation === 100 ? 'var(--green)' : 'var(--gold)' }}>
+              {a.allocation}%
             </div>
-            {(a as any).startDate && (a as any).endDate && (
+            {a.startDate && a.endDate && (
               <div className="project-team-member-days">
-                {Math.round((a as any).allocation / 100 * countWorkingDays((a as any).startDate, (a as any).endDate))} j
+                {Math.round(a.allocation / 100 * countWorkingDays(a.startDate, a.endDate))} j
               </div>
             )}
           </div>
@@ -195,7 +196,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
   ]
 
   function openCreate() { setEditProject(null); setSelected(null); setFormOpen(true) }
-  function openEdit(p: Project) { setEditProject(p as any); setSelected(null); setFormOpen(true) }
+  function openEdit(p: Project) { setEditProject(p); setSelected(null); setFormOpen(true) }
 
   async function handleArchive(p: Project) {
     if (!confirm(t('confirmArchive', { name: p.name }))) return
@@ -271,7 +272,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
                     </td>
                     <td><TeamAvatars team={p.team} /></td>
                     <td><DeadlineChip date={p.endDate} t={t} /></td>
-                    <td><Badge variant={p.status as any} /></td>
+                    <td><Badge variant={p.status as ProjectStatus} /></td>
                     {!readOnly && (                                                      
                       <td onClick={e => e.stopPropagation()}>
                         <div className="row-actions">
@@ -318,7 +319,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
             <div className="project-drawer-description">{selected.description}</div>
           )}
           {([
-            { label: t('drawer.status'),    value: <Badge variant={selected.status as any} /> },
+            { label: t('drawer.status'),    value: <Badge variant={selected.status as ProjectStatus} /> },
             { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString() : '—' },
             { label: t('drawer.deadline'),  value: <DeadlineChip date={selected.endDate} t={t} /> },
             ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                   : []),
@@ -383,7 +384,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
 
       {!readOnly && assignOpen && selected && (                                           
         <AssignmentModal
-          project={selected as any}
+          project={selected as CanonicalProject}
           onClose={() => setAssignOpen(false)}
           onSaved={() => {
             setAssignOpen(false)
@@ -395,7 +396,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
 
       {!readOnly && formOpen && (                                                         
         <ProjectForm
-          project={editProject as any}
+          project={editProject as CanonicalProject | null}
           onClose={() => { setFormOpen(false); setEditProject(null) }}
           onSaved={() => { router.refresh() }}
         />

@@ -11,7 +11,8 @@ import { StatRow }             from '@/components/ui'
 import { Avatar }              from '@/components/ui/Avatar'
 import { EmptyState }          from '@/components/ui/EmptyState'
 import { AssignmentDrawer }    from '@/components/assignments/AssignmentDrawer'
-import type { Consultant }     from '@/types'
+import type { Consultant, AvatarColor } from '@/types'
+import type { Tables }         from '@/types/supabase'
 
 // ── Fallbacks t.raw() ────────────────────────────────────────
 const MONTHS_FB     = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -23,17 +24,38 @@ type CellType = 'free' | 'project' | 'leave' | 'partial' | 'overloaded' | 'weeke
 
 interface DayCell {
   type:         CellType
-  projectId?:   string
-  projectName?: string
-  leaveType?:   string
+  projectId?:   string | null
+  projectName?: string | null
+  leaveType?:   string | null
   isToday:      boolean
   isWeekend:    boolean
 }
 
+// Ligne de la vue SQL `consultant_occupancy` (snake_case), avec les alias
+// camelCase lus défensivement par le composant.
+type AvailabilityConsultant = Tables<'consultant_occupancy'> & {
+  avatarColor?: string | null
+}
+
+// Demande de congé remappée côté page (camelCase).
+interface AvailabilityLeave {
+  id:           string
+  consultantId: string | null
+  type:         string | null
+  status:       string | null
+  startDate:    string | null
+  endDate:      string | null
+}
+
+// Affectation : ligne `assignments` + projet joint.
+type AvailabilityAssignment = Tables<'assignments'> & {
+  projects?: { name: string | null } | null
+}
+
 interface Props {
-  consultants?:   any[]
-  leaveRequests?: any[]
-  assignments?:   any[]
+  consultants?:   AvailabilityConsultant[]
+  leaveRequests?: AvailabilityLeave[]
+  assignments?:   AvailabilityAssignment[]
   teamAccess?:    boolean
   userId?:        string | null
   companyId?:     string
@@ -68,7 +90,7 @@ function toISO(d: Date): string {
 
 // ── Builder grille ────────────────────────────────────────────
 
-function buildGrid(consultants: any[], year: number, month: number, leaveRequests: any[], assignments: any[]) {
+function buildGrid(consultants: AvailabilityConsultant[], year: number, month: number, leaveRequests: AvailabilityLeave[], assignments: AvailabilityAssignment[]) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const today       = new Date(); today.setHours(0, 0, 0, 0)
 
@@ -84,6 +106,7 @@ function buildGrid(consultants: any[], year: number, month: number, leaveRequest
 
       const leave = leaveRequests.find(lr =>
         lr.consultantId === c.id && lr.status !== 'refused' &&
+        lr.startDate != null && lr.endDate != null &&
         dateStr >= lr.startDate && dateStr <= lr.endDate
       )
       if (leave) { cells.push({ type: 'leave', leaveType: leave.type, isToday, isWeekend: false }); continue }
@@ -93,8 +116,8 @@ function buildGrid(consultants: any[], year: number, month: number, leaveRequest
         (!a.start_date || dateStr >= a.start_date) &&
         (!a.end_date   || dateStr <= a.end_date)
       )
-      const totalAlloc  = active.reduce((s: number, a: any) => s + (a.allocation ?? 0), 0)
-      const mainProject = [...active].sort((a: any, b: any) => (b.allocation ?? 0) - (a.allocation ?? 0))[0]
+      const totalAlloc  = active.reduce((s: number, a) => s + (a.allocation ?? 0), 0)
+      const mainProject = [...active].sort((a, b) => (b.allocation ?? 0) - (a.allocation ?? 0))[0]
 
       if      (totalAlloc > 100)  cells.push({ type: 'overloaded', projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
       else if (totalAlloc >= 100) cells.push({ type: 'project',    projectId: mainProject?.project_id, projectName: mainProject?.projects?.name, isToday, isWeekend: false })
@@ -107,7 +130,7 @@ function buildGrid(consultants: any[], year: number, month: number, leaveRequest
 
 // ── Légende ───────────────────────────────────────────────────
 
-function AvailabilityLegend({ tDisp }: { tDisp: any }) {
+function AvailabilityLegend({ tDisp }: { tDisp: ReturnType<typeof useTranslations> }) {
   const items = [
     { cls: 'avail-swatch--busy',     label: tDisp('legend.busy')       + ' (100%)'  },
     { cls: 'avail-swatch--partial',  label: tDisp('legend.partial')    + ' (<100%)' },
@@ -149,7 +172,7 @@ export function AvailabilityClient({
   const now = new Date()
   const [year,  setYear]  = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
-  const [assignTarget, setAssignTarget] = useState<{ consultant: Consultant; date: string } | null>(null)
+  const [assignTarget, setAssignTarget] = useState<{ consultant: AvailabilityConsultant; date: string } | null>(null)
 
   const prevMonth      = () => month === 0  ? (setMonth(11), setYear(y => y - 1)) : setMonth(m => m - 1)
   const nextMonth      = () => month === 11 ? (setMonth(0),  setYear(y => y + 1)) : setMonth(m => m + 1)
@@ -220,7 +243,7 @@ export function AvailabilityClient({
               {grid.map(({ consultant, cells }, rowIdx) => (
                 <div key={consultant.id} className="avail-row" style={{ gridTemplateColumns: gridCols, borderBottom: rowIdx < grid.length - 1 ? '1px solid var(--border)' : undefined }}>
                   <div className="avail-name-cell">
-                    <Avatar initials={consultant.initials} color={consultant.avatarColor ?? consultant.avatar_color} size="sm" />
+                    <Avatar initials={consultant.initials ?? ''} color={(consultant.avatarColor ?? consultant.avatar_color ?? 'green') as AvatarColor} size="sm" />
                     <div>
                       <div className="avail-c-name">{(consultant.name ?? '').split(' ')[0]}</div>
                       <div className="avail-c-role">{consultant.role}</div>
@@ -249,7 +272,7 @@ export function AvailabilityClient({
                       <div
                         key={dayIdx}
                         title={
-                          cell.type === 'project' || cell.type === 'partial' || cell.type === 'overloaded' ? cell.projectName
+                          cell.type === 'project' || cell.type === 'partial' || cell.type === 'overloaded' ? (cell.projectName ?? undefined)
                           : cell.type === 'leave'   ? `${tDisp('legend.leave')}${cell.leaveType ? ` (${cell.leaveType})` : ''}`
                           : cell.type === 'free'    ? tDisp('legend.free')
                           : undefined
@@ -282,7 +305,7 @@ export function AvailabilityClient({
 
       {assignTarget && (
         <AssignmentDrawer
-          consultant={assignTarget.consultant}
+          consultant={assignTarget.consultant as unknown as Consultant}
           defaultDate={assignTarget.date}
           companyId={companyId}
           onClose={() => setAssignTarget(null)}

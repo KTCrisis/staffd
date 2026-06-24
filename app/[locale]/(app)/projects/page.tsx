@@ -4,6 +4,7 @@ import { getPageAuth }     from '@/lib/auth/page-auth'
 import { getTranslations } from 'next-intl/server'
 import { Topbar }          from '@/components/layout/Topbar'
 import { ProjectsClient }  from '@/components/projects/ProjectsClient'
+import type { Tables }     from '@/types/supabase'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -31,7 +32,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
         .select('project_id')
         .eq('consultant_id', meData.id)
 
-      myProjectIds = (assignments ?? []).map((a: any) => a.project_id)
+      myProjectIds = ((assignments ?? []) as Pick<Tables<'assignments'>, 'project_id'>[])
+        .map((a) => a.project_id) as string[]
     } else {
       myProjectIds = [] // pas de profil lié → aucun projet
     }
@@ -62,7 +64,15 @@ export default async function ProjectsPage({ searchParams }: Props) {
 
   const { data, error } = await query
 
-  const projects = (data ?? []).map((p: any) => ({
+  type ProjectAssignmentConsultant = Pick<Tables<'consultants'>, 'id' | 'name' | 'initials' | 'avatar_color'>
+  // La page lit `p.client` (legacy) qui n'est pas une colonne de la table projects :
+  // la lecture retombait déjà sur null. Déclarée optionnelle pour préserver le runtime.
+  type ProjectRow = Tables<'projects'> & {
+    client?: string | null
+    assignments: { consultant_id: string | null; consultants: ProjectAssignmentConsultant | null }[]
+  }
+
+  const projects = ((data ?? []) as ProjectRow[]).map((p) => ({
     id:          p.id,
     name:        p.name,
     status:      p.status,
@@ -78,9 +88,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
     isInternal:  p.is_internal  ?? false,
     progress:    p.progress     ?? 0,
     team: (p.assignments ?? [])
-      .map((a: any) => a.consultants)
-      .filter(Boolean)
-      .map((c: any) => ({
+      .map((a) => a.consultants)
+      .filter((c): c is ProjectAssignmentConsultant => Boolean(c))
+      .map((c) => ({
         id:          c.id,
         name:        c.name,
         initials:    c.initials,
@@ -91,7 +101,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
-      <ProjectsClient projects={projects} error={error?.message ?? null} userRole={role} />
+      <ProjectsClient projects={projects as React.ComponentProps<typeof ProjectsClient>['projects']} error={error?.message ?? null} userRole={role} />
     </>
   )
 }

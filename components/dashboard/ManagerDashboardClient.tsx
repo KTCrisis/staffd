@@ -7,28 +7,31 @@ import { KpiCard, Panel }  from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
 import { ConsultantItem }  from '@/components/consultants/ConsultantItem'
 import { ActivityFeed }    from '@/components/dashboard/ActivityFeed'
+import type { ActivityFeedItem } from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }    from '@/components/dashboard/MiniCalendar'
 import type { CalendarEvent } from '@/components/dashboard/MiniCalendar'
+import type { Consultant } from '@/types'
 
 interface LeaveReq {
   id: string; status: string; type: string
   startDate: string; endDate: string; consultantName: string
 }
 
-interface KpiData {
+// KPIs propres au tableau de bord manager (forme distincte du KpiData canonique)
+interface ManagerKpiData {
   available: number; assigned: number; pendingLeave: number
   pendingCra: number; avgOcc: number; total: number
 }
 
 interface Props {
-  consultants?: any[]
+  consultants?: Consultant[]
   leaveReqs?:   LeaveReq[]
-  activity?:    any[]
-  kpi?:         KpiData
+  activity?:    ActivityFeedItem[]
+  kpi?:         ManagerKpiData
   calendarEvents?: CalendarEvent[]
 }
 
-const DEFAULT_KPI: KpiData = {
+const DEFAULT_KPI: ManagerKpiData = {
   available: 0, assigned: 0, pendingLeave: 0,
   pendingCra: 0, avgOcc: 0, total: 0,
 }

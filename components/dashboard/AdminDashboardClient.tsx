@@ -8,21 +8,15 @@ import { EmptyState }      from '@/components/ui/EmptyState'
 import { ConsultantItem }  from '@/components/consultants/ConsultantItem'
 import { ProjectRow }      from '@/components/projects/ProjectRow'
 import { ActivityFeed }    from '@/components/dashboard/ActivityFeed'
+import type { ActivityFeedItem } from '@/components/dashboard/ActivityFeed'
 import { MiniCalendar }    from '@/components/dashboard/MiniCalendar'
 import type { CalendarEvent } from '@/components/dashboard/MiniCalendar'
-
-interface KpiData {
-  activeConsultants: number
-  totalConsultants:  number
-  activeProjects:    number
-  pendingLeaves:     number
-  occupancyRate:     number
-}
+import type { Consultant, Project, KpiData } from '@/types'
 
 interface Props {
-  consultants?:     any[]
-  activeProjects?:  any[]
-  activity?:        any[]
+  consultants?:     Consultant[]
+  activeProjects?:  Project[]
+  activity?:        ActivityFeedItem[]
   kpi?:             KpiData
   projectProgress?: number
   calendarEvents?:  CalendarEvent[]

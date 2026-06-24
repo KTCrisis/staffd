@@ -14,7 +14,10 @@ import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
 import { deleteConsultant }  from '@/lib/data'
 import { toast }             from '@/lib/toast'
 import { fmt, fmtTjm, getMargeColor, formatDate } from '@/lib/utils'
-import type { AvatarColor }  from '@/types'
+import type { AvatarColor, ConsultantStatus, ProjectStatus, Consultant as CanonicalConsultant } from '@/types'
+import type { Database }     from '@/types/supabase'
+
+type Profitability = Database['public']['Views']['consultant_profitability']['Row']
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -52,7 +55,7 @@ interface Consultant {
 interface Props {
   consultant:    Consultant
   assignments?:  Assignment[]
-  profitability?: any
+  profitability?: Profitability | null
   userRole?:     string
   companyId?:    string
 }
@@ -132,7 +135,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                 <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{c.name}</div>
                 <div style={{ color: 'var(--text2)', fontSize: 12, marginBottom: 8 }}>{c.role}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <Badge variant={c.status as any} />
+                  <Badge variant={c.status as ConsultantStatus} />
                   <ContractBadge type={c.contractType} />
                 </div>
               </div>
@@ -303,7 +306,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                           {a.project?.clientName ?? '—'}
                         </td>
                         <td>
-                          {a.project && <Badge variant={a.project.status as any} />}
+                          {a.project && <Badge variant={a.project.status as ProjectStatus} />}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 700,
                           color: a.allocation === 100 ? 'var(--green)' : 'var(--gold)' }}>
@@ -328,7 +331,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
 
       {showForm && (
         <ConsultantForm
-          consultant={c as any}
+          consultant={c as unknown as CanonicalConsultant}
           companyId={companyId}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); router.refresh() }}

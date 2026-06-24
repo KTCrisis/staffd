@@ -12,13 +12,22 @@ interface ProjectRowProps {
   onClick?:    () => void
 }
 
+// Le projet peut arriver en camelCase (hooks) OU en snake_case (Server Component raw)
+type ProjectRaw = Project & {
+  consultant_ids?: string[]
+  client_name?:    string | null
+  end_date?:       string | null
+}
+
 export function ProjectRow({ project, consultants = [], onClick }: ProjectRowProps) {
   const t = useTranslations('projects')
 
+  const p = project as ProjectRaw
+
   // Supporte camelCase (hooks) ET snake_case (Server Component raw)
   const consultantIds: string[] =
-    (project as any).consultantIds ??
-    (project as any).consultant_ids ??
+    p.consultantIds ??
+    p.consultant_ids ??
     []
 
   const members = consultantIds
@@ -27,7 +36,8 @@ export function ProjectRow({ project, consultants = [], onClick }: ProjectRowPro
     .filter(Boolean) as Consultant[]
 
   const extra    = Math.max(0, consultantIds.length - 3)
-  const progress = (project as any).progress ?? 0
+  const progress = p.progress ?? 0
+  const dueDate  = p.endDate ?? p.end_date
 
   const pctColor =
     progress >= 80 ? 'var(--green)' :
@@ -40,7 +50,7 @@ export function ProjectRow({ project, consultants = [], onClick }: ProjectRowPro
       <div>
         <div className="pr-name">{project.name}</div>
         <div className="pr-client">
-          {(project as any).clientName ?? (project as any).client_name ?? '—'}
+          {p.clientName ?? p.client_name ?? '—'}
           {' · '}
           {t('consultantCount', { count: consultantIds.length })}
         </div>
@@ -73,9 +83,7 @@ export function ProjectRow({ project, consultants = [], onClick }: ProjectRowPro
 
       {/* Due date */}
       <div style={{ fontSize: 10, color: 'var(--text2)', textAlign: 'right' }}>
-        {project.endDate ?? (project as any).end_date
-          ? formatDate(project.endDate ?? (project as any).end_date)
-          : '—'}
+        {dueDate ? formatDate(dueDate) : '—'}
       </div>
     </div>
   )

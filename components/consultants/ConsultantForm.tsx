@@ -51,7 +51,7 @@ function calcTjmCoutReel(
 export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('consultantForm')
   const { data: companyData } = useCompanySettings()
-  const companyCountry = (companyData?.hr_settings as any)?.country_code ?? 'FR'
+  const companyCountry = companyData?.hr_settings?.country_code ?? 'FR'
 
   const isEdit = !!consultant
 
@@ -140,7 +140,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         role:                form.role.trim(),
         avatar_color:        form.avatar_color,
         stack:               form.stack ? form.stack.split(',').map(s => s.trim()).filter(Boolean) : [],
-        status:              form.status as any,
+        status:              form.status,
         contract_type:       form.contract_type,
         salaire_annuel_brut: isEmployee && form.salaire_annuel_brut ? parseFloat(form.salaire_annuel_brut) : undefined,
         charges_pct:         isEmployee ? parseFloat(form.charges_pct) || 42 : undefined,
@@ -160,8 +160,8 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
 
       onSaved()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }

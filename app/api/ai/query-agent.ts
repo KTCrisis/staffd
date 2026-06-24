@@ -48,7 +48,25 @@ Examples:
 - User asks about a draft project →
   <!--ACTIONS[{"label":"Passer Projet Alpha en actif","action":"update_project_status","params":{"project_name":"Projet Alpha","status":"active"}}]-->`
 
-  
+
+// ── Shapes minimales des lignes de vues Supabase utilisées ───
+interface ProfitabilityRow {
+  consultant_id?:  string
+  name?:           string
+  role?:           string
+  contract_type?:  string
+  tjm_cout?:       number | null
+  tjm_cible?:      number | null
+  ca_genere?:      number | null
+  cout_consultant?: number | null
+  marge_brute?:    number | null
+  marge_pct?:      number | null
+  jours_generes?:  number | null
+  nb_assignments?: number | null
+  occupancy_rate?: number | null
+  status?:         string
+}
+
 // ── Context fetcher ──────────────────────────────────────────
 async function fetchContext(cmd: string, url: string, userToken: string): Promise<string> {
   if (!url || !userToken) return '{}'
@@ -71,7 +89,7 @@ async function fetchContext(cmd: string, url: string, userToken: string): Promis
         ),
         q('consultant_occupancy', 'id,name,contract_type,tjm_cout_reel,tjm_cible,occupancy_rate,status'),
       ])
-      const arr        = profitability as any[]
+      const arr        = profitability as ProfitabilityRow[]
       const totalCA    = arr.reduce((s, c) => s + (c.ca_genere   ?? 0), 0)
       const totalMarge = arr.reduce((s, c) => s + (c.marge_brute ?? 0), 0)
       const avgMarge   = arr.length
@@ -135,13 +153,13 @@ async function fetchContext(cmd: string, url: string, userToken: string): Promis
       q('leave_requests', 'id,consultant_id,type,start_date,end_date,days,status', 'status=eq.pending&limit=20'),
       q('consultant_profitability', 'consultant_id,name,contract_type,tjm_cout,tjm_cible,marge_pct,ca_genere'),
     ])
-    const arr = profitSummary as any[]
+    const arr = profitSummary as ProfitabilityRow[]
     return JSON.stringify({
       consultants,
       pending_leaves: leaves,
       profitability_summary: {
-        employees:  arr.filter((c: any) => c.contract_type === 'employee').length,
-        freelances: arr.filter((c: any) => c.contract_type === 'freelance').length,
+        employees:  arr.filter((c) => c.contract_type === 'employee').length,
+        freelances: arr.filter((c) => c.contract_type === 'freelance').length,
         details: arr,
       },
     })

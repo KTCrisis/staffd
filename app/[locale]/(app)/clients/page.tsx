@@ -4,6 +4,12 @@ import { getPageAuth }    from '@/lib/auth/page-auth'
 import { getTranslations } from 'next-intl/server'
 import { Topbar }          from '@/components/layout/Topbar'
 import { ClientsClient }   from '@/components/clients/ClientsClient'
+import type { Tables }     from '@/types/supabase'
+import type { Client }     from '@/types'
+
+type ClientRow = Tables<'clients'> & {
+  projects: Pick<Tables<'projects'>, 'id' | 'status'>[]
+}
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
@@ -25,7 +31,10 @@ export default async function ClientsPage({ searchParams }: Props) {
 
   const { data } = await query
 
-  const clients = (data ?? []).map((row: any) => ({
+  // Le mapping émet `string | null` sur les champs optionnels ; `Client` les
+  // déclare `string | undefined`. On conserve la valeur runtime (null) et on
+  // réconcilie le type au passage de prop — type-only, aucun changement de valeur.
+  const clients = ((data ?? []) as ClientRow[]).map((row) => ({
     id:             row.id,
     name:           row.name,
     sector:         row.sector        ?? null,
@@ -35,14 +44,14 @@ export default async function ClientsPage({ searchParams }: Props) {
     contactPhone:   row.contact_phone ?? null,
     companyId:      row.company_id,
     notes:          row.notes         ?? null,
-    activeProjects: (row.projects as any[]).filter((p: any) => p.status === 'active').length,
-    totalProjects:  (row.projects as any[]).length,
+    activeProjects: row.projects.filter((p) => p.status === 'active').length,
+    totalProjects:  row.projects.length,
   }))
 
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
-      <ClientsClient clients={clients} companyId={companyId} />
+      <ClientsClient clients={clients as Client[]} companyId={companyId} />
     </>
   )
 }
