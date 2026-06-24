@@ -15,10 +15,21 @@ import { useTranslations }   from 'next-intl'
 
 import { useProjects, createAssignment } from '@/lib/data'
 import { Avatar }            from '@/components/ui/Avatar'
-import type { Consultant }   from '@/types'
+import type { AvatarColor }  from '@/types'
+
+// Forme minimale réellement consommée par le drawer (camelCase). L'appelant
+// (AvailabilityClient) mappe sa ligne de vue snake_case vers cette forme.
+export interface DrawerConsultant {
+  id:            string
+  name:          string
+  initials:      string
+  avatarColor:   AvatarColor
+  role:          string
+  occupancyRate: number
+}
 
 interface Props {
-  consultant:  Consultant
+  consultant:  DrawerConsultant
   defaultDate: string
   companyId:   string
   onClose:     () => void

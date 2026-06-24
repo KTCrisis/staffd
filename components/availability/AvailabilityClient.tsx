@@ -11,7 +11,7 @@ import { StatRow }             from '@/components/ui'
 import { Avatar }              from '@/components/ui/Avatar'
 import { EmptyState }          from '@/components/ui/EmptyState'
 import { AssignmentDrawer }    from '@/components/assignments/AssignmentDrawer'
-import type { Consultant, AvatarColor } from '@/types'
+import type { AvatarColor } from '@/types'
 import type { Tables }         from '@/types/supabase'
 
 // ── Fallbacks t.raw() ────────────────────────────────────────
@@ -305,7 +305,14 @@ export function AvailabilityClient({
 
       {assignTarget && (
         <AssignmentDrawer
-          consultant={assignTarget.consultant as unknown as Consultant}
+          consultant={{
+            id:            assignTarget.consultant.id ?? '',
+            name:          assignTarget.consultant.name ?? '',
+            initials:      assignTarget.consultant.initials ?? '',
+            avatarColor:   (assignTarget.consultant.avatar_color ?? 'green') as AvatarColor,
+            role:          assignTarget.consultant.role ?? '',
+            occupancyRate: assignTarget.consultant.occupancy_rate ?? 0,
+          }}
           defaultDate={assignTarget.date}
           companyId={companyId}
           onClose={() => setAssignTarget(null)}
