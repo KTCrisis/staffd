@@ -72,8 +72,8 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
 
       onSaved()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setSaving(false)
     }

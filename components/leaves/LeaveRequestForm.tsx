@@ -75,7 +75,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
             .select('hr_settings')
             .eq('id', data.company_id)
             .single()
-          cc = (company?.hr_settings as any)?.country_code ?? 'FR'
+          cc = (company?.hr_settings as { country_code?: string } | null)?.country_code ?? 'FR'
         }
         if (cancelled) return
         const resolvedCC = cc ?? 'FR'
@@ -187,8 +187,8 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
 
       onSaved()
       onClose()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e) {
+      setError((e as Error).message)
     } finally {
       setLoading(false)
     }

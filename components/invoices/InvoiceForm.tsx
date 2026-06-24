@@ -188,8 +188,8 @@ export function InvoiceForm() {
         .gte('date', from).lte('date', to)
         .eq('status', 'approved')
 
-      if (consultantId) q = (q as any).eq('consultant_id', consultantId)
-      if (projectId)    q = (q as any).eq('project_id', projectId)
+      if (consultantId) q = q.eq('consultant_id', consultantId)
+      if (projectId)    q = q.eq('project_id', projectId)
 
       const { data } = await q
 
@@ -198,15 +198,26 @@ export function InvoiceForm() {
         return
       }
 
+      // tjm_cout_reel n'existe pas sur la table consultants dans les types générés
+      // (c'est une colonne de la vue) ; on type le payload imbriqué explicitement.
+      type TimesheetEntry = {
+        date: string | null
+        value: number | null
+        consultant_id: string | null
+        project_id: string | null
+        projects: { name: string | null } | null
+        consultants: { name: string | null; tjm_cout_reel: number | null } | null
+      }
+
       // Group by consultant + project
       const groups = new Map<string, { desc: string; days: number; rate: number }>()
-      data.forEach((entry: any) => {
+      ;(data as unknown as TimesheetEntry[]).forEach((entry) => {
         const cName  = entry.consultants?.name ?? 'Consultant'
         const pName  = entry.projects?.name    ?? projectName ?? 'Project'
         const rate   = entry.consultants?.tjm_cout_reel ?? 0
         const key    = cName + '__' + pName
         if (!groups.has(key)) groups.set(key, { desc: cName + ' — ' + pName, days: 0, rate })
-        groups.get(key)!.days += entry.value
+        groups.get(key)!.days += entry.value ?? 0
       })
 
       setLines(Array.from(groups.values()).map(g => ({
@@ -300,8 +311,8 @@ export function InvoiceForm() {
       if (linesErr) throw linesErr
 
       router.push('/invoices')
-    } catch (e: any) {
-      alert(e?.message || 'Failed to save invoice')
+    } catch (e) {
+      alert((e as Error)?.message || 'Failed to save invoice')
     } finally {
       setSaving(false)
     }

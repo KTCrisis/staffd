@@ -9,9 +9,12 @@ import { EmptyState }                       from '@/components/ui/EmptyState'
 import { MargeBar }                         from '@/components/ui/MargeBar'
 import { MargeLegend }                      from '@/components/ui/MargeLegend'
 import { fmt, getMargeColor, pluralFr }     from '@/lib/utils'
+import type { Tables }                       from '@/types/supabase'
+
+type ProjectFinancials = Tables<'project_financials'>
 
 interface Props {
-  projects?: any[]
+  projects?: ProjectFinancials[]
 }
 
 export function FinancialsClient({ projects = [] }: Props) {
@@ -35,7 +38,7 @@ export function FinancialsClient({ projects = [] }: Props) {
       <div className="kpi-grid">
         <KpiCard label={t('kpi.totalCA')}    value={fmt(totalCA)}      sub={t('kpi.totalCASub')} accent="cyan"  />
         <KpiCard label={t('kpi.totalMarge')} value={fmt(totalMarge)}   sub={`${avgMargePct}%`}   accent="green" />
-        <KpiCard label={t('kpi.avgMarge')}   value={`${avgMargePct}%`} sub={margeSub}            accent={margeAccent as any} />
+        <KpiCard label={t('kpi.avgMarge')}   value={`${avgMargePct}%`} sub={margeSub}            accent={margeAccent} />
         <KpiCard
           label={t('kpi.bestMarge')}
           value={bestProjet?.name ?? '—'}
@@ -64,7 +67,7 @@ export function FinancialsClient({ projects = [] }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {projects.map((p: any) => {
+                  {projects.map((p) => {
                     const color = getMargeColor(p.marge_pct)
                     return (
                       <tr key={p.id}>
@@ -86,7 +89,7 @@ export function FinancialsClient({ projects = [] }: Props) {
                           <MargeBar pct={p.marge_pct ?? 0} />
                         </td>
                         <td style={{ textAlign: 'center', color: 'var(--text2)' }}>
-                          {p.team_size} {pluralFr(p.team_size, t('table.consultant'), t('table.consultants'))}
+                          {p.team_size} {pluralFr(p.team_size ?? 0, t('table.consultant'), t('table.consultants'))}
                         </td>
                       </tr>
                     )

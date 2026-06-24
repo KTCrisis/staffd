@@ -8,6 +8,7 @@ import { useRouter }       from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import { Panel, Badge }    from '@/components/ui'
 import { ClientForm }      from '@/components/clients/ClientForm'
+import type { Client as CanonicalClient, ProjectStatus } from '@/types'
 
 interface Project {
   id:          string
@@ -134,7 +135,7 @@ export function ClientDetailClient({ client, projects = [] }: Props) {
                       {p.budgetTotal ? ` · ${p.budgetTotal.toLocaleString('fr-FR')} €` : ''}
                     </div>
                   </div>
-                  <Badge variant={p.status as any} />
+                  <Badge variant={p.status as ProjectStatus} />
                 </div>
               ))
             )}
@@ -151,7 +152,7 @@ export function ClientDetailClient({ client, projects = [] }: Props) {
 
       {formOpen && (
         <ClientForm
-          client={client as any}
+          client={client as unknown as CanonicalClient}
           companyId={client.companyId}
           onClose={() => setFormOpen(false)}
           onSaved={() => {

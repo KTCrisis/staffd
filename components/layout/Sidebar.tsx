@@ -263,7 +263,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
               }}
               onKeyDown={e => {
                 if (e.key === 'Enter') {
-                  router.push(`${p('/ai')}?q=${encodeURIComponent(command)}` as any)
+                  router.push(`${p('/ai')}?q=${encodeURIComponent(command)}` as never)
                   setCommand('')
                 }
               }}

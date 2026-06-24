@@ -5,6 +5,8 @@ import { getTranslations }        from 'next-intl/server'
 import { notFound }                from 'next/navigation'
 import { Topbar }                  from '@/components/layout/Topbar'
 import { ConsultantDetailClient }  from '@/components/consultants/ConsultantDetailClient'
+import type { Tables }              from '@/types/supabase'
+import type { AvatarColor }         from '@/types'
 
 interface Props {
   params:       Promise<{ id: string }>
@@ -45,16 +47,19 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
 
   if (!consultantRes.data) notFound()
 
-  const c = consultantRes.data as any
+  const c = consultantRes.data as Tables<'consultant_occupancy'> & {
+    country_code?:   string | null
+    available_from?: string | null
+  }
 
   const consultant = {
-    id:              c.id,
-    name:            c.name,
-    initials:        c.initials,
-    role:            c.role,
+    id:              c.id ?? '',
+    name:            c.name ?? '',
+    initials:        c.initials ?? '',
+    role:            c.role ?? '',
     email:           c.email ?? null,
-    avatarColor:     c.avatar_color ?? 'green',
-    status:          c.status,
+    avatarColor:     (c.avatar_color ?? 'green') as AvatarColor,
+    status:          c.status ?? '',
     contractType:    c.contract_type ?? 'employee',
     occupancyRate:   c.occupancy_rate ?? 0,
     leaveDaysLeft:   c.leave_days_left ?? 0,
@@ -70,11 +75,19 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     countryCode:     c.country_code ?? null,
   }
 
-  const assignments = (assignmentsRes.data ?? []).map((a: any) => ({
+  type AssignmentRow = {
+    id:         string
+    allocation: number | null
+    start_date: string | null
+    end_date:   string | null
+    projects:   { id: string; name: string; status: string; client_name: string | null } | null
+  }
+
+  const assignments = ((assignmentsRes.data ?? []) as AssignmentRow[]).map((a) => ({
     id:         a.id,
-    allocation: a.allocation,
-    startDate:  a.start_date,
-    endDate:    a.end_date,
+    allocation: a.allocation ?? 0,
+    startDate:  a.start_date ?? '',
+    endDate:    a.end_date ?? '',
     project: a.projects ? {
       id:         a.projects.id,
       name:       a.projects.name,
@@ -83,7 +96,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     } : null,
   }))
 
-  const profitability = (profitabilityRes as any).data ?? null
+  const profitability = profitabilityRes.data ?? null
 
   return (
     <>

@@ -39,7 +39,15 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     notes:        raw.notes         ?? null,
   }
 
-  const projects = (projectsRes.data ?? []).map((p: any) => ({
+  type ProjectRow = {
+    id:           string
+    name:         string
+    status:       string
+    end_date:     string | null
+    budget_total: number | null
+  }
+
+  const projects = ((projectsRes.data ?? []) as ProjectRow[]).map((p) => ({
     id:          p.id,
     name:        p.name,
     status:      p.status,

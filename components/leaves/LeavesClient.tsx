@@ -12,7 +12,7 @@ import { LeaveSolde }       from '@/components/leaves/LeaveSolde'
 import { LeaveRequestForm } from '@/components/leaves/LeaveRequestForm'
 import { approveLeave, refuseLeave } from '@/lib/data'
 import { toast }            from '@/lib/toast'
-import type { LeaveStatus } from '@/types'
+import type { LeaveStatus, LeaveRequest, Consultant } from '@/types'
 
 interface LeaveRow {
   id:             string
@@ -30,7 +30,7 @@ interface LeaveRow {
 
 interface Props {
   requests?:    LeaveRow[]
-  consultants?: any[]
+  consultants?: Consultant[]
   userRole?:    string
   userId?:      string
   companyId?:   string
@@ -120,7 +120,7 @@ export function LeavesClient({
               {visible.map(r => (
                 <LeaveRequestCard
                   key={r.id}
-                  request={r as any}
+                  request={r as unknown as LeaveRequest}
                   onApprove={editAccess ? handleApprove : undefined}
                   onRefuse={editAccess  ? handleRefuse  : undefined}
                 />
