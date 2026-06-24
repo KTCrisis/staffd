@@ -89,7 +89,6 @@ interface Props {
 export function TimelineClient({
   projects      = [],
   consultants   = [],
-  leaveRequests = [],
 }: Props) {
   const t   = useTranslations('timeline')
   // `now` figé au montage : évite `new Date()` impur dans le rendu et le rend
@@ -251,7 +250,6 @@ export function TimelineClient({
 
                   {cells.map((cell, dayIdx) => {
                     const isFirst      = dayIdx === firstActive
-                    const isLast       = dayIdx === lastActive
                     const projectStyle = cell.type === 'active'
                       ? { background: color.bg, borderTop: `2px solid ${color.border}` }
                       : {}

@@ -83,7 +83,7 @@ async function fetchContext(cmd: string, url: string, userToken: string): Promis
 
   try {
     if (cmd.startsWith('/profit')) {
-      const [profitability, consultants] = await Promise.all([
+      const [profitability] = await Promise.all([
         q('consultant_profitability',
           'consultant_id,name,role,contract_type,tjm_cout,tjm_cible,ca_genere,cout_consultant,marge_brute,marge_pct,jours_generes,nb_assignments,occupancy_rate,status'
         ),

@@ -44,7 +44,7 @@ export default function LoginPage() {
             <span className="login-logo-white">staff</span>
             <span className="login-logo-green">7</span>
           </div>
-          <div className="login-tagline">// Staffing ops, AI-first</div>
+          <div className="login-tagline">{'// Staffing ops, AI-first'}</div>
         </div>
 
         {/* Auth required */}

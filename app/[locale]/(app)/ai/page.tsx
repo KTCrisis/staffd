@@ -13,7 +13,7 @@ export default async function AIPage() {
     <>
       <Topbar title="Agentic Console" breadcrumb="// staff7 intelligence" isSuperAdmin={isSA} companyName={companyName} />
       <div className="app-content">
-        <Suspense fallback={<div className="ai-loading">// initializing agents…</div>}>
+        <Suspense fallback={<div className="ai-loading">{'// initializing agents…'}</div>}>
           <AIContent userEmail={userEmail} />
         </Suspense>
       </div>

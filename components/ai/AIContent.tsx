@@ -45,7 +45,7 @@ function CmdMenu({ query, onSelect }: { query: string; onSelect: (cmd: Cmd) => v
   if (!filtered.length) return null
   return (
     <div className="cmd-menu">
-      <div className="cmd-menu-header">// commands · ↑↓ navigate · ↵ select · esc close</div>
+      <div className="cmd-menu-header">{'// commands · ↑↓ navigate · ↵ select · esc close'}</div>
       {filtered.map((cmd, i) => (
         <button
           key={cmd.id}

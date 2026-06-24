@@ -4,7 +4,7 @@
 import { useState }         from 'react'
 import { useRouter }        from 'next/navigation'
 import { useTranslations }  from 'next-intl'
-import { isAdmin, canEdit } from '@/lib/auth'
+import { canEdit }          from '@/lib/auth'
 import { Panel, StatRow }   from '@/components/ui'
 import { EmptyState }       from '@/components/ui/EmptyState'
 import { LeaveRequestCard } from '@/components/leaves/LeaveRequestCard'
@@ -42,11 +42,9 @@ export function LeavesClient({
   consultants = [],
   userRole,
   userId,
-  companyId,
 }: Props) {
   const t           = useTranslations('conges')
   const router      = useRouter()
-  const adminAccess = isAdmin(userRole)
   const editAccess  = canEdit(userRole)
 
   const [filter,   setFilter]   = useState<LeaveStatus | 'all'>(editAccess ? 'pending' : 'all')

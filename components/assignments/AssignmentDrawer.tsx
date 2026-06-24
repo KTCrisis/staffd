@@ -160,7 +160,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
                 marginTop: 6, fontSize: 10, color: 'var(--cyan)',
                 letterSpacing: 1,
               }}>
-                // {selectedProject.status}
+                {'// '}{selectedProject.status}
                 {selectedProject.endDate && ` · ${tS('drawer.projectEnd')} ${new Date(selectedProject.endDate).toLocaleDateString()}`}
               </div>
             )}

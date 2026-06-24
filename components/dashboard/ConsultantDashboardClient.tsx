@@ -4,7 +4,6 @@
 import { useMemo }         from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter }       from '@/lib/navigation'
-import { useLocale }       from 'next-intl'
 import { Panel }           from '@/components/ui/Panel'
 import { KpiCard }         from '@/components/ui/KpiCard'
 import { Avatar }          from '@/components/ui/Avatar'

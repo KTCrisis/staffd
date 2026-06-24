@@ -18,7 +18,7 @@ export function DocNav({ active }: { active: 'home' | 'platform' | 'ai' }) {
         <Link href="/docs" className="doc-nav-logo">
           <span className="s">staff</span><span className="d">7</span>
         </Link>
-        <span className="doc-nav-tag">// docs</span>
+        <span className="doc-nav-tag">{'// docs'}</span>
       </div>
       <ul className="doc-nav-links">
         <li>
@@ -65,7 +65,7 @@ export function DocSidebar({ sections, active, variant = 'platform', crossLink }
   return (
     <aside className="doc-sidebar">
       <div className="doc-sidebar-label">
-        // {variant === 'ai' ? 'ai layer' : 'platform'} docs
+        {'// '}{variant === 'ai' ? 'ai layer' : 'platform'} docs
       </div>
       {sections.map(s => (
         <a
@@ -102,7 +102,7 @@ export function Section({ id, label, icon, color = 'var(--cyan)', children }: {
       <div className="doc-section-header">
         <span className="doc-section-icon" style={{ color }}>{icon}</span>
         <div>
-          <div className="doc-section-id">// {id}</div>
+          <div className="doc-section-id">{'// '}{id}</div>
           <h2 className="doc-section-title">{label}</h2>
         </div>
       </div>
@@ -183,7 +183,7 @@ export function Screenshot({ src, alt, caption }: {
       {src ? (
         <img src={src} alt={alt ?? ''} />
       ) : (
-        <span className="doc-screenshot-placeholder">// screenshot coming soon</span>
+        <span className="doc-screenshot-placeholder">{'// screenshot coming soon'}</span>
       )}
       {caption && <div className="doc-screenshot-caption">{caption}</div>}
     </div>

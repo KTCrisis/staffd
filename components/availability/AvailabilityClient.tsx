@@ -161,7 +161,6 @@ export function AvailabilityClient({
   userId        = null,
   companyId     = '',
 }: Props) {
-  const t     = useTranslations('staffing')
   const tDisp = useTranslations('disponibilites')
   const tNav  = useTranslations('timeline')
 

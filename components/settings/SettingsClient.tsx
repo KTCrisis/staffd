@@ -29,7 +29,7 @@ interface Props {
   isSuperAdmin: boolean
 }
 
-export function SettingsClient({ userRole, companyId, isSuperAdmin }: Props) {
+export function SettingsClient({ companyId, isSuperAdmin }: Props) {
   const t = useTranslations('settings')
   const [activeTab, setActiveTab] = useState<Tab>('company')
 

@@ -88,7 +88,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
         if (Array.isArray(hData)) {
           setHolidays(new Set(hData.map((h: { date: string }) => h.date)))
         }
-      } catch (_) {
+      } catch {
         // profil non trouvé — on garde les défauts employee
       } finally {
         if (!cancelled) setLoadingProfile(false)

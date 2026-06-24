@@ -9,7 +9,6 @@ import { useEffect, useState }          from 'react'
 import { useRouter }                    from 'next/navigation'
 import { supabase }                     from '../supabase'
 import type { AuthUser, UserRole }      from './roles'
-import { isSuperAdmin as _isSuperAdmin } from './roles'
 
 // ──────────────────────────────────────────────────────────────
 // ACTIONS

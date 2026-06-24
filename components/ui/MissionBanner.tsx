@@ -8,7 +8,7 @@ export function MissionBanner() {
       opacity: 0.85,
     }}>
       <p style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 4, letterSpacing: '0.08em' }}>
-        // WHAT WE DO
+        {'// WHAT WE DO'}
       </p>
       <p style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, lineHeight: 1.6 }}>
         staff7 is an <strong>AI-native staffing OS</strong> for Professional Services Firms.

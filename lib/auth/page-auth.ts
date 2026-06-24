@@ -17,7 +17,7 @@ export interface PageAuth {
   supabase:    ReturnType<typeof createServerClient>
 }
 
-export async function getPageAuth(tenant?: string): Promise<PageAuth> {
+export async function getPageAuth(_tenant?: string): Promise<PageAuth> {
   const cookieStore = await cookies()
 
   const anonClient = createServerClient<Database>(

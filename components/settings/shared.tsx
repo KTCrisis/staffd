@@ -13,7 +13,7 @@ export function SectionLabel({ label }: { label: string }) {
       fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
       textTransform: 'uppercase', marginBottom: 16,
     }}>
-      // {label}
+      {'// '}{label}
     </div>
   )
 }

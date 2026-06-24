@@ -284,7 +284,7 @@ function TeamForm({
         borderRadius: 6, padding: 28, width: 480, maxWidth: '90vw',
       }}>
         <div style={{ fontSize: 9, color: 'var(--cyan)', letterSpacing: 3, marginBottom: 20 }}>
-          // {initial ? t('titleEdit') : t('titleNew')}
+          {'// '}{initial ? t('titleEdit') : t('titleNew')}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -597,7 +597,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
             borderRadius: 6, padding: 28, width: 400, maxWidth: '90vw',
           }}>
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>
-              // {tDel('header')}
+              {'// '}{tDel('header')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text)', marginBottom: 8 }}>
               {tDel('title', { name: confirmDel.name })}
@@ -640,7 +640,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
             borderRadius: 6, padding: 28, width: 400, maxWidth: '90vw',
           }}>
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>
-              // {tRem('header')}
+              {'// '}{tRem('header')}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text)', marginBottom: 8 }}>
               {tRem('title', { consultant: confirmRemoveMember.consultantName })}

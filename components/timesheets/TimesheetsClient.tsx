@@ -178,8 +178,6 @@ function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }:
 export function TimesheetsClient({
   userRole,
   userId,
-  companyId,
-  tenant,
   managerTeamId,
 }: Props) {
   const t      = useTranslations('timesheets')

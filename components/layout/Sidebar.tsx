@@ -180,7 +180,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
         {!collapsed && (
           <div>
             <div className="brand">staff<span>7</span></div>
-            <div className="sub">// AI-native PSA</div>
+            <div className="sub">{'// AI-native PSA'}</div>
           </div>
         )}
         <button

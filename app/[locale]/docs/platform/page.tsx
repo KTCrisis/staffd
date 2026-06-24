@@ -3,7 +3,7 @@
 
 import {
   DocNav, DocSidebar, Section, FeatureGrid, CodeBlock,
-  Table, Note, Screenshot, DemoBanner, useScrollSpy,
+  Table, Note, DemoBanner, useScrollSpy,
 } from '@/components/docs'
 import '@/styles/docs.css'
 

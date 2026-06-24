@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 function ParticleCanvas() {
@@ -162,7 +162,7 @@ export default function DocsIndexPage() {
       <nav className="doc-nav">
         <div style={{ display:'flex', alignItems:'center' }}>
           <Link href="/login" className="nav-logo"><span className="s">staff</span><span className="d">7</span></Link>
-          <span className="nav-tag">// docs</span>
+          <span className="nav-tag">{'// docs'}</span>
         </div>
         <ul className="nav-links">
           <li><Link href="/docs/platform">Platform</Link></li>
@@ -219,7 +219,7 @@ export default function DocsIndexPage() {
               <span className="beta-subtitle">· looking for early adopters & contributors</span>
             </div>
             <p className="beta-desc">
-              We're building <Staff7 /> in the open and looking for{' '}
+              We&apos;re building <Staff7 /> in the open and looking for{' '}
               <strong>agencies willing to test it on real projects</strong> — and{' '}
               <strong>developers who want to contribute</strong> to the platform or AI layer.
             </p>
@@ -254,7 +254,7 @@ export default function DocsIndexPage() {
           {/* Portal cards */}
           <div className="portal">
             <Link href="/docs/platform" className="portal-card platform">
-              <div className="portal-label">// platform docs</div>
+              <div className="portal-label">{'// platform docs'}</div>
               <div className="portal-icon">◧</div>
               <div className="portal-title">Platform</div>
               <p className="portal-desc">
@@ -270,7 +270,7 @@ export default function DocsIndexPage() {
             </Link>
 
             <Link href="/docs/ai" className="portal-card ai">
-              <div className="portal-label">// ai layer docs</div>
+              <div className="portal-label">{'// ai layer docs'}</div>
               <div className="portal-icon">⚡</div>
               <div className="portal-title">AI layer</div>
               <p className="portal-desc">
