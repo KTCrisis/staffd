@@ -43,13 +43,12 @@ export default async function ConsultantsPage({ searchParams }: Props) {
 
   const { data } = await query.order('name')
 
-  // La vue consultant_occupancy n'expose pas current_project/available_from/
-  // country_code : ces lectures retombaient déjà sur leur fallback (`?? ...`).
-  // On les déclare optionnelles pour préserver ce comportement sans masquer le reste.
+  // La vue consultant_occupancy expose `project_names` (tableau), d'où l'on dérive
+  // le projet courant — comme le fait le mapper lib/data/consultants.
+  // `country_code` n'est PAS exposé par la vue (à ajouter lors de la phase schéma
+  // #4/#5) ; `available_from` n'existe nulle part (champ non implémenté).
   type OccupancyRow = Tables<'consultant_occupancy'> & {
-    current_project?: string | null
-    available_from?:  string | null
-    country_code?:    string | null
+    country_code?: string | null
   }
   const consultants = ((data ?? []) as OccupancyRow[]).map((r) => ({
     id:               r.id,
@@ -62,8 +61,8 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     stack:            r.stack            ?? [],
     status:           r.status,
     contractType:     r.contract_type    ?? 'employee',
-    currentProject:   r.current_project  ?? null,
-    availableFrom:    r.available_from   ?? null,
+    currentProject:   r.project_names?.[0] ?? null,
+    availableFrom:    undefined,
     occupancyRate:    r.occupancy_rate   ?? 0,
     leaveDaysLeft:    r.leave_days_left  ?? 0,
     leaveDaysTotal:   r.leave_days_total ?? 25,
