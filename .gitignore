@@ -44,3 +44,6 @@ next-env.d.ts
 staffd-notes.md
 .dev.vars
 .claude/
+
+# Seeds reels (donnees personnelles) — depot public, ne jamais commiter
+supabase/seed.*.local.sql
