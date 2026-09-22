@@ -61,6 +61,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     avatarColor:     (c.avatar_color ?? 'green') as AvatarColor,
     status:          c.status ?? '',
     contractType:    c.contract_type ?? 'employee',
+    isFounder:       c.is_founder ?? false,
     occupancyRate:   c.occupancy_rate ?? 0,
     leaveDaysLeft:   c.leave_days_left ?? 0,
     leaveDaysTotal:  c.leave_days_total ?? 0,

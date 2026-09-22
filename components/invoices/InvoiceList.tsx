@@ -1,10 +1,11 @@
 'use client'
 
-import { useState }         from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter }        from 'next/navigation'
 import { useTranslations }  from 'next-intl'
 import { supabase }         from '@/lib/supabase'
-import { toISO }            from '@/lib/utils'
+import { toISO, alpha }     from '@/lib/utils'
+import type { Tables }      from '@/types/supabase'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
     <span style={{
       fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
       padding: '2px 8px', borderRadius: 2,
-      color: s.color, background: s.bg, border: '1px solid ' + s.color + '33',
+      color: s.color, background: s.bg, border: `1px solid ${alpha(s.color, 20)}`,
     }}>
       {t(status)}
     </span>
@@ -85,54 +86,52 @@ function KpiCard({ label, value, sub, color = 'var(--text)' }: {
   )
 }
 
-// ── Mock data (replace with Supabase query) ───────────────────────────────────
+// ── Data ──────────────────────────────────────────────────────────────────────
 
-const MOCK: Invoice[] = [
-  {
-    id: '1', invoice_number: 'NOR-2026-0003', invoice_date: '2026-03-01',
-    due_date: '2026-03-31', status: 'sent', subtotal: 12000, tva_rate: 20,
-    tva_amount: 2400, total_ttc: 14400, source_type: 'timesheet',
-    source_period_start: '2026-02-01', source_period_end: '2026-02-28',
-    client_name: 'Acme Corp', project_name: 'Site refonte 2026',
-    consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: null,
-  },
-  {
-    id: '2', invoice_number: 'NOR-2026-0002', invoice_date: '2026-02-01',
-    due_date: '2026-02-15', status: 'overdue', subtotal: 9600, tva_rate: 20,
-    tva_amount: 1920, total_ttc: 11520, source_type: 'project',
-    source_period_start: null, source_period_end: null,
-    client_name: 'Studio Bleu', project_name: 'Branding Q1',
-    consultant_name: 'David Mora', is_overdue: true, days_overdue: 18, paid_at: null,
-  },
-  {
-    id: '3', invoice_number: 'NOR-2026-0001', invoice_date: '2026-01-15',
-    due_date: '2026-02-14', status: 'paid', subtotal: 7500, tva_rate: 20,
-    tva_amount: 1500, total_ttc: 9000, source_type: 'timesheet',
-    source_period_start: '2026-01-01', source_period_end: '2026-01-31',
-    client_name: 'NovaTech', project_name: 'API integration',
-    consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: '2026-02-10',
-  },
-  {
-    id: '4', invoice_number: 'NOR-2026-0004', invoice_date: '2026-03-05',
-    due_date: null, status: 'draft', subtotal: 4800, tva_rate: 20,
-    tva_amount: 960, total_ttc: 5760, source_type: 'manual',
-    source_period_start: null, source_period_end: null,
-    client_name: 'Freelance client', project_name: null,
-    consultant_name: 'Sophie Chen', is_overdue: false, days_overdue: null, paid_at: null,
-  },
-]
+type InvoiceRow = Tables<'invoice_list'>
+
+/** View columns are nullable in the generated types; the table columns are not. */
+function toInvoice(r: InvoiceRow): Invoice {
+  return {
+    id:                  r.id ?? '',
+    invoice_number:      r.invoice_number ?? '',
+    invoice_date:        r.invoice_date ?? '',
+    due_date:            r.due_date,
+    status:              (r.status ?? 'draft') as InvoiceStatus,
+    subtotal:            Number(r.subtotal ?? 0),
+    tva_rate:            Number(r.tva_rate ?? 0),
+    tva_amount:          Number(r.tva_amount ?? 0),
+    total_ttc:           Number(r.total_ttc ?? 0),
+    source_type:         r.source_type ?? 'manual',
+    source_period_start: r.source_period_start,
+    source_period_end:   r.source_period_end,
+    client_name:         r.client_name,
+    project_name:        r.project_name,
+    consultant_name:     r.consultant_name,
+    is_overdue:          !!r.is_overdue,
+    days_overdue:        r.days_overdue,
+    paid_at:             r.paid_at,
+  }
+}
+
+/** `overdue` is never stored: the view derives it from status 'sent' + due date. */
+const displayStatus = (i: Invoice): InvoiceStatus => (i.is_overdue ? 'overdue' : i.status)
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function InvoiceList() {
+export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[]; error: string | null }) {
   const router  = useRouter()
   const t       = useTranslations('invoices.list')
 
-  const [invoices,  setInvoices]  = useState<Invoice[]>(MOCK)
+  const [invoices,  setInvoices]  = useState<Invoice[]>(() => rows.map(toInvoice))
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Server data wins after router.refresh()
+  useEffect(() => { setInvoices(rows.map(toInvoice)) }, [rows])
   const [filter,    setFilter]    = useState<InvoiceStatus | 'all'>('all')
   const [marking,   setMarking]   = useState<string | null>(null)
 
-  const filtered = filter === 'all' ? invoices : invoices.filter(i => i.status === filter)
+  const filtered = filter === 'all' ? invoices : invoices.filter(i => displayStatus(i) === filter)
 
   const totalBilled  = invoices.reduce((s, i) => s + i.total_ttc, 0)
   const totalPaid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
@@ -142,27 +141,25 @@ export function InvoiceList() {
   // ── Mark as paid ──────────────────────────────────────────────
   const handleMarkPaid = async (inv: Invoice) => {
     setMarking(inv.id)
+    setSaveError(null)
     const today = toISO(new Date())
-    try {
-      // Optimistic update
-      setInvoices(prev => prev.map(i =>
-        i.id === inv.id
-          ? { ...i, status: 'paid' as InvoiceStatus, paid_at: today, is_overdue: false, days_overdue: null }
-          : i
-      ))
-
-      await supabase
-        .from('invoices')
-        .update({ status: 'paid', paid_at: today })
-        .eq('id', inv.id)
-    } catch {
-      // Rollback on error
-      setInvoices(prev => prev.map(i =>
-        i.id === inv.id ? inv : i
-      ))
-    } finally {
-      setMarking(null)
+    // Optimistic update, rolled back if the database refuses it
+    setInvoices(prev => prev.map(i =>
+      i.id === inv.id
+        ? { ...i, status: 'paid' as InvoiceStatus, paid_at: today, is_overdue: false, days_overdue: null }
+        : i
+    ))
+    const { error: updError } = await supabase
+      .from('invoices')
+      .update({ status: 'paid', paid_at: today })
+      .eq('id', inv.id)
+    if (updError) {
+      setInvoices(prev => prev.map(i => (i.id === inv.id ? inv : i)))
+      setSaveError(updError.message)
+    } else {
+      router.refresh()
     }
+    setMarking(null)
   }
 
   // ── Can mark as paid? ─────────────────────────────────────────
@@ -170,6 +167,13 @@ export function InvoiceList() {
 
   return (
     <>
+      {(error || saveError) && (
+        <div style={{ fontSize: 11, color: 'var(--pink)', padding: '8px 12px', marginBottom: 16,
+          background: alpha('var(--pink)', 8), border: `1px solid ${alpha('var(--pink)', 20)}`, borderRadius: 4 }}>
+          {error ?? saveError}
+        </div>
+      )}
+
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <KpiCard
@@ -305,7 +309,7 @@ export function InvoiceList() {
                   {fmt(inv.total_ttc)}
                 </td>
 
-                <td><StatusBadge status={inv.status} /></td>
+                <td><StatusBadge status={displayStatus(inv)} /></td>
 
                 {/* Actions — Mark as paid + preview + PDF */}
                 <td>

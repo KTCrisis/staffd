@@ -37,6 +37,13 @@ export const canViewFinancials   = (role?: UserRole | string) => isAdmin(role)
 export const isConsultantOrAbove = (role?: UserRole | string) => role === 'consultant' || role === 'freelance' || canEdit(role)
 export const canViewOwnInvoices  = (role?: UserRole | string) => role === 'freelance' || canEdit(role)
 
+/** Roles the caller may grant when inviting someone into its tenant. */
+export function grantableRoles(caller?: UserRole | string): UserRole[] {
+  if (isAdmin(caller))  return ['admin', 'manager', 'consultant', 'freelance']
+  if (caller === 'manager') return ['consultant', 'freelance']
+  return []
+}
+
 // ──────────────────────────────────────────────────────────────
 // GUARDS DE ROUTES (source de vérité partagée avec le middleware)
 // ──────────────────────────────────────────────────────────────

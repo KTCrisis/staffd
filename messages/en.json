@@ -84,7 +84,7 @@
     "noActiveProjects": "// no active projects",
     "calEvent": "Event"
   },
-    "statuses": {
+  "statuses": {
     "available": "Available",
     "assigned": "On assignment",
     "leave": "On leave",
@@ -149,7 +149,8 @@
     "contractType": {
       "label": "Contract",
       "employee": "Employee",
-      "freelance": "Freelance"
+      "freelance": "Freelance",
+      "founder": "Founder"
     },
     "tjm": {
       "cout": "Daily cost",
@@ -166,7 +167,14 @@
       "inviting": "⏳ Sending...",
       "sent": "✓ Invitation sent to {email}",
       "already": "⚠ Existing account — role updated",
-      "error": "✗ Error — check email address"
+      "error": "✗ Error — check email address",
+      "roleLabel": "Granted role",
+      "roles": {
+        "admin": "Admin",
+        "manager": "Manager",
+        "consultant": "Consultant",
+        "freelance": "Freelance"
+      }
     },
     "deleteConfirm": {
       "message": "Delete {name} permanently?",
@@ -553,9 +561,9 @@
       "draft": "Draft",
       "completed": "Completed"
     },
-    "filters":{
+    "filters": {
       "toggleInternal": "Internal"
-      },
+    },
     "consultant": "Consultant",
     "months": [
       "January",
@@ -1134,8 +1142,8 @@
     "yesterday": "yesterday · {time}"
   },
   "invoices": {
-  "title": "Invoices",
-  "breadcrumb": "// billing",    
+    "title": "Invoices",
+    "breadcrumb": "// billing",
     "form": {
       "title": "New invoice",
       "breadcrumb": "// invoices / new",

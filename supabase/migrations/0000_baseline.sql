@@ -18,6 +18,7 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  consultants.is_founder + consultant_occupancy (0002_founder.sql).
 --   2026.09.23  companies.branding (cf. migrations/0001_branding.sql). Les évolutions
 --               passent désormais par des migrations numérotées ; ce fichier reste
 --               l'init d'une base neuve et ne se rejoue pas sur des données réelles.
@@ -142,6 +143,8 @@ create table if not exists consultants (
   leave_days_total int default 25, leave_days_taken int default 0,
   rtt_total int default 0, rtt_taken int default 0,
   occupancy_rate int default 0,
+  -- Associé fondateur : affichage seulement, les coûts suivent contract_type
+  is_founder boolean not null default false,
   team_id uuid,   -- FK ajoutée après création de la table teams (voir ALTER plus bas)
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
@@ -713,7 +716,8 @@ select
   c.rtt_total, c.rtt_taken,
   coalesce(c.rtt_total, 0) - coalesce(c.rtt_taken, 0) as rtt_left,
   coalesce(sum(a.allocation), 0)                       as occupancy_rate,
-  array_agg(p.name) filter (where p.name is not null)  as project_names
+  array_agg(p.name) filter (where p.name is not null)  as project_names,
+  c.is_founder
 from consultants c
 left join assignments a on a.consultant_id = c.id
   and (a.end_date is null or a.end_date >= current_date)
@@ -723,7 +727,7 @@ group by c.id, c.company_id, c.user_id, c.name, c.initials, c.email, c.role,
   c.avatar_color, c.stack, c.status, c.team_id,
   c.contract_type, c.tjm, c.tjm_facture, c.tjm_cible,
   c.salaire_annuel_brut, c.charges_pct, c.jours_travailles,
-  c.leave_days_total, c.leave_days_taken, c.rtt_total, c.rtt_taken;
+  c.leave_days_total, c.leave_days_taken, c.rtt_total, c.rtt_taken, c.is_founder;
 
 create view consultants_with_leave with (security_invoker = true) as
 select c.*,

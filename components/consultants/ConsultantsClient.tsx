@@ -8,13 +8,15 @@
 import { useState }          from 'react'
 import { useRouter }         from 'next/navigation'
 import { useTranslations }   from 'next-intl'
-import { isAdmin, canEdit, canViewFinancials } from '@/lib/auth'
+import { isAdmin, canEdit, canViewFinancials, grantableRoles } from '@/lib/auth'
+import type { UserRole }      from '@/lib/auth'
 import { Panel, StatRow }    from '@/components/ui'
 import { Avatar }            from '@/components/ui/Avatar'
 import { Badge }             from '@/components/ui/Badge'
 import { ProgressBar }       from '@/components/ui/ProgressBar'
 import { EmptyState }        from '@/components/ui/EmptyState'
 import { ConsultantTable }   from '@/components/consultants/ConsultantTable'
+import { ContractBadge }     from '@/components/consultants/ContractBadge'
 import { ConsultantForm }    from '@/components/consultants/ConsultantForm'
 import { deleteConsultant }  from '@/lib/data'
 import { toast }             from '@/lib/toast'
@@ -22,32 +24,19 @@ import type { ConsultantStatus, Consultant } from '@/types'
 
 // ── Badge contrat ─────────────────────────────────────────────
 
-function ContractBadge({ type }: { type: string }) {
-  const t = useTranslations('consultants')
-  const isFreelance = type === 'freelance'
-  return (
-    <span
-      className="cons-contract-badge"
-      style={{
-        background: isFreelance ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
-        border:     isFreelance ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
-        color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
-      }}
-    >
-      {t(isFreelance ? 'contractType.freelance' : 'contractType.employee')}
-    </span>
-  )
-}
 
 // ── Invite status ─────────────────────────────────────────────
 
 type InviteStatus = 'idle' | 'sent' | 'already' | 'error'
 
-function AccountSection({ selected, onInvite, inviteLoading, inviteStatus }: {
+function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles, inviteRole, onRoleChange }: {
   selected:      Consultant
   onInvite:      () => void
   inviteLoading: boolean
   inviteStatus:  InviteStatus
+  roles:         UserRole[]
+  inviteRole:    UserRole
+  onRoleChange:  (r: UserRole) => void
 }) {
   const t = useTranslations('consultants')
   return (
@@ -75,6 +64,16 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus }: {
               </div>
             </div>
           </div>
+          <label className="label-meta" style={{ display: 'block', marginBottom: 6 }}>{t('account.roleLabel')}</label>
+          <select
+            className="form-input"
+            style={{ width: '100%', marginBottom: 10 }}
+            value={inviteRole}
+            onChange={e => onRoleChange(e.target.value as UserRole)}
+            disabled={inviteLoading}
+          >
+            {roles.map(r => <option key={r} value={r}>{t(`account.roles.${r}`)}</option>)}
+          </select>
           <button
             className="btn btn-ghost"
             style={{ width: '100%', borderColor: 'var(--cyan)', color: 'var(--cyan)', opacity: (!selected.email || inviteLoading) ? 0.5 : 1 }}
@@ -141,6 +140,8 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
   const [deleting,      setDeleting]      = useState(false)
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteStatus,  setInviteStatus]  = useState<InviteStatus>('idle')
+  const inviteRoles = grantableRoles(userRole)
+  const [inviteRole,    setInviteRole]    = useState<UserRole>('consultant')
 
   const FILTERS: { label: string; value: ConsultantStatus | 'all' }[] = [
     { label: t('filters.all'),       value: 'all'       },
@@ -187,7 +188,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
       const res  = await fetch('/api/invite', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ consultantId: selected.id, email: selected.email, companyId }),
+        body:    JSON.stringify({ consultantId: selected.id, email: selected.email, companyId, role: inviteRole }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error)
@@ -255,7 +256,10 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
         {visible.length > 0 ? (
           <ConsultantTable
             consultants={visible}
-            onSelect={c => { setSelected(c as Consultant); setInviteStatus('idle') }}
+            onSelect={c => {
+              setSelected(c as Consultant); setInviteStatus('idle')
+              setInviteRole((c as Consultant).contractType === 'freelance' ? 'freelance' : 'consultant')
+            }}
           />
         ) : (
           <EmptyState message={t('noResults')} />
@@ -279,7 +283,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
                 <div className="cons-drawer-name">{selected.name}</div>
                 <div className="cons-drawer-role-row">
                   <span className="cons-drawer-role">{selected.role}</span>
-                  {selected.contractType && <ContractBadge type={selected.contractType} />}
+                  {selected.contractType && <ContractBadge type={selected.contractType} founder={selected.isFounder} />}
                 </div>
                 {selected.email && <div className="cons-drawer-email">{selected.email}</div>}
               </div>
@@ -315,6 +319,9 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
                 onInvite={handleInvite}
                 inviteLoading={inviteLoading}
                 inviteStatus={inviteStatus}
+                roles={inviteRoles}
+                inviteRole={inviteRole}
+                onRoleChange={setInviteRole}
               />
             )}
 

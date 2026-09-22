@@ -338,6 +338,7 @@ export type Database = {
           email: string | null
           id: string
           initials: string | null
+          is_founder: boolean
           jours_travailles: number | null
           leave_days_taken: number | null
           leave_days_total: number | null
@@ -366,6 +367,7 @@ export type Database = {
           email?: string | null
           id?: string
           initials?: string | null
+          is_founder?: boolean
           jours_travailles?: number | null
           leave_days_taken?: number | null
           leave_days_total?: number | null
@@ -394,6 +396,7 @@ export type Database = {
           email?: string | null
           id?: string
           initials?: string | null
+          is_founder?: boolean
           jours_travailles?: number | null
           leave_days_taken?: number | null
           leave_days_total?: number | null
@@ -1458,6 +1461,7 @@ export type Database = {
           email: string | null
           id: string | null
           initials: string | null
+          is_founder: boolean | null
           jours_travailles: number | null
           leave_days_left: number | null
           leave_days_taken: number | null
@@ -1544,6 +1548,7 @@ export type Database = {
           email: string | null
           id: string | null
           initials: string | null
+          is_founder: boolean | null
           jours_travailles: number | null
           leave_days_left: number | null
           leave_days_taken: number | null
@@ -1574,6 +1579,7 @@ export type Database = {
           email?: string | null
           id?: string | null
           initials?: string | null
+          is_founder?: boolean | null
           jours_travailles?: number | null
           leave_days_left?: never
           leave_days_taken?: number | null
@@ -1604,6 +1610,7 @@ export type Database = {
           email?: string | null
           id?: string | null
           initials?: string | null
+          is_founder?: boolean | null
           jours_travailles?: number | null
           leave_days_left?: never
           leave_days_taken?: number | null

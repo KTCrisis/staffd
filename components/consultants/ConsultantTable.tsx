@@ -6,27 +6,13 @@ import { Avatar }           from '@/components/ui/Avatar'
 import { Badge }            from '@/components/ui/Badge'
 import { ProgressBar }      from '@/components/ui/ProgressBar'
 import { formatDate }       from '@/lib/utils'
+import { ContractBadge }    from './ContractBadge'
 
 interface ConsultantTableProps {
   consultants: Consultant[]
   onSelect?:   (consultant: Consultant) => void
 }
 
-function ContractBadge({ type }: { type: 'employee' | 'freelance' }) {
-  const t = useTranslations('consultants')
-  const isFreelance = type === 'freelance'
-  return (
-    <span style={{
-      fontSize: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
-      padding: '1px 5px', borderRadius: 2,
-      background: isFreelance ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
-      border:     isFreelance ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
-      color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
-    }}>
-      {isFreelance ? t('contractType.freelance') : t('contractType.employee')}
-    </span>
-  )
-}
 
 export function ConsultantTable({ consultants, onSelect }: ConsultantTableProps) {
   const t = useTranslations('consultants')
@@ -57,7 +43,7 @@ export function ConsultantTable({ consultants, onSelect }: ConsultantTableProps)
                     <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <span className="td-primary">{c.name}</span>
-                      {c.contractType && <ContractBadge type={c.contractType} />}
+                      {c.contractType && <ContractBadge type={c.contractType} founder={c.isFounder} compact />}
                     </div>
                   </div>
                 </td>

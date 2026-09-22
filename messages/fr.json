@@ -84,7 +84,7 @@
     "noActiveProjects": "// aucun projet actif",
     "calEvent": "Événement"
   },
-    "statuses": {
+  "statuses": {
     "available": "Disponible",
     "assigned": "En mission",
     "leave": "En congé",
@@ -149,7 +149,8 @@
     "contractType": {
       "label": "Contrat",
       "employee": "Salarié",
-      "freelance": "Freelance"
+      "freelance": "Freelance",
+      "founder": "Fondateur"
     },
     "tjm": {
       "cout": "Coût journalier",
@@ -166,7 +167,14 @@
       "inviting": "⏳ Envoi...",
       "sent": "✓ Invitation envoyée à {email}",
       "already": "⚠ Compte existant — rôle mis à jour",
-      "error": "✗ Erreur — vérifiez l'adresse email"
+      "error": "✗ Erreur — vérifiez l'adresse email",
+      "roleLabel": "Rôle attribué",
+      "roles": {
+        "admin": "Admin",
+        "manager": "Manager",
+        "consultant": "Consultant",
+        "freelance": "Freelance"
+      }
     },
     "deleteConfirm": {
       "message": "Supprimer {name} définitivement ?",
@@ -553,9 +561,9 @@
       "draft": "Brouillon",
       "completed": "Terminé"
     },
-    "filters":{
+    "filters": {
       "toggleInternal": "Interne"
-      },
+    },
     "consultant": "Consultant",
     "months": [
       "Janvier",
@@ -1134,8 +1142,8 @@
     "yesterday": "hier · {time}"
   },
   "invoices": {
-  "title": "Factures",
-  "breadcrumb": "// facturation",   
+    "title": "Factures",
+    "breadcrumb": "// facturation",
     "form": {
       "title": "Nouvelle facture",
       "breadcrumb": "// factures / nouvelle",

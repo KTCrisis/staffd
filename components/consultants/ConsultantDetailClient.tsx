@@ -16,6 +16,7 @@ import { toast }             from '@/lib/toast'
 import { fmt, fmtTjm, getMargeColor, formatDate } from '@/lib/utils'
 import type { AvatarColor, ConsultantStatus, ProjectStatus, Consultant as CanonicalConsultant } from '@/types'
 import type { Database }     from '@/types/supabase'
+import { ContractBadge }     from './ContractBadge'
 
 type Profitability = Database['public']['Views']['consultant_profitability']['Row']
 
@@ -38,6 +39,7 @@ interface Consultant {
   avatarColor:   string
   status:        string
   contractType:  string
+  isFounder:     boolean
   occupancyRate: number
   leaveDaysLeft: number
   leaveDaysTotal: number
@@ -62,19 +64,6 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function ContractBadge({ type }: { type: string }) {
-  const t = useTranslations('consultants')
-  const isFree = type === 'freelance'
-  return (
-    <span className="cons-contract-badge" style={{
-      background: isFree ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
-      border:     isFree ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
-      color:      isFree ? 'var(--cyan)' : 'var(--text2)',
-    }}>
-      {type === 'freelance' ? t('contractType.freelance') : t('contractType.employee')}
-    </span>
-  )
-}
 
 function SectionTitle({ label }: { label: string }) {
   return (
@@ -136,7 +125,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                 <div style={{ color: 'var(--text2)', fontSize: 12, marginBottom: 8 }}>{c.role}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <Badge variant={c.status as ConsultantStatus} />
-                  <ContractBadge type={c.contractType} />
+                  <ContractBadge type={c.contractType} founder={c.isFounder} />
                 </div>
               </div>
             </div>

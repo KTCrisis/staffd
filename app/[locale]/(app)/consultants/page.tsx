@@ -61,6 +61,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     stack:            r.stack            ?? [],
     status:           r.status,
     contractType:     r.contract_type    ?? 'employee',
+    isFounder:        r.is_founder       ?? false,
     currentProject:   r.project_names?.[0] ?? null,
     availableFrom:    undefined,
     occupancyRate:    r.occupancy_rate   ?? 0,

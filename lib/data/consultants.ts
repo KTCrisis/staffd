@@ -80,6 +80,7 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     rttTaken:            row.rtt_taken as number | undefined,
     rttLeft:             row.rtt_left as number | undefined,
     contractType:        (row.contract_type as ContractType) ?? 'employee',
+    isFounder:           (row.is_founder as boolean | undefined) ?? false,
     tjm:                 row.tjm as number | undefined,
     tjmFacture:          row.tjm_facture as number | undefined,
     tjmCible:            row.tjm_cible as number | undefined,

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies }      from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import { grantableRoles }     from '@/lib/auth/roles'
 
 // 1. Force la route en mode dynamique pour éviter le scan au build
 export const dynamic = 'force-dynamic';
@@ -38,9 +39,15 @@ export async function POST(req: Request) {
   }
 
 
-  const { consultantId, email, companyId: bodyCompanyId } = await req.json()
+  const { consultantId, email, companyId: bodyCompanyId, role: requestedRole } = await req.json()
   if (!consultantId || !email) {
     return Response.json({ error: 'Missing fields' }, { status: 400 })
+  }
+
+  // Role granted to the invitee: bounded by the caller's own role.
+  const allowedRoles = grantableRoles(role)
+  if (requestedRole !== undefined && !allowedRoles.includes(requestedRole)) {
+    return Response.json({ error: 'Role not allowed' }, { status: 403 })
   }
 
   // La company cible vient du JWT de l'appelant, JAMAIS du client (cette route
@@ -84,29 +91,37 @@ export async function POST(req: Request) {
     if (existingCompany && existingCompany !== targetCompanyId) {
       return Response.json({ error: 'This email already belongs to another company' }, { status: 409 })
     }
-    // Compte de la même company (ou non rattaché) — on lie sans jamais
-    // dégrader/élever le rôle existant (préserve un rôle déjà attribué).
+    // Compte de la même company (ou non rattaché) : le rôle existant est gardé,
+    // sauf si l'appelant en demande explicitement un (borné plus haut).
     userId = existingUser.id
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
+    const { error: metaErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       app_metadata: {
         ...existingUser.app_metadata,
-        user_role: existingUser.app_metadata?.user_role ?? 'consultant',
+        user_role: requestedRole ?? existingUser.app_metadata?.user_role ?? 'consultant',
         company_id: targetCompanyId,
       }
     })
+    if (metaErr) return Response.json({ error: metaErr.message }, { status: 500 })
   } else {
     // 3. Envoyer l'invitation email
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    data: {
-        user_role: 'consultant',
-        company_id: targetCompanyId,
-    }
-    })
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email)
     if (error) {
-    console.error('Invite error:', error) // ← ajouter
-    return Response.json({ error: error.message }, { status: 500 })
+      console.error('Invite error:', error)
+      return Response.json({ error: error.message }, { status: 500 })
     }
     userId = data.user.id
+
+    // Role and tenant go to app_metadata, the only place the RLS and the app
+    // read them. The invite `data` option writes user_metadata instead, which
+    // the user can edit and nothing reads: the invitee arrived with no role.
+    const { error: metaErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      app_metadata: {
+        ...data.user.app_metadata,
+        user_role: requestedRole ?? 'consultant',
+        company_id: targetCompanyId,
+      }
+    })
+    if (metaErr) return Response.json({ error: metaErr.message }, { status: 500 })
   }
 
   // 4. Lier le user_id au consultant (appartenance déjà validée ci-dessus)

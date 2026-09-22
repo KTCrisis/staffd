@@ -32,6 +32,7 @@ export interface Consultant {
   rttLeft?:          number
   // ── Contrat ────────────────────────────────────────────────
   contractType?:     ContractType   // 'employee' | 'freelance'
+  isFounder?:        boolean        // associé : libellé seulement, coûts = contractType
   // TJM
   tjm?:              number         // fallback legacy
   tjmFacture?:       number         // freelance : tarif facturé
