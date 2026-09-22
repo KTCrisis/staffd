@@ -104,12 +104,14 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
   const setStatus = (s: OpportunityStatus) => run(() => setOpportunityStatus(o!.id, s, lostReason))
 
   return (
+    // Header and footer stay put; only the body scrolls, so the actions are always reachable.
     <div style={{
       position: 'fixed', top: 0, right: 0, bottom: 0, width: 440,
       background: 'var(--bg2)', borderLeft: '1px solid var(--border)',
-      zIndex: 300, padding: 28, overflowY: 'auto', boxShadow: '-4px 0 24px var(--shadow)',
+      zIndex: 300, boxShadow: '-4px 0 24px var(--shadow)',
+      display: 'flex', flexDirection: 'column',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 28px', borderBottom: '1px solid var(--border)' }}>
         <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
           {mode === 'edit' ? t('form.titleEdit') : t('form.titleCreate')}
           {o && o.status !== 'open' && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>· {t(`status.${o.status}`)}</span>}
@@ -117,8 +119,7 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
         <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
       </div>
 
-      {error && <div className="form-error">{error}</div>}
-
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 28px 20px' }}>
       <Section>{t('form.sectionDeal')}</Section>
       <Field label={t('form.name')} required>
         <input className="input" value={name} onChange={e => setName(e.target.value)} />
@@ -196,54 +197,57 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
                placeholder={estimated != null ? String(estimated) : ''} />
       </Field>
       <Field label={t('form.description')}>
-        <textarea className="input" rows={3} value={description} onChange={e => setDescription(e.target.value)}
+        <textarea className="input" rows={2} value={description} onChange={e => setDescription(e.target.value)}
                   style={{ resize: 'vertical', fontFamily: 'inherit' }} />
       </Field>
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
-        <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={saving}>
-          {saving ? t('form.saving') : mode === 'edit' ? t('form.save') : t('form.create')}
-        </button>
-        <button className="btn btn-ghost" onClick={onClose} disabled={saving}>{t('form.cancel')}</button>
+      {o && (
+        <div style={{ marginTop: 18 }}>
+          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text2)' }} disabled={saving}
+                  onClick={() => { if (confirm(t('actions.deleteConfirm'))) run(() => deleteOpportunity(o.id)) }}>
+            {t('actions.delete')}
+          </button>
+        </div>
+      )}
       </div>
 
-      {/* Closing / reopening */}
-      {o && (
-        <>
-          <Section>{t('form.sectionClose')}</Section>
-          {isOpen ? (
-            <>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--green)', color: 'var(--green)' }}
-                        disabled={saving} onClick={() => setStatus('won')}>{t('actions.won')}</button>
-                <button className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--pink)', color: 'var(--pink)' }}
-                        disabled={saving} onClick={() => setAskLost(true)}>{t('actions.lost')}</button>
-                <button className="btn btn-ghost btn-sm" disabled={saving}
-                        onClick={() => setStatus('abandoned')}>{t('actions.abandoned')}</button>
-              </div>
-              {askLost && (
-                <div style={{ marginTop: 12 }}>
-                  <Field label={t('form.lostReason')} required>
-                    <input className="input" value={lostReason} onChange={e => setLostReason(e.target.value)} autoFocus />
-                  </Field>
-                  <button className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--pink)', color: 'var(--pink)' }}
-                          disabled={saving} onClick={() => setStatus('lost')}>{t('actions.confirmLost')}</button>
-                </div>
-              )}
-            </>
-          ) : (
-            <button className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setStatus('open')}>
-              {t('actions.reopen')}
-            </button>
-          )}
-          <div style={{ marginTop: 20 }}>
-            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text2)' }} disabled={saving}
-                    onClick={() => { if (confirm(t('actions.deleteConfirm'))) run(() => deleteOpportunity(o.id)) }}>
-              {t('actions.delete')}
-            </button>
+      <div style={{ borderTop: '1px solid var(--border)', padding: '14px 28px', background: 'var(--bg2)' }}>
+        {error && <div className="form-error" style={{ marginBottom: 10 }}>{error}</div>}
+
+        {/* Outcome: close an open deal, or reopen a closed one */}
+        {o && isOpen && !askLost && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <button className="btn btn-ghost btn-sm" style={{ flex: 1, borderColor: 'var(--green)', color: 'var(--green)' }}
+                    disabled={saving} onClick={() => setStatus('won')}>{t('actions.won')}</button>
+            <button className="btn btn-ghost btn-sm" style={{ flex: 1, borderColor: 'var(--pink)', color: 'var(--pink)' }}
+                    disabled={saving} onClick={() => setAskLost(true)}>{t('actions.lost')}</button>
+            <button className="btn btn-ghost btn-sm" style={{ flex: 1 }} disabled={saving}
+                    onClick={() => setStatus('abandoned')}>{t('actions.abandoned')}</button>
           </div>
-        </>
-      )}
+        )}
+        {o && isOpen && askLost && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <input className="input" style={{ flex: 1 }} placeholder={t('form.lostReason')} value={lostReason}
+                   onChange={e => setLostReason(e.target.value)} autoFocus
+                   onKeyDown={e => { if (e.key === 'Enter') setStatus('lost') }} />
+            <button className="btn btn-ghost btn-sm" style={{ borderColor: 'var(--pink)', color: 'var(--pink)' }}
+                    disabled={saving} onClick={() => setStatus('lost')}>{t('actions.confirmLost')}</button>
+            <button className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setAskLost(false)}>✕</button>
+          </div>
+        )}
+        {o && !isOpen && (
+          <div style={{ marginBottom: 10 }}>
+            <button className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setStatus('open')}>{t('actions.reopen')}</button>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={saving}>
+            {saving ? t('form.saving') : mode === 'edit' ? t('form.save') : t('form.create')}
+          </button>
+          <button className="btn btn-ghost" onClick={onClose} disabled={saving}>{t('form.cancel')}</button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -304,7 +308,7 @@ function QuickClient({ companyId, defaultType, onCreated }: {
 
 function Section({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', margin: '22px 0 14px' }}>
+    <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', margin: '18px 0 12px' }}>
       {children}
     </div>
   )
