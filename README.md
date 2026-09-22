@@ -33,7 +33,7 @@ This is a working product in active development.
 | Backend / DB | Supabase (PostgreSQL + RLS + RPC) |
 | Auth | Supabase Auth — roles in `app_metadata` |
 | AI | Ollama (local/cloud) via SSE streaming |
-| Deployment | Cloudflare Pages via OpenNext |
+| Deployment | Cloudflare Workers via OpenNext (`wrangler.jsonc`) |
 
 ---
 
@@ -107,10 +107,20 @@ supabase/
 | Staging | `main` | staging project | `seed.fixtures.sql` |
 | Production | `release/*` | one project per deployment | its `seed.*.local.sql` only |
 
-Both are Cloudflare Pages projects on this repository, each with its own
-`NEXT_PUBLIC_SUPABASE_*` variables. A change lands on `main`, is checked on
-staging, then ships by fast-forwarding the release branch. Fixtures never go
-to production. Put Cloudflare Access in front of both.
+Each environment is a Worker (`wrangler.jsonc` → `env.staging`, `env.cabinet`)
+connected to this repository with Workers Builds:
+
+- build command `npx opennextjs-cloudflare build`, deploy command
+  `npx opennextjs-cloudflare deploy --env <env>`, production branch per Worker;
+- **build variables** `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  (inlined by `next build`, so they must be set at build time, per Worker);
+- **secrets** `SUPABASE_SERVICE_ROLE_KEY`, `OLLAMA_API_KEY`
+  (`npx wrangler secret put <NAME> --env <env>`).
+
+A change lands on `main`, is checked on staging, then ships by fast-forwarding
+the release branch. Fixtures never go to production. Put Cloudflare Access in
+front of both. Local check on the Workers runtime: `npm run cf:preview`
+(reads `.env.local` at build, `.dev.vars` at runtime).
 
 ---
 

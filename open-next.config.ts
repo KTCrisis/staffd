@@ -1,29 +1,8 @@
-import type { OpenNextConfig } from '@opennextjs/cloudflare'
-import kvIncrementalCache from '@opennextjs/cloudflare/overrides/incremental-cache/kv-incremental-cache'
+import { defineCloudflareConfig } from '@opennextjs/cloudflare'
+import staticAssetsIncrementalCache from '@opennextjs/cloudflare/overrides/incremental-cache/static-assets-incremental-cache'
 
-const config: OpenNextConfig = {
-  default: {
-    override: {
-      wrapper: 'cloudflare-node',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-      incrementalCache: () => kvIncrementalCache,
-      tagCache: 'dummy',
-      queue: 'direct',
-    },
-  },
-  edgeExternals: ['node:crypto'],
-  middleware: {
-    external: true,
-    override: {
-      wrapper: 'cloudflare-edge',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-      incrementalCache: 'dummy',
-      tagCache: 'dummy',
-      queue: 'direct',
-    },
-  },
-}
-
-export default config
+// No ISR / revalidation in the app: prerendered pages are served from the
+// Worker's static assets, so no KV namespace per environment is needed.
+export default defineCloudflareConfig({
+  incrementalCache: staticAssetsIncrementalCache,
+})

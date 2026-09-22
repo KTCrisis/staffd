@@ -1,0 +1,35 @@
+// Cloudflare Workers — one Worker per environment, same code.
+//   staging    → Worker "staffd-staging", built from `main`, Supabase preprod + fixtures
+//   cabinet    → Worker "staffd-cabinet", built from `release/cabinet`, its own Supabase
+//
+// NEXT_PUBLIC_* values are inlined by `next build`: set them as BUILD variables
+// on each Worker (dashboard > Settings > Build), never here. Secrets
+// (SUPABASE_SERVICE_ROLE_KEY, OLLAMA_API_KEY) go in `wrangler secret put --env <env>`.
+// Bindings and vars are NOT inherited by environments: redeclare them in each.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "staffd",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "observability": { "enabled": true },
+  "vars": {
+    "OLLAMA_MODEL": "kimi-k2.5:cloud",
+    "OLLAMA_HOST": "https://ollama.com"
+  },
+  "env": {
+    "staging": {
+      "vars": {
+        "OLLAMA_MODEL": "kimi-k2.5:cloud",
+        "OLLAMA_HOST": "https://ollama.com"
+      }
+    },
+    "cabinet": {
+      "vars": {
+        "OLLAMA_MODEL": "kimi-k2.5:cloud",
+        "OLLAMA_HOST": "https://ollama.com"
+      }
+    }
+  }
+}

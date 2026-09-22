@@ -47,3 +47,6 @@ staffd-notes.md
 
 # Seeds reels (donnees personnelles) — depot public, ne jamais commiter
 supabase/seed.*.local.sql
+
+# wrangler local state
+.wrangler/
