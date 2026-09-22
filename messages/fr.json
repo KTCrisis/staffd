@@ -17,7 +17,7 @@
     "agents": "Agents",
     "business": "Business",
     "finance": "Finance",
-    "appelsOffres": "Appels d'offres",
+    "appelsOffres": "Affaires",
     "financials": "Finances",
     "profitability": "Rentabilité",
     "simulator": "Simu embauche",
@@ -1298,6 +1298,93 @@
     "modes": {
       "solo": "solo",
       "team": "équipe"
+    }
+  },
+  "crm": {
+    "title": "Affaires",
+    "breadcrumb": "// pipeline commercial",
+    "new": "+ Affaire",
+    "pickTenant": "Choisissez un tenant pour créer une affaire",
+    "unknownStage": "Étape inconnue",
+    "emptyColumn": "// vide",
+    "emptyClosed": "// aucune affaire",
+    "kpi": {
+      "open": "Pipeline ouvert",
+      "openCount": "{count, plural, =0 {aucune affaire} one {# affaire} other {# affaires}}",
+      "weighted": "Pondéré",
+      "weightedSub": "montant × probabilité",
+      "won": "Gagné",
+      "winRate": "Taux de transformation",
+      "lostCount": "{count, plural, =0 {aucune perdue} one {# perdue} other {# perdues}}"
+    },
+    "tabs": {
+      "open": "En cours",
+      "won": "Gagnées",
+      "lost": "Perdues / abandonnées"
+    },
+    "table": {
+      "name": "Affaire",
+      "client": "Donneur d'ordre",
+      "type": "Type",
+      "amount": "Montant",
+      "closeDate": "Clôture",
+      "reason": "Motif"
+    },
+    "dealType": {
+      "regie": "Régie",
+      "forfait": "Forfait",
+      "sourcing": "Sourcing"
+    },
+    "status": {
+      "open": "En cours",
+      "won": "Gagnée",
+      "lost": "Perdue",
+      "abandoned": "Abandonnée"
+    },
+    "form": {
+      "titleCreate": "Nouvelle affaire",
+      "titleEdit": "Affaire",
+      "sectionDeal": "Affaire",
+      "sectionPipeline": "Pipeline",
+      "sectionMoney": "Chiffrage",
+      "sectionClose": "Issue",
+      "name": "Intitulé",
+      "client": "Donneur d'ordre",
+      "clientHint": "Celui qu'on facture (client final ou ESN intermédiaire)",
+      "endClient": "Client final",
+      "endClientHint": "À renseigner si la mission passe par un intermédiaire",
+      "dealType": "Type",
+      "owner": "Porteur",
+      "stage": "Étape",
+      "probability": "Probabilité (%)",
+      "closeDate": "Clôture prévue",
+      "startDate": "Démarrage souhaité",
+      "startDateHint": "Confronté aux disponibilités",
+      "source": "Source",
+      "sourcePlaceholder": "réseau, appel d'offres, partenaire ESN…",
+      "tjmVendu": "TJM vendu (€)",
+      "tjmAchat": "TJM achat (€)",
+      "jours": "Jours estimés",
+      "amount": "Montant (€)",
+      "amountEstimated": "Estimé : {amount} € (TJM × jours) si laissé vide",
+      "description": "Notes",
+      "lostReason": "Motif de la perte",
+      "save": "Enregistrer",
+      "create": "Créer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler",
+      "errorName": "L'intitulé est obligatoire",
+      "errorClient": "Le donneur d'ordre est obligatoire",
+      "errorLostReason": "Indiquez le motif de la perte"
+    },
+    "actions": {
+      "won": "✓ Gagnée",
+      "lost": "✕ Perdue",
+      "abandoned": "Abandonnée",
+      "confirmLost": "Confirmer la perte",
+      "reopen": "↺ Rouvrir",
+      "delete": "Supprimer l'affaire",
+      "deleteConfirm": "Supprimer définitivement cette affaire ?"
     }
   }
 }

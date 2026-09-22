@@ -480,6 +480,37 @@ insert into invoice_lines (invoice_id, company_id, description, quantity, unit, 
   ('11111111-4444-0000-0000-000000000004','aaaaaaaa-0000-0000-0000-000000000001','Baptiste Leroi — Data Engineering — ENGIE',  20.0,'day',780.00)
 on conflict do nothing;
 
+-- ── CRM — Norvane Conseil (pipeline de démonstration) ─────────
+-- Accenture joue l'ESN intermédiaire : l'affaire BNP est facturée à Accenture,
+-- BNP en est le client final. Couvre les trois types et les trois issues.
+update clients set client_type = 'intermediary' where id = 'bbbbbbbb-0004-0000-0000-000000000004';
+update companies set crm_settings = '{"enabled": true}'::jsonb where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+insert into opportunities (id, company_id, client_id, end_client_id, owner_id, name, deal_type,
+  amount, tjm_vendu, tjm_achat, jours_estimes, probability, stage, status, source,
+  expected_close_date, start_date, lost_reason) values
+  ('abababab-0001-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001',
+   'bbbbbbbb-0001-0000-0000-000000000001', null, 'cccccccc-0001-0000-0000-000000000001',
+   'ENGIE — plateforme événementielle', 'regie', 184800, 880, null, 210, 40, 'proposition', 'open', 'reseau',
+   current_date + 21, current_date + 45, null),
+  ('abababab-0002-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001',
+   'bbbbbbbb-0004-0000-0000-000000000004', 'bbbbbbbb-0002-0000-0000-000000000002', 'cccccccc-0001-0000-0000-000000000001',
+   'BNP via Accenture — architecte data', 'sourcing', 90000, 750, 600, 120, 70, 'negociation', 'open', 'partenaire_esn',
+   current_date + 7, current_date + 30, null),
+  ('abababab-0003-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000001',
+   'bbbbbbbb-0003-0000-0000-000000000003', null, null,
+   'Société Générale — audit API', 'forfait', 45000, null, null, null, 10, 'qualification', 'open', 'appel_offres',
+   current_date - 3, null, null),
+  ('abababab-0004-0000-0000-000000000004', 'aaaaaaaa-0000-0000-0000-000000000001',
+   'bbbbbbbb-0001-0000-0000-000000000001', null, 'cccccccc-0002-0000-0000-000000000002',
+   'ENGIE — cadrage streaming', 'forfait', 30000, null, null, null, 100, 'negociation', 'won', 'reseau',
+   current_date - 20, current_date - 10, null),
+  ('abababab-0005-0000-0000-000000000005', 'aaaaaaaa-0000-0000-0000-000000000001',
+   'bbbbbbbb-0002-0000-0000-000000000002', null, null,
+   'BNP — gouvernance MCP', 'forfait', 60000, null, null, null, 40, 'proposition', 'lost', 'appel_offres',
+   current_date - 40, null, 'Prix : concurrent intégrateur 20 % moins cher')
+on conflict (id) do nothing;
+
 -- ── Extra activity feed ──────────────────────────────────────
 insert into activity_feed (company_id, type, message, read) values
   ('aaaaaaaa-0000-0000-0000-000000000001','milestone','Nexus v2 — livraison sprint 3 validée ✓',true),

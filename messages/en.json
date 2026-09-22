@@ -17,7 +17,7 @@
     "agents": "Agents",
     "business": "Business",
     "finance": "Finance",
-    "appelsOffres": "Bids / RFPs",
+    "appelsOffres": "Deals",
     "financials": "Finances",
     "profitability": "Profitability",
     "simulator": "Hiring sim",
@@ -1298,6 +1298,93 @@
     "modes": {
       "solo": "solo",
       "team": "team"
+    }
+  },
+  "crm": {
+    "title": "Deals",
+    "breadcrumb": "// sales pipeline",
+    "new": "+ Deal",
+    "pickTenant": "Pick a tenant to create a deal",
+    "unknownStage": "Unknown stage",
+    "emptyColumn": "// empty",
+    "emptyClosed": "// no deals",
+    "kpi": {
+      "open": "Open pipeline",
+      "openCount": "{count, plural, =0 {no deals} one {# deal} other {# deals}}",
+      "weighted": "Weighted",
+      "weightedSub": "amount × probability",
+      "won": "Won",
+      "winRate": "Win rate",
+      "lostCount": "{count, plural, =0 {none lost} one {# lost} other {# lost}}"
+    },
+    "tabs": {
+      "open": "Open",
+      "won": "Won",
+      "lost": "Lost / abandoned"
+    },
+    "table": {
+      "name": "Deal",
+      "client": "Billed party",
+      "type": "Type",
+      "amount": "Amount",
+      "closeDate": "Close",
+      "reason": "Reason"
+    },
+    "dealType": {
+      "regie": "Time & materials",
+      "forfait": "Fixed price",
+      "sourcing": "Sourcing"
+    },
+    "status": {
+      "open": "Open",
+      "won": "Won",
+      "lost": "Lost",
+      "abandoned": "Abandoned"
+    },
+    "form": {
+      "titleCreate": "New deal",
+      "titleEdit": "Deal",
+      "sectionDeal": "Deal",
+      "sectionPipeline": "Pipeline",
+      "sectionMoney": "Pricing",
+      "sectionClose": "Outcome",
+      "name": "Title",
+      "client": "Billed party",
+      "clientHint": "Who gets invoiced (end client or intermediary firm)",
+      "endClient": "End client",
+      "endClientHint": "Set it when the mission goes through an intermediary",
+      "dealType": "Type",
+      "owner": "Owner",
+      "stage": "Stage",
+      "probability": "Probability (%)",
+      "closeDate": "Expected close",
+      "startDate": "Requested start",
+      "startDateHint": "Checked against availability",
+      "source": "Source",
+      "sourcePlaceholder": "network, tender, partner firm…",
+      "tjmVendu": "Day rate sold (€)",
+      "tjmAchat": "Day rate bought (€)",
+      "jours": "Estimated days",
+      "amount": "Amount (€)",
+      "amountEstimated": "Estimated: {amount} € (rate × days) if left empty",
+      "description": "Notes",
+      "lostReason": "Why it was lost",
+      "save": "Save",
+      "create": "Create",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "errorName": "A title is required",
+      "errorClient": "The billed party is required",
+      "errorLostReason": "Say why the deal was lost"
+    },
+    "actions": {
+      "won": "✓ Won",
+      "lost": "✕ Lost",
+      "abandoned": "Abandoned",
+      "confirmLost": "Confirm loss",
+      "reopen": "↺ Reopen",
+      "delete": "Delete deal",
+      "deleteConfirm": "Delete this deal permanently?"
     }
   }
 }

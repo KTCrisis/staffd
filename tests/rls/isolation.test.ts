@@ -121,3 +121,33 @@ describe('Fix #6 — un freelance ne peut pas auto-valider sa facture', () => {
     expect(data!.status).toBe('draft')
   })
 })
+
+describe('CRM — affaires réservées admin/manager', () => {
+  it("un consultant ne lit aucune affaire, un admin lit celles de son tenant", async () => {
+    const { data: opp } = await admin.from('opportunities').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'RLS opp', stage: 'qualification',
+    }).select('id').single().throwOnError()
+
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const asConsultant = await c.from('opportunities').select('id')
+    expect(asConsultant.error).toBeNull()
+    expect(asConsultant.data ?? []).toHaveLength(0)
+
+    const a = await authClient(EMAILS.adminA, PWD)
+    const asAdmin = await a.from('opportunities').select('id')
+    expect((asAdmin.data ?? []).map(r => r.id)).toContain(opp!.id)
+
+    const b = await authClient(EMAILS.adminB, PWD)
+    const otherTenant = await b.from('opportunities').select('id')
+    expect((otherTenant.data ?? []).map(r => r.id)).not.toContain(opp!.id)
+  })
+
+  it('une affaire perdue sans motif est refusée par la base', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { error } = await a.from('opportunities').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'lost no reason', stage: 'qualification', status: 'lost',
+    })
+    expect(error).not.toBeNull()
+  })
+})
+
