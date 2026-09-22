@@ -272,7 +272,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
           <div className="drawer-overlay" onClick={closeDrawer} />
           <div className="cons-drawer">
 
-            <div className="cons-drawer-header">
+            <div className="cons-drawer-header drawer-head">
               <span className="label-meta">{t('drawer.label')}</span>
               <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>{t('drawer.close')}</button>
             </div>
@@ -326,7 +326,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
             )}
 
             {editAccess && (
-              <div className="cons-drawer-actions">
+              <div className="cons-drawer-actions drawer-foot drawer-foot--mid">
                 <button
                   className="btn btn-primary"
                   style={{ flex: 1 }}

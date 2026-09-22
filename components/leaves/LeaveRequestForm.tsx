@@ -209,7 +209,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
       }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+        <div className="drawer-head">
           <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
             {t('form.title')}
           </span>
@@ -330,7 +330,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
             )}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div className="drawer-foot">
               <button
                 className="btn btn-primary" style={{ flex: 1 }}
                 onClick={handleSubmit}

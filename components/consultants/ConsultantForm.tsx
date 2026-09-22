@@ -178,7 +178,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         boxShadow: '-4px 0 20px var(--shadow)',
       }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+        <div className="drawer-head">
           <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
             {isEdit ? t('titleEdit') : t('titleCreate')}
           </span>
@@ -376,7 +376,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div className="drawer-foot">
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={loading}>
               {loading ? '...' : isEdit ? t('actions.save') : t('actions.create')}
             </button>

@@ -91,7 +91,7 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
       boxShadow: '-4px 0 24px var(--shadow)',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+      <div className="drawer-head">
         <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
           {mode === 'edit' ? t('form.titleEdit') : t('form.titleCreate')}
         </span>
@@ -156,7 +156,7 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 32 }}>
+      <div className="drawer-foot">
         <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmit} disabled={saving}>
           {saving ? t('form.saving') : mode === 'edit' ? t('form.save') : t('form.create')}
         </button>

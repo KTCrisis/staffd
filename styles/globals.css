@@ -204,6 +204,16 @@ button { font-family: 'JetBrains Mono', monospace; }
 
 /* Overlay drawer (partagé — consultants, projets…) */
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 199; }
+/* Side panels (padding 28px, overflow-y: auto): header and action bar stay
+   visible while the form scrolls. Sticky offsets are measured from the
+   content box, hence -28px to reach the panel edges; negative margins span
+   the panel padding. */
+.drawer-head { position: sticky; top: -28px; z-index: 2; display: flex; justify-content: space-between; align-items: center;
+               margin: -28px -28px 20px; padding: 18px 28px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.drawer-foot { position: sticky; bottom: -28px; z-index: 2; display: flex; gap: 8px;
+               margin: 24px -28px -28px; padding: 14px 28px; background: var(--bg2); border-top: 1px solid var(--border); }
+/* Action bar followed by other content (e.g. a delete button): no bottom bleed. */
+.drawer-foot--mid { margin-bottom: 0; }
 
 /* Typographie */
 .label-meta { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); }

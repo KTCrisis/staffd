@@ -282,6 +282,7 @@ function TeamForm({
       <div style={{
         background: 'var(--bg2)', border: '1px solid var(--border)',
         borderRadius: 6, padding: 28, width: 480, maxWidth: '90vw',
+        maxHeight: 'calc(100vh - 48px)', overflowY: 'auto',
       }}>
         <div style={{ fontSize: 9, color: 'var(--cyan)', letterSpacing: 3, marginBottom: 20 }}>
           {'// '}{initial ? t('titleEdit') : t('titleNew')}

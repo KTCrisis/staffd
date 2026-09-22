@@ -301,7 +301,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
       {/* Drawer — lecture seule pour consultant */}
       {selected && !formOpen && (
         <div className="project-drawer">
-          <div className="project-drawer-header">
+          <div className="project-drawer-header drawer-head">
             <span className="label-meta">{t('drawer.label')}</span>
             <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)}>✕</button>
           </div>
@@ -362,7 +362,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
           />
           {!readOnly && (                                                                 
             <>
-              <div className="project-drawer-actions">
+              <div className="project-drawer-actions drawer-foot drawer-foot--mid">
                 <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => openEdit(selected)}>
                   {t('drawer.edit')}
                 </button>

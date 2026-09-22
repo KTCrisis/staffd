@@ -152,6 +152,7 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
         background: 'var(--bg2)',
         border: '1px solid var(--border)',
         borderRadius: 6, padding: 28, zIndex: 401,
+        maxHeight: 'calc(100vh - 48px)', overflowY: 'auto',
         boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
       }}>
         {/* Header */}

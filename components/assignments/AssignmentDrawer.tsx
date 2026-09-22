@@ -108,7 +108,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
       }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+        <div className="drawer-head">
           <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
             {tS('drawer.title')}
           </span>
@@ -233,7 +233,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
           )}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div className="drawer-foot">
             <button
               className="btn btn-primary"
               style={{ flex: 1 }}
