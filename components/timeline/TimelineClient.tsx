@@ -22,10 +22,10 @@ type CellType = 'active' | 'free' | 'weekend' | 'before' | 'after'
 interface DayCell { type: CellType; isToday: boolean }
 
 const STATUS_COLOR: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  active:    { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064', dot: '#00e5ff' },
-  on_hold:   { bg: 'rgba(255,209,102,0.16)', border: 'rgba(255,209,102,0.50)', text: '#e65100', dot: '#ffd166' },
+  active:    { bg: 'color-mix(in srgb, var(--cyan) 16%, transparent)',   border: 'color-mix(in srgb, var(--cyan) 50%, transparent)',   text: '#006064', dot: 'var(--cyan)' },
+  on_hold:   { bg: 'color-mix(in srgb, var(--gold) 16%, transparent)', border: 'color-mix(in srgb, var(--gold) 50%, transparent)', text: '#e65100', dot: 'var(--gold)' },
   draft:     { bg: 'rgba(100,100,100,0.12)', border: 'rgba(100,100,100,0.30)', text: '#455a64', dot: '#7a8a7a' },
-  completed: { bg: 'rgba(0,255,136,0.12)',   border: 'rgba(0,255,136,0.40)',   text: '#1b5e20', dot: '#00ff88' },
+  completed: { bg: 'color-mix(in srgb, var(--green) 12%, transparent)',   border: 'color-mix(in srgb, var(--green) 40%, transparent)',   text: '#1b5e20', dot: 'var(--green)' },
 }
 
 function TimelineLegend({ t }: { t: ReturnType<typeof useTranslations> }) {

@@ -35,9 +35,9 @@ interface Invoice {
 
 const STATUS_COLORS: Record<InvoiceStatus, { color: string; bg: string }> = {
   draft:     { color: 'var(--text2)', bg: 'rgba(255,255,255,.05)' },
-  sent:      { color: 'var(--cyan)',  bg: 'rgba(0,229,255,.08)'   },
-  paid:      { color: 'var(--green)', bg: 'rgba(0,255,136,.08)'   },
-  overdue:   { color: 'var(--pink)',  bg: 'rgba(255,45,107,.08)'  },
+  sent:      { color: 'var(--cyan)',  bg: 'color-mix(in srgb, var(--cyan) 8%, transparent)'   },
+  paid:      { color: 'var(--green)', bg: 'color-mix(in srgb, var(--green) 8%, transparent)'   },
+  overdue:   { color: 'var(--pink)',  bg: 'color-mix(in srgb, var(--pink) 8%, transparent)'  },
   cancelled: { color: 'var(--text2)', bg: 'rgba(255,255,255,.03)' },
 }
 
@@ -218,7 +218,7 @@ export function InvoiceList() {
         <button
           onClick={() => router.push('/invoices/new')}
           style={{
-            background: 'var(--green)', color: '#060a06', border: 'none',
+            background: 'var(--green)', color: 'var(--bg)', border: 'none',
             padding: '8px 20px', borderRadius: 3, fontSize: 11, fontWeight: 700,
             cursor: 'pointer', fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
           }}>
@@ -315,7 +315,7 @@ export function InvoiceList() {
                         onClick={() => handleMarkPaid(inv)}
                         disabled={marking === inv.id}
                         style={{
-                          background: 'rgba(0,255,136,.08)', border: '1px solid rgba(0,255,136,.3)',
+                          background: 'color-mix(in srgb, var(--green) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--green) 30%, transparent)',
                           color: 'var(--green)', fontSize: 9, padding: '3px 8px',
                           borderRadius: 2, cursor: 'pointer',
                           fontFamily: 'var(--font-mono, monospace)', fontWeight: 700,

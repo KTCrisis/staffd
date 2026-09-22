@@ -1,14 +1,16 @@
 -- ============================================================
 -- STAFFD — Schéma de référence (init Supabase)
--- Version : 2026.09.22
+-- Version : 2026.09.23
 -- ============================================================
 -- Schéma SEUL. Les données vivent dans des seeds séparés :
 --   supabase/seed.fixtures.sql          jeux d'essai (ESN, agence, solo) — préprod et local
 --   supabase/seed.tenant.example.sql    gabarit d'un tenant réel
 --   supabase/seed.*.local.sql           tenants réels, ignorés par git (dépôt public)
 -- En local : `npx supabase db reset` applique ce fichier puis les seeds (config.toml).
--- En prod  : SQL Editor, ce fichier PUIS le seed voulu. Le script commence par un
---            drop-all : toutes les données métier sont effacées (auth.users préservés).
+-- En prod  : base NEUVE seulement — SQL Editor, ce fichier PUIS le seed voulu.
+--            Base existante : appliquer les migrations 0001+ manquantes, JAMAIS ce
+--            fichier : il commence par un drop-all qui efface toutes les données
+--            métier (auth.users préservés).
 --
 -- Sections : 0. drops · 1. extensions · 2. tables (PSA) · 2b. facturation
 --            2c. CRM avant-vente · 3. fonctions/triggers/RPC · 4. vues
@@ -16,6 +18,9 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  companies.branding (cf. migrations/0001_branding.sql). Les évolutions
+--               passent désormais par des migrations numérotées ; ce fichier reste
+--               l'init d'une base neuve et ne se rejoue pas sur des données réelles.
 --   2026.09.22  module CRM intégré (contacts, framework_agreements, opportunities,
 --               interactions, vue opportunity_pipeline, companies.crm_settings,
 --               clients.client_type, projects.end_client_id / framework_agreement_id
@@ -86,6 +91,7 @@ create table if not exists companies (
   ai_settings      jsonb default '{}'::jsonb,  -- ollama_endpoint, ollama_model, agents_enabled, mcp_tools
   hr_settings      jsonb default '{}'::jsonb,  -- country_code, default_cp, default_rtt, working_days, cra_deadline
   crm_settings     jsonb default '{}'::jsonb,  -- enabled, stages, deal_types, sources (cf. section 2c)
+  branding         jsonb default '{}'::jsonb,  -- name, tagline, heading_font, dark/light color tokens (lib/branding.ts)
   -- Typage léger d'entité + hiérarchie opérationnelle (business units). PSA pur :
   -- pas de graphe de capital ici (ownership/dividendes vivront dans le cockpit groupe).
   entity_type       text not null default 'company' check (entity_type in ('company','holding','filiale','sasu')),

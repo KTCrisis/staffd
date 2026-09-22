@@ -392,8 +392,8 @@ export function HRTab() {
             </div>
             <span style={{
               fontSize: 9, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
-              background: 'rgba(0,229,255,0.08)', color: 'var(--cyan)',
-              border: '1px solid rgba(0,229,255,0.2)',
+              background: 'color-mix(in srgb, var(--cyan) 8%, transparent)', color: 'var(--cyan)',
+              border: '1px solid color-mix(in srgb, var(--cyan) 20%, transparent)',
             }}>
               {t('activityCount', { count: activityTypes.length })}
             </span>
@@ -428,7 +428,7 @@ export function HRTab() {
                     onClick={() => handleDeleteActivity(a.id)}
                     style={{
                       fontSize: 9, padding: '3px 10px', borderRadius: 2,
-                      background: 'none', border: '1px solid rgba(255,45,107,0.2)',
+                      background: 'none', border: '1px solid color-mix(in srgb, var(--pink) 20%, transparent)',
                       color: 'var(--pink)', cursor: 'pointer', fontFamily: 'inherit',
                       letterSpacing: 0.5,
                     }}

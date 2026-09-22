@@ -337,7 +337,7 @@ export function InvoiceForm() {
                 fontFamily: 'var(--font-mono, monospace)', fontSize: 10,
                 letterSpacing: 1, textTransform: 'uppercase',
                 border:     sourceType === s ? '1px solid var(--cyan)' : '1px solid var(--border)',
-                background: sourceType === s ? 'rgba(0,229,255,.08)'   : 'none',
+                background: sourceType === s ? 'color-mix(in srgb, var(--cyan) 8%, transparent)'   : 'none',
                 color:      sourceType === s ? 'var(--cyan)'            : 'var(--text2)',
               }}>
                 {t(`source.${s}`)}
@@ -360,7 +360,7 @@ export function InvoiceForm() {
                   {consultants.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
                 <button onClick={importFromTimesheet} disabled={importing} style={{
-                  background: 'var(--cyan)', color: '#060a06', border: 'none',
+                  background: 'var(--cyan)', color: 'var(--bg)', border: 'none',
                   padding: '8px 16px', borderRadius: 3, cursor: 'pointer',
                   fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)',
                   opacity: importing ? 0.6 : 1, whiteSpace: 'nowrap',
@@ -386,7 +386,7 @@ export function InvoiceForm() {
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </Select>
                 <button onClick={importFromProject} style={{
-                  background: 'var(--cyan)', color: '#060a06', border: 'none',
+                  background: 'var(--cyan)', color: 'var(--bg)', border: 'none',
                   padding: '8px 16px', borderRadius: 3, cursor: 'pointer',
                   fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)',
                 }}>
@@ -551,7 +551,7 @@ export function InvoiceForm() {
             <button onClick={() => handleSave(false)} disabled={saving} style={{
               flex: 2, padding: '12px', background: 'var(--green)',
               border: 'none', borderRadius: 3, cursor: 'pointer',
-              color: '#060a06', fontSize: 11, fontWeight: 700,
+              color: 'var(--bg)', fontSize: 11, fontWeight: 700,
               fontFamily: 'var(--font-mono, monospace)', letterSpacing: 1,
               opacity: saving ? 0.5 : 1,
             }}>

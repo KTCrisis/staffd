@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl'
 import { canEdit }         from '@/lib/auth'
 import { Panel, StatRow }  from '@/components/ui'
 import { EmptyState }      from '@/components/ui/EmptyState'
-import { fmt }             from '@/lib/utils'
+import { fmt, alpha }      from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ export function BidsClient({ userRole }: Props) {
   function StatusTag({ status }: { status: BidStatus }) {
     const color = STATUS_COLORS[status]
     return (
-      <span className="bid-status-tag" style={{ color, background: `${color}22`, border: `1px solid ${color}44` }}>
+      <span className="bid-status-tag" style={{ color, background: alpha(color, 13), border: `1px solid ${alpha(color, 27)}` }}>
         {t(`statuses.${status}`)}
       </span>
     )

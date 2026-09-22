@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   toISO, getMondayOf, addDays, getWeekDays, countWorkingDays,
-  getMargeColor, getMargLabel, isCibleAlert, progressColor, pluralFr, truncate,
+  getMargeColor, getMargLabel, isCibleAlert, progressColor, pluralFr, truncate, alpha,
 } from './utils'
 
 // Dates construites avec composants explicites (heure locale) pour éviter
@@ -87,5 +87,11 @@ describe('texte', () => {
   it('truncate', () => {
     expect(truncate('court')).toBe('court')
     expect(truncate('a'.repeat(40), 10)).toBe('aaaaaaaaaa…')
+  })
+})
+
+describe('alpha', () => {
+  it('wraps any color, including theme variables, in color-mix', () => {
+    expect(alpha('var(--green)', 13)).toBe('color-mix(in srgb, var(--green) 13%, transparent)')
   })
 })

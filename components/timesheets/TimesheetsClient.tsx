@@ -448,7 +448,7 @@ export function TimesheetsClient({
                         const canEditCell  = !cellLocked && (canEdit(role) || (isSelf && entryIsDraft))
                         const disabled     = (isConsultant && !isSelf) || !!cellLocked
 
-                        const cellBg = holiday ? 'rgba(255,209,102,.08)' : leaveOverlay ? 'rgba(0,229,255,.06)' : undefined
+                        const cellBg = holiday ? 'color-mix(in srgb, var(--gold) 8%, transparent)' : leaveOverlay ? 'color-mix(in srgb, var(--cyan) 6%, transparent)' : undefined
 
                         const openPopup = (e: React.MouseEvent) => {
                           if (isOpen) { setPopup(null); return }

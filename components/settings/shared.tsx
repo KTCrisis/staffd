@@ -113,8 +113,8 @@ export function SaveBar({
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '12px 16px', marginTop: 16,
-      background: 'rgba(0,229,255,.06)',
-      border: '1px solid rgba(0,229,255,.25)',
+      background: 'color-mix(in srgb, var(--cyan) 6%, transparent)',
+      border: '1px solid color-mix(in srgb, var(--cyan) 25%, transparent)',
       borderRadius: 6,
     }}>
       <span style={{ fontSize: 10, color: 'var(--cyan)', letterSpacing: 1 }}>
@@ -138,10 +138,10 @@ export function Skeleton({ h = 60 }: { h?: number }) {
 
 export function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, { bg: string; color: string; border: string }> = {
-    manager:    { bg: 'rgba(255,209,102,0.1)', color: 'var(--gold)', border: 'rgba(255,209,102,0.3)' },
-    admin:      { bg: 'rgba(255,45,107,0.1)',  color: 'var(--pink)', border: 'rgba(255,45,107,0.3)' },
+    manager:    { bg: 'color-mix(in srgb, var(--gold) 10%, transparent)', color: 'var(--gold)', border: 'color-mix(in srgb, var(--gold) 30%, transparent)' },
+    admin:      { bg: 'color-mix(in srgb, var(--pink) 10%, transparent)',  color: 'var(--pink)', border: 'color-mix(in srgb, var(--pink) 30%, transparent)' },
     consultant: { bg: 'rgba(255,255,255,0.05)', color: 'var(--text2)', border: 'var(--border)' },
-    freelance:  { bg: 'rgba(0,229,255,0.08)',  color: 'var(--cyan)',  border: 'rgba(0,229,255,0.25)' },
+    freelance:  { bg: 'color-mix(in srgb, var(--cyan) 8%, transparent)',  color: 'var(--cyan)',  border: 'color-mix(in srgb, var(--cyan) 25%, transparent)' },
   }
   const s = colors[role] ?? colors.consultant
   return (
@@ -194,7 +194,7 @@ export function ErrorBanner({ message }: { message: string | null }) {
   return (
     <div style={{
       padding: '8px 14px', borderRadius: 4,
-      background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.2)',
+      background: 'color-mix(in srgb, var(--pink) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--pink) 20%, transparent)',
       fontSize: 11, color: 'var(--pink)',
     }}>
       ⚠ {message}

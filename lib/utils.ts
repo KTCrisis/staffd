@@ -95,6 +95,15 @@ export function fmtTjm(n: number): string {
  * Seuils : ≥ 25% excellent (green) · 15–25% correct (gold) · < 15% alerte (pink)
  * Utilisé dans financials, profitability, KpiCard, MargeBar, légendes.
  */
+/**
+ * Translucent variant of any CSS color, including `var(--token)`.
+ * Replaces the `${color}22` hex-suffix idiom, which yields invalid CSS
+ * (`var(--green)22`) as soon as the color is a theme variable.
+ */
+export function alpha(color: string, pct: number): string {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
+}
+
 export function getMargeColor(pct: number | null | undefined): string {
   if (pct == null) return 'var(--text2)'
   if (pct >= 25) return 'var(--green)'

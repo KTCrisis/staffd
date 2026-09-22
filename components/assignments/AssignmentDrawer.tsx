@@ -212,7 +212,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
             {consultant.occupancyRate + allocation > 100 && (
               <div style={{
                 marginTop: 8, padding: '6px 10px', borderRadius: 4,
-                background: 'rgba(255,45,107,0.08)', border: '1px solid rgba(255,45,107,0.2)',
+                background: 'color-mix(in srgb, var(--pink) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--pink) 20%, transparent)',
                 fontSize: 10, color: 'var(--pink)',
               }}>
                 ⚠ {tS('drawer.overallocation', {
@@ -226,7 +226,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
           {error && (
             <div style={{
               fontSize: 11, color: 'var(--pink)',
-              padding: '8px 12px', background: 'rgba(255,45,107,0.08)', borderRadius: 4,
+              padding: '8px 12px', background: 'color-mix(in srgb, var(--pink) 8%, transparent)', borderRadius: 4,
             }}>
               {error}
             </div>

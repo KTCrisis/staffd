@@ -336,9 +336,9 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
             <div style={{
               padding: '8px 14px', borderRadius: 6,
               background: margeCible >= 20
-                ? 'rgba(0,255,136,.08)' : margeCible >= 10
-                ? 'rgba(255,209,102,.08)' : 'rgba(255,45,107,.08)',
-              border: `1px solid ${margeCible >= 20 ? 'rgba(0,255,136,.2)' : margeCible >= 10 ? 'rgba(255,209,102,.2)' : 'rgba(255,45,107,.2)'}`,
+                ? 'color-mix(in srgb, var(--green) 8%, transparent)' : margeCible >= 10
+                ? 'color-mix(in srgb, var(--gold) 8%, transparent)' : 'color-mix(in srgb, var(--pink) 8%, transparent)',
+              border: `1px solid ${margeCible >= 20 ? 'color-mix(in srgb, var(--green) 20%, transparent)' : margeCible >= 10 ? 'color-mix(in srgb, var(--gold) 20%, transparent)' : 'color-mix(in srgb, var(--pink) 20%, transparent)'}`,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span style={{ fontSize: 10, color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -371,7 +371,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
 
           {/* ── Erreur + Actions ─────────────────────────────────────── */}
           {error && (
-            <div style={{ fontSize: 11, color: 'var(--pink)', padding: '8px 12px', background: 'rgba(255,45,107,0.08)', borderRadius: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--pink)', padding: '8px 12px', background: 'color-mix(in srgb, var(--pink) 8%, transparent)', borderRadius: 4 }}>
               {error}
             </div>
           )}

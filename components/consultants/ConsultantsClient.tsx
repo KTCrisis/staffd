@@ -29,8 +29,8 @@ function ContractBadge({ type }: { type: string }) {
     <span
       className="cons-contract-badge"
       style={{
-        background: isFreelance ? 'rgba(0,229,255,0.1)' : 'rgba(255,255,255,0.06)',
-        border:     isFreelance ? '1px solid rgba(0,229,255,0.3)' : '1px solid var(--border)',
+        background: isFreelance ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
+        border:     isFreelance ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
         color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
       }}
     >

@@ -60,6 +60,18 @@ update consultants c set user_id = u.id
   where u.email = c.email and c.company_id = '11110000-4444-0000-0000-000000000001';
 
 -- ============================================================
+-- 4. BRANDING (optionnel) — filtré par lib/branding.ts : variables connues
+--    (bg, bg2, bg3, bg4, green, pink, cyan, gold, purple, dim, text, text2,
+--    border, border2), couleurs #hex ou rgb()/rgba() uniquement ; police des
+--    titres parmi JetBrains Mono, Space Grotesk, Inter Tight.
+-- ============================================================
+-- update companies set branding = '{
+--   "name": "<NOM>", "tagline": "// <baseline>", "heading_font": "Space Grotesk",
+--   "dark": { "bg": "#101010", "green": "#<ACCENT>", "text": "#A0A0A0" }
+-- }'::jsonb
+-- where id = '11110000-4444-0000-0000-000000000001';
+
+-- ============================================================
 -- VÉRIFICATION
 -- ============================================================
 -- select name, email, user_id is not null as lie from consultants

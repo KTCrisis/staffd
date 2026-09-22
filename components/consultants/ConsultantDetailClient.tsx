@@ -67,8 +67,8 @@ function ContractBadge({ type }: { type: string }) {
   const isFree = type === 'freelance'
   return (
     <span className="cons-contract-badge" style={{
-      background: isFree ? 'rgba(0,229,255,0.1)' : 'rgba(255,255,255,0.06)',
-      border:     isFree ? '1px solid rgba(0,229,255,0.3)' : '1px solid var(--border)',
+      background: isFree ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
+      border:     isFree ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
       color:      isFree ? 'var(--cyan)' : 'var(--text2)',
     }}>
       {type === 'freelance' ? t('contractType.freelance') : t('contractType.employee')}

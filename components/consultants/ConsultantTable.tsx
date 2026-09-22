@@ -19,8 +19,8 @@ function ContractBadge({ type }: { type: 'employee' | 'freelance' }) {
     <span style={{
       fontSize: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
       padding: '1px 5px', borderRadius: 2,
-      background: isFreelance ? 'rgba(0,229,255,0.1)' : 'rgba(255,255,255,0.06)',
-      border:     isFreelance ? '1px solid rgba(0,229,255,0.3)' : '1px solid var(--border)',
+      background: isFreelance ? 'color-mix(in srgb, var(--cyan) 10%, transparent)' : 'rgba(255,255,255,0.06)',
+      border:     isFreelance ? '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)' : '1px solid var(--border)',
       color:      isFreelance ? 'var(--cyan)' : 'var(--text2)',
     }}>
       {isFreelance ? t('contractType.freelance') : t('contractType.employee')}

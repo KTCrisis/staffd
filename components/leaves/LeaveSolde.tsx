@@ -73,7 +73,7 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
                     <span style={{
                       fontSize: 8, fontWeight: 700, letterSpacing: 1,
                       padding: '1px 5px', borderRadius: 2, textTransform: 'uppercase',
-                      background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.3)',
+                      background: 'color-mix(in srgb, var(--cyan) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)',
                       color: 'var(--cyan)',
                     }}>
                       Freelance

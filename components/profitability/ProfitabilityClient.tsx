@@ -10,7 +10,7 @@ import { AdminBadge }          from '@/components/ui/AdminBadge'
 import { EmptyState }          from '@/components/ui/EmptyState'
 import { MargeLegend }         from '@/components/ui/MargeLegend'
 import { ProgressBar }         from '@/components/ui/ProgressBar'
-import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert } from '@/lib/utils'
+import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert, alpha } from '@/lib/utils'
 import type { AvatarColor, ContractType } from '@/types'
 import type { Tables }         from '@/types/supabase'
 
@@ -22,7 +22,7 @@ type ProfitabilityRow = Tables<'consultant_profitability'>
 function MargeBadge({ pct }: { pct: number }) {
   const color = getMargeColor(pct)
   return (
-    <span className="marge-badge" style={{ background: `${color}22`, border: `1px solid ${color}55`, color }}>
+    <span className="marge-badge" style={{ background: alpha(color, 13), border: `1px solid ${alpha(color, 33)}`, color }}>
       {pct}%
     </span>
   )

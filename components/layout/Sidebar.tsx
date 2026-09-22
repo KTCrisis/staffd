@@ -33,11 +33,14 @@ interface SidebarProps {
   userRole:    string
   userEmail:   string
   companyMode: 'solo' | 'team' | null
+  /** Tenant branding (companies.branding); null = product default. */
+  brandName?:    string | null
+  brandTagline?: string | null
 }
 
 // ── Composant ─────────────────────────────────────────────────
 
-export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
+export function Sidebar({ userRole, userEmail, companyMode, brandName, brandTagline }: SidebarProps) {
   const pathname = usePathname()
   const locale   = useLocale()
   const t        = useTranslations('nav')
@@ -179,8 +182,8 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 8 }}>
         {!collapsed && (
           <div>
-            <div className="brand">staff<span>7</span></div>
-            <div className="sub">{'// AI-native PSA'}</div>
+            <div className="brand">{brandName ?? <>staff<span>7</span></>}</div>
+            <div className="sub">{brandTagline ?? '// AI-native PSA'}</div>
           </div>
         )}
         <button
@@ -249,7 +252,7 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       {!collapsed && (isSuperAdmin || isAdmin) && (
         <div style={{ padding: '0 16px', marginBottom: 12 }}>
           <div style={{
-            background: 'rgba(255,45,107,0.05)', border: '1px solid rgba(255,45,107,0.2)',
+            background: 'color-mix(in srgb, var(--pink) 5%, transparent)', border: '1px solid color-mix(in srgb, var(--pink) 20%, transparent)',
             borderRadius: 4, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <span style={{ color: 'var(--pink)', fontSize: 10, fontWeight: 'bold' }}>&gt;_</span>
@@ -307,8 +310,8 @@ export function Sidebar({ userRole, userEmail, companyMode }: SidebarProps) {
       <style>{`
         @keyframes shimmer-ai {
           0%,100% { color: var(--text2); text-shadow: none; }
-          40%     { color: var(--cyan);  text-shadow: 0 0 8px rgba(0,229,255,0.55); }
-          70%     { color: var(--pink);  text-shadow: 0 0 8px rgba(255,45,107,0.45); }
+          40%     { color: var(--cyan);  text-shadow: 0 0 8px color-mix(in srgb, var(--cyan) 55%, transparent); }
+          70%     { color: var(--pink);  text-shadow: 0 0 8px color-mix(in srgb, var(--pink) 45%, transparent); }
         }
         .nav-label-glow {
           animation: shimmer-ai 3s ease-in-out infinite;

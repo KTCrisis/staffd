@@ -133,8 +133,8 @@ export function AITab() {
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '12px 16px', borderRadius: 3,
-                background: agentsEnabled ? 'rgba(0,255,136,0.04)' : 'var(--bg3)',
-                border: `1px solid ${agentsEnabled ? 'rgba(0,255,136,0.2)' : 'var(--border)'}`,
+                background: agentsEnabled ? 'color-mix(in srgb, var(--green) 4%, transparent)' : 'var(--bg3)',
+                border: `1px solid ${agentsEnabled ? 'color-mix(in srgb, var(--green) 20%, transparent)' : 'var(--border)'}`,
               }}>
                 <div>
                   <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
@@ -182,8 +182,8 @@ export function AITab() {
             </div>
             <span style={{
               fontSize: 8, padding: '2px 8px', borderRadius: 2, letterSpacing: 1,
-              background: 'rgba(255,209,102,0.1)', color: 'var(--gold)',
-              border: '1px solid rgba(255,209,102,0.2)',
+              background: 'color-mix(in srgb, var(--gold) 10%, transparent)', color: 'var(--gold)',
+              border: '1px solid color-mix(in srgb, var(--gold) 20%, transparent)',
             }}>
               {t('mcpPlanned')}
             </span>

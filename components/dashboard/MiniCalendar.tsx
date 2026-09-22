@@ -163,10 +163,10 @@ export function MiniCalendar({
                   fontWeight: isToday ? 700 : 400,
                   position: 'relative',
                   background: isToday
-                    ? 'rgba(0,255,136,0.15)'
+                    ? 'color-mix(in srgb, var(--green) 15%, transparent)'
                     : isWeekend ? 'var(--bg3)' : 'transparent',
                   border: isToday
-                    ? '1px solid rgba(0,255,136,0.35)'
+                    ? '1px solid color-mix(in srgb, var(--green) 35%, transparent)'
                     : '1px solid transparent',
                   color: isToday
                     ? 'var(--green)'

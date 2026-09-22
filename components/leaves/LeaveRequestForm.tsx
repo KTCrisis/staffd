@@ -229,7 +229,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
             {isFreelance && (
               <div style={{
                 padding: '8px 12px', borderRadius: 4,
-                background: 'rgba(0,229,255,0.06)', border: '1px solid rgba(0,229,255,0.2)',
+                background: 'color-mix(in srgb, var(--cyan) 6%, transparent)', border: '1px solid color-mix(in srgb, var(--cyan) 20%, transparent)',
                 fontSize: 10, color: 'var(--cyan)', letterSpacing: 1,
               }}>
                 {t('form.freelanceBadge')}
@@ -323,7 +323,7 @@ export function LeaveRequestForm({ userId, onClose, onSaved }: Props) {
             {error && (
               <div style={{
                 fontSize: 11, color: 'var(--pink)',
-                padding: '8px 12px', background: 'rgba(255,45,107,0.08)', borderRadius: 4,
+                padding: '8px 12px', background: 'color-mix(in srgb, var(--pink) 8%, transparent)', borderRadius: 4,
               }}>
                 {error}
               </div>

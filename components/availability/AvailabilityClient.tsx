@@ -64,9 +64,9 @@ interface Props {
 // ── Couleurs projet ──────────────────────────────────────────
 
 const PROJECT_COLORS = [
-  { bg: 'rgba(0,229,255,0.16)',   border: 'rgba(0,229,255,0.50)',   text: '#006064' },   // cyan
-  { bg: 'rgba(0,255,136,0.15)',   border: 'rgba(0,255,136,0.48)',   text: '#1b5e20' },   // green
-  { bg: 'rgba(179,136,255,0.16)', border: 'rgba(179,136,255,0.50)', text: '#4a148c' },   // purple
+  { bg: 'color-mix(in srgb, var(--cyan) 16%, transparent)',   border: 'color-mix(in srgb, var(--cyan) 50%, transparent)',   text: '#006064' },   // cyan
+  { bg: 'color-mix(in srgb, var(--green) 15%, transparent)',   border: 'color-mix(in srgb, var(--green) 48%, transparent)',   text: '#1b5e20' },   // green
+  { bg: 'color-mix(in srgb, var(--purple) 16%, transparent)', border: 'color-mix(in srgb, var(--purple) 50%, transparent)', text: '#4a148c' },   // purple
   { bg: 'rgba(255,171,64,0.16)',  border: 'rgba(255,171,64,0.50)',  text: '#bf360c' },   // orange (remplace gold)
   { bg: 'rgba(77,182,172,0.16)',  border: 'rgba(77,182,172,0.50)',  text: '#004d40' },   // teal (remplace pink)
   { bg: 'rgba(141,110,99,0.16)',  border: 'rgba(141,110,99,0.50)',  text: '#3e2723' },   // brown/warm (remplace sage)

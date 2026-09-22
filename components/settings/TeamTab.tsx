@@ -65,7 +65,7 @@ function TeamCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 3,
-            background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.2)',
+            background: 'color-mix(in srgb, var(--cyan) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--cyan) 20%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 14, color: 'var(--cyan)',
           }}>◈</div>
@@ -92,7 +92,7 @@ function TeamCard({
             onClick={() => onDelete(team)}
             style={{
               fontSize: 10, padding: '4px 10px', borderRadius: 2,
-              background: 'none', border: '1px solid rgba(255,45,107,0.3)',
+              background: 'none', border: '1px solid color-mix(in srgb, var(--pink) 30%, transparent)',
               color: 'var(--pink)', cursor: 'pointer', fontFamily: 'inherit',
             }}
           >{t('delete')}</button>
@@ -102,7 +102,7 @@ function TeamCard({
       {/* Manager */}
       <div style={{
         padding: '12px 20px', borderBottom: '1px solid var(--border)',
-        background: 'rgba(255,209,102,0.03)',
+        background: 'color-mix(in srgb, var(--gold) 3%, transparent)',
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
         <span style={{
@@ -157,7 +157,7 @@ function TeamCard({
                     onClick={() => onRemoveMember(member.id, team.name, member.name)}
                     style={{
                       fontSize: 9, padding: '2px 8px', borderRadius: 2,
-                      background: 'none', border: '1px solid rgba(255,45,107,0.2)',
+                      background: 'none', border: '1px solid color-mix(in srgb, var(--pink) 20%, transparent)',
                       color: 'var(--pink)', cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >{t('remove')}</button>
@@ -547,7 +547,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
           <section>
             <SectionLabel label={t('unassignedSection')} />
             <div style={{
-              background: 'var(--bg2)', border: '1px solid rgba(255,209,102,0.2)',
+              background: 'var(--bg2)', border: '1px solid color-mix(in srgb, var(--gold) 20%, transparent)',
               borderRadius: 4, padding: '16px 20px',
             }}>
               <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 12 }}>
@@ -593,7 +593,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <div style={{
-            background: 'var(--bg2)', border: '1px solid rgba(255,45,107,0.3)',
+            background: 'var(--bg2)', border: '1px solid color-mix(in srgb, var(--pink) 30%, transparent)',
             borderRadius: 6, padding: 28, width: 400, maxWidth: '90vw',
           }}>
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>
@@ -636,7 +636,7 @@ export function TeamTab({ companyId }: { companyId: string }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <div style={{
-            background: 'var(--bg2)', border: '1px solid rgba(255,45,107,0.3)',
+            background: 'var(--bg2)', border: '1px solid color-mix(in srgb, var(--pink) 30%, transparent)',
             borderRadius: 6, padding: 28, width: 400, maxWidth: '90vw',
           }}>
             <div style={{ fontSize: 9, color: 'var(--pink)', letterSpacing: 3, marginBottom: 12 }}>

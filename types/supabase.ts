@@ -278,6 +278,7 @@ export type Database = {
         Row: {
           ai_settings: Json | null
           billing_settings: Json | null
+          branding: Json | null
           created_at: string | null
           crm_settings: Json | null
           entity_type: string
@@ -291,6 +292,7 @@ export type Database = {
         Insert: {
           ai_settings?: Json | null
           billing_settings?: Json | null
+          branding?: Json | null
           created_at?: string | null
           crm_settings?: Json | null
           entity_type?: string
@@ -304,6 +306,7 @@ export type Database = {
         Update: {
           ai_settings?: Json | null
           billing_settings?: Json | null
+          branding?: Json | null
           created_at?: string | null
           crm_settings?: Json | null
           entity_type?: string

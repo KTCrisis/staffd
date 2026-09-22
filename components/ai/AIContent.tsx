@@ -7,6 +7,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase }        from '@/lib/supabase'
+import { alpha }           from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ function CmdMenu({ query, onSelect }: { query: string; onSelect: (cmd: Cmd) => v
         >
           <span className="cmd-menu-id"    style={{ color: cmd.color }}>{cmd.id}</span>
           <span className="cmd-menu-desc">{cmd.desc}</span>
-          <span className="cmd-menu-badge" style={{ background: `${cmd.color}18`, color: cmd.color, border: `1px solid ${cmd.color}33` }}>
+          <span className="cmd-menu-badge" style={{ background: alpha(cmd.color, 9), color: cmd.color, border: `1px solid ${alpha(cmd.color, 20)}` }}>
             {cmd.context.slice(1)}
           </span>
         </button>
@@ -228,7 +229,7 @@ export function AIContent({ userEmail }: Props) {
         <div className="ai-cmd-hints">
           {COMMANDS.slice(0, 3).map(c => (
             <button key={c.id} onClick={() => { setInput(c.id + ' '); setShowMenu(false); inputRef.current?.focus() }}
-              className="ai-cmd-hint" style={{ color: c.color, border: `1px solid ${c.color}33` }}>
+              className="ai-cmd-hint" style={{ color: c.color, border: `1px solid ${alpha(c.color, 20)}` }}>
               {c.id}
             </button>
           ))}
