@@ -13,7 +13,8 @@ import {
   useProjectAssignments,
   archiveProject, deleteProject, deleteAssignment,
 } from '@/lib/data'
-import { daysUntil, countWorkingDays } from '@/lib/utils'
+import { daysUntil, countWorkingDays, fmt } from '@/lib/utils'
+import { billedChain, projectRevenue } from '@/lib/mission'
 import type { ProjectStatus, Project as CanonicalProject } from '@/types'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -35,6 +36,11 @@ interface Project {
   description?: string | null
   clientName?: string | null
   client?:     string | null
+  clientId?:   string | null
+  endClientId?: string | null
+  endClientName?: string | null
+  billingMode?: 'regie' | 'forfait'
+  companyId?:  string | null
   startDate?:  string | null
   endDate?:    string | null
   tjmVendu?:   number | null
@@ -268,7 +274,10 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
                       {p.reference && <div className="project-ref">{p.reference}</div>}
                     </td>
                     <td style={{ color: 'var(--text2)', fontSize: 12 }}>
-                      {p.clientName ?? p.client ?? '—'}
+                      {billedChain(p.clientName ?? p.client, p.endClientName)}
+                      {!p.isInternal && p.billingMode === 'forfait' && (
+                        <span className="tag-internal" style={{ marginLeft: 6 }}>{t('billing.forfait')}</span>
+                      )}
                     </td>
                     <td><TeamAvatars team={p.team} /></td>
                     <td><DeadlineChip date={p.endDate} t={t} /></td>
@@ -311,7 +320,7 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
               {selected.isInternal && <span className="tag-internal">{t('internal')}</span>}
             </div>
             <div className="project-drawer-sub">
-              {selected.clientName ?? selected.client}
+              {billedChain(selected.clientName ?? selected.client, selected.endClientName)}
               {selected.reference && ` · ${selected.reference}`}
             </div>
           </div>
@@ -322,9 +331,12 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
             { label: t('drawer.status'),    value: <Badge variant={selected.status as ProjectStatus} /> },
             { label: t('drawer.startDate'), value: selected.startDate ? new Date(selected.startDate).toLocaleDateString() : '—' },
             { label: t('drawer.deadline'),  value: <DeadlineChip date={selected.endDate} t={t} /> },
-            ...(selected.tjmVendu    ? [{ label: t('drawer.tjm'),    value: `${selected.tjmVendu} €/j` }]                   : []),
-            ...(selected.joursVendus ? [{ label: t('drawer.jours'),  value: `${selected.joursVendus} j` }]                  : []),
-            ...(selected.budgetTotal ? [{ label: t('drawer.budget'), value: `${selected.budgetTotal.toLocaleString()} €` }] : []),
+            ...(!selected.isInternal ? [{ label: t('drawer.billingMode'), value: t(`billing.${selected.billingMode ?? 'regie'}`) }] : []),
+            ...(selected.billingMode !== 'forfait' && selected.tjmVendu ? [{ label: t('drawer.tjm'), value: `${selected.tjmVendu} €/j` }] : []),
+            ...(selected.joursVendus ? [{ label: selected.billingMode === 'forfait' ? t('form.joursEstimes') : t('drawer.jours'), value: `${selected.joursVendus} j` }] : []),
+            ...(projectRevenue({ billing_mode: selected.billingMode, tjm_vendu: selected.tjmVendu, jours_vendus: selected.joursVendus, budget_total: selected.budgetTotal }) != null
+              ? [{ label: t('drawer.revenue'), value: fmt(projectRevenue({ billing_mode: selected.billingMode, tjm_vendu: selected.tjmVendu, jours_vendus: selected.joursVendus, budget_total: selected.budgetTotal })!) }]
+              : []),
           ] as { label: string; value: React.ReactNode }[]).map((row, i) => (
             <div key={i} className="project-drawer-row">
               <span className="project-drawer-row-label">{row.label}</span>

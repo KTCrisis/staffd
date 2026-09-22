@@ -1121,6 +1121,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          billing_mode: string
           budget_total: number | null
           client_id: string | null
           client_name: string | null
@@ -1145,6 +1146,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          billing_mode?: string
           budget_total?: number | null
           client_id?: string | null
           client_name?: string | null
@@ -1169,6 +1171,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          billing_mode?: string
           budget_total?: number | null
           client_id?: string | null
           client_name?: string | null
@@ -1745,6 +1748,8 @@ export type Database = {
       }
       project_financials: {
         Row: {
+          billing_mode: string | null
+          budget_total: number | null
           client: string | null
           company_id: string | null
           id: string | null

@@ -451,7 +451,9 @@
       "deadline": "Échéance",
       "tjm": "TJM vendu",
       "jours": "Jours vendus",
-      "budget": "Budget total"
+      "budget": "Budget total",
+      "billingMode": "Mode de vente",
+      "revenue": "CA du projet"
     },
     "form": {
       "titleCreate": "Nouveau projet",
@@ -480,9 +482,25 @@
       "status": "Statut",
       "tjmVendu": "TJM vendu (€/j)",
       "joursVendus": "Jours vendus",
-      "budgetTotal": "Budget total (€)"
+      "budgetTotal": "Budget total (€)",
+      "endClient": "Client final",
+      "sameAsClient": "identique au donneur d'ordre",
+      "endClientHint": "À renseigner si la mission passe par un intermédiaire (ESN, portage)",
+      "intermediary": "Intermédiaire",
+      "billingMode": "Mode de vente",
+      "billing": {
+        "regie": "Régie",
+        "forfait": "Forfait"
+      },
+      "fixedPrice": "Montant du forfait (€)",
+      "joursEstimes": "Jours estimés",
+      "revenue": "CA du projet"
     },
-    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}"
+    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}",
+    "billing": {
+      "regie": "Régie",
+      "forfait": "Forfait"
+    }
   },
   "assignments": {
     "team": "Équipe",

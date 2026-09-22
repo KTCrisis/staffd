@@ -63,6 +63,9 @@ export interface Project {
   joursVendus?:  number
   isInternal?:   boolean
   companyId?:    string
+  billingMode?:  'regie' | 'forfait'
+  endClientId?:  string
+  endClientName?: string
 }
 
 /** Who is invoiced vs who receives the work (missions sold via another firm). */

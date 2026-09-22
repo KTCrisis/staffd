@@ -18,6 +18,7 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  projects.billing_mode, project_financials étendue (0004_mission_model.sql).
 --   2026.09.23  win_opportunity() : affaire gagnée → projet (0003_win_opportunity.sql).
 --   2026.09.23  consultants.is_founder + consultant_occupancy (0002_founder.sql).
 --   2026.09.23  companies.branding (cf. migrations/0001_branding.sql). Les évolutions
@@ -188,6 +189,8 @@ create table if not exists projects (
   start_date date, end_date date,
   progress int default 0 check (progress between 0 and 100),
   tjm_vendu numeric(10,2), jours_vendus int, budget_total numeric(10,2),
+  -- 'regie' : TJM × jours · 'forfait' : budget_total (cf. 0004)
+  billing_mode text not null default 'regie' check (billing_mode in ('regie','forfait')),
   status text not null default 'draft'
     check (status in ('draft','active','on_hold','completed','archived')),
   created_at timestamptz default now(), updated_at timestamptz default now(),
@@ -599,12 +602,13 @@ begin
     insert into projects (
       company_id, client_id, end_client_id, opportunity_id, created_by,
       name, client_name, description,
-      start_date, tjm_vendu, jours_vendus, budget_total, status
+      start_date, tjm_vendu, jours_vendus, budget_total, billing_mode, status
     ) values (
       o.company_id, o.client_id, o.end_client_id, o.id, auth.uid(),
       o.name, coalesce(v_client, o.name), o.description,
       o.start_date, o.tjm_vendu, o.jours_estimes,
       case when o.deal_type = 'forfait' then o.amount end,
+      case when o.deal_type = 'forfait' then 'forfait' else 'regie' end,
       'active'
     )
     returning id into v_project;
@@ -918,7 +922,11 @@ select
     else null
   end as marge_pct,
 
-  count(distinct a.consultant_id) as team_size
+  count(distinct a.consultant_id) as team_size,
+
+  -- 0004 : mode de facturation (CA d'un forfait = budget_total, pas TJM × jours)
+  p.billing_mode,
+  p.budget_total
 
 from projects p
 left join assignments a on a.project_id = p.id
@@ -927,7 +935,8 @@ where (is_super_admin() or p.company_id = my_company_id())
   and p.status in ('active', 'on_hold')
   and coalesce(p.is_activity_type, false) = false  -- exclut les activity types
 group by
-  p.id, p.company_id, p.name, p.client_name, p.tjm_vendu, p.jours_vendus;
+  p.id, p.company_id, p.name, p.client_name, p.tjm_vendu, p.jours_vendus,
+  p.billing_mode, p.budget_total;
   -- ── timesheet_summary ─────────────────────────────────────────────────────────
 create view timesheet_summary with (security_invoker = true) as
 select

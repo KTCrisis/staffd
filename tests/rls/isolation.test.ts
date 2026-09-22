@@ -206,3 +206,27 @@ describe('CRM — affaire gagnée → projet', () => {
   })
 })
 
+describe('Modèle de mission', () => {
+  it('une affaire au forfait gagnée donne un projet au forfait, au montant de l\'affaire', async () => {
+    const { data: opp } = await admin.from('opportunities').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'Audit au forfait', stage: 'negociation',
+      deal_type: 'forfait', amount: 45000,
+    }).select('id').single().throwOnError()
+
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data: projectId, error } = await a.rpc('win_opportunity', { p_opportunity_id: opp!.id })
+    expect(error).toBeNull()
+
+    const { data: proj } = await admin.from('projects').select('billing_mode, budget_total').eq('id', projectId!).single()
+    expect(proj).toMatchObject({ billing_mode: 'forfait', budget_total: 45000 })
+  })
+
+  it('la base refuse un mode de facturation inconnu', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { error } = await a.from('projects').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'x', client_name: 'Client A', billing_mode: 'abonnement',
+    })
+    expect(error).not.toBeNull()
+  })
+})
+

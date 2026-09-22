@@ -17,6 +17,8 @@ export interface ProjectInput {
   name:          string
   client_name?:  string
   client_id?:    string
+  end_client_id?: string | null
+  billing_mode?: 'regie' | 'forfait'
   reference?:    string
   description?:  string
   start_date?:   string
@@ -52,6 +54,8 @@ function toProject(row: Record<string, unknown>): Project {
     joursVendus:    row.jours_vendus as number | undefined,
     isInternal:     (row.is_internal as boolean) ?? false,
     companyId:      row.company_id as string | undefined,
+    billingMode:    (row.billing_mode as Project['billingMode']) ?? 'regie',
+    endClientId:    row.end_client_id as string | undefined,
     team:           (row.team as Project['team']) ?? [],
   }
 }

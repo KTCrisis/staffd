@@ -9,6 +9,7 @@ import { EmptyState }                       from '@/components/ui/EmptyState'
 import { MargeBar }                         from '@/components/ui/MargeBar'
 import { MargeLegend }                      from '@/components/ui/MargeLegend'
 import { fmt, getMargeColor, pluralFr }     from '@/lib/utils'
+import { projectRevenue }                   from '@/lib/mission'
 import type { Tables }                       from '@/types/supabase'
 
 type ProjectFinancials = Tables<'project_financials'>
@@ -20,7 +21,8 @@ interface Props {
 export function FinancialsClient({ projects = [] }: Props) {
   const t = useTranslations('financials')
 
-  const totalCA     = projects.reduce((s, p) => s + ((p.tjm_vendu ?? 0) * (p.jours_vendus ?? 0)), 0)
+  // Forfaits count their fixed price, régies their rate × days (lib/mission)
+  const totalCA     = projects.reduce((s, p) => s + (projectRevenue(p) ?? 0), 0)
   const totalMarge  = projects.reduce((s, p) => s + (p.marge_brute_totale ?? 0), 0)
   const avgMargePct = projects.length
     ? Math.round(projects.reduce((s, p) => s + (p.marge_pct ?? 0), 0) / projects.length)

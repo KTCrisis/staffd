@@ -43,6 +43,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
     .from('projects')
     .select(`
       *,
+      end_client:clients!projects_end_client_id_fkey(name),
       assignments(
         consultant_id,
         consultants(id, name, initials, avatar_color)
@@ -69,6 +70,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   // la lecture retombait déjà sur null. Déclarée optionnelle pour préserver le runtime.
   type ProjectRow = Tables<'projects'> & {
     client?: string | null
+    end_client: { name: string } | null
     assignments: { consultant_id: string | null; consultants: ProjectAssignmentConsultant | null }[]
   }
 
@@ -79,6 +81,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
     reference:   p.reference    ?? null,
     description: p.description  ?? null,
     clientName:  p.client_name  ?? null,
+    // Needed by the edit form (it used to reopen with no client selected)
+    clientId:    p.client_id    ?? null,
+    endClientId: p.end_client_id ?? null,
+    endClientName: p.end_client?.name ?? null,
+    billingMode: p.billing_mode as 'regie' | 'forfait',
+    companyId:   p.company_id   ?? null,
     client:      p.client       ?? null,
     startDate:   p.start_date   ?? null,
     endDate:     p.end_date     ?? null,

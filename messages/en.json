@@ -451,7 +451,9 @@
       "deadline": "Deadline",
       "tjm": "Rate sold",
       "jours": "Days sold",
-      "budget": "Total budget"
+      "budget": "Total budget",
+      "billingMode": "Pricing",
+      "revenue": "Project revenue"
     },
     "form": {
       "titleCreate": "New project",
@@ -480,9 +482,25 @@
       "status": "Status",
       "tjmVendu": "Rate sold (€/day)",
       "joursVendus": "Days sold",
-      "budgetTotal": "Total budget (€)"
+      "budgetTotal": "Total budget (€)",
+      "endClient": "End client",
+      "sameAsClient": "same as billed party",
+      "endClientHint": "Set it when the mission goes through an intermediary",
+      "intermediary": "Intermediary",
+      "billingMode": "Pricing",
+      "billing": {
+        "regie": "Time & materials",
+        "forfait": "Fixed price"
+      },
+      "fixedPrice": "Fixed price (€)",
+      "joursEstimes": "Estimated days",
+      "revenue": "Project revenue"
     },
-    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}"
+    "consultantCount": "{count, plural, one {# consultant} other {# consultants}}",
+    "billing": {
+      "regie": "Time & materials",
+      "forfait": "Fixed price"
+    }
   },
   "assignments": {
     "team": "Team",

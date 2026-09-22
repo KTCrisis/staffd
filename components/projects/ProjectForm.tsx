@@ -10,6 +10,9 @@ import { useState, useEffect }          from 'react'
 import { useTranslations }              from 'next-intl'
 import { createProject, updateProject, useClients, useCompanySettings } from '@/lib/data'
 import type { Project }                 from '@/types'
+import { QuickClient, type QuickClientResult } from '@/components/crm/QuickClient'
+import { BILLING_MODES, projectRevenue, type BillingMode } from '@/lib/mission'
+import { fmt }                          from '@/lib/utils'
 
 const STATUS_OPTIONS = ['draft', 'active', 'on_hold', 'completed'] as const
 
@@ -24,7 +27,13 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const mode = project ? 'edit' : 'create'
 
   // Charger la liste des clients
-  const { data: clients } = useClients()
+  const { data: loadedClients } = useClients()
+  // Clients created inline are added here until the next refresh
+  const [extraClients, setExtraClients] = useState<QuickClientResult[]>([])
+  const clients = [
+    ...(loadedClients ?? []).map(c => ({ id: c.id, name: c.name, sector: c.sector, client_type: c.clientType ?? 'final' })),
+    ...extraClients.map(c => ({ ...c, sector: undefined })),
+  ].sort((a, b) => a.name.localeCompare(b.name))
 
   // Nom dynamique de la company (pour badge "projet interne")
   const { data: companySettings } = useCompanySettings()
@@ -34,6 +43,8 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const [name,        setName]        = useState(project?.name        ?? '')
   const [isInternal,  setIsInternal]  = useState(project?.isInternal  ?? false)
   const [clientId,    setClientId]    = useState(project?.clientId    ?? '')
+  const [endClientId, setEndClientId] = useState(project?.endClientId ?? '')
+  const [billingMode, setBillingMode] = useState<BillingMode>(project?.billingMode ?? 'regie')
   const [reference,   setReference]   = useState(project?.reference   ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [startDate,   setStartDate]   = useState(project?.startDate   ?? '')
@@ -52,6 +63,8 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
     setName(project?.name ?? '')
     setIsInternal(project?.isInternal ?? false)
     setClientId(project?.clientId ?? '')
+    setEndClientId(project?.endClientId ?? '')
+    setBillingMode(project?.billingMode ?? 'regie')
     setReference(project?.reference ?? '')
     setDescription(project?.description ?? '')
     setStartDate(project?.startDate ?? '')
@@ -65,10 +78,19 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
   // Quand on passe en interne, vider la sélection client
   useEffect(() => {
-    if (isInternal) setClientId('')
+    if (isInternal) { setClientId(''); setEndClientId('') }
   }, [isInternal])
 
-  const selectedClient = (clients ?? []).find(c => c.id === clientId)
+  const selectedClient = clients.find(c => c.id === clientId)
+  const revenue = projectRevenue({
+    billing_mode: billingMode,
+    tjm_vendu:    tjmVendu    ? parseFloat(tjmVendu)    : null,
+    jours_vendus: joursVendus ? parseInt(joursVendus)   : null,
+    budget_total: budgetTotal ? parseFloat(budgetTotal) : null,
+  })
+  const onQuickClient = (setter: (id: string) => void) => (c: QuickClientResult) => {
+    setExtraClients(cs => [...cs, c]); setter(c.id)
+  }
 
   // ── Submit ────────────────────────────────────────────────
   async function handleSubmit() {
@@ -83,6 +105,8 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         name:         name.trim(),
         client_name:  isInternal ? companyName : (selectedClient?.name ?? ''),
         client_id:    isInternal ? undefined : clientId || undefined,
+        end_client_id: isInternal ? null : (endClientId || null),
+        billing_mode: billingMode,
         is_internal:  isInternal,
         reference:    reference.trim() || undefined,
         description:  description.trim() || undefined,
@@ -90,7 +114,10 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
         end_date:     endDate || undefined,
         tjm_vendu:    tjmVendu    ? parseFloat(tjmVendu)    : undefined,
         jours_vendus: joursVendus ? parseInt(joursVendus)   : undefined,
-        budget_total: budgetTotal ? parseFloat(budgetTotal) : undefined,
+        // Régie: the budget is the contracted value (rate × days); forfait: the fixed price.
+        budget_total: billingMode === 'forfait'
+          ? (budgetTotal ? parseFloat(budgetTotal) : undefined)
+          : (revenue ?? undefined),
         status,
         company_id:   companySettings?.id ?? '',
       }
@@ -162,18 +189,24 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
             onChange={e => setClientId(e.target.value)}
           >
             <option value="">— {t('form.selectClient')} —</option>
-            {(clients ?? []).map(c => (
+            {clients.map(c => (
               <option key={c.id} value={c.id}>
-                {c.name}{c.sector ? ` · ${c.sector}` : ''}
+                {c.name}{c.client_type === 'intermediary' ? ` · ${t('form.intermediary')}` : c.sector ? ` · ${c.sector}` : ''}
               </option>
             ))}
           </select>
-          <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text2)' }}>
-            {t('form.clientNotFound')}{' '}
-            <a href="/clients" target="_blank" style={{ color: 'var(--cyan)', textDecoration: 'underline' }}>
-              {t('form.createClient')}
-            </a>
-          </div>
+          <QuickClient companyId={companySettings?.id ?? ''} defaultType="final" onCreated={onQuickClient(setClientId)} />
+        </Field>
+      )}
+
+      {!isInternal && (
+        <Field label={t('form.endClient')}>
+          <select className="input" value={endClientId} onChange={e => setEndClientId(e.target.value)}>
+            <option value="">— {t('form.sameAsClient')} —</option>
+            {clients.filter(c => c.id !== clientId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <div style={{ marginTop: 5, fontSize: 10, color: 'var(--text2)' }}>{t('form.endClientHint')}</div>
+          <QuickClient companyId={companySettings?.id ?? ''} defaultType="final" onCreated={onQuickClient(setEndClientId)} />
         </Field>
       )}
 
@@ -225,18 +258,42 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
       <SectionLabel style={{ marginTop: 24 }}>{t('form.sectionFinancial')}</SectionLabel>
       <p style={{ fontSize: 10, color: 'var(--text2)', marginBottom: 14 }}>{t('form.financialNote')}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Field label={t('form.tjmVendu')}>
-          <input className="input" type="number" value={tjmVendu} onChange={e => setTjmVendu(e.target.value)} placeholder="800" min={0} />
-        </Field>
-        <Field label={t('form.joursVendus')}>
-          <input className="input" type="number" value={joursVendus} onChange={e => setJoursVendus(e.target.value)} placeholder="120" min={0} />
-        </Field>
-      </div>
-
-      <Field label={t('form.budgetTotal')}>
-        <input className="input" type="number" value={budgetTotal} onChange={e => setBudgetTotal(e.target.value)} placeholder="96 000" min={0} />
+      <Field label={t('form.billingMode')}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {BILLING_MODES.map(m => (
+            <button key={m} type="button" className={`btn btn-sm ${billingMode === m ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ flex: 1 }} onClick={() => setBillingMode(m)}>
+              {t(`form.billing.${m}`)}
+            </button>
+          ))}
+        </div>
       </Field>
+
+      {billingMode === 'regie' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <Field label={t('form.tjmVendu')}>
+            <input className="input" type="number" value={tjmVendu} onChange={e => setTjmVendu(e.target.value)} placeholder="800" min={0} />
+          </Field>
+          <Field label={t('form.joursVendus')}>
+            <input className="input" type="number" value={joursVendus} onChange={e => setJoursVendus(e.target.value)} placeholder="120" min={0} />
+          </Field>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <Field label={t('form.fixedPrice')}>
+            <input className="input" type="number" value={budgetTotal} onChange={e => setBudgetTotal(e.target.value)} placeholder="45 000" min={0} />
+          </Field>
+          <Field label={t('form.joursEstimes')}>
+            <input className="input" type="number" value={joursVendus} onChange={e => setJoursVendus(e.target.value)} placeholder="40" min={0} />
+          </Field>
+        </div>
+      )}
+
+      <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: -4, marginBottom: 8 }}>
+        {t('form.revenue')} : <span style={{ color: revenue != null ? 'var(--green)' : 'var(--text2)', fontWeight: 700 }}>
+          {revenue != null ? fmt(revenue) : '—'}
+        </span>
+      </div>
 
       {/* ── Actions ── */}
       <div className="drawer-foot">
