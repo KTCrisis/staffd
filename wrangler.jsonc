@@ -14,18 +14,27 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "observability": { "enabled": true },
+  // workers.dev stays on (it is the staging URL, behind Cloudflare Access).
+  // Per-version preview URLs are separate hostnames that an Access rule on the
+  // main hostname does not cover: keep them off.
+  "workers_dev": true,
+  "preview_urls": false,
   "vars": {
     "OLLAMA_MODEL": "kimi-k2.5:cloud",
     "OLLAMA_HOST": "https://ollama.com"
   },
   "env": {
     "staging": {
+      "workers_dev": true,
+      "preview_urls": false,
       "vars": {
         "OLLAMA_MODEL": "kimi-k2.5:cloud",
         "OLLAMA_HOST": "https://ollama.com"
       }
     },
     "cabinet": {
+      "workers_dev": true,
+      "preview_urls": false,
       "vars": {
         "OLLAMA_MODEL": "kimi-k2.5:cloud",
         "OLLAMA_HOST": "https://ollama.com"
