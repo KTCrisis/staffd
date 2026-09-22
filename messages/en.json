@@ -1327,7 +1327,8 @@
     "tabs": {
       "open": "Open",
       "won": "Won",
-      "lost": "Lost / abandoned"
+      "lost": "Lost / abandoned",
+      "todo": "To do"
     },
     "table": {
       "name": "Deal",
@@ -1335,7 +1336,9 @@
       "type": "Type",
       "amount": "Amount",
       "closeDate": "Close",
-      "reason": "Reason"
+      "reason": "Reason",
+      "project": "Project",
+      "openProject": "open project →"
     },
     "dealType": {
       "regie": "Time & materials",
@@ -1388,7 +1391,11 @@
       "quickClientName": "Client name",
       "final": "End client",
       "intermediary": "Intermediary",
-      "both": "Both"
+      "both": "Both",
+      "sectionJournal": "Interactions",
+      "addNote": "+ Interaction",
+      "noNotes": "// no interactions on this deal",
+      "projectLink": "→ project created"
     },
     "actions": {
       "won": "✓ Won",
@@ -1448,6 +1455,13 @@
         "note": "Note",
         "relance": "Follow-up"
       }
+    },
+    "todo": {
+      "followUps": "Follow-ups",
+      "noFollowUps": "// no follow-ups in the next 7 days",
+      "lateDeals": "Past close date",
+      "noLateDeals": "// no overdue deals",
+      "closeWas": "expected close {date}"
     }
   }
 }

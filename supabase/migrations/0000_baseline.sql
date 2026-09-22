@@ -18,6 +18,7 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  win_opportunity() : affaire gagnée → projet (0003_win_opportunity.sql).
 --   2026.09.23  consultants.is_founder + consultant_occupancy (0002_founder.sql).
 --   2026.09.23  companies.branding (cf. migrations/0001_branding.sql). Les évolutions
 --               passent désormais par des migrations numérotées ; ce fichier reste
@@ -74,6 +75,7 @@ drop function if exists merge_billing_settings(uuid, jsonb)           cascade;
 drop function if exists merge_ai_settings(uuid, jsonb)               cascade;
 drop function if exists merge_hr_settings(uuid, jsonb)              cascade;
 drop function if exists merge_crm_settings(uuid, jsonb)             cascade;
+drop function if exists win_opportunity(uuid)                       cascade;
 -- ============================================================
 -- 1. EXTENSIONS
 -- ============================================================
@@ -569,6 +571,50 @@ begin
   update companies
   set hr_settings = coalesce(hr_settings, '{}'::jsonb) || p_patch
   where id = p_company_id;
+end;
+$$;
+
+-- ── Affaire gagnée → projet (atomique, SECURITY INVOKER) — cf. 0003
+create or replace function win_opportunity(p_opportunity_id uuid)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  o          opportunities%rowtype;
+  v_project  uuid;
+  v_client   text;
+begin
+  select * into o from opportunities where id = p_opportunity_id for update;
+  if not found then
+    raise exception 'opportunity % not found', p_opportunity_id using errcode = 'P0002';
+  end if;
+
+  v_project := o.project_id;
+
+  if v_project is null then
+    select name into v_client from clients where id = o.client_id;
+
+    insert into projects (
+      company_id, client_id, end_client_id, opportunity_id, created_by,
+      name, client_name, description,
+      start_date, tjm_vendu, jours_vendus, budget_total, status
+    ) values (
+      o.company_id, o.client_id, o.end_client_id, o.id, auth.uid(),
+      o.name, coalesce(v_client, o.name), o.description,
+      o.start_date, o.tjm_vendu, o.jours_estimes,
+      case when o.deal_type = 'forfait' then o.amount end,
+      'active'
+    )
+    returning id into v_project;
+  end if;
+
+  update opportunities
+     set status = 'won', probability = 100, lost_reason = null, project_id = v_project
+   where id = o.id;
+
+  return v_project;
 end;
 $$;
 

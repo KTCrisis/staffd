@@ -1914,6 +1914,7 @@ export type Database = {
       my_role: { Args: never; Returns: string }
       my_team_consultant_ids: { Args: never; Returns: string[] }
       next_invoice_number: { Args: { p_company_id: string }; Returns: string }
+      win_opportunity: { Args: { p_opportunity_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

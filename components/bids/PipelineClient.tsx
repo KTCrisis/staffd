@@ -9,27 +9,36 @@
 import { useState }         from 'react'
 import { useRouter }        from 'next/navigation'
 import { useTranslations }  from 'next-intl'
+import { Link }             from '@/lib/navigation'
 import type { Tables }      from '@/types/supabase'
-import { alpha, fmt }       from '@/lib/utils'
-import { groupByStage, pipelineKpis, type Stage } from '@/lib/crm'
+import { alpha, fmt, toISO, formatDate } from '@/lib/utils'
+import { groupByStage, pipelineKpis, followUpState, sortJournal, type Stage } from '@/lib/crm'
+import { JournalEntry, type Interaction } from '@/components/crm/Journal'
 import { OpportunityForm }  from './OpportunityForm'
 
 export type Opportunity = Tables<'opportunities'>
 export interface ClientOption { id: string; name: string; client_type: string }
 export interface OwnerOption  { id: string; name: string }
+export interface ContactOption { id: string; name: string; client_id: string }
 
-type Tab = 'open' | 'won' | 'lost'
+type Tab = 'open' | 'todo' | 'won' | 'lost'
+
+/** Follow-ups shown in "to do": overdue, today, and the next 7 days. */
+const TODO_HORIZON_DAYS = 7
 
 interface Props {
   opportunities: Opportunity[]
   clients:       ClientOption[]
   owners:        OwnerOption[]
   stages:        Stage[]
+  interactions:  Interaction[]
+  contacts:      ContactOption[]
+  myConsultantId: string | null
   companyId:     string | null
   error:         string | null
 }
 
-export function PipelineClient({ opportunities, clients, owners, stages, companyId, error }: Props) {
+export function PipelineClient({ opportunities, clients, owners, stages, interactions, contacts, myConsultantId, companyId, error }: Props) {
   const t      = useTranslations('crm')
   const router = useRouter()
 
@@ -41,6 +50,22 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
   const columns   = groupByStage(opportunities, stages)
   const clientsBy = new Map(clients.map(c => [c.id, c]))
   const ownersBy  = new Map(owners.map(o => [o.id, o]))
+  const oppsBy    = new Map(opportunities.map(o => [o.id, o]))
+  const contactsBy = new Map(contacts.map(c => [c.id, c.name]))
+
+  // "To do": pending follow-ups within the horizon, and open deals past their close date
+  // Frozen at mount: render must stay pure, and the view is refreshed on each action anyway.
+  const [now]    = useState(() => Date.now())
+  const today    = toISO(new Date(now))
+  const horizon  = toISO(new Date(now + TODO_HORIZON_DAYS * 86_400_000))
+  const followUps = sortJournal(interactions.filter(i => {
+    const s = followUpState(i, today)
+    return s === 'overdue' || s === 'today' || (s === 'upcoming' && i.next_step_due != null && i.next_step_due <= horizon)
+  }), today)
+  const lateDeals = opportunities.filter(o => o.status === 'open' && o.expected_close_date != null && o.expected_close_date < today)
+  const urgent    = followUps.filter(i => followUpState(i, today) !== 'upcoming').length + lateDeals.length
+  const [todoError, setTodoError] = useState<string | null>(null)
+
   const closed    = opportunities.filter(o =>
     tab === 'won' ? o.status === 'won' : o.status === 'lost' || o.status === 'abandoned')
 
@@ -66,12 +91,13 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
       {/* Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          {(['open', 'won', 'lost'] as const).map(k => (
+          {(['open', 'todo', 'won', 'lost'] as const).map(k => (
             <button key={k} onClick={() => setTab(k)} className="btn btn-ghost btn-sm" style={{
               borderColor: tab === k ? 'var(--green)' : 'var(--border)',
               color:       tab === k ? 'var(--green)' : 'var(--text2)',
             }}>
               {t(`tabs.${k}`)}
+              {k === 'todo' && urgent > 0 && <span style={{ marginLeft: 6, color: 'var(--pink)' }}>{urgent}</span>}
             </button>
           ))}
         </div>
@@ -81,7 +107,45 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
         </button>
       </div>
 
-      {tab === 'open' ? (
+      {tab === 'todo' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 14 }}>
+          <div className="panel">
+            <div className="panel-header"><span className="panel-title">{t('todo.followUps')}</span></div>
+            <div className="panel-body" style={{ padding: 0 }}>
+              {todoError && <div className="form-error" style={{ margin: 12 }}>{todoError}</div>}
+              {followUps.length === 0 && <div style={{ padding: '20px 18px', color: 'var(--text2)', fontSize: 12 }}>{t('todo.noFollowUps')}</div>}
+              {followUps.map(i => {
+                const opp = i.opportunity_id ? oppsBy.get(i.opportunity_id) : undefined
+                return (
+                  <JournalEntry key={i.id} i={i}
+                    clientName={i.client_id ? clientsBy.get(i.client_id)?.name : undefined}
+                    contactName={i.contact_id ? contactsBy.get(i.contact_id) : undefined}
+                    oppName={opp?.name} onOpp={opp ? () => setEditing(opp) : undefined}
+                    onChanged={() => { setTodoError(null); router.refresh() }} onError={setTodoError} />
+                )
+              })}
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-header"><span className="panel-title">{t('todo.lateDeals')}</span></div>
+            <div className="panel-body" style={{ padding: 0 }}>
+              {lateDeals.length === 0 && <div style={{ padding: '20px 18px', color: 'var(--text2)', fontSize: 12 }}>{t('todo.noLateDeals')}</div>}
+              {lateDeals.map(o => (
+                <button key={o.id} onClick={() => setEditing(o)} style={{
+                  display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+                  background: 'none', border: 'none', borderBottom: '1px solid var(--border)', padding: '12px 18px', color: 'var(--text)',
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>{o.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 3 }}>
+                    {clientsBy.get(o.client_id)?.name ?? '—'} · {o.amount != null ? fmt(Number(o.amount)) : '—'} ·{' '}
+                    <span style={{ color: 'var(--pink)' }}>{t('todo.closeWas', { date: formatDate(o.expected_close_date!) })}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : tab === 'open' ? (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, minmax(240px, 1fr))`, gap: 12, overflowX: 'auto' }}>
           {columns.map(({ stage, items }) => {
             const total = items.reduce((s, o) => s + (Number(o.amount) || 0), 0)
@@ -122,7 +186,7 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
               <th>{t('table.client')}</th>
               <th>{t('table.type')}</th>
               <th style={{ textAlign: 'right' }}>{t('table.amount')}</th>
-              <th>{tab === 'won' ? t('table.closeDate') : t('table.reason')}</th>
+              <th>{tab === 'won' ? t('table.project') : t('table.reason')}</th>
             </tr>
           </thead>
           <tbody>
@@ -136,7 +200,11 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
                 <td>{t(`dealType.${o.deal_type}`)}</td>
                 <td style={{ textAlign: 'right' }}>{o.amount != null ? fmt(Number(o.amount)) : '—'}</td>
                 <td style={{ color: 'var(--text2)', fontSize: 11 }}>
-                  {tab === 'won' ? (o.expected_close_date ?? '—') : (o.lost_reason ?? t(`status.${o.status}`))}
+                  {tab === 'won'
+                    ? (o.project_id
+                        ? <Link href="/projects" onClick={e => e.stopPropagation()} style={{ color: 'var(--cyan)' }}>{t('table.openProject')}</Link>
+                        : '—')
+                    : (o.lost_reason ?? t(`status.${o.status}`))}
                 </td>
               </tr>
             ))}
@@ -151,6 +219,9 @@ export function PipelineClient({ opportunities, clients, owners, stages, company
           stages={stages}
           clients={clients}
           owners={owners}
+          interactions={editing ? interactions.filter(i => i.opportunity_id === editing.id) : []}
+          contacts={contacts}
+          myConsultantId={myConsultantId}
           companyId={editing?.company_id ?? companyId ?? ''}
           onClose={closeDrawer}
           onSaved={saved}

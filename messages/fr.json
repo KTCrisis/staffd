@@ -1327,7 +1327,8 @@
     "tabs": {
       "open": "En cours",
       "won": "Gagnées",
-      "lost": "Perdues / abandonnées"
+      "lost": "Perdues / abandonnées",
+      "todo": "À faire"
     },
     "table": {
       "name": "Affaire",
@@ -1335,7 +1336,9 @@
       "type": "Type",
       "amount": "Montant",
       "closeDate": "Clôture",
-      "reason": "Motif"
+      "reason": "Motif",
+      "project": "Projet",
+      "openProject": "voir le projet →"
     },
     "dealType": {
       "regie": "Régie",
@@ -1388,7 +1391,11 @@
       "quickClientName": "Nom du client",
       "final": "Client final",
       "intermediary": "Intermédiaire",
-      "both": "Les deux"
+      "both": "Les deux",
+      "sectionJournal": "Échanges",
+      "addNote": "+ Échange",
+      "noNotes": "// aucun échange sur cette affaire",
+      "projectLink": "→ projet créé"
     },
     "actions": {
       "won": "✓ Gagnée",
@@ -1448,6 +1455,13 @@
         "note": "Note",
         "relance": "Relance"
       }
+    },
+    "todo": {
+      "followUps": "Relances",
+      "noFollowUps": "// aucune relance dans les 7 jours",
+      "lateDeals": "Clôtures dépassées",
+      "noLateDeals": "// aucune affaire en retard",
+      "closeWas": "clôture prévue le {date}"
     }
   }
 }

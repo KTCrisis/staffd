@@ -16,7 +16,7 @@ interface Props {
 export default async function BidsPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('crm')
-  const { role, isSA, companyId, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, userId, companyId, companyName, supabase } = await getPageAuth(tenant)
 
   if (!canEdit(role)) redirect('/dashboard')
 
@@ -25,16 +25,22 @@ export default async function BidsPage({ searchParams }: Props) {
 
   const scope = <T extends { eq: (c: string, v: string) => T }>(q: T) => (tenant ? q.eq('company_id', tenant) : q)
 
-  const [opps, clients, owners, company] = await Promise.all([
+  const [opps, clients, owners, company, interactions, contacts, me] = await Promise.all([
     scope(supabase.from('opportunities').select('*')).order('expected_close_date', { ascending: true, nullsFirst: false }),
     scope(supabase.from('clients').select('id, name, client_type')).order('name'),
     scope(supabase.from('consultants').select('id, name')).order('name'),
     writeCompanyId
       ? supabase.from('companies').select('crm_settings').eq('id', writeCompanyId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    scope(supabase.from('interactions').select('*')).order('occurred_at', { ascending: false }),
+    scope(supabase.from('contacts').select('id, name, client_id')).order('name'),
+    userId
+      ? supabase.from('consultants').select('id').eq('user_id', userId).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ])
 
-  const error = opps.error?.message ?? clients.error?.message ?? owners.error?.message ?? null
+  const error = opps.error?.message ?? clients.error?.message ?? owners.error?.message
+    ?? interactions.error?.message ?? contacts.error?.message ?? null
 
   return (
     <>
@@ -44,6 +50,9 @@ export default async function BidsPage({ searchParams }: Props) {
         clients={clients.data ?? []}
         owners={owners.data ?? []}
         stages={parseStages(company.data?.crm_settings)}
+        interactions={interactions.data ?? []}
+        contacts={contacts.data ?? []}
+        myConsultantId={me.data?.id ?? null}
         companyId={writeCompanyId}
         error={error}
       />

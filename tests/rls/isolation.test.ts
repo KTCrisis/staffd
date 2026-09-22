@@ -178,3 +178,31 @@ describe('CRM — contacts lisibles, échanges réservés', () => {
   })
 })
 
+describe('CRM — affaire gagnée → projet', () => {
+  it('crée et lie le projet une seule fois ; refusé à un consultant', async () => {
+    const { data: opp } = await admin.from('opportunities').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'Mission gagnée', stage: 'negociation',
+      deal_type: 'regie', tjm_vendu: 1100, jours_estimes: 210, amount: 231000,
+    }).select('id').single().throwOnError()
+
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const denied = await c.rpc('win_opportunity', { p_opportunity_id: opp!.id })
+    expect(denied.error).not.toBeNull()
+
+    const a = await authClient(EMAILS.adminA, PWD)
+    const first = await a.rpc('win_opportunity', { p_opportunity_id: opp!.id })
+    expect(first.error).toBeNull()
+    const again = await a.rpc('win_opportunity', { p_opportunity_id: opp!.id })
+    expect(again.data).toBe(first.data)
+
+    const { data: proj } = await admin.from('projects')
+      .select('id, client_id, tjm_vendu, jours_vendus, opportunity_id, client_name, status')
+      .eq('opportunity_id', opp!.id)
+    expect(proj).toHaveLength(1)
+    expect(proj![0]).toMatchObject({ client_id: clientAId, tjm_vendu: 1100, jours_vendus: 210, client_name: 'Client A', status: 'active' })
+
+    const { data: won } = await admin.from('opportunities').select('status, probability, project_id').eq('id', opp!.id).single()
+    expect(won).toMatchObject({ status: 'won', probability: 100, project_id: first.data })
+  })
+})
+

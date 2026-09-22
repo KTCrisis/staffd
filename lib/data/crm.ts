@@ -27,15 +27,27 @@ export async function updateOpportunity(id: string, data: OpportunityPatch) {
  * opportunities_lost_reason_check); reopening clears the reason.
  */
 export async function setOpportunityStatus(id: string, status: OpportunityStatus, lostReason?: string) {
+  if (status === 'won') { await winOpportunity(id); return }
   const patch: OpportunityPatch = {
     status,
     lost_reason: status === 'lost' ? (lostReason?.trim() || null) : null,
-    // A closed deal is certain either way; the weighted pipeline only counts open ones.
-    ...(status === 'won' && { probability: 100 }),
+    // A lost deal is certain; the weighted pipeline only counts open ones.
+    // (Won deals go through winOpportunity, which sets 100.)
     ...((status === 'lost' || status === 'abandoned') && { probability: 0 }),
   }
   if (status === 'lost' && !patch.lost_reason) throw new Error('lost_reason_required')
   await updateOpportunity(id, patch)
+}
+
+/**
+ * Mark the deal won and create its project (client, end client, rate, days,
+ * dates) in one transaction — see migration 0003. Idempotent: a deal that
+ * already has a project keeps it. Returns the project id.
+ */
+export async function winOpportunity(id: string): Promise<string> {
+  const { data, error } = await supabase.rpc('win_opportunity', { p_opportunity_id: id })
+  if (error) throw new Error(error.message)
+  return data as string
 }
 
 export async function deleteOpportunity(id: string) {

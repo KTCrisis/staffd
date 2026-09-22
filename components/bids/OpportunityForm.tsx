@@ -7,6 +7,8 @@
  */
 
 import { useState }        from 'react'
+import { useRouter }       from 'next/navigation'
+import { Link }            from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import {
   createOpportunity, updateOpportunity, setOpportunityStatus, deleteOpportunity, createClient,
@@ -16,13 +18,19 @@ import {
   DEAL_TYPES, estimateAmount, stageProbability, clampPct,
   type DealType, type OpportunityStatus, type Stage,
 } from '@/lib/crm'
-import type { Opportunity, ClientOption, OwnerOption } from './PipelineClient'
+import type { Opportunity, ClientOption, OwnerOption, ContactOption } from './PipelineClient'
+import { JournalEntry, InteractionForm, type Interaction } from '@/components/crm/Journal'
+import { sortJournal } from '@/lib/crm'
+import { toISO }       from '@/lib/utils'
 
 interface Props {
   opportunity: Opportunity | null
   stages:      Stage[]
   clients:     ClientOption[]
   owners:      OwnerOption[]
+  interactions: Interaction[]
+  contacts:     ContactOption[]
+  myConsultantId: string | null
   companyId:   string
   onClose:     () => void
   onSaved:     () => void
@@ -30,7 +38,10 @@ interface Props {
 
 const num = (v: string) => (v.trim() === '' ? null : Number(v))
 
-export function OpportunityForm({ opportunity: o, stages, clients: initialClients, owners, companyId, onClose, onSaved }: Props) {
+export function OpportunityForm({ opportunity: o, stages, clients: initialClients, owners, interactions, contacts, myConsultantId, companyId, onClose, onSaved }: Props) {
+  const router = useRouter()
+  const [addingNote, setAddingNote] = useState(false)
+  const [journalError, setJournalError] = useState<string | null>(null)
   const t    = useTranslations('crm')
   const mode = o ? 'edit' : 'create'
 
@@ -115,6 +126,9 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
         <span style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase' }}>
           {mode === 'edit' ? t('form.titleEdit') : t('form.titleCreate')}
           {o && o.status !== 'open' && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>· {t(`status.${o.status}`)}</span>}
+          {o?.project_id && (
+            <Link href="/projects" style={{ marginLeft: 10, color: 'var(--cyan)', textTransform: 'none', letterSpacing: 0 }}>{t('form.projectLink')}</Link>
+          )}
         </span>
         <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
       </div>
@@ -201,6 +215,32 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
                   style={{ resize: 'vertical', fontFamily: 'inherit' }} />
       </Field>
 
+      {o && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Section>{t('form.sectionJournal')}</Section>
+            {!addingNote && (
+              <button className="panel-action" onClick={() => setAddingNote(true)}>{t('form.addNote')}</button>
+            )}
+          </div>
+          {journalError && <div className="form-error">{journalError}</div>}
+          {addingNote && (
+            <InteractionForm flush
+              companyId={o.company_id} clientId={o.client_id} opportunityId={o.id}
+              contacts={contacts.filter(c => c.client_id === o.client_id || c.client_id === o.end_client_id)}
+              myConsultantId={myConsultantId}
+              onDone={() => { setAddingNote(false); router.refresh() }} onCancel={() => setAddingNote(false)} />
+          )}
+          {interactions.length === 0 && !addingNote && (
+            <div style={{ fontSize: 11, color: 'var(--text2)' }}>{t('form.noNotes')}</div>
+          )}
+          {sortJournal(interactions, toISO(new Date())).map(i => (
+            <JournalEntry key={i.id} i={i} compact
+              contactName={i.contact_id ? contacts.find(c => c.id === i.contact_id)?.name : undefined}
+              onChanged={() => { setJournalError(null); router.refresh() }} onError={setJournalError} />
+          ))}
+        </>
+      )}
       {o && (
         <div style={{ marginTop: 18 }}>
           <button className="btn btn-ghost btn-sm" style={{ color: 'var(--text2)' }} disabled={saving}
