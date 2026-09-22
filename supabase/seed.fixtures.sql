@@ -1,15 +1,24 @@
 -- ============================================================
--- STAFFD — Seed démo
+-- STAFFD — Jeux d'essai (préprod et développement local)
 -- ============================================================
--- S'applique APRÈS supabase/migrations/0000_baseline.sql.
--- Tenants : Norvane Conseil (team), AgenceCreative (team), Marc Dupont (solo).
--- Données fictives, versionnées. Les tenants réels vont dans seed.*.local.sql.
--- La section « comptes » ne fait que des UPDATE sur auth.users : sans les comptes
--- (stack local vierge), elle ne fait rien.
+-- S'applique APRÈS supabase/migrations/0000_baseline.sql. Données fictives,
+-- versionnées. Ne JAMAIS charger sur une instance de production.
+--
+-- Chaque tenant couvre un cas de fonctionnement différent :
+--   Norvane Conseil  ESN en équipe : salariés + un freelance, managers et équipes,
+--                    RLS manager, factures, rentabilité salarié vs freelance
+--   AgenceCreative   agence en équipe, autre métier : isolation entre tenants,
+--                    projets forfait, second jeu de rôles
+--   Marc Dupont      mode solo : un freelance seul, auto-liaison du compte
+-- Non couvert : le portage salarial (trois parties : consultant, société de
+-- portage, client final), absent aussi du schéma.
+--
+-- La section « comptes » ne fait que des UPDATE sur auth.users : sans les
+-- comptes (stack local vierge), elle ne fait rien.
 -- ============================================================
 
 -- ============================================================
--- 1. DONNÉES DÉMO
+-- 1. DONNÉES
 -- ============================================================
 
 -- ── TENANT A : Norvane Conseil ─────────────────────────────────────

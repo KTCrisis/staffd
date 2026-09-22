@@ -32,11 +32,6 @@ export function DocNav({ active }: { active: 'home' | 'platform' | 'ai' }) {
           </Link>
         </li>
         <li>
-          <Link href="/login?demo=admin" className="doc-nav-demo">
-            try demo →
-          </Link>
-        </li>
-        <li>
           <a href="mailto:flux7art@gmail.com" className="doc-nav-cta">
             join beta →
           </a>
@@ -186,27 +181,6 @@ export function Screenshot({ src, alt, caption }: {
         <span className="doc-screenshot-placeholder">{'// screenshot coming soon'}</span>
       )}
       {caption && <div className="doc-screenshot-caption">{caption}</div>}
-    </div>
-  )
-}
-
-// ── Demo banner ──────────────────────────────────────────────
-
-export function DemoBanner() {
-  return (
-    <div className="doc-demo-banner">
-      <div>
-        <div className="doc-demo-banner-text">
-          <strong>Try staff7 live</strong> — explore the platform with pre-loaded demo data.
-          Switch between admin, manager, freelance, consultant or solo views.
-        </div>
-        <div className="doc-demo-banner-creds">
-          <span className="doc-demo-banner-cred">Request admin account</span>
-        </div>
-      </div>
-      <Link href="/login?demo=admin" className="doc-demo-banner-btn">
-        open demo →
-      </Link>
     </div>
   )
 }

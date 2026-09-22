@@ -4,8 +4,8 @@
 -- Copier en seed.<tenant>.local.sql (ignoré par git : le dépôt est public et
 -- les adresses des associés sont des données personnelles), remplacer les
 -- valeurs <…>, puis :
---   local : npx supabase db reset       (charge seed.demo.sql + seed.*.local.sql)
---   prod  : SQL Editor, 0000_baseline.sql PUIS ce fichier (pas seed.demo.sql)
+--   local : npx supabase db reset       (charge seed.fixtures.sql + seed.*.local.sql)
+--   prod  : SQL Editor, 0000_baseline.sql PUIS ce fichier (jamais seed.fixtures.sql)
 --
 -- Les comptes doivent exister dans auth.users AVANT (Authentication > Add user) :
 -- la section 3 ne crée aucun utilisateur, elle pose company_id et le rôle.

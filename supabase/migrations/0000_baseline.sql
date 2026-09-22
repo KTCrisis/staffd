@@ -3,7 +3,7 @@
 -- Version : 2026.09.22
 -- ============================================================
 -- Schéma SEUL. Les données vivent dans des seeds séparés :
---   supabase/seed.demo.sql              tenants démo (Norvane Conseil, AgenceCreative, solo)
+--   supabase/seed.fixtures.sql          jeux d'essai (ESN, agence, solo) — préprod et local
 --   supabase/seed.tenant.example.sql    gabarit d'un tenant réel
 --   supabase/seed.*.local.sql           tenants réels, ignorés par git (dépôt public)
 -- En local : `npx supabase db reset` applique ce fichier puis les seeds (config.toml).
@@ -19,7 +19,7 @@
 --   2026.09.22  module CRM intégré (contacts, framework_agreements, opportunities,
 --               interactions, vue opportunity_pipeline, companies.crm_settings,
 --               clients.client_type, projects.end_client_id / framework_agreement_id
---               / opportunity_id) ; données démo sorties vers seed.demo.sql
+--               / opportunity_id) ; données démo sorties vers seed.fixtures.sql
 --   2026.06.24  grants PostgREST explicites
 --   2026.06.23  audit RLS : invoices WITH CHECK, search_path figé (SECURITY DEFINER)
 --   2026.03     projets internes, timesheets sem. courante, sync team_id

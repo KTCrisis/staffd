@@ -61,9 +61,13 @@ npm install
 cp .env.example .env.local
 # Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# 3. Database — single consolidated init
-# Apply supabase/migrations/0000_baseline.sql to your Supabase project
-# (e.g. `supabase db reset` on a fresh project, or run the SQL directly)
+# 3. Database — schema, then data
+# Local: `npx supabase start && npx supabase db reset` applies
+#   supabase/migrations/0000_baseline.sql, then supabase/seed.fixtures.sql
+#   and any supabase/seed.*.local.sql (see supabase/config.toml)
+# Remote: run 0000_baseline.sql in the SQL Editor, then the seed for that
+#   environment. The baseline starts with a drop-all of business data
+#   (auth.users is preserved).
 
 # 4. Run
 npm run dev
@@ -88,8 +92,25 @@ lib/
   data/           # Supabase hooks and mutations (per-domain modules)
   navigation.ts   # Typed router wrapper
 supabase/
-  migrations/     # 0000_baseline.sql — single consolidated init
+  migrations/     # 0000_baseline.sql — versioned schema (no data)
+  seed.fixtures.sql        # test tenants: ESN team, agency, solo freelancer
+  seed.tenant.example.sql  # template for a real tenant
+  seed.*.local.sql         # real tenants — git-ignored (public repo)
 ```
+
+---
+
+## Environments
+
+| Environment | Branch | Supabase project | Data |
+|---|---|---|---|
+| Staging | `main` | staging project | `seed.fixtures.sql` |
+| Production | `release/*` | one project per deployment | its `seed.*.local.sql` only |
+
+Both are Cloudflare Pages projects on this repository, each with its own
+`NEXT_PUBLIC_SUPABASE_*` variables. A change lands on `main`, is checked on
+staging, then ships by fast-forwarding the release branch. Fixtures never go
+to production. Put Cloudflare Access in front of both.
 
 ---
 

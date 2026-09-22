@@ -3,7 +3,7 @@
 
 import {
   DocNav, DocSidebar, Section, FeatureGrid, CodeBlock,
-  Table, Note, DemoBanner, useScrollSpy,
+  Table, Note, useScrollSpy,
 } from '@/components/docs'
 import '@/styles/docs.css'
 
@@ -39,7 +39,6 @@ export default function PlatformDocsPage() {
 
         <main style={{ flex: 1, minWidth: 0 }}>
 
-          <DemoBanner />
 
           {/* ── Overview ── */}
           <Section id="overview" label="Platform overview" icon="◈">
