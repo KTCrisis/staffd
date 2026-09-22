@@ -3,8 +3,8 @@
 -- Version : 2026.09.22
 -- ============================================================
 -- Schéma SEUL. Les données vivent dans des seeds séparés :
---   supabase/seed.demo.sql              tenants démo (NexDigital, AgenceCreative, solo)
---   supabase/seed.offro4d.example.sql   gabarit d'un tenant réel
+--   supabase/seed.demo.sql              tenants démo (Norvane Conseil, AgenceCreative, solo)
+--   supabase/seed.tenant.example.sql    gabarit d'un tenant réel
 --   supabase/seed.*.local.sql           tenants réels, ignorés par git (dépôt public)
 -- En local : `npx supabase db reset` applique ce fichier puis les seeds (config.toml).
 -- En prod  : SQL Editor, ce fichier PUIS le seed voulu. Le script commence par un

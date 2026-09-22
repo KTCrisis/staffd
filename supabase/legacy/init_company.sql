@@ -8,6 +8,6 @@ create table if not exists companies (
 insert into companies (id, name, slug)
 values (
   'aaaaaaaa-0000-0000-0000-000000000001',
-  'NexDigital',
-  'nexdigital'
+  'Norvane Conseil',
+  'norvane'
 ) on conflict (id) do nothing;

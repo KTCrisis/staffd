@@ -130,7 +130,7 @@ export function BillingTab() {
               <SettingsField label={t('prefixLabel')} hint={t('prefixHint')}>
                 <SettingsInput
                   value={invoicePrefix} onChange={setInvoicePrefix}
-                  placeholder="NEX-2026-"
+                  placeholder="NOR-2026-"
                 />
               </SettingsField>
               <SettingsField label={t('counterLabel')} hint={t('counterHint')}>

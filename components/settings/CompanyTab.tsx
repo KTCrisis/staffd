@@ -88,7 +88,7 @@ export function CompanyTab() {
                   <SettingsInput
                     value={companyName}
                     onChange={setCompanyName}
-                    placeholder="NexDigital"
+                    placeholder="Norvane Conseil"
                   />
                 </SettingsField>
                 <SettingsField label={t('slugLabel')} hint={t('slugHint')}>

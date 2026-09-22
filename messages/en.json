@@ -979,7 +979,7 @@
       "bankNameLabel": "Bank name",
       "invoiceSection": "INVOICE_SETTINGS",
       "prefixLabel": "Invoice prefix",
-      "prefixHint": "e.g. NEX-2026-",
+      "prefixHint": "e.g. NOR-2026-",
       "counterLabel": "Invoice counter",
       "counterHint": "Read-only — auto-incremented",
       "paymentTermsLabel": "Payment terms (days)",

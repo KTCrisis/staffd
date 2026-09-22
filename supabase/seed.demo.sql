@@ -2,7 +2,7 @@
 -- STAFFD — Seed démo
 -- ============================================================
 -- S'applique APRÈS supabase/migrations/0000_baseline.sql.
--- Tenants : NexDigital (team), AgenceCreative (team), Marc Dupont (solo).
+-- Tenants : Norvane Conseil (team), AgenceCreative (team), Marc Dupont (solo).
 -- Données fictives, versionnées. Les tenants réels vont dans seed.*.local.sql.
 -- La section « comptes » ne fait que des UPDATE sur auth.users : sans les comptes
 -- (stack local vierge), elle ne fait rien.
@@ -12,9 +12,9 @@
 -- 1. DONNÉES DÉMO
 -- ============================================================
 
--- ── TENANT A : NexDigital ─────────────────────────────────────
+-- ── TENANT A : Norvane Conseil ─────────────────────────────────────
 insert into companies (id, name, slug, mode, billing_settings) values (
-  'aaaaaaaa-0000-0000-0000-000000000001', 'NexDigital', 'nexdigital', 'team',
+  'aaaaaaaa-0000-0000-0000-000000000001', 'Norvane Conseil', 'norvane', 'team',
   '{
     "siret": "12345678901234",
     "tva_number": "FR12345678901",
@@ -24,7 +24,7 @@ insert into companies (id, name, slug, mode, billing_settings) values (
     "bank_bic": "BNPAFRPPXXX",
     "bank_name": "BNP Paribas",
     "legal_mention": "SAS au capital de 10 000€ — RCS Paris 123 456 789",
-    "invoice_prefix": "NEX-2026-",
+    "invoice_prefix": "NOR-2026-",
     "invoice_counter": 0
   }'::jsonb
 ) on conflict (id) do update set billing_settings = excluded.billing_settings;
@@ -42,11 +42,11 @@ on conflict (id) do nothing;
 insert into consultants (id, company_id, name, initials, email, role, avatar_color, status, stack,
   contract_type, salaire_annuel_brut, charges_pct, jours_travailles, tjm_facture, tjm, tjm_cible,
   leave_days_total, leave_days_taken, rtt_total, rtt_taken, occupancy_rate) values
-  ('cccccccc-0001-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Alice Martin',  'AM','alice@nexdigital.fr',   'Lead Developer',   'green', 'assigned',ARRAY['React','Node.js','AWS'],       'employee',65000,42,218,null,null,800, 25, 7,10,2, 90),
-  ('cccccccc-0002-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000001','Baptiste Leroi','BL','baptiste@nexdigital.fr','Data Engineer',    'cyan',  'partial', ARRAY['Python','Spark','Databricks'], 'employee',55000,42,218,null,null,720, 25, 3,10,1, 50),
-  ('cccccccc-0003-0000-0000-000000000003','aaaaaaaa-0000-0000-0000-000000000001','Clara Kim',    'CK','clara@nexdigital.fr',   'UX Designer',      'pink',  'leave',   ARRAY['Figma','Storybook'],           'employee',48000,42,218,null,null,650, 25,18,10,4,  0),
-  ('cccccccc-0004-0000-0000-000000000004','aaaaaaaa-0000-0000-0000-000000000001','David Mora',   'DM','david@nexdigital.fr',   'DevOps Engineer',  'gold',  'partial', ARRAY['Kubernetes','Terraform','GCP'],'freelance',null,  42,218, 680,null,750, 25, 5,10,2, 50),
-  ('cccccccc-0005-0000-0000-000000000005','aaaaaaaa-0000-0000-0000-000000000001','Emma Petit',   'EP','emma@nexdigital.fr',    'Backend Developer','purple','assigned',ARRAY['Java','Spring','PostgreSQL'],  'employee',50000,42,218,null,null,700, 25,25,10,0,100)
+  ('cccccccc-0001-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Alice Martin',  'AM','alice@norvane.fr',   'Lead Developer',   'green', 'assigned',ARRAY['React','Node.js','AWS'],       'employee',65000,42,218,null,null,800, 25, 7,10,2, 90),
+  ('cccccccc-0002-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000001','Baptiste Leroi','BL','baptiste@norvane.fr','Data Engineer',    'cyan',  'partial', ARRAY['Python','Spark','Databricks'], 'employee',55000,42,218,null,null,720, 25, 3,10,1, 50),
+  ('cccccccc-0003-0000-0000-000000000003','aaaaaaaa-0000-0000-0000-000000000001','Clara Kim',    'CK','clara@norvane.fr',   'UX Designer',      'pink',  'leave',   ARRAY['Figma','Storybook'],           'employee',48000,42,218,null,null,650, 25,18,10,4,  0),
+  ('cccccccc-0004-0000-0000-000000000004','aaaaaaaa-0000-0000-0000-000000000001','David Mora',   'DM','david@norvane.fr',   'DevOps Engineer',  'gold',  'partial', ARRAY['Kubernetes','Terraform','GCP'],'freelance',null,  42,218, 680,null,750, 25, 5,10,2, 50),
+  ('cccccccc-0005-0000-0000-000000000005','aaaaaaaa-0000-0000-0000-000000000001','Emma Petit',   'EP','emma@norvane.fr',    'Backend Developer','purple','assigned',ARRAY['Java','Spring','PostgreSQL'],  'employee',50000,42,218,null,null,700, 25,25,10,0,100)
 on conflict (id) do nothing;
 
 insert into projects (id, company_id, client_id, name, client_name, is_internal, status, progress, start_date, end_date, tjm_vendu, jours_vendus, budget_total) values
@@ -54,10 +54,10 @@ insert into projects (id, company_id, client_id, name, client_name, is_internal,
   ('dddddddd-0002-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0002-0000-0000-000000000002', 'Nexus v2',          'BNP Paribas',     false, 'active',  38, '2025-12-01', '2026-06-30', 800, 120,  96000),
   ('dddddddd-0003-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001', 'DataLake Refonte',  'ENGIE',           false, 'active',  51, '2026-01-15', '2026-05-20', 780,  90,  70200),
   ('dddddddd-0004-0000-0000-000000000004', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0003-0000-0000-000000000003', 'Audit Cyber SG',   'Société Générale', false, 'on_hold', 15, '2026-02-01', '2026-03-31', 900,  40,  36000),
-  ('dddddddd-0005-0000-0000-000000000005', 'aaaaaaaa-0000-0000-0000-000000000001', null,                                   'Portail RH interne','NexDigital',      true,  'draft',    5, '2026-03-01', '2026-08-31', null, null, null)
+  ('dddddddd-0005-0000-0000-000000000005', 'aaaaaaaa-0000-0000-0000-000000000001', null,                                   'Portail RH interne','Norvane Conseil',      true,  'draft',    5, '2026-03-01', '2026-08-31', null, null, null)
 on conflict (id) do nothing;
 
--- Projets internes NexDigital — apparaissent dans le picker timesheet
+-- Projets internes Norvane Conseil — apparaissent dans le picker timesheet
 insert into projects (id, company_id, name, is_internal, is_activity_type, status, start_date, end_date) values
   ('a0000001-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'Intercontrat', true, true, 'active', '2020-01-01', '2099-12-31'),
   ('a0000002-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'Formation',    true, true, 'active', '2020-01-01', '2099-12-31'),
@@ -355,7 +355,7 @@ insert into timesheets (company_id, consultant_id, project_id, date, value, stat
   ('bbbbbbbb-1111-0000-0000-000000000002','eeeeeeee-0002-0000-0000-000000000002','a0000001-0000-0000-0000-000000000002','2026-03-04',1.0,'draft')
 on conflict do nothing;
 
--- ── ÉQUIPES — NexDigital ──────────────────────────────────────────────────────
+-- ── ÉQUIPES — Norvane Conseil ──────────────────────────────────────────────────────
 -- Pôle Dev & Data  : manager = Alice Martin (Lead Developer)
 -- Pôle Design & Ops : pas de manager défini (Clara seule, David freelance)
 insert into teams (id, company_id, name, description, manager_id) values
@@ -367,7 +367,7 @@ insert into teams (id, company_id, name, description, manager_id) values
    null)
 on conflict (id) do nothing;
 
--- team_members NexDigital (le trigger sync_consultant_team_id met à jour consultants.team_id)
+-- team_members Norvane Conseil (le trigger sync_consultant_team_id met à jour consultants.team_id)
 insert into team_members (team_id, consultant_id) values
   ('a1a1a1a1-0001-0000-0000-000000000001', 'cccccccc-0001-0000-0000-000000000001'), -- Alice
   ('a1a1a1a1-0001-0000-0000-000000000001', 'cccccccc-0002-0000-0000-000000000002'), -- Baptiste
@@ -402,7 +402,7 @@ on conflict (consultant_id) do nothing;
 
 
 -- ============================================================
--- ── INVOICES — NexDigital (2 paid · 1 sent · 1 draft) ───────
+-- ── INVOICES — Norvane Conseil (2 paid · 1 sent · 1 draft) ───────
 -- ============================================================
 insert into invoices (id, company_id, consultant_id, client_id, project_id,
   invoice_number, invoice_date, due_date, status,
@@ -415,10 +415,10 @@ insert into invoices (id, company_id, consultant_id, client_id, project_id,
    'cccccccc-0001-0000-0000-000000000001',
    'bbbbbbbb-0004-0000-0000-000000000004',
    'dddddddd-0001-0000-0000-000000000001',
-   'NEX-2026-001','2026-01-31','2026-03-02','paid',
+   'NOR-2026-001','2026-01-31','2026-03-02','paid',
    42500.00,20,8500.00,51000.00,
    'timesheet','2026-01-01','2026-01-31',
-   '{"name":"NexDigital","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
+   '{"name":"Norvane Conseil","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
    '{"name":"Accenture","contact":"Thomas Bernard","email":"thomas.bernard@accenture.com"}'::jsonb,
    'Prestation janvier 2026 — Alpha CRM',30),
 
@@ -427,10 +427,10 @@ insert into invoices (id, company_id, consultant_id, client_id, project_id,
    'cccccccc-0002-0000-0000-000000000002',
    'bbbbbbbb-0002-0000-0000-000000000002',
    'dddddddd-0002-0000-0000-000000000002',
-   'NEX-2026-002','2026-01-31','2026-03-02','paid',
+   'NOR-2026-002','2026-01-31','2026-03-02','paid',
    18000.00,20,3600.00,21600.00,
    'timesheet','2026-01-01','2026-01-31',
-   '{"name":"NexDigital","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
+   '{"name":"Norvane Conseil","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
    '{"name":"BNP Paribas","contact":"Marc Delaunay","email":"marc.delaunay@bnp.com"}'::jsonb,
    'Prestation janvier 2026 — Nexus v2',30),
 
@@ -439,10 +439,10 @@ insert into invoices (id, company_id, consultant_id, client_id, project_id,
    'cccccccc-0001-0000-0000-000000000001',
    'bbbbbbbb-0004-0000-0000-000000000004',
    'dddddddd-0001-0000-0000-000000000001',
-   'NEX-2026-003','2026-02-28','2026-03-30','sent',
+   'NOR-2026-003','2026-02-28','2026-03-30','sent',
    42500.00,20,8500.00,51000.00,
    'timesheet','2026-02-01','2026-02-28',
-   '{"name":"NexDigital","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
+   '{"name":"Norvane Conseil","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
    '{"name":"Accenture","contact":"Thomas Bernard","email":"thomas.bernard@accenture.com"}'::jsonb,
    'Prestation février 2026 — Alpha CRM',30),
 
@@ -451,10 +451,10 @@ insert into invoices (id, company_id, consultant_id, client_id, project_id,
    null,
    'bbbbbbbb-0001-0000-0000-000000000001',
    'dddddddd-0003-0000-0000-000000000003',
-   'NEX-2026-004','2026-02-28','2026-03-30','draft',
+   'NOR-2026-004','2026-02-28','2026-03-30','draft',
    23400.00,20,4680.00,28080.00,
    'timesheet','2026-02-01','2026-02-28',
-   '{"name":"NexDigital","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
+   '{"name":"Norvane Conseil","siret":"12345678901234","address":"12 rue de la Paix, 75001 Paris"}'::jsonb,
    '{"name":"ENGIE","contact":"Sophie Renard","email":"sophie.renard@engie.com"}'::jsonb,
    'Prestation février 2026 — DataLake Refonte — à valider',30)
 
@@ -477,7 +477,7 @@ insert into activity_feed (company_id, type, message, read) values
   ('aaaaaaaa-0000-0000-0000-000000000001','alert',    'David Mora — contrat freelance expire dans 30j',false),
   ('aaaaaaaa-0000-0000-0000-000000000001','leave',    'Baptiste Leroi — RTT 20 fév approuvé',true),
   ('aaaaaaaa-0000-0000-0000-000000000001','alert',    'Audit Cyber SG — projet en pause, relance à confirmer',false),
-  ('aaaaaaaa-0000-0000-0000-000000000001','milestone','Facture NEX-2026-001 payée — 51 000€ ✓',true),
+  ('aaaaaaaa-0000-0000-0000-000000000001','milestone','Facture NOR-2026-001 payée — 51 000€ ✓',true),
   ('bbbbbbbb-1111-0000-0000-000000000002','alert',    'Nina Colas — taux d occupation > 90% ce mois',false),
   ('bbbbbbbb-1111-0000-0000-000000000002','leave',    'Antoine Lamy — retour prévu le 10 mars',false),
   ('bbbbbbbb-1111-0000-0000-000000000002','milestone','Identité BioNaturel — moodboard validé ✓',true),
@@ -547,7 +547,7 @@ update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"a
 update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"bbbbbbbb-1111-0000-0000-000000000002","user_role":"admin"}'::jsonb where email = 'demo2@staff7.art';
 
 -- ── managers ─────────────────────────────────────────────────────────────────
--- Alice Martin — manager NexDigital (Pôle Dev & Data)
+-- Alice Martin — manager Norvane Conseil (Pôle Dev & Data)
 update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"aaaaaaaa-0000-0000-0000-000000000001","user_role":"manager"}'::jsonb where email = 'flux7art+alice@gmail.com';
 update consultants set user_id = (select id from auth.users where email = 'flux7art+alice@gmail.com') where id = 'cccccccc-0001-0000-0000-000000000001';
 
@@ -556,7 +556,7 @@ update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"b
 update consultants set user_id = (select id from auth.users where email = 'flux7art+sophie@gmail.com') where id = 'eeeeeeee-0001-0000-0000-000000000001';
 
 -- ── consultants ───────────────────────────────────────────────────────────────
--- NexDigital — Emma Petit (à créer : flux7art+emma@gmail.com)
+-- Norvane Conseil — Emma Petit (à créer : flux7art+emma@gmail.com)
 update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"aaaaaaaa-0000-0000-0000-000000000001","user_role":"consultant"}'::jsonb where email = 'flux7art+emma@gmail.com';
 update consultants set user_id = (select id from auth.users where email = 'flux7art+emma@gmail.com') where id = 'cccccccc-0005-0000-0000-000000000005'; -- Emma Petit
 
@@ -565,7 +565,7 @@ update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"b
 update consultants set user_id = (select id from auth.users where email = 'flux7art+tom@gmail.com') where id = 'eeeeeeee-0004-0000-0000-000000000004'; -- Tom Vasseur
 
 -- ── freelance ────────────────────────────────────────────────────────────────
--- David Mora — freelance NexDigital
+-- David Mora — freelance Norvane Conseil
 update auth.users set raw_app_meta_data = raw_app_meta_data || '{"company_id":"aaaaaaaa-0000-0000-0000-000000000001","user_role":"freelance"}'::jsonb where email = 'flux7art+david@gmail.com';
 update consultants set user_id = (select id from auth.users where email = 'flux7art+david@gmail.com') where id = 'cccccccc-0004-0000-0000-000000000004';
 
@@ -590,11 +590,11 @@ update consultants set user_id = (select id from auth.users where email = 'flux7
 --
 -- Comptes de test :
 --   super_admin  : flux7art@gmail.com
---   admin A      : demo1@staff7.art             (NexDigital)
+--   admin A      : demo1@staff7.art             (Norvane Conseil)
 --   admin B      : demo2@staff7.art             (AgenceCreative)
---   manager A    : flux7art+alice@gmail.com     (NexDigital  — Alice Martin, Pôle Dev & Data)
+--   manager A    : flux7art+alice@gmail.com     (Norvane Conseil  — Alice Martin, Pôle Dev & Data)
 --   manager B    : flux7art+sophie@gmail.com    (AgenceCreative — Sophie Durand, Équipe Créa)
---   consultant A : flux7art+emma@gmail.com      (NexDigital  — Emma Petit)     ← à créer
+--   consultant A : flux7art+emma@gmail.com      (Norvane Conseil  — Emma Petit)     ← à créer
 --   consultant B : flux7art+tom@gmail.com       (AgenceCreative — Tom Vasseur) ← à créer
---   freelance    : flux7art+david@gmail.com     (NexDigital  — David Mora)
+--   freelance    : flux7art+david@gmail.com     (Norvane Conseil  — David Mora)
 

@@ -979,7 +979,7 @@
       "bankNameLabel": "Nom de la banque",
       "invoiceSection": "PARAMÈTRES FACTURES",
       "prefixLabel": "Préfixe facture",
-      "prefixHint": "ex. NEX-2026-",
+      "prefixHint": "ex. NOR-2026-",
       "counterLabel": "Compteur factures",
       "counterHint": "Lecture seule — auto-incrémenté",
       "paymentTermsLabel": "Délai de paiement (jours)",

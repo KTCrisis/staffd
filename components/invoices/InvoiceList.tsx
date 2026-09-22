@@ -89,7 +89,7 @@ function KpiCard({ label, value, sub, color = 'var(--text)' }: {
 
 const MOCK: Invoice[] = [
   {
-    id: '1', invoice_number: 'NEX-2026-0003', invoice_date: '2026-03-01',
+    id: '1', invoice_number: 'NOR-2026-0003', invoice_date: '2026-03-01',
     due_date: '2026-03-31', status: 'sent', subtotal: 12000, tva_rate: 20,
     tva_amount: 2400, total_ttc: 14400, source_type: 'timesheet',
     source_period_start: '2026-02-01', source_period_end: '2026-02-28',
@@ -97,7 +97,7 @@ const MOCK: Invoice[] = [
     consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: null,
   },
   {
-    id: '2', invoice_number: 'NEX-2026-0002', invoice_date: '2026-02-01',
+    id: '2', invoice_number: 'NOR-2026-0002', invoice_date: '2026-02-01',
     due_date: '2026-02-15', status: 'overdue', subtotal: 9600, tva_rate: 20,
     tva_amount: 1920, total_ttc: 11520, source_type: 'project',
     source_period_start: null, source_period_end: null,
@@ -105,7 +105,7 @@ const MOCK: Invoice[] = [
     consultant_name: 'David Mora', is_overdue: true, days_overdue: 18, paid_at: null,
   },
   {
-    id: '3', invoice_number: 'NEX-2026-0001', invoice_date: '2026-01-15',
+    id: '3', invoice_number: 'NOR-2026-0001', invoice_date: '2026-01-15',
     due_date: '2026-02-14', status: 'paid', subtotal: 7500, tva_rate: 20,
     tva_amount: 1500, total_ttc: 9000, source_type: 'timesheet',
     source_period_start: '2026-01-01', source_period_end: '2026-01-31',
@@ -113,7 +113,7 @@ const MOCK: Invoice[] = [
     consultant_name: 'Alice Martin', is_overdue: false, days_overdue: null, paid_at: '2026-02-10',
   },
   {
-    id: '4', invoice_number: 'NEX-2026-0004', invoice_date: '2026-03-05',
+    id: '4', invoice_number: 'NOR-2026-0004', invoice_date: '2026-03-05',
     due_date: null, status: 'draft', subtotal: 4800, tva_rate: 20,
     tva_amount: 960, total_ttc: 5760, source_type: 'manual',
     source_period_start: null, source_period_end: null,
