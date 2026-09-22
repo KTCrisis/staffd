@@ -151,3 +151,30 @@ describe('CRM — affaires réservées admin/manager', () => {
   })
 })
 
+describe('CRM — contacts lisibles, échanges réservés', () => {
+  it('un consultant lit les contacts mais ne peut ni en créer ni lire les échanges', async () => {
+    const { data: ct } = await admin.from('contacts').insert({
+      company_id: COMPANY_A, client_id: clientAId, name: 'RLS contact',
+    }).select('id').single().throwOnError()
+    await admin.from('interactions').insert({
+      company_id: COMPANY_A, client_id: clientAId, type: 'note', summary: 'RLS note',
+    }).throwOnError()
+
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const contacts = await c.from('contacts').select('id')
+    expect((contacts.data ?? []).map(r => r.id)).toContain(ct!.id)
+
+    const insert = await c.from('contacts').insert({ company_id: COMPANY_A, client_id: clientAId, name: 'intrus' })
+    expect(insert.error).not.toBeNull()
+
+    const journal = await c.from('interactions').select('id')
+    expect(journal.data ?? []).toHaveLength(0)
+  })
+
+  it("un échange sans client ni affaire est refusé par la base", async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { error } = await a.from('interactions').insert({ company_id: COMPANY_A, type: 'note', summary: 'orphelin' })
+    expect(error).not.toBeNull()
+  })
+})
+

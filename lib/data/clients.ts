@@ -7,7 +7,7 @@
 import { useActiveTenant } from '../tenant-context'
 import { supabase }        from '../supabase'
 import { useSupabase }     from './core'
-import type { Client }     from '@/types'
+import type { Client, ClientType } from '@/types'
 
 // ──────────────────────────────────────────────────────────────
 // TYPES
@@ -16,6 +16,7 @@ import type { Client }     from '@/types'
 export interface ClientInput {
   name:           string
   sector?:        string
+  client_type?:   ClientType
   website?:       string
   contact_name?:  string
   contact_email?: string
@@ -34,6 +35,7 @@ function toClient(row: Record<string, unknown>): Client {
     companyId:      row.company_id as string,
     name:           row.name as string,
     sector:         row.sector as string | undefined,
+    clientType:     (row.client_type as ClientType | undefined) ?? 'final',
     website:        row.website as string | undefined,
     contactName:    row.contact_name as string | undefined,
     contactEmail:   row.contact_email as string | undefined,
@@ -96,9 +98,11 @@ export function useClientProjects(clientId: string, dep?: number) {
 // MUTATIONS
 // ──────────────────────────────────────────────────────────────
 
-export async function createClient(data: ClientInput) {
-  const { error } = await supabase.from('clients').insert(data)
+/** Returns the new client's id (used by the quick-create in the deal form). */
+export async function createClient(data: ClientInput): Promise<string> {
+  const { data: row, error } = await supabase.from('clients').insert(data).select('id').single()
   if (error) throw new Error(error.message)
+  return row.id
 }
 
 export async function updateClient(id: string, data: Partial<ClientInput>) {

@@ -54,3 +54,31 @@ describe('groupByStage', () => {
     expect(cols.map(c => [c.stage.key, c.items.length])).toEqual([['qualification', 0], ['proposition', 1], ['negociation', 0], ['__unknown', 1]])
   })
 })
+
+import { followUpState, sortJournal } from './crm'
+
+describe('followUpState', () => {
+  const base = { next_step: 'rappeler', next_step_due: null as string | null, next_step_done: false }
+  it('classifies relative to today', () => {
+    expect(followUpState({ next_step: null, next_step_due: null, next_step_done: false }, '2026-09-23')).toBe('none')
+    expect(followUpState({ ...base, next_step_due: '2026-09-20' }, '2026-09-23')).toBe('overdue')
+    expect(followUpState({ ...base, next_step_due: '2026-09-23' }, '2026-09-23')).toBe('today')
+    expect(followUpState({ ...base, next_step_due: '2026-10-01' }, '2026-09-23')).toBe('upcoming')
+    expect(followUpState({ ...base, next_step_due: '2026-09-01', next_step_done: true }, '2026-09-23')).toBe('done')
+  })
+})
+
+describe('sortJournal', () => {
+  it('puts pending follow-ups first by due date, then history newest first', () => {
+    const mk = (id: string, occurred_at: string, due: string | null, done = false) =>
+      ({ id, occurred_at, next_step: due ? 'x' : null, next_step_due: due, next_step_done: done })
+    const out = sortJournal([
+      mk('old', '2026-09-01', null),
+      mk('later', '2026-09-10', '2026-10-05'),
+      mk('done', '2026-09-15', '2026-09-16', true),
+      mk('late', '2026-09-05', '2026-09-12'),
+      mk('new', '2026-09-20', null),
+    ], '2026-09-23')
+    expect(out.map(i => i.id)).toEqual(['late', 'later', 'new', 'done', 'old'])
+  })
+})

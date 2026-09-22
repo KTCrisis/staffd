@@ -42,3 +42,52 @@ export async function deleteOpportunity(id: string) {
   const { error } = await supabase.from('opportunities').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+// ── Contacts ──────────────────────────────────────────────────
+
+export type ContactInput = TablesInsert<'contacts'>
+export type ContactPatch = TablesUpdate<'contacts'>
+
+/** Only one primary contact per client: promoting one demotes the others. */
+async function demoteOtherPrimaries(clientId: string, keepId?: string) {
+  let q = supabase.from('contacts').update({ is_primary: false }).eq('client_id', clientId).eq('is_primary', true)
+  if (keepId) q = q.neq('id', keepId)
+  const { error } = await q
+  if (error) throw new Error(error.message)
+}
+
+export async function createContact(data: ContactInput) {
+  if (data.is_primary) await demoteOtherPrimaries(data.client_id)
+  const { error } = await supabase.from('contacts').insert(data)
+  if (error) throw new Error(error.message)
+}
+
+export async function updateContact(id: string, clientId: string, data: ContactPatch) {
+  if (data.is_primary) await demoteOtherPrimaries(clientId, id)
+  const { error } = await supabase.from('contacts').update(data).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteContact(id: string) {
+  const { error } = await supabase.from('contacts').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ── Interactions (journal + follow-ups) ───────────────────────
+
+export type InteractionInput = TablesInsert<'interactions'>
+
+export async function createInteraction(data: InteractionInput) {
+  const { error } = await supabase.from('interactions').insert(data)
+  if (error) throw new Error(error.message)
+}
+
+export async function setNextStepDone(id: string, done: boolean) {
+  const { error } = await supabase.from('interactions').update({ next_step_done: done }).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteInteraction(id: string) {
+  const { error } = await supabase.from('interactions').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}

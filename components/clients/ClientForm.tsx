@@ -9,10 +9,11 @@ import { useState, useEffect } from 'react'
 import { useTranslations }     from 'next-intl'
 
 import { createClient, updateClient } from '@/lib/data'
-import type { Client }         from '@/types'
+import type { Client, ClientType } from '@/types'
 
 export const SECTORS = ['ESN', 'Énergie', 'Finance', 'Industrie', 'Retail', 'Public', 'Autre'] as const
 export type Sector = typeof SECTORS[number]
+export const CLIENT_TYPES: ClientType[] = ['final', 'intermediary', 'both']
 
 interface ClientFormProps {
   client?:    Client | null
@@ -27,6 +28,7 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
 
   const [name,         setName]         = useState(client?.name         ?? '')
   const [sector,       setSector]       = useState<Sector | ''>(client?.sector as Sector ?? '')
+  const [clientType,   setClientType]   = useState<ClientType>(client?.clientType ?? 'final')
   const [website,      setWebsite]      = useState(client?.website      ?? '')
   const [contactName,  setContactName]  = useState(client?.contactName  ?? '')
   const [contactEmail, setContactEmail] = useState(client?.contactEmail ?? '')
@@ -38,6 +40,7 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
   useEffect(() => {
     setName(client?.name ?? '')
     setSector(client?.sector as Sector ?? '')
+    setClientType(client?.clientType ?? 'final')
     setWebsite(client?.website ?? '')
     setContactName(client?.contactName ?? '')
     setContactEmail(client?.contactEmail ?? '')
@@ -56,6 +59,7 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
       const payload = {
         name:          name.trim(),
         sector:        sector || undefined,
+        client_type:   clientType,
         website:       website.trim() || undefined,
         contact_name:  contactName.trim() || undefined,
         contact_email: contactEmail.trim() || undefined,
@@ -110,6 +114,14 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
           <option value="">—</option>
           {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+      </div>
+
+      <div className="form-field">
+        <label>{t('form.clientType')}</label>
+        <select className="input" value={clientType} onChange={e => setClientType(e.target.value as ClientType)}>
+          {CLIENT_TYPES.map(ct => <option key={ct} value={ct}>{t(`clientType.${ct}`)}</option>)}
+        </select>
+        <div style={{ marginTop: 5, fontSize: 10, color: 'var(--text2)' }}>{t('form.clientTypeHint')}</div>
       </div>
 
       <div className="form-field">

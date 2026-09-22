@@ -511,6 +511,29 @@ insert into opportunities (id, company_id, client_id, end_client_id, owner_id, n
    current_date - 40, null, 'Prix : concurrent intégrateur 20 % moins cher')
 on conflict (id) do nothing;
 
+-- ── CRM — contacts et échanges (ENGIE, Accenture) ────────────
+insert into contacts (id, company_id, client_id, name, title, email, buying_role, is_primary) values
+  ('acacacac-0001-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001',
+   'Sophie Renard', 'DSI adjointe', 'sophie.renard@exemple.fr', 'sponsor', true),
+  ('acacacac-0002-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001',
+   'Paul Morel', 'Acheteur IT', 'paul.morel@exemple.fr', 'acheteur', false),
+  ('acacacac-0003-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0004-0000-0000-000000000004',
+   'Thomas Bernard', 'Responsable sourcing', 'thomas.bernard@exemple.fr', 'prescripteur', true)
+on conflict (id) do nothing;
+
+insert into interactions (company_id, client_id, opportunity_id, contact_id, consultant_id, type, occurred_at, summary, next_step, next_step_due, next_step_done) values
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001', 'abababab-0001-0000-0000-000000000001',
+   'acacacac-0001-0000-0000-000000000001', 'cccccccc-0001-0000-0000-000000000001', 'reunion', now() - interval '12 days',
+   'Atelier de cadrage : besoin d''une plateforme événementielle pour 3 métiers, budget 2027 à confirmer.',
+   'Envoyer la proposition chiffrée', current_date - 2, false),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001', 'abababab-0001-0000-0000-000000000001',
+   'acacacac-0002-0000-0000-000000000002', 'cccccccc-0001-0000-0000-000000000001', 'appel', now() - interval '3 days',
+   'Référencement fournisseur à renouveler avant toute commande.',
+   'Transmettre les pièces de référencement', current_date + 5, false),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0001-0000-0000-000000000001', null,
+   null, 'cccccccc-0002-0000-0000-000000000002', 'note', now() - interval '30 days',
+   'Premier contact via le réseau.', null, null, false);
+
 -- ── Extra activity feed ──────────────────────────────────────
 insert into activity_feed (company_id, type, message, read) values
   ('aaaaaaaa-0000-0000-0000-000000000001','milestone','Nexus v2 — livraison sprint 3 validée ✓',true),

@@ -6,6 +6,7 @@ import { Topbar }          from '@/components/layout/Topbar'
 import { ClientsClient }   from '@/components/clients/ClientsClient'
 import type { Tables }     from '@/types/supabase'
 import type { Client }     from '@/types'
+import type { ClientType } from '@/types'
 
 type ClientRow = Tables<'clients'> & {
   projects: Pick<Tables<'projects'>, 'id' | 'status'>[]
@@ -38,6 +39,7 @@ export default async function ClientsPage({ searchParams }: Props) {
     id:             row.id,
     name:           row.name,
     sector:         row.sector        ?? null,
+    clientType:     (row.client_type ?? 'final') as ClientType,
     website:        row.website       ?? null,
     contactName:    row.contact_name  ?? null,
     contactEmail:   row.contact_email ?? null,

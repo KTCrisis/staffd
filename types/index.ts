@@ -65,11 +65,15 @@ export interface Project {
   companyId?:    string
 }
 
+/** Who is invoiced vs who receives the work (missions sold via another firm). */
+export type ClientType = 'final' | 'intermediary' | 'both'
+
 export interface Client {
   id:              string
   companyId:       string
   name:            string
   sector?:         string
+  clientType?:     ClientType     // 'final' | 'intermediary' | 'both'
   website?:        string
   contactName?:    string
   contactEmail?:   string

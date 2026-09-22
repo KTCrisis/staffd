@@ -107,3 +107,38 @@ export function groupByStage<T extends PipelineItem>(items: T[], stages: Stage[]
   }
   return columns
 }
+
+// ── Contacts & interactions ───────────────────────────────────
+
+export const BUYING_ROLES     = ['sponsor', 'decideur', 'acheteur', 'prescripteur', 'utilisateur'] as const
+export const INTERACTION_TYPES = ['appel', 'reunion', 'email', 'note', 'relance'] as const
+export type BuyingRole      = (typeof BUYING_ROLES)[number]
+export type InteractionType = (typeof INTERACTION_TYPES)[number]
+
+export type FollowUpState = 'none' | 'done' | 'overdue' | 'today' | 'upcoming'
+
+/** State of an interaction's next step, relative to `today` (YYYY-MM-DD). */
+export function followUpState(
+  i: { next_step: string | null; next_step_due: string | null; next_step_done: boolean },
+  today: string,
+): FollowUpState {
+  if (!i.next_step && !i.next_step_due) return 'none'
+  if (i.next_step_done)                 return 'done'
+  if (!i.next_step_due)                 return 'upcoming'
+  if (i.next_step_due < today)          return 'overdue'
+  if (i.next_step_due === today)        return 'today'
+  return 'upcoming'
+}
+
+/** Open follow-ups first (earliest due first), then the journal, newest first. */
+export function sortJournal<T extends { occurred_at: string; next_step: string | null; next_step_due: string | null; next_step_done: boolean }>(
+  items: T[], today: string,
+): T[] {
+  const pending = (i: T) => { const s = followUpState(i, today); return s === 'overdue' || s === 'today' || s === 'upcoming' }
+  return [...items].sort((a, b) => {
+    const pa = pending(a), pb = pending(b)
+    if (pa !== pb) return pa ? -1 : 1
+    if (pa && pb) return (a.next_step_due ?? '9999').localeCompare(b.next_step_due ?? '9999')
+    return b.occurred_at.localeCompare(a.occurred_at)
+  })
+}

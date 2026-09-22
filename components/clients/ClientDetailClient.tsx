@@ -8,6 +8,7 @@ import { useRouter }       from '@/lib/navigation'
 import { useTranslations } from 'next-intl'
 import { Panel, Badge }    from '@/components/ui'
 import { ClientForm }      from '@/components/clients/ClientForm'
+import { ClientCrm, type ClientCrmData } from '@/components/clients/ClientCrm'
 import type { Client as CanonicalClient, ProjectStatus } from '@/types'
 
 interface Project {
@@ -23,6 +24,7 @@ interface Client {
   companyId:    string
   name:         string
   sector:       string | null
+  clientType:   string
   website:      string | null
   contactName:  string | null
   contactEmail: string | null
@@ -33,9 +35,10 @@ interface Client {
 interface Props {
   client?:   Client
   projects?: Project[]
+  crm?:      ClientCrmData
 }
 
-export function ClientDetailClient({ client, projects = [] }: Props) {
+export function ClientDetailClient({ client, projects = [], crm }: Props) {
   const t      = useTranslations('clients')
   const router = useRouter()
 
@@ -77,6 +80,7 @@ export function ClientDetailClient({ client, projects = [] }: Props) {
             {[
               { label: t('detail.sector'),       value: client.sector
                   ? <span className="badge badge-starting">{client.sector}</span> : '—' },
+              { label: t('form.clientType'),     value: t(`clientType.${client.clientType}`) },
               { label: t('detail.website'),      value: client.website
                   ? <a href={client.website} target="_blank" rel="noopener" style={{ color: 'var(--cyan)' }}>{client.website.replace(/^https?:\/\//, '')}</a>
                   : '—' },
@@ -143,6 +147,8 @@ export function ClientDetailClient({ client, projects = [] }: Props) {
         </Panel>
 
       </div>
+
+      {crm && <ClientCrm clientId={client.id} companyId={client.companyId} data={crm} onChanged={() => router.refresh()} />}
 
       <div style={{ marginTop: 20 }}>
         <button className="btn btn-ghost" onClick={() => router.push('/clients' as never)}>

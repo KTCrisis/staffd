@@ -328,9 +328,16 @@
       "notesPlaceholder": "Contexte, historique, informations spécifiques sur ce client...",
       "selectClient": "Sélectionner un client",
       "clientNotFound": "Client absent de la liste ?",
-      "createClient": "Le créer ici"
+      "createClient": "Le créer ici",
+      "clientType": "Type de client",
+      "clientTypeHint": "Intermédiaire : ESN ou société par laquelle passe la facture"
     },
-    "activeCount": "{count} actif(s)"
+    "activeCount": "{count} actif(s)",
+    "clientType": {
+      "final": "Client final",
+      "intermediary": "Intermédiaire",
+      "both": "Final et intermédiaire"
+    }
   },
   "timesheets": {
     "title": "Feuilles de temps",
@@ -1375,7 +1382,13 @@
       "cancel": "Annuler",
       "errorName": "L'intitulé est obligatoire",
       "errorClient": "Le donneur d'ordre est obligatoire",
-      "errorLostReason": "Indiquez le motif de la perte"
+      "errorLostReason": "Indiquez le motif de la perte",
+      "quickClient": "+ nouveau client",
+      "manageClients": "gérer les clients ↗",
+      "quickClientName": "Nom du client",
+      "final": "Client final",
+      "intermediary": "Intermédiaire",
+      "both": "Les deux"
     },
     "actions": {
       "won": "✓ Gagnée",
@@ -1385,6 +1398,56 @@
       "reopen": "↺ Rouvrir",
       "delete": "Supprimer l'affaire",
       "deleteConfirm": "Supprimer définitivement cette affaire ?"
+    },
+    "contacts": {
+      "title": "Contacts",
+      "add": "+ Contact",
+      "edit": "modifier",
+      "empty": "// aucun contact",
+      "primary": "Contact principal",
+      "name": "Nom *",
+      "jobTitle": "Fonction",
+      "email": "Email",
+      "phone": "Téléphone",
+      "role": "Rôle dans la décision",
+      "notes": "Notes",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "deleteConfirm": "Supprimer ce contact ?",
+      "errorName": "Le nom est obligatoire",
+      "roles": {
+        "sponsor": "Sponsor",
+        "decideur": "Décideur",
+        "acheteur": "Acheteur",
+        "prescripteur": "Prescripteur",
+        "utilisateur": "Utilisateur"
+      }
+    },
+    "journal": {
+      "title": "Échanges",
+      "add": "+ Échange",
+      "empty": "// aucun échange",
+      "due": "{count, plural, one {# relance due} other {# relances dues}}",
+      "followUp": "Relance",
+      "overdue": "en retard",
+      "today": "aujourd'hui",
+      "contact": "Contact (optionnel)",
+      "opportunity": "Affaire (optionnel)",
+      "summary": "Ce qui s'est dit *",
+      "nextStep": "Prochaine étape",
+      "nextStepDue": "Échéance",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "deleteConfirm": "Supprimer cet échange ?",
+      "errorSummary": "Le résumé est obligatoire",
+      "types": {
+        "appel": "Appel",
+        "reunion": "Réunion",
+        "email": "Email",
+        "note": "Note",
+        "relance": "Relance"
+      }
     }
   }
 }

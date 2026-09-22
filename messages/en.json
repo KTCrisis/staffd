@@ -328,9 +328,16 @@
       "contactEmail": "Email",
       "contactPhone": "Phone",
       "notes": "Notes",
-      "notesPlaceholder": "Context, history, specific notes about this client..."
+      "notesPlaceholder": "Context, history, specific notes about this client...",
+      "clientType": "Client type",
+      "clientTypeHint": "Intermediary: the firm the invoice goes through"
     },
-    "activeCount": "{count} active"
+    "activeCount": "{count} active",
+    "clientType": {
+      "final": "End client",
+      "intermediary": "Intermediary",
+      "both": "End client and intermediary"
+    }
   },
   "timesheets": {
     "title": "Timesheets",
@@ -1375,7 +1382,13 @@
       "cancel": "Cancel",
       "errorName": "A title is required",
       "errorClient": "The billed party is required",
-      "errorLostReason": "Say why the deal was lost"
+      "errorLostReason": "Say why the deal was lost",
+      "quickClient": "+ new client",
+      "manageClients": "manage clients ↗",
+      "quickClientName": "Client name",
+      "final": "End client",
+      "intermediary": "Intermediary",
+      "both": "Both"
     },
     "actions": {
       "won": "✓ Won",
@@ -1385,6 +1398,56 @@
       "reopen": "↺ Reopen",
       "delete": "Delete deal",
       "deleteConfirm": "Delete this deal permanently?"
+    },
+    "contacts": {
+      "title": "Contacts",
+      "add": "+ Contact",
+      "edit": "edit",
+      "empty": "// no contacts",
+      "primary": "Primary contact",
+      "name": "Name *",
+      "jobTitle": "Job title",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Buying role",
+      "notes": "Notes",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this contact?",
+      "errorName": "A name is required",
+      "roles": {
+        "sponsor": "Sponsor",
+        "decideur": "Decision maker",
+        "acheteur": "Buyer",
+        "prescripteur": "Influencer",
+        "utilisateur": "User"
+      }
+    },
+    "journal": {
+      "title": "Interactions",
+      "add": "+ Interaction",
+      "empty": "// no interactions",
+      "due": "{count, plural, one {# follow-up due} other {# follow-ups due}}",
+      "followUp": "Follow-up",
+      "overdue": "overdue",
+      "today": "today",
+      "contact": "Contact (optional)",
+      "opportunity": "Deal (optional)",
+      "summary": "What was said *",
+      "nextStep": "Next step",
+      "nextStepDue": "Due date",
+      "save": "Save",
+      "cancel": "Cancel",
+      "deleteConfirm": "Delete this interaction?",
+      "errorSummary": "A summary is required",
+      "types": {
+        "appel": "Call",
+        "reunion": "Meeting",
+        "email": "Email",
+        "note": "Note",
+        "relance": "Follow-up"
+      }
     }
   }
 }

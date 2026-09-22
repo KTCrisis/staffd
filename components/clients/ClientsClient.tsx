@@ -124,6 +124,9 @@ export function ClientsClient({ clients = [], companyId = '' }: Props) {
                         ? <span className="badge badge-starting">{c.sector}</span>
                         : <span className="td-empty">—</span>
                       }
+                      {c.clientType && c.clientType !== 'final' && (
+                        <div className="td-sub" style={{ marginTop: 4 }}>{t(`clientType.${c.clientType}`)}</div>
+                      )}
                     </td>
                     <td>
                       {c.contactName ? (
