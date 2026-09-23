@@ -7,6 +7,7 @@ import { Topbar }             from '@/components/layout/Topbar'
 import { InvoiceDetail }      from '@/components/invoices/InvoiceDetail'
 import { canViewOwnInvoices, canEdit } from '@/lib/auth/roles'
 import type { BillingSettings, InvoiceClient, InvoiceLineItem } from '@/components/invoices/InvoicePreview'
+import { resolveInvoiceStyle } from '@/lib/branding'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -21,7 +22,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   const { data: inv } = await supabase
     .from('invoices')
-    .select('*, clients(name,billing_address,siren,tva_number), projects(name), companies(billing_settings,name)')
+    .select('*, clients(name,billing_address,siren,tva_number), projects(name), companies(billing_settings,name,branding)')
     .eq('id', id)
     .maybeSingle()
   if (!inv) notFound()
@@ -34,7 +35,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
 
   // Émise : instantanés figés à l'émission. Brouillon : état courant.
   const issued  = inv.status !== 'draft'
-  const company = inv.companies as { billing_settings: BillingSettings | null; name: string } | null
+  const company = inv.companies as { billing_settings: BillingSettings | null; name: string; branding: unknown } | null
   const billing = (issued && inv.emitter_snapshot
     ? inv.emitter_snapshot
     : { ...(company?.billing_settings ?? {}), company_name: company?.name }) as BillingSettings
@@ -65,6 +66,7 @@ export default async function InvoiceDetailPage({ params }: Props) {
         client={client}
         billing={billing}
         canManage={canEdit(role)}
+        style={resolveInvoiceStyle(company?.branding)}
       />
     </>
   )

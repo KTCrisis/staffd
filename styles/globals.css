@@ -1076,6 +1076,7 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
 }
 /* Impression d'une facture : seule la feuille .invoice-sheet sort (InvoicePreview) */
 @media print {
+  html, body { background: #fff !important; }
   body * { visibility: hidden; }
   .invoice-sheet, .invoice-sheet * { visibility: visible; }
   .invoice-sheet { position: absolute; inset: 0 auto auto 0; width: 100%; box-shadow: none !important; border-radius: 0 !important; }

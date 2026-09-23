@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveBranding, isSafeColor, headingFontHref, DEFAULT_BRANDING } from './branding'
+import { resolveBranding, isSafeColor, headingFontHref, DEFAULT_BRANDING, resolveInvoiceStyle } from './branding'
 
 describe('isSafeColor', () => {
   it('accepts hex and rgb(a) literals', () => {
@@ -47,5 +47,17 @@ describe('headingFontHref', () => {
     expect(headingFontHref(null)).toBeNull()
     expect(headingFontHref('JetBrains Mono')).toBeNull()
     expect(headingFontHref('Space Grotesk')).toContain('family=Space+Grotesk')
+  })
+})
+
+describe('resolveInvoiceStyle', () => {
+  it('prend l\'accent du thème clair et la police des titres', () => {
+    expect(resolveInvoiceStyle({ heading_font: 'Space Grotesk', light: { green: '#436C0C' }, dark: { green: '#B8F542' } }))
+      .toEqual({ accent: '#436C0C', headingFont: 'Space Grotesk' })
+  })
+  it('écarte une couleur ou une police non sûres', () => {
+    expect(resolveInvoiceStyle({ heading_font: 'Comic Sans', light: { green: 'red;}body{x' } }))
+      .toEqual({ accent: null, headingFont: null })
+    expect(resolveInvoiceStyle(null)).toEqual({ accent: null, headingFont: null })
   })
 })

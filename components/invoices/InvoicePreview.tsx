@@ -11,6 +11,8 @@
 
 import { useTranslations } from 'next-intl'
 import { toISO }           from '@/lib/utils'
+import { headingFontHref } from '@/lib/branding'
+import type { InvoiceStyle } from '@/lib/branding'
 
 // ── Shared types (exported for InvoiceForm and the detail page) ─────────────
 
@@ -59,6 +61,8 @@ export interface InvoicePreviewProps {
   billing:       BillingSettings
   notes:         string
   periodLabel:   string
+  /** Charte du tenant (accent du thème clair, police des titres) — lib/branding */
+  style?:        InvoiceStyle
 }
 
 function fmt(n: number) {
@@ -67,9 +71,12 @@ function fmt(n: number) {
 
 export function InvoicePreview({
   invoiceNumber, invoiceDate, dueDate, lines, tvaRate,
-  client, projectName, billing, notes, periodLabel,
+  client, projectName, billing, notes, periodLabel, style,
 }: InvoicePreviewProps) {
   const t = useTranslations('invoices.preview')
+  const accent   = style?.accent ?? '#000'
+  const fontHref = headingFontHref(style?.headingFont ?? null)
+  const heading  = style?.headingFont ? `'${style.headingFont}', Georgia, serif` : 'Georgia, serif'
 
   const subtotal  = lines.reduce((s, l) => s + l.quantity * l.unit_price, 0)
   const tvaAmount = subtotal * tvaRate / 100
@@ -104,11 +111,13 @@ export function InvoicePreview({
       fontSize: 12, lineHeight: 1.6,
       boxShadow: '0 4px 32px rgba(0,0,0,.4)',
     }}>
+      {fontHref && <link rel="stylesheet" href={fontHref} />}
 
-      {/* En-tête */}
+      {/* En-tête : filet et titre à la couleur du tenant */}
+      <div style={{ height: 4, background: accent, margin: '-40px -48px 32px', borderRadius: '4px 4px 0 0' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 36 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#000', letterSpacing: -1 }}>{t('title')}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: accent, letterSpacing: -1, fontFamily: heading }}>{t('title')}</div>
           <div style={{ fontSize: 12, color: invoiceNumber ? '#333' : '#c00', marginTop: 4, fontWeight: 600 }}>
             {invoiceNumber ?? t('draft')}
           </div>
@@ -123,7 +132,7 @@ export function InvoicePreview({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 32 }}>
         <div>
           <div style={label}>{t('from')}</div>
-          <div style={{ fontWeight: 700, fontSize: 13 }}>{emitterName}</div>
+          <div style={{ fontWeight: 700, fontSize: 13, fontFamily: heading }}>{emitterName}</div>
           <div style={{ ...small, marginTop: 4 }}>
             {billing.address && <div style={{ whiteSpace: 'pre-line' }}>{billing.address}</div>}
             {legalLine && <div>{legalLine}</div>}
@@ -149,7 +158,7 @@ export function InvoicePreview({
       {/* Lignes */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
         <thead>
-          <tr style={{ borderBottom: '2px solid #000' }}>
+          <tr style={{ borderBottom: `2px solid ${accent}` }}>
             {tableHeaders.map(h => (
               <th key={h.key} style={{
                 textAlign: h.align, padding: '6px 8px', fontSize: 10, letterSpacing: 1,
@@ -194,7 +203,7 @@ export function InvoicePreview({
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 11, color: '#555', borderBottom: '1px solid #eee' }}>
             <span>{t('vat', { rate: tvaRate })}</span><span>{fmt(tvaAmount)} €</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, fontWeight: 700, color: '#000', borderBottom: '2px solid #000' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, fontWeight: 700, color: '#000', borderBottom: `2px solid ${accent}` }}>
             <span>{t('grandTotal')}</span><span>{fmt(total)} €</span>
           </div>
         </div>

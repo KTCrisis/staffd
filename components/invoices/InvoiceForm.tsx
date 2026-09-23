@@ -9,6 +9,8 @@ import type { InvoiceLineItem, BillingSettings } from '@/components/invoices/Inv
 import { toISO, addDays }  from '@/lib/utils'
 import { useActiveTenant } from '@/lib/tenant-context'
 import type { Json }       from '@/types/supabase'
+import { resolveInvoiceStyle } from '@/lib/branding'
+import type { InvoiceStyle } from '@/lib/branding'
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
@@ -128,6 +130,7 @@ export function InvoiceForm() {
   const [projects,    setProjects]    = useState<Project[]>([])
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [billing,     setBilling]     = useState<BillingSettings>({})
+  const [invStyle,    setInvStyle]    = useState<InvoiceStyle>({ accent: null, headingFont: null })
   const [saving,      setSaving]      = useState(false)
 
   const dueDate = invoiceDate
@@ -154,15 +157,16 @@ export function InvoiceForm() {
       .in('status', ['active', 'on_hold', 'completed'])
       .eq('is_internal', false)
     let coQ = supabase.from('consultant_occupancy').select('id,name').order('name')
-    const cpQ = supabase.from('companies').select('billing_settings').single()
+    let cpQ = supabase.from('companies').select('billing_settings,branding')
 
     if (tid) {
       clQ = clQ.eq('company_id', tid)
       prQ = prQ.eq('company_id', tid)
       coQ = coQ.eq('company_id', tid)
+      cpQ = cpQ.eq('id', tid)
     }
 
-    Promise.all([clQ, prQ, coQ, cpQ]).then(([cl, pr, co, comp]) => {
+    Promise.all([clQ, prQ, coQ, cpQ.single()]).then(([cl, pr, co, comp]) => {
       if (cancelled) return
       if (cl.data)   setClients(cl.data)
       if (pr.data)   setProjects(pr.data)
@@ -171,6 +175,7 @@ export function InvoiceForm() {
       if (co.data)   setConsultants(
         co.data.filter(c => c.id != null).map(c => ({ id: c.id!, name: c.name ?? '' })),
       )
+      setInvStyle(resolveInvoiceStyle(comp.data?.branding))
       if (comp.data?.billing_settings) {
         const b = comp.data.billing_settings as unknown as BillingSettings
         setBilling(b)
@@ -629,6 +634,7 @@ export function InvoiceForm() {
             billing={billing}
             notes={notes}
             periodLabel={periodLabel}
+            style={invStyle}
           />
         </div>
       </div>

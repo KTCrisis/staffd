@@ -14,6 +14,7 @@ import { supabase }           from '@/lib/supabase'
 import { toISO }              from '@/lib/utils'
 import { InvoicePreview }     from './InvoicePreview'
 import type { BillingSettings, InvoiceClient, InvoiceLineItem } from './InvoicePreview'
+import type { InvoiceStyle } from '@/lib/branding'
 
 const CODES = ['INVOICE_LOCKED', 'INVOICE_NOT_DRAFT', 'INVOICE_EMPTY', 'INVOICE_FORBIDDEN', 'INVOICE_ISSUE_REQUIRED'] as const
 
@@ -27,9 +28,10 @@ interface Props {
   client:    InvoiceClient
   billing:   BillingSettings
   canManage: boolean
+  style:     InvoiceStyle
 }
 
-export function InvoiceDetail({ invoice, lines, client, billing, canManage }: Props) {
+export function InvoiceDetail({ invoice, lines, client, billing, canManage, style }: Props) {
   const t      = useTranslations('invoices.detail')
   const router = useRouter()
   const [busy,  setBusy]  = useState(false)
@@ -91,6 +93,7 @@ export function InvoiceDetail({ invoice, lines, client, billing, canManage }: Pr
           billing={billing}
           notes={invoice.notes}
           periodLabel={period}
+          style={style}
         />
       </div>
     </div>

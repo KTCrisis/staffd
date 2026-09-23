@@ -88,3 +88,23 @@ export function headingFontHref(font: HeadingFont | null): string | null {
   if (!font || font === 'JetBrains Mono') return null
   return `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}:wght@400;600;700&display=swap`
 }
+
+/**
+ * Invoice styling derived from the tenant branding: the LIGHT theme accent
+ * (an invoice is printed on white) and the heading font. Same validation as
+ * resolveBranding: unknown font or unsafe color → null, default look.
+ */
+export interface InvoiceStyle {
+  accent:      string | null
+  headingFont: HeadingFont | null
+}
+
+export function resolveInvoiceStyle(raw: unknown): InvoiceStyle {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { accent: null, headingFont: null }
+  const b     = raw as Record<string, unknown>
+  const light = (b.light && typeof b.light === 'object') ? b.light as Record<string, unknown> : {}
+  return {
+    accent:      isSafeColor(light.green) ? (light.green as string).trim() : null,
+    headingFont: HEADING_FONTS.find(f => f === b.heading_font) ?? null,
+  }
+}
