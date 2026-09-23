@@ -20,7 +20,7 @@
   "workers_dev": true,
   "preview_urls": false,
   "vars": {
-    "OLLAMA_MODEL": "kimi-k2.5:cloud",
+    "OLLAMA_MODEL": "gpt-oss:120b",
     "OLLAMA_HOST": "https://ollama.com"
   },
   "env": {
@@ -28,7 +28,7 @@
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
-        "OLLAMA_MODEL": "kimi-k2.5:cloud",
+        "OLLAMA_MODEL": "gpt-oss:120b",
         "OLLAMA_HOST": "https://ollama.com"
       }
     },
@@ -36,7 +36,7 @@
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
-        "OLLAMA_MODEL": "kimi-k2.5:cloud",
+        "OLLAMA_MODEL": "gpt-oss:120b",
         "OLLAMA_HOST": "https://ollama.com"
       }
     }

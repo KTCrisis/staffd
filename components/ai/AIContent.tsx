@@ -302,7 +302,7 @@ export function AIContent({ userEmail }: Props) {
           </div>
         </div>
         <div className="ai-hint">
-          ↵ send · / commands · esc close menu · context live Supabase · {process.env.NEXT_PUBLIC_AI_MODEL ?? 'kimi-k2.5:cloud'}
+          ↵ send · / commands · esc close menu · context live Supabase · {process.env.NEXT_PUBLIC_AI_MODEL ?? 'gpt-oss:120b'}
         </div>
       </div>
 

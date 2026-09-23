@@ -36,7 +36,7 @@ export interface MCPTool {
 
 export interface AISettings {
   ollama_endpoint?: string   // ex: https://ollama.yourdomain.com
-  ollama_model?:    string   // ex: kimi-k2.5:cloud
+  ollama_model?:    string   // ex: gpt-oss:120b
   agents_enabled?:  boolean
   mcp_tools?:       MCPTool[]
 }

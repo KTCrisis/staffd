@@ -1,5 +1,5 @@
 // app/api/ai/action-agent.ts
-// Agent spécialisé actions — utilise le tool calling natif de kimi-k2.5
+// Agent spécialisé actions — utilise le tool calling natif du modèle (gpt-oss:120b par défaut)
 // Ne stream pas de texte : retourne un SSE event { action } pour confirmation UI
 // puis exécute après confirmation.
 

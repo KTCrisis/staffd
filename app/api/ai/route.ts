@@ -37,7 +37,7 @@ async function verifyUser(token: string): Promise<{
 // ── POST /api/ai — questions et analyses ─────────────────────
 export async function POST(req: Request): Promise<Response> {
   const apiKey = process.env.OLLAMA_API_KEY
-  const model  = process.env.OLLAMA_MODEL ?? 'kimi-k2.5:cloud'
+  const model  = process.env.OLLAMA_MODEL ?? 'gpt-oss:120b'
   const host   = (process.env.OLLAMA_HOST ?? 'https://ollama.com').replace(/\/$/, '')
 
   const enc     = new TextEncoder()

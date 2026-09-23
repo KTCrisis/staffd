@@ -13,7 +13,7 @@ import {
 } from './shared'
 
 const OLLAMA_MODELS = [
-  'kimi-k2.5:cloud',
+  'gpt-oss:120b',
   'llama3.2:latest',
   'llama3.1:8b',
   'mistral:latest',
@@ -38,7 +38,7 @@ export function AITab() {
   const { data: companyData, loading } = useCompanySettings(refresh)
 
   const [ollamaEndpoint, setOllamaEndpoint] = useState('')
-  const [ollamaModel,    setOllamaModel]    = useState('kimi-k2.5:cloud')
+  const [ollamaModel,    setOllamaModel]    = useState('gpt-oss:120b')
   const [agentsEnabled,  setAgentsEnabled]  = useState(false)
   const [saving,         setSaving]         = useState(false)
   const [error,          setError]          = useState<string | null>(null)
@@ -47,14 +47,14 @@ export function AITab() {
     if (!companyData) return
     const ai = companyData.ai_settings ?? {}
     setOllamaEndpoint(ai.ollama_endpoint ?? '')
-    setOllamaModel(ai.ollama_model ?? 'kimi-k2.5:cloud')
+    setOllamaModel(ai.ollama_model ?? 'gpt-oss:120b')
     setAgentsEnabled(ai.agents_enabled ?? false)
   }, [companyData])
 
   const ai = companyData?.ai_settings ?? {}
   const dirty = (
     ollamaEndpoint !== (ai.ollama_endpoint ?? '') ||
-    ollamaModel    !== (ai.ollama_model    ?? 'kimi-k2.5:cloud') ||
+    ollamaModel    !== (ai.ollama_model    ?? 'gpt-oss:120b') ||
     agentsEnabled  !== (ai.agents_enabled  ?? false)
   )
 
@@ -81,7 +81,7 @@ export function AITab() {
     if (!companyData) return
     const a = companyData.ai_settings ?? {}
     setOllamaEndpoint(a.ollama_endpoint ?? '')
-    setOllamaModel(a.ollama_model ?? 'kimi-k2.5:cloud')
+    setOllamaModel(a.ollama_model ?? 'gpt-oss:120b')
     setAgentsEnabled(a.agents_enabled ?? false)
   }
 

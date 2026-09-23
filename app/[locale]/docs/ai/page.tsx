@@ -48,7 +48,7 @@ export default function AiDocsPage() {
               { icon: '◈', title: 'AI Console',           desc: 'Terminal-style chat interface. Type questions or use structured /commands to load specific context.' },
               { icon: '◎', title: 'Agentic actions',      desc: 'Approve leaves, update project status, assign consultants — directly from the console with a confirmation step.' },
               { icon: '⬡', title: 'RLS-aware queries',    desc: 'The agent uses your session JWT — it can only see your company\'s data. RLS enforces tenant isolation.' },
-              { icon: '◫', title: 'Bring your own model', desc: 'Connect any Ollama-compatible model: local (privacy-first) or cloud (kimi-k2.5, llama3, mistral…).' },
+              { icon: '◫', title: 'Bring your own model', desc: 'Connect any Ollama-compatible model: local (privacy-first) or cloud (gpt-oss, llama3, mistral…).' },
             ]} />
           </Section>
 
@@ -92,7 +92,7 @@ export default function AiDocsPage() {
           {/* ── Agentic actions ── */}
           <Section id="actions" label="Agentic actions" icon="◎" color="var(--gold)">
             <p>
-              The action agent uses <strong>native tool calling</strong> (kimi-k2.5 supports it natively)
+              The action agent uses <strong>native tool calling</strong> (gpt-oss:120b supports it natively)
               to detect write intentions and execute them with a confirmation step.
             </p>
             <FeatureGrid items={[
@@ -181,7 +181,7 @@ OLLAMA_API_KEY=
 
 # or cloud
 OLLAMA_HOST=https://ollama.com
-OLLAMA_MODEL=kimi-k2.5:cloud
+OLLAMA_MODEL=gpt-oss:120b
 OLLAMA_API_KEY=sk-...`}</CodeBlock>
           </Section>
 
