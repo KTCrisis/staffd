@@ -181,7 +181,7 @@ export function AssignmentModal({ project, onClose, onSaved }: AssignmentModalPr
             onChange={e => setConsultantId(e.target.value)}
           >
             <option value="">— {t('selectConsultant')} —</option>
-            {(consultants ?? []).map(c => (
+            {(consultants ?? []).filter(c => c.fonction === 'consultant').map(c => (  // facturables seulement (0009)
               <option key={c.id} value={c.id}>
                 {c.name} · {c.role}
                 {c.occupancyRate > 0

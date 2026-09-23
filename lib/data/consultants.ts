@@ -14,6 +14,8 @@ import type { Consultant }  from '@/types'
 // ──────────────────────────────────────────────────────────────
 
 export type ContractType = 'employee' | 'freelance'
+export const STAFF_FUNCTIONS = ['consultant', 'dirigeant', 'commercial', 'support'] as const
+export type StaffFunction = typeof STAFF_FUNCTIONS[number]
 
 export interface ConsultantInput {
   company_id?:          string
@@ -36,6 +38,7 @@ export interface ConsultantInput {
   date_entree?:         string | null
   date_sortie?:         string | null
   honoraires_mensuels?: number | null
+  fonction?:            StaffFunction
 }
 
 export interface AssignmentInput {
@@ -93,6 +96,7 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     dateEntree:          (row.date_entree as string | null | undefined) ?? null,
     dateSortie:          (row.date_sortie as string | null | undefined) ?? null,
     honorairesMensuels:  (row.honoraires_mensuels as number | null | undefined) ?? null,
+    fonction:            (row.fonction as StaffFunction | undefined) ?? 'consultant',
     tjmCoutReel:         row.tjm_cout_reel as number | undefined,
     salaireAnnuelBrut:   row.salaire_annuel_brut as number | undefined,
     chargesPct:          row.charges_pct as number | undefined,

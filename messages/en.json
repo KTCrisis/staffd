@@ -184,6 +184,12 @@
     "deleteBtn": "✕ Delete",
     "costLabels": {
       "charged": "Charged"
+    },
+    "fonction": {
+      "consultant": "Consultant",
+      "dirigeant": "Executive",
+      "commercial": "Sales",
+      "support": "Support"
     }
   },
   "conges": {
@@ -870,7 +876,9 @@
       "dateEntree": "Start date",
       "dateSortie": "End date",
       "honoraires": "Monthly fees excl. VAT (€)",
-      "honorairesHint": "Partner billing through their company: fixed monthly cost, on assignment or not. Replaces any other cost in EBITDA."
+      "honorairesHint": "Partner billing through their company: fixed monthly cost, on assignment or not. Replaces any other cost in EBITDA.",
+      "fonction": "Function",
+      "fonctionHint": "Not billable: excluded from staffing, availability, occupancy and profitability. Their cost stays in EBITDA."
     },
     "contractTypes": {
       "employee": "👤 Employee",
@@ -1249,7 +1257,8 @@
         "cancel": "Cancel",
         "removing": "Removing…",
         "confirm": "Remove"
-      }
+      },
+      "statsFounders": "Partners"
     },
     "grades": {
       "section": "GRADE_GRID",

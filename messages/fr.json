@@ -184,6 +184,12 @@
     "deleteBtn": "✕ Supprimer",
     "costLabels": {
       "charged": "Facturé"
+    },
+    "fonction": {
+      "consultant": "Consultant",
+      "dirigeant": "Dirigeant",
+      "commercial": "Commercial",
+      "support": "Support"
     }
   },
   "conges": {
@@ -870,7 +876,9 @@
       "dateEntree": "Date d'entrée",
       "dateSortie": "Date de sortie",
       "honoraires": "Honoraires mensuels HT (€)",
-      "honorairesHint": "Associé facturé via sa société : coût fixe chaque mois, mission ou non. Remplace tout autre coût dans l'EBITDA."
+      "honorairesHint": "Associé facturé via sa société : coût fixe chaque mois, mission ou non. Remplace tout autre coût dans l'EBITDA.",
+      "fonction": "Fonction",
+      "fonctionHint": "Ne facture pas : hors staffing, disponibilité, occupation et rentabilité. Son coût reste dans l'EBITDA."
     },
     "contractTypes": {
       "employee": "👤 Salarié",
@@ -1249,7 +1257,8 @@
         "cancel": "Annuler",
         "removing": "Retrait…",
         "confirm": "Retirer"
-      }
+      },
+      "statsFounders": "Associés"
     },
     "grades": {
       "section": "GRILLE_PAR_GRADE",

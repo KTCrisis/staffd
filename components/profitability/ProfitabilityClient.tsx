@@ -11,7 +11,8 @@ import { EmptyState }          from '@/components/ui/EmptyState'
 import { MargeLegend }         from '@/components/ui/MargeLegend'
 import { ProgressBar }         from '@/components/ui/ProgressBar'
 import { fmt, fmtTjm, getMargeColor, progressColor, isCibleAlert, alpha } from '@/lib/utils'
-import type { AvatarColor, ContractType } from '@/types'
+import type { AvatarColor } from '@/types'
+import { ContractBadge }       from '@/components/consultants/ContractBadge'
 import type { Tables }         from '@/types/supabase'
 
 // Ligne de la vue SQL `consultant_profitability` (snake_case, lecture seule)
@@ -24,14 +25,6 @@ function MargeBadge({ pct }: { pct: number }) {
   return (
     <span className="marge-badge" style={{ background: alpha(color, 13), border: `1px solid ${alpha(color, 33)}`, color }}>
       {pct}%
-    </span>
-  )
-}
-
-function ContractBadge({ type, tCons }: { type: ContractType; tCons: ReturnType<typeof useTranslations> }) {
-  return (
-    <span className={`contract-badge contract-badge-${type}`}>
-      {tCons(type === 'freelance' ? 'contractType.freelance' : 'contractType.employee')}
     </span>
   )
 }
@@ -59,7 +52,6 @@ interface Props {
 
 export function ProfitabilityClient({ consultants = [], error }: Props) {
   const t     = useTranslations('profitability')
-  const tCons = useTranslations('consultants')
   const [sort, setSort] = useState<SortKey>('ca_genere')
 
   const SORTS: { label: string; key: SortKey }[] = [
@@ -153,7 +145,7 @@ export function ProfitabilityClient({ consultants = [], error }: Props) {
                               <div className="td-primary">{c.name}</div>
                               <div className="consultant-cell-meta">
                                 <span style={{ fontSize: 9, color: 'var(--text2)' }}>{c.role}</span>
-                                <ContractBadge type={(c.contract_type ?? 'employee') as ContractType} tCons={tCons} />
+                                <ContractBadge type={c.contract_type ?? 'employee'} founder={c.is_founder ?? false} fonction={c.fonction} compact />
                               </div>
                             </div>
                           </div>

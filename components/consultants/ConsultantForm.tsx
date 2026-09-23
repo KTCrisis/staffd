@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslations }              from 'next-intl'
 import { createConsultant, updateConsultant, useCompanySettings, useGrades } from '@/lib/data'
 import type { Consultant }              from '@/types'
-import type { ContractType }            from '@/lib/data'
+import type { ContractType, StaffFunction } from '@/lib/data'
+import { STAFF_FUNCTIONS }             from '@/lib/data'
 
 const COLORS   = ['green', 'cyan', 'pink', 'gold', 'purple']
 const STATUSES = ['available', 'assigned', 'partial', 'leave']
@@ -54,6 +55,7 @@ function calcTjmCoutReel(
 
 export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('consultantForm')
+  const tCons = useTranslations('consultants')
   const { data: companyData } = useCompanySettings()
   const { data: grades }      = useGrades()
   const companyCountry = companyData?.hr_settings?.country_code ?? 'FR'
@@ -84,6 +86,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     date_entree:         '',
     date_sortie:         '',
     honoraires_mensuels: '',
+    fonction:            'consultant' as StaffFunction,
   })
 
   useEffect(() => {
@@ -109,6 +112,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         date_entree:         consultant.dateEntree ?? '',
         date_sortie:         consultant.dateSortie ?? '',
         honoraires_mensuels: consultant.honorairesMensuels?.toString() ?? '',
+        fonction:            consultant.fonction ?? 'consultant',
       })
     }
   }, [consultant])
@@ -173,6 +177,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         date_entree:         form.date_entree || null,
         date_sortie:         form.date_sortie || null,
         honoraires_mensuels: form.honoraires_mensuels ? parseFloat(form.honoraires_mensuels) : null,
+        fonction:            form.fonction,
       }
 
       if (isEdit) {
@@ -293,6 +298,16 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
 
           {/* ── Contrat ──────────────────────────────────────────────── */}
           <SectionLabel>{t('sections.contract')}</SectionLabel>
+
+          <Field label={t('fields.fonction')}>
+            <select className="search-input" style={{ width: '100%' }}
+              value={form.fonction} onChange={e => set('fonction', e.target.value)}>
+              {STAFF_FUNCTIONS.map(f => <option key={f} value={f}>{tCons(`fonction.${f}`)}</option>)}
+            </select>
+            {form.fonction !== 'consultant' && (
+              <span style={{ fontSize: 9, color: 'var(--text2)' }}>{t('fields.fonctionHint')}</span>
+            )}
+          </Field>
 
           <Field label={t('fields.contractType')}>
             <div style={{ display: 'flex', gap: 6 }}>

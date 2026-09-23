@@ -28,7 +28,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   if (role !== 'admin' && !isSA) redirect('/dashboard')
 
   // ── Queries principales ────────────────────────────────────
-  let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
+  let consultantsQ = supabase.from('consultant_occupancy').select('*').eq('fonction', 'consultant').order('name')  // facturables seulement (0009)
   let projectsQ    = supabase.from('projects').select('id, name, status, client_name, progress, tjm_vendu, start_date, end_date').neq('status', 'archived').order('status')
   let leavesQ      = supabase.from('leave_requests').select('status').eq('status', 'pending')
   let activityQ    = supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(5)

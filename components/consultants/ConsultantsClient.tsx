@@ -258,7 +258,8 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
             consultants={visible}
             onSelect={c => {
               setSelected(c as Consultant); setInviteStatus('idle')
-              setInviteRole((c as Consultant).contractType === 'freelance' ? 'freelance' : 'consultant')
+              // Un associé facturé via sa société n'est pas un freelance côté rôle applicatif
+              setInviteRole((c as Consultant).contractType === 'freelance' && !(c as Consultant).isFounder ? 'freelance' : 'consultant')
             }}
           />
         ) : (
@@ -283,7 +284,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
                 <div className="cons-drawer-name">{selected.name}</div>
                 <div className="cons-drawer-role-row">
                   <span className="cons-drawer-role">{selected.role}</span>
-                  {selected.contractType && <ContractBadge type={selected.contractType} founder={selected.isFounder} />}
+                  {selected.contractType && <ContractBadge type={selected.contractType} founder={selected.isFounder} fonction={selected.fonction} />}
                 </div>
                 {selected.email && <div className="cons-drawer-email">{selected.email}</div>}
               </div>

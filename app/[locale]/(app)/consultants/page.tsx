@@ -75,6 +75,7 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     dateEntree:       r.date_entree      ?? null,
     dateSortie:       r.date_sortie      ?? null,
     honorairesMensuels: r.honoraires_mensuels ?? null,
+    fonction:         (r.fonction ?? 'consultant') as Consultant['fonction'],
     tjmCoutReel:      r.tjm_cout_reel    ?? null,
     tjmFacture:       r.tjm_facture      ?? null,
     salaireAnnuelBrut: r.salaire_annuel_brut ?? null,

@@ -417,3 +417,16 @@ describe('EBITDA courant', () => {
     expect(exp ?? []).toHaveLength(0)
   })
 })
+
+describe('Fonction dans l\'entreprise', () => {
+  it('la base refuse une fonction inconnue ; la vue expose la fonction', async () => {
+    const bad = await admin.from('consultants').insert({ company_id: COMPANY_A, name: 'X', contract_type: 'employee', fonction: 'stagiaire' })
+    expect(bad.error).not.toBeNull()
+    await admin.from('consultants').update({ fonction: 'dirigeant' }).eq('id', freelanceConsultantId).throwOnError()
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data } = await a.from('consultant_occupancy').select('fonction').eq('id', freelanceConsultantId).single()
+    expect(data!.fonction).toBe('dirigeant')
+    const { data: prof } = await a.from('consultant_profitability').select('consultant_id').eq('fonction', 'consultant')
+    expect((prof ?? []).map(r => r.consultant_id)).not.toContain(freelanceConsultantId)
+  })
+})

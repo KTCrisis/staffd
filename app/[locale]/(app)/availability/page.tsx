@@ -26,7 +26,7 @@ export default async function AvailabilityPage({ searchParams }: Props) {
   }
 
   // ── Queries de base ──────────────────────────────────────────
-  let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
+  let consultantsQ = supabase.from('consultant_occupancy').select('*').eq('fonction', 'consultant').order('name')  // facturables seulement (0009)
   let leavesQ      = supabase.from('leave_requests').select('id, consultant_id, type, status, start_date, end_date').neq('status', 'refused')
   let assignmentsQ = supabase.from('assignments').select('*, projects(name)')
 

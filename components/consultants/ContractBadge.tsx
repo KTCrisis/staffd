@@ -4,17 +4,22 @@ import { useTranslations } from 'next-intl'
 import { alpha }           from '@/lib/utils'
 
 /**
- * Contract badge shared by the consultants list, drawer and detail page.
- * `founder` only changes the label: costs keep following contract_type.
+ * Contract badge shared by the consultants list, drawer, detail and
+ * profitability pages. A non-billable function (dirigeant, commercial,
+ * support) wins, then `founder`; both only change the label: costs keep
+ * following contract_type.
  */
-export function ContractBadge({ type, founder = false, compact = false }: {
-  type:     string
-  founder?: boolean
-  compact?: boolean
+export function ContractBadge({ type, founder = false, fonction, compact = false }: {
+  type:      string
+  founder?:  boolean
+  fonction?: string | null
+  compact?:  boolean
 }) {
   const t = useTranslations('consultants')
-  const tone  = founder ? 'var(--green)' : type === 'freelance' ? 'var(--cyan)' : null
-  const label = founder ? t('contractType.founder')
+  const nonBillable = !!fonction && fonction !== 'consultant'
+  const tone  = nonBillable ? 'var(--gold)' : founder ? 'var(--green)' : type === 'freelance' ? 'var(--cyan)' : null
+  const label = nonBillable ? t(`fonction.${fonction}`)
+    : founder ? t('contractType.founder')
     : type === 'freelance' ? t('contractType.freelance') : t('contractType.employee')
 
   return (

@@ -338,6 +338,7 @@ export type Database = {
           date_entree: string | null
           date_sortie: string | null
           email: string | null
+          fonction: string
           grade_id: string | null
           honoraires_mensuels: number | null
           id: string
@@ -371,6 +372,7 @@ export type Database = {
           date_entree?: string | null
           date_sortie?: string | null
           email?: string | null
+          fonction?: string
           grade_id?: string | null
           honoraires_mensuels?: number | null
           id?: string
@@ -404,6 +406,7 @@ export type Database = {
           date_entree?: string | null
           date_sortie?: string | null
           email?: string | null
+          fonction?: string
           grade_id?: string | null
           honoraires_mensuels?: number | null
           id?: string
@@ -1583,6 +1586,7 @@ export type Database = {
           date_entree: string | null
           date_sortie: string | null
           email: string | null
+          fonction: string | null
           grade_id: string | null
           grade_label: string | null
           honoraires_mensuels: number | null
@@ -1649,9 +1653,11 @@ export type Database = {
           consultant_id: string | null
           contract_type: string | null
           cout_consultant: number | null
+          fonction: string | null
           grade_id: string | null
           grade_label: string | null
           initials: string | null
+          is_founder: boolean | null
           jours_generes: number | null
           marge_brute: number | null
           marge_pct: number | null

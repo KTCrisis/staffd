@@ -55,6 +55,7 @@ interface Consultant {
   dateEntree:    string | null
   dateSortie:    string | null
   honorairesMensuels: number | null
+  fonction:      string
   user_id:       string | null
   countryCode:   string | null
 }
@@ -130,7 +131,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                 <div style={{ color: 'var(--text2)', fontSize: 12, marginBottom: 8 }}>{c.role}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <Badge variant={c.status as ConsultantStatus} />
-                  <ContractBadge type={c.contractType} founder={c.isFounder} />
+                  <ContractBadge type={c.contractType} founder={c.isFounder} fonction={c.fonction} />
                   {c.gradeLabel && (
                     <span className="badge" style={{ color: 'var(--gold)', borderColor: 'color-mix(in srgb, var(--gold) 30%, transparent)' }}>
                       {c.gradeLabel}

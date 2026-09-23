@@ -1,6 +1,8 @@
 export type Theme = 'dark' | 'light'
 
 export type ContractType    = 'employee' | 'freelance'
+/** Fonction dans l'entreprise : seul 'consultant' facture (0009) */
+export type StaffFunction   = 'consultant' | 'dirigeant' | 'commercial' | 'support'
 export type ConsultantStatus = 'available' | 'assigned' | 'leave' | 'partial'
 export type LeaveStatus      = 'pending' | 'approved' | 'refused'
 export type LeaveType        = 'CP' | 'RTT' | 'Sans solde' | 'Absence autorisée'
@@ -42,6 +44,7 @@ export interface Consultant {
   dateEntree?:       string | null  // présence dans l'EBITDA (0008)
   dateSortie?:       string | null
   honorairesMensuels?: number | null  // associé facturé via sa société : coût fixe mensuel
+  fonction?:         StaffFunction
   tjmCoutReel?:      number         // calculé par la vue SQL (lecture seule)
   // Employee — base de calcul du coût réel
   salaireAnnuelBrut?: number        // ex : 55000

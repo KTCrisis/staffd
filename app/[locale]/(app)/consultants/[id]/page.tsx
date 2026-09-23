@@ -77,6 +77,7 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     dateEntree:      c.date_entree ?? null,
     dateSortie:      c.date_sortie ?? null,
     honorairesMensuels: c.honoraires_mensuels ?? null,
+    fonction:        c.fonction ?? 'consultant',
     user_id:         c.user_id ?? null,
     countryCode:     c.country_code ?? null,
   }

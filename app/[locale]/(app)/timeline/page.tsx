@@ -40,6 +40,7 @@ export default async function TimelinePage({ searchParams }: Props) {
   let consultantsQ = supabase
     .from('consultant_occupancy')
     .select('id, name, initials, avatar_color, status')
+    .eq('fonction', 'consultant')  // facturables seulement (0009)
     .order('name')
 
   let leavesQ = supabase

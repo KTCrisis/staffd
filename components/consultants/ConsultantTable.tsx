@@ -43,7 +43,7 @@ export function ConsultantTable({ consultants, onSelect }: ConsultantTableProps)
                     <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <span className="td-primary">{c.name}</span>
-                      {c.contractType && <ContractBadge type={c.contractType} founder={c.isFounder} compact />}
+                      {c.contractType && <ContractBadge type={c.contractType} founder={c.isFounder} fonction={c.fonction} compact />}
                     </div>
                   </div>
                 </td>

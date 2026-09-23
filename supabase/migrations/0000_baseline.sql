@@ -25,6 +25,8 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  consultants.fonction (dirigeant, commercial, support non facturables) ;
+--               vues occupancy / profitability étendues (0009_staff_function.sql).
 --   2026.09.23  EBITDA courant : operating_expenses, consultants.date_entree/date_sortie/
 --               honoraires_mensuels, working_days(), ebitda_monthly() (0008_ebitda.sql).
 --   2026.09.23  fusion de 0001-0007 dans ce fichier ; table schema_migrations.
@@ -116,7 +118,7 @@ create table if not exists schema_migrations (
   applied_at timestamptz not null default now()
 );
 alter table schema_migrations enable row level security;
-insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda') on conflict do nothing;
+insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda'), ('0009_staff_function') on conflict do nothing;
 
 create table if not exists companies (
   id               uuid primary key default gen_random_uuid(),
@@ -227,6 +229,9 @@ create table if not exists consultants (
   honoraires_mensuels numeric(10,2),
   constraint consultants_honoraires_check check (honoraires_mensuels is null or honoraires_mensuels >= 0),
   constraint consultants_dates_check check (date_sortie is null or date_entree is null or date_sortie >= date_entree),
+  -- Fonction (0009) : seul 'consultant' facture
+  fonction text not null default 'consultant',
+  constraint consultants_fonction_check check (fonction in ('consultant','dirigeant','commercial','support')),
   team_id uuid,   -- FK ajoutée après création de la table teams (voir ALTER plus bas)
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
@@ -1176,7 +1181,9 @@ select
   -- 0008 : présence et honoraires (EBITDA)
   c.date_entree,
   c.date_sortie,
-  c.honoraires_mensuels
+  c.honoraires_mensuels,
+  -- 0009 : fonction (non facturable si ≠ 'consultant')
+  c.fonction
 from consultants c
 left join grades g      on g.id = c.grade_id
 left join assignments a on a.consultant_id = c.id
@@ -1318,10 +1325,13 @@ select
   end                   as marge_pct,
   -- 0005 : grade
   grade_id,
-  grade_label
+  grade_label,
+  -- 0009 : associé et fonction (affichage, filtre des non-facturables)
+  is_founder,
+  fonction
 from rows
 group by id, company_id, name, role, initials, avatar_color, contract_type,
-  tjm_cible, occupancy_rate, status, day_cost, grade_id, grade_label;
+  tjm_cible, occupancy_rate, status, day_cost, grade_id, grade_label, is_founder, fonction;
 
 create or replace view invoice_list
 with (security_invoker = true) as

@@ -42,7 +42,7 @@ export default async function ManagerDashboardPage({ searchParams }: Props) {
 
   const noMatch = '00000000-0000-0000-0000-000000000000'
 
-  let consultantsQ = supabase.from('consultant_occupancy').select('*').order('name')
+  let consultantsQ = supabase.from('consultant_occupancy').select('*').eq('fonction', 'consultant').order('name')  // facturables seulement (0009)
   let leavesQ      = supabase.from('leave_requests')
                        .select('id, status, type, start_date, end_date, consultant_id, consultants(name)')
                        .eq('status', 'pending').order('start_date')

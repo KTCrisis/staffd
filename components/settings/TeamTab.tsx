@@ -482,8 +482,9 @@ export function TeamTab({ companyId }: { companyId: string }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
           {[
             { labelKey: 'statsTeams',       value: teamCount,  color: 'var(--cyan)' },
-            { labelKey: 'statsConsultants', value: allConsultants.filter(c => c.contractType !== 'freelance').length, color: 'var(--green)' },
-            { labelKey: 'statsFreelances',  value: allConsultants.filter(c => c.contractType === 'freelance').length, color: 'var(--gold)' },
+            { labelKey: 'statsConsultants', value: allConsultants.filter(c => c.contractType !== 'freelance' && !c.isFounder).length, color: 'var(--green)' },
+            { labelKey: 'statsFreelances',  value: allConsultants.filter(c => c.contractType === 'freelance' && !c.isFounder).length, color: 'var(--gold)' },
+            { labelKey: 'statsFounders',    value: allConsultants.filter(c => c.isFounder).length, color: 'var(--cyan)' },
             { labelKey: 'statsUnassigned',  value: unassigned, color: unassigned > 0 ? 'var(--pink)' : 'var(--text2)' },
           ].map(s => (
             <div key={s.labelKey} style={{

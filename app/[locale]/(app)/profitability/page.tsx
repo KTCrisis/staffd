@@ -17,7 +17,8 @@ export default async function ProfitabilityPage({ searchParams }: Props) {
 
   if (role !== 'admin' && role !== 'manager' && !isSA) redirect('/dashboard')
 
-  let query = supabase.from('consultant_profitability').select('*')
+  // Les non-facturables (dirigeant, commercial, support) n'ont pas de rentabilité propre (0009)
+  let query = supabase.from('consultant_profitability').select('*').eq('fonction', 'consultant')
   if (tenant) query = query.eq('company_id', tenant)
 
   const { data: consultants, error } = await query
