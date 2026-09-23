@@ -174,8 +174,8 @@ function TeamCard({
               value={selectedConsultantId}
               onChange={e => setSelectedConsultantId(e.target.value)}
               style={{
-                flex: 1, background: 'var(--bg3)', border: '1px solid var(--border2)',
-                color: 'var(--text)', padding: '6px 10px', borderRadius: 2,
+                flex: 1, backgroundColor: 'var(--bg3)', border: '1px solid var(--border2)',
+                color: 'var(--text)', padding: '6px 30px 6px 10px', borderRadius: 2,
                 fontSize: 11, fontFamily: 'inherit',
               }}
             >

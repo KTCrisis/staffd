@@ -56,6 +56,11 @@ interface Consultant {
   dateSortie:    string | null
   honorairesMensuels: number | null
   fonction:      string
+  salaireAnnuelBrut: number | null
+  chargesPct:    number | null
+  joursTravailles: number | null
+  tjmFacture:    number | null
+  tjm:           number | null
   user_id:       string | null
   countryCode:   string | null
 }

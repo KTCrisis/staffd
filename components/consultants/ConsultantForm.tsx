@@ -56,6 +56,7 @@ function calcTjmCoutReel(
 export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('consultantForm')
   const tCons = useTranslations('consultants')
+  const tStatus = useTranslations('statuses')
   const { data: companyData } = useCompanySettings()
   const { data: grades }      = useGrades()
   const companyCountry = companyData?.hr_settings?.country_code ?? 'FR'
@@ -291,7 +292,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {STATUSES.map(s => (
                 <button key={s} className={`btn btn-sm ${form.status === s ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => set('status', s)}>{s}</button>
+                  onClick={() => set('status', s)}>{tStatus(s)}</button>
               ))}
             </div>
           </Field>

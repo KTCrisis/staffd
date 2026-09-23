@@ -78,6 +78,13 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     dateSortie:      c.date_sortie ?? null,
     honorairesMensuels: c.honoraires_mensuels ?? null,
     fonction:        c.fonction ?? 'consultant',
+    // Champs de coût : le formulaire de modification les affiche (ils
+    // manquaient, le salaire apparaissait vide depuis cette page)
+    salaireAnnuelBrut: c.salaire_annuel_brut ?? null,
+    chargesPct:        c.charges_pct ?? null,
+    joursTravailles:   c.jours_travailles ?? null,
+    tjmFacture:        c.tjm_facture ?? null,
+    tjm:               c.tjm ?? null,
     user_id:         c.user_id ?? null,
     countryCode:     c.country_code ?? null,
   }

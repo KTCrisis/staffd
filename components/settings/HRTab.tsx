@@ -280,8 +280,8 @@ export function HRTab() {
               value={hrCountry}
               onChange={e => setHrCountry(e.target.value)}
               style={{
-                background: 'var(--bg3)', border: '1px solid var(--border2)',
-                color: 'var(--text)', padding: '8px 12px', borderRadius: 2,
+                backgroundColor: 'var(--bg3)', border: '1px solid var(--border2)',
+                color: 'var(--text)', padding: '8px 32px 8px 12px', borderRadius: 2,
                 fontSize: 12, fontFamily: 'inherit', minWidth: 180,
               }}
             >

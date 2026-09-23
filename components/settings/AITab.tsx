@@ -117,9 +117,9 @@ export function AITab() {
                   value={ollamaModel}
                   onChange={e => setOllamaModel(e.target.value)}
                   style={{
-                    width: '100%', background: 'var(--bg3)',
+                    width: '100%', backgroundColor: 'var(--bg3)',
                     border: '1px solid var(--border2)',
-                    color: 'var(--text)', padding: '8px 12px', borderRadius: 2,
+                    color: 'var(--text)', padding: '8px 32px 8px 12px', borderRadius: 2,
                     fontSize: 12, fontFamily: 'inherit',
                   }}
                 >

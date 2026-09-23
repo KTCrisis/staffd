@@ -75,8 +75,8 @@ function Select({ value, onChange, children, style = {} }: {
     <select
       value={value} onChange={e => onChange(e.target.value)}
       style={{
-        width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
-        borderRadius: 3, color: 'var(--text)', padding: '8px 12px',
+        width: '100%', backgroundColor: 'var(--bg3)', border: '1px solid var(--border)',
+        borderRadius: 3, color: 'var(--text)', padding: '8px 32px 8px 12px',
         fontFamily: 'var(--font-mono, monospace)', fontSize: 12, outline: 'none',
         ...style,
       }}
