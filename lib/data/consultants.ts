@@ -33,6 +33,9 @@ export interface ConsultantInput {
   tjm_cible?:           number
   leave_days_total?:    number
   grade_id?:            string | null
+  date_entree?:         string | null
+  date_sortie?:         string | null
+  honoraires_mensuels?: number | null
 }
 
 export interface AssignmentInput {
@@ -87,6 +90,9 @@ function toConsultant(row: Record<string, unknown>): Consultant {
     tjmCible:            row.tjm_cible as number | undefined,
     gradeId:             (row.grade_id as string | null | undefined) ?? null,
     gradeLabel:          (row.grade_label as string | null | undefined) ?? null,
+    dateEntree:          (row.date_entree as string | null | undefined) ?? null,
+    dateSortie:          (row.date_sortie as string | null | undefined) ?? null,
+    honorairesMensuels:  (row.honoraires_mensuels as number | null | undefined) ?? null,
     tjmCoutReel:         row.tjm_cout_reel as number | undefined,
     salaireAnnuelBrut:   row.salaire_annuel_brut as number | undefined,
     chargesPct:          row.charges_pct as number | undefined,

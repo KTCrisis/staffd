@@ -674,6 +674,62 @@
       "good": "Marge ≥ 20% — Bonne",
       "watch": "Marge 10–20% — À surveiller",
       "low": "Marge < 10% — Faible"
+    },
+    "ebitda": {
+      "title": "EBITDA courant",
+      "loading": "Calcul…",
+      "missingEntry": "{count, plural, one {# fiche consultant n'a} other {# fiches consultants n'ont}} pas de date d'entrée : l'EBITDA les compte depuis la création de la fiche. Renseigne-la sur la fiche.",
+      "method": "CA régie = CRA validés × TJM vendu ; forfait = budget à l'avancement des jours validés. Salariés et honoraires au prorata de la présence ; mois en cours : coûts fixes au prorata des jours ouvrés écoulés, CA et freelances réels à date. « En attente » = CRA saisis non validés, hors EBITDA.",
+      "kpi": {
+        "current": "EBITDA du mois",
+        "currentSub": "à date · {pct} % du mois ouvré",
+        "noCurrent": "année close",
+        "ytd": "EBITDA cumulé",
+        "ca": "CA reconnu",
+        "caSub": "+ {pending} en attente de validation",
+        "costs": "Coûts cumulés",
+        "costsSub": "salariés, freelances, honoraires, charges"
+      },
+      "table": {
+        "title": "Compte de résultat mensuel",
+        "month": "Mois",
+        "caRegie": "CA régie",
+        "caForfait": "CA forfait",
+        "pending": "En attente",
+        "salaries": "Salariés",
+        "freelances": "Freelances",
+        "fees": "Honoraires",
+        "opex": "Charges",
+        "ebitda": "EBITDA",
+        "margin": "Marge",
+        "total": "Total",
+        "toDate": "à date · {pct} %"
+      },
+      "expenses": {
+        "title": "Charges d'exploitation",
+        "label": "Libellé",
+        "amount": "Montant HT",
+        "monthly": "Mensuelle",
+        "once": "Ponctuelle",
+        "from": "Depuis",
+        "until": "Jusqu'à (option)",
+        "month": "Mois",
+        "add": "+ Ajouter",
+        "remove": "Supprimer",
+        "empty": "Aucune charge saisie : l'EBITDA ne compte que la masse salariale, les freelances et les honoraires.",
+        "required": "Libellé et montant requis.",
+        "rangeMonthly": "mensuelle · {from} → {until}",
+        "rangeOnce": "ponctuelle · {month}",
+        "categories": {
+          "locaux": "Locaux",
+          "outils": "Outils, licences",
+          "rc_compta": "RC, comptable, juridique",
+          "marketing": "Marketing",
+          "deplacements": "Déplacements",
+          "formation": "Formation",
+          "autre": "Autre"
+        }
+      }
     }
   },
   "profitability": {
@@ -810,7 +866,11 @@
       "margeCible": "Marge cible",
       "country": "Pays (jours fériés)",
       "countryInherit": "— Hérite de la company ({country})",
-      "countryHint": "Utilise le pays par défaut de la company :"
+      "countryHint": "Utilise le pays par défaut de la company :",
+      "dateEntree": "Date d'entrée",
+      "dateSortie": "Date de sortie",
+      "honoraires": "Honoraires mensuels HT (€)",
+      "honorairesHint": "Associé facturé via sa société : coût fixe chaque mois, mission ou non. Remplace tout autre coût dans l'EBITDA."
     },
     "contractTypes": {
       "employee": "👤 Salarié",

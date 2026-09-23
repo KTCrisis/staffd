@@ -335,8 +335,11 @@ export type Database = {
           contract_type: string
           country_code: string | null
           created_at: string | null
+          date_entree: string | null
+          date_sortie: string | null
           email: string | null
           grade_id: string | null
+          honoraires_mensuels: number | null
           id: string
           initials: string | null
           is_founder: boolean
@@ -365,8 +368,11 @@ export type Database = {
           contract_type?: string
           country_code?: string | null
           created_at?: string | null
+          date_entree?: string | null
+          date_sortie?: string | null
           email?: string | null
           grade_id?: string | null
+          honoraires_mensuels?: number | null
           id?: string
           initials?: string | null
           is_founder?: boolean
@@ -395,8 +401,11 @@ export type Database = {
           contract_type?: string
           country_code?: string | null
           created_at?: string | null
+          date_entree?: string | null
+          date_sortie?: string | null
           email?: string | null
           grade_id?: string | null
+          honoraires_mensuels?: number | null
           id?: string
           initials?: string | null
           is_founder?: boolean
@@ -1008,6 +1017,50 @@ export type Database = {
           },
         ]
       }
+      operating_expenses: {
+        Row: {
+          amount: number
+          category: string
+          company_id: string
+          created_at: string | null
+          end_month: string | null
+          id: string
+          label: string
+          recurrence: string
+          start_month: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          company_id: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label: string
+          recurrence?: string
+          start_month: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          company_id?: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label?: string
+          recurrence?: string
+          start_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_expenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           amount: number | null
@@ -1291,6 +1344,21 @@ export type Database = {
           },
         ]
       }
+      schema_migrations: {
+        Row: {
+          applied_at: string
+          version: string
+        }
+        Insert: {
+          applied_at?: string
+          version: string
+        }
+        Update: {
+          applied_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           consultant_id: string
@@ -1512,9 +1580,12 @@ export type Database = {
           charges_pct: number | null
           company_id: string | null
           contract_type: string | null
+          date_entree: string | null
+          date_sortie: string | null
           email: string | null
           grade_id: string | null
           grade_label: string | null
+          honoraires_mensuels: number | null
           id: string | null
           initials: string | null
           is_founder: boolean | null
@@ -1618,6 +1689,7 @@ export type Database = {
           country_code: string | null
           created_at: string | null
           email: string | null
+          grade_id: string | null
           id: string | null
           initials: string | null
           is_founder: boolean | null
@@ -1649,6 +1721,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email?: string | null
+          grade_id?: string | null
           id?: string | null
           initials?: string | null
           is_founder?: boolean | null
@@ -1680,6 +1753,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email?: string | null
+          grade_id?: string | null
           id?: string | null
           initials?: string | null
           is_founder?: boolean | null
@@ -1710,6 +1784,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultants_grade_fk"
+            columns: ["company_id", "grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["company_id", "id"]
           },
           {
             foreignKeyName: "consultants_team_id_fkey"
@@ -1972,6 +2053,27 @@ export type Database = {
         }
         Returns: number
       }
+      ebitda_monthly: {
+        Args: {
+          p_company_id: string
+          p_from: string
+          p_to: string
+          p_today?: string
+        }
+        Returns: {
+          ca_en_attente: number
+          ca_forfait: number
+          ca_regie: number
+          ca_total: number
+          charges_exploitation: number
+          cout_freelances: number
+          cout_honoraires: number
+          cout_salaries: number
+          ebitda: number
+          month: string
+          prorata: number
+        }[]
+      }
       increment_leave_taken: {
         Args: { p_consultant_id: string; p_days: number }
         Returns: undefined
@@ -2006,6 +2108,7 @@ export type Database = {
         Returns: number
       }
       win_opportunity: { Args: { p_opportunity_id: string }; Returns: string }
+      working_days: { Args: { p_from: string; p_to: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

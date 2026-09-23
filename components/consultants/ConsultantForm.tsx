@@ -81,6 +81,9 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     tjm_cible:           '',
     leave_days_total:    '25',
     grade_id:            '',
+    date_entree:         '',
+    date_sortie:         '',
+    honoraires_mensuels: '',
   })
 
   useEffect(() => {
@@ -103,6 +106,9 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         tjm_cible:           consultant.tjmCible?.toString() ?? '',
         leave_days_total:    consultant.leaveDaysTotal?.toString() ?? '25',
         grade_id:            consultant.gradeId ?? '',
+        date_entree:         consultant.dateEntree ?? '',
+        date_sortie:         consultant.dateSortie ?? '',
+        honoraires_mensuels: consultant.honorairesMensuels?.toString() ?? '',
       })
     }
   }, [consultant])
@@ -164,6 +170,9 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         leave_days_total:    parseInt(form.leave_days_total) || 25,
         country_code:        countryCode ?? undefined,
         grade_id:            form.grade_id || null,
+        date_entree:         form.date_entree || null,
+        date_sortie:         form.date_sortie || null,
+        honoraires_mensuels: form.honoraires_mensuels ? parseFloat(form.honoraires_mensuels) : null,
       }
 
       if (isEdit) {
@@ -296,6 +305,17 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
             </div>
           </Field>
 
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Field label={t('fields.dateEntree')} style={{ flex: 1 }}>
+              <input className="search-input" style={{ width: '100%' }} type="date"
+                value={form.date_entree} onChange={e => set('date_entree', e.target.value)} />
+            </Field>
+            <Field label={t('fields.dateSortie')} style={{ flex: 1 }}>
+              <input className="search-input" style={{ width: '100%' }} type="date"
+                value={form.date_sortie} onChange={e => set('date_sortie', e.target.value)} />
+            </Field>
+          </div>
+
           {(grades?.length ?? 0) > 0 && (
             <Field label={t('fields.grade')}>
               <select className="search-input" style={{ width: '100%' }}
@@ -333,6 +353,12 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
                 value={form.tjm_facture} onChange={e => set('tjm_facture', e.target.value)} />
             </Field>
           )}
+
+          <Field label={t('fields.honoraires')}>
+            <input className="search-input" style={{ width: '100%' }} type="number" min={0} step={100}
+              value={form.honoraires_mensuels} onChange={e => set('honoraires_mensuels', e.target.value)} />
+            <span style={{ fontSize: 9, color: 'var(--text2)' }}>{t('fields.honorairesHint')}</span>
+          </Field>
 
           {tjmCoutReel !== null && (
             <div style={{

@@ -10,6 +10,7 @@ import { MargeBar }                         from '@/components/ui/MargeBar'
 import { MargeLegend }                      from '@/components/ui/MargeLegend'
 import { fmt, getMargeColor, pluralFr }     from '@/lib/utils'
 import { projectRevenue }                   from '@/lib/mission'
+import { EbitdaSection }                    from './EbitdaSection'
 import type { Tables }                       from '@/types/supabase'
 
 type ProjectFinancials = Tables<'project_financials'>
@@ -36,6 +37,8 @@ export function FinancialsClient({ projects = [] }: Props) {
     <div className="app-content">
 
       <AdminBadge label={t('adminBadge')} />
+
+      <EbitdaSection />
 
       <div className="kpi-grid">
         <KpiCard label={t('kpi.totalCA')}    value={fmt(totalCA)}      sub={t('kpi.totalCASub')} accent="cyan"  />

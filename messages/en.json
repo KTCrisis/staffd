@@ -674,6 +674,62 @@
       "good": "Margin ≥ 20% — Good",
       "watch": "Margin 10–20% — Watch",
       "low": "Margin < 10% — Low"
+    },
+    "ebitda": {
+      "title": "Current EBITDA",
+      "loading": "Computing…",
+      "missingEntry": "{count, plural, one {# consultant record has} other {# consultant records have}} no start date: EBITDA counts them from record creation. Set it on the record.",
+      "method": "Time & materials revenue = approved timesheets × sold rate; fixed price = budget by approved-day progress. Salaries and fees prorated to presence; current month: fixed costs prorated to elapsed working days, revenue and freelancers actual to date. \"Pending\" = logged but unapproved timesheets, outside EBITDA.",
+      "kpi": {
+        "current": "Month EBITDA",
+        "currentSub": "to date · {pct}% of working month",
+        "noCurrent": "closed year",
+        "ytd": "Year-to-date EBITDA",
+        "ca": "Recognised revenue",
+        "caSub": "+ {pending} awaiting approval",
+        "costs": "Year-to-date costs",
+        "costsSub": "salaries, freelancers, fees, opex"
+      },
+      "table": {
+        "title": "Monthly P&L",
+        "month": "Month",
+        "caRegie": "T&M revenue",
+        "caForfait": "Fixed-price revenue",
+        "pending": "Pending",
+        "salaries": "Salaries",
+        "freelances": "Freelancers",
+        "fees": "Fees",
+        "opex": "Opex",
+        "ebitda": "EBITDA",
+        "margin": "Margin",
+        "total": "Total",
+        "toDate": "to date · {pct}%"
+      },
+      "expenses": {
+        "title": "Operating expenses",
+        "label": "Label",
+        "amount": "Amount excl. VAT",
+        "monthly": "Monthly",
+        "once": "One-off",
+        "from": "From",
+        "until": "Until (optional)",
+        "month": "Month",
+        "add": "+ Add",
+        "remove": "Remove",
+        "empty": "No expense yet: EBITDA only counts payroll, freelancers and fees.",
+        "required": "Label and amount required.",
+        "rangeMonthly": "monthly · {from} → {until}",
+        "rangeOnce": "one-off · {month}",
+        "categories": {
+          "locaux": "Premises",
+          "outils": "Tools, licences",
+          "rc_compta": "Insurance, accounting, legal",
+          "marketing": "Marketing",
+          "deplacements": "Travel",
+          "formation": "Training",
+          "autre": "Other"
+        }
+      }
     }
   },
   "profitability": {
@@ -810,7 +866,11 @@
       "margeCible": "Target margin",
       "country": "Country (public holidays)",
       "countryInherit": "— Inherits from company ({country})",
-      "countryHint": "Uses company default country:"
+      "countryHint": "Uses company default country:",
+      "dateEntree": "Start date",
+      "dateSortie": "End date",
+      "honoraires": "Monthly fees excl. VAT (€)",
+      "honorairesHint": "Partner billing through their company: fixed monthly cost, on assignment or not. Replaces any other cost in EBITDA."
     },
     "contractTypes": {
       "employee": "👤 Employee",

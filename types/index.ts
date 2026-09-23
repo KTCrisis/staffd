@@ -39,6 +39,9 @@ export interface Consultant {
   tjmCible?:         number         // objectif commercial (analysable par IA)
   gradeId?:          string | null  // grille par grade (0005)
   gradeLabel?:       string | null
+  dateEntree?:       string | null  // présence dans l'EBITDA (0008)
+  dateSortie?:       string | null
+  honorairesMensuels?: number | null  // associé facturé via sa société : coût fixe mensuel
   tjmCoutReel?:      number         // calculé par la vue SQL (lecture seule)
   // Employee — base de calcul du coût réel
   salaireAnnuelBrut?: number        // ex : 55000

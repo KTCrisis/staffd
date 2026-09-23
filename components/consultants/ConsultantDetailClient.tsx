@@ -52,6 +52,9 @@ interface Consultant {
   tjmCible:      number | null
   gradeId:       string | null
   gradeLabel:    string | null
+  dateEntree:    string | null
+  dateSortie:    string | null
+  honorairesMensuels: number | null
   user_id:       string | null
   countryCode:   string | null
 }

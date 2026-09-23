@@ -351,3 +351,69 @@ describe('CRA fiables', () => {
     expect(code(r.error)).toContain('CRA_INVOICED')
   })
 })
+
+describe('EBITDA courant', () => {
+  // Scénario chiffré à la main, février 2026 (1er = dimanche ; 20 jours ouvrés).
+  //   E salarié 60 k × 1,5 = 90 k/an → 7 500/mois, entré le 01/01
+  //   F freelance 600/j ; H honoraires 10 000/mois, entré le 15/01
+  //   Régie 1 000/j : E 3 j + F 2 j validés, F 1 j soumis ; forfait 20 000 / 20 j : E 5 j validés
+  //   Charges : 2 000/mois depuis janvier + 500 ponctuels en février
+  beforeAll(async () => {
+    const ins = async (row: Record<string, unknown>) =>
+      (await admin.from('consultants').insert({ company_id: COMPANY_A, ...row }).select('id').single().throwOnError()).data!.id as string
+    const e = await ins({ name: 'EBITDA E', contract_type: 'employee', salaire_annuel_brut: 60000, charges_pct: 50, date_entree: '2026-01-01' })
+    const f = await ins({ name: 'EBITDA F', contract_type: 'freelance', tjm_facture: 600, date_entree: '2026-01-01' })
+    await ins({ name: 'EBITDA H', contract_type: 'freelance', is_founder: true, honoraires_mensuels: 10000, date_entree: '2026-01-15' })
+    const proj = async (row: Record<string, unknown>) =>
+      (await admin.from('projects').insert({ company_id: COMPANY_A, client_name: 'Client A', status: 'active', ...row }).select('id').single().throwOnError()).data!.id as string
+    const regie   = await proj({ name: 'EBITDA régie', billing_mode: 'regie', tjm_vendu: 1000 })
+    const forfait = await proj({ name: 'EBITDA forfait', billing_mode: 'forfait', budget_total: 20000, jours_vendus: 20 })
+    const ts = (consultant_id: string, project_id: string, date: string, status = 'approved') =>
+      ({ company_id: COMPANY_A, consultant_id, project_id, date, value: 1, status })
+    await admin.from('timesheets').insert([
+      ts(e, regie, '2026-02-02'), ts(e, regie, '2026-02-03'), ts(e, regie, '2026-02-04'),
+      ts(f, regie, '2026-02-05'), ts(f, regie, '2026-02-06'), ts(f, regie, '2026-02-09', 'submitted'),
+      ...['16', '17', '18', '19', '20'].map(d => ts(e, forfait, `2026-02-${d}`)),
+    ]).throwOnError()
+    await admin.from('operating_expenses').insert([
+      { company_id: COMPANY_A, category: 'locaux', label: 'Bureau', amount: 2000, recurrence: 'monthly', start_month: '2026-01-01' },
+      { company_id: COMPANY_A, category: 'rc_compta', label: 'Bilan', amount: 500, recurrence: 'once', start_month: '2026-02-01' },
+    ]).throwOnError()
+  })
+
+  it('mois clos : CA régie + forfait à l\'avancement, coûts complets', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data, error } = await a.rpc('ebitda_monthly', { p_company_id: COMPANY_A, p_from: '2026-01-01', p_to: '2026-02-28', p_today: '2026-09-23' })
+    expect(error).toBeNull()
+    const [jan, feb] = data!.map((r: Record<string, number>) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, k === 'month' ? v : Number(v)])))
+    expect(feb).toMatchObject({
+      ca_regie: 5000, ca_forfait: 5000, ca_total: 10000, ca_en_attente: 1000,
+      cout_salaries: 7500, cout_freelances: 1200, cout_honoraires: 10000, charges_exploitation: 2500,
+      ebitda: -11200,
+    })
+    // Janvier : H présent du 15 au 31 (17/31)
+    expect(jan.cout_honoraires).toBeCloseTo(10000 * 17 / 31, 2)
+    expect(jan.ebitda).toBeCloseTo(-(7500 + 10000 * 17 / 31 + 2000), 2)
+  })
+
+  it('mois en cours : coûts fixes au prorata des jours ouvrés, CA à date', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data } = await a.rpc('ebitda_monthly', { p_company_id: COMPANY_A, p_from: '2026-02-01', p_to: '2026-02-28', p_today: '2026-02-11' })
+    const feb = data![0] as Record<string, number>
+    expect(Number(feb.prorata)).toBeCloseTo(8 / 20, 4)
+    expect(Number(feb.ca_total)).toBe(5000)            // forfait (16-20/02) pas encore réalisé
+    expect(Number(feb.cout_salaries)).toBeCloseTo(3000, 2)
+    expect(Number(feb.charges_exploitation)).toBeCloseTo(2000 * 0.4 + 500, 2)
+  })
+
+  it('réservé à l\'admin du tenant', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const r1 = await c.rpc('ebitda_monthly', { p_company_id: COMPANY_A, p_from: '2026-01-01', p_to: '2026-02-28' })
+    expect(r1.error?.message).toContain('EBITDA_FORBIDDEN')
+    const b = await authClient(EMAILS.adminB, PWD)
+    const r2 = await b.rpc('ebitda_monthly', { p_company_id: COMPANY_A, p_from: '2026-01-01', p_to: '2026-02-28' })
+    expect(r2.error?.message).toContain('EBITDA_FORBIDDEN')
+    const { data: exp } = await c.from('operating_expenses').select('id')
+    expect(exp ?? []).toHaveLength(0)
+  })
+})
