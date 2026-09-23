@@ -116,7 +116,9 @@
       "status": "Status",
       "available": "Available from",
       "leaveDays": "Days left",
-      "occupancy": "Occupancy"
+      "occupancy": "Occupancy",
+      "client": "Client",
+      "country": "Country"
     },
     "export": "↓ Export",
     "noResults": "// no results",
@@ -183,14 +185,19 @@
     },
     "deleteBtn": "✕ Delete",
     "costLabels": {
-      "charged": "Charged"
+      "charged": "Loaded cost / day",
+      "billed": "Freelance rate / day"
     },
     "fonction": {
       "consultant": "Consultant",
       "dirigeant": "Executive",
       "commercial": "Sales",
       "support": "Support"
-    }
+    },
+    "soldes": {
+      "title": "Leave balance"
+    },
+    "noAssignments": "No assignments"
   },
   "conges": {
     "title": "Time Off",

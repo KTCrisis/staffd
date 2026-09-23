@@ -210,7 +210,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
 
           {/* Congés */}
           {c.contractType !== 'freelance' && (
-            <Panel title={t('soldes.title') ?? 'Leave balance'}>
+            <Panel title={t('soldes.title')}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -289,7 +289,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                   <thead>
                     <tr>
                       <th>{t('table.project') ?? 'Projet'}</th>
-                      <th>{t('table.client') ?? 'Client'}</th>
+                      <th>{t('table.client')}</th>
                       <th>{t('table.status') ?? 'Statut'}</th>
                       <th style={{ textAlign: 'right' }}>Alloc.</th>
                       <th>Début</th>

@@ -116,7 +116,9 @@
       "status": "Statut",
       "available": "Disponible le",
       "leaveDays": "CP restants",
-      "occupancy": "Taux occup."
+      "occupancy": "Taux occup.",
+      "client": "Client",
+      "country": "Pays"
     },
     "export": "↓ Exporter",
     "noResults": "// aucun résultat",
@@ -183,14 +185,19 @@
     },
     "deleteBtn": "✕ Supprimer",
     "costLabels": {
-      "charged": "Facturé"
+      "charged": "Coût chargé / jour",
+      "billed": "Tarif freelance / jour"
     },
     "fonction": {
       "consultant": "Consultant",
       "dirigeant": "Dirigeant",
       "commercial": "Commercial",
       "support": "Support"
-    }
+    },
+    "soldes": {
+      "title": "Soldes de congés"
+    },
+    "noAssignments": "Aucune mission"
   },
   "conges": {
     "title": "Congés",

@@ -133,7 +133,9 @@ export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[];
 
   const filtered = filter === 'all' ? invoices : invoices.filter(i => displayStatus(i) === filter)
 
-  const totalBilled  = invoices.reduce((s, i) => s + i.total_ttc, 0)
+  // Facturé = factures émises (envoyées, payées) : ni brouillons, ni annulées
+  const issued       = invoices.filter(i => i.status === 'sent' || i.status === 'paid' || i.status === 'overdue')
+  const totalBilled  = issued.reduce((s, i) => s + i.total_ttc, 0)
   const totalPaid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.total_ttc, 0)
   const totalPending = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + i.total_ttc, 0)
   const overdueCount = invoices.filter(i => i.is_overdue).length
@@ -179,7 +181,7 @@ export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[];
         <KpiCard
           label={t('kpi.totalBilled')}
           value={fmt(totalBilled)}
-          sub={t('kpi.invoiceCount', { count: invoices.length })}
+          sub={t('kpi.invoiceCount', { count: issued.length })}
         />
         <KpiCard
           label={t('kpi.collected')}
@@ -329,13 +331,13 @@ export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[];
                         {marking === inv.id ? '···' : t('actions.markPaid')}
                       </button>
                     )}
+                    {/* PDF = la page de la facture, imprimable en A4 */}
                     <button
-                      disabled
-                      title="Coming soon"
+                      onClick={e => { e.stopPropagation(); router.push(`/invoices/${inv.id}`) }}
                       style={{
                         background: 'none', border: '1px solid var(--border)',
                         color: 'var(--text2)', fontSize: 9, padding: '3px 8px',
-                        borderRadius: 2, cursor: 'not-allowed', opacity: 0.3,
+                        borderRadius: 2, cursor: 'pointer',
                         fontFamily: 'var(--font-mono, monospace)',
                       }}
                     >

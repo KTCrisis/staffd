@@ -4,6 +4,7 @@ import { getPageAuth }     from '@/lib/auth/page-auth'
 import { getTranslations } from 'next-intl/server'
 import { Topbar }          from '@/components/layout/Topbar'
 import { LeavesClient }    from '@/components/leaves/LeavesClient'
+import type { Consultant } from '@/types'
 import type { Tables }     from '@/types/supabase'
 
 interface Props {
@@ -32,7 +33,7 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   let consultantsQ = supabase
     .from('consultant_occupancy')
-    .select('id, name, initials, avatar_color, leave_days_left, rtt_left, user_id')
+    .select('id, name, initials, avatar_color, role, contract_type, leave_days_left, leave_days_total, rtt_left, rtt_total, user_id')
     .order('name')
 
   if (tenant) {
@@ -70,7 +71,26 @@ export default async function LeavesPage({ searchParams }: Props) {
     impactWarning:  r.impact_warning ?? null,
   }))
 
-  const consultants = consultantsRes.data ?? []
+  // LeaveSolde lit le modèle Consultant (camelCase) : les lignes brutes de la
+  // vue laissaient les soldes vides (« j / 25j », barres pleines).
+  type SoldeRow = Pick<Tables<'consultant_occupancy'>,
+    'id' | 'name' | 'initials' | 'avatar_color' | 'role' | 'contract_type'
+    | 'leave_days_left' | 'leave_days_total' | 'rtt_left' | 'rtt_total' | 'user_id'>
+  const consultants = ((consultantsRes.data ?? []) as SoldeRow[]).map(c => ({
+    id:             c.id ?? '',
+    name:           c.name ?? '',
+    initials:       c.initials ?? '',
+    role:           c.role ?? '',
+    avatarColor:    (c.avatar_color ?? 'green') as Consultant['avatarColor'],
+    status:         'available' as Consultant['status'],
+    contractType:   (c.contract_type ?? 'employee') as Consultant['contractType'],
+    leaveDaysLeft:  c.leave_days_left ?? 0,
+    leaveDaysTotal: c.leave_days_total ?? 25,
+    rttLeft:        c.rtt_left ?? 0,
+    rttTotal:       c.rtt_total ?? 0,
+    occupancyRate:  0,
+    user_id:        c.user_id ?? null,
+  })) as Consultant[]
 
   return (
     <>
