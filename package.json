@@ -13,8 +13,8 @@
     "db:types": "supabase gen types typescript --local > types/supabase.ts",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --env staging",
-    "cf:deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
-    "cf:deploy:cabinet": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env cabinet"
+    "cf:deploy:staging": "scripts/cf-deploy.sh staging",
+    "cf:deploy:cabinet": "scripts/cf-deploy.sh cabinet"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
