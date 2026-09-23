@@ -230,3 +230,37 @@ describe('Modèle de mission', () => {
   })
 })
 
+
+describe('Grille par grade', () => {
+  it('un admin gère la grille de son tenant ; un consultant ne la lit pas ; B ne la voit pas', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data: g, error } = await a.from('grades').insert({
+      company_id: COMPANY_A, label: 'Senior', tjm_cible: 1100, occupation_cible: 70, cout_annuel_charge: 135000,
+    }).select('id').single()
+    expect(error).toBeNull()
+
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const { data: seen } = await c.from('grades').select('id')
+    expect(seen ?? []).toHaveLength(0)
+    const { error: cErr } = await c.from('grades').insert({ company_id: COMPANY_A, label: 'Junior' })
+    expect(cErr).not.toBeNull()
+
+    const b = await authClient(EMAILS.adminB, PWD)
+    const { data: seenB } = await b.from('grades').select('id').eq('id', g!.id)
+    expect(seenB ?? []).toHaveLength(0)
+  })
+
+  it("le coût du grade alimente la vue quand la fiche n'a pas de salaire ; un grade d'un autre tenant est refusé", async () => {
+    const { data: g } = await admin.from('grades').select('id').eq('company_id', COMPANY_A).eq('label', 'Senior').single().throwOnError()
+    await admin.from('consultants').update({ grade_id: g!.id, jours_travailles: 218 }).eq('id', consultantRowId).throwOnError()
+
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data: row } = await a.from('consultant_occupancy').select('tjm_cout_reel, grade_label').eq('id', consultantRowId).single()
+    expect(Number(row!.tjm_cout_reel)).toBeCloseTo(135000 / 218, 2)
+    expect(row!.grade_label).toBe('Senior')
+
+    const { data: gB } = await admin.from('grades').insert({ company_id: COMPANY_B, label: 'Senior' }).select('id').single().throwOnError()
+    const { error } = await admin.from('consultants').update({ grade_id: gB!.id }).eq('id', consultantRowId)
+    expect(error).not.toBeNull()
+  })
+})

@@ -35,3 +35,20 @@ describe('computeProposableSalary', () => {
     expect(computeProposableSalary(input)).toBeNull()
   })
 })
+
+describe('computeProposableSalary — occupation', () => {
+  it("l'occupation réduit le coût salarié max, pas le TJM freelance", () => {
+    const base = { tjmVendu: 1100, marge: 20, charges: 42, jours: 218 }
+    const full = computeProposableSalary(base)!
+    const occ  = computeProposableSalary({ ...base, occupation: 70 })!
+    expect(occ.coutJourMax).toBeCloseTo(full.coutJourMax * 0.7, 6)
+    expect(occ.brutAnnuel).toBeCloseTo(full.brutAnnuel * 0.7, 6)
+    expect(occ.tjmFreelance).toBe(full.tjmFreelance)
+  })
+
+  it('refuse une occupation nulle ou supérieure à 100', () => {
+    const base = { tjmVendu: 1100, marge: 20, charges: 42, jours: 218 }
+    expect(computeProposableSalary({ ...base, occupation: 0 })).toBeNull()
+    expect(computeProposableSalary({ ...base, occupation: 101 })).toBeNull()
+  })
+})

@@ -37,6 +37,8 @@ export interface Consultant {
   tjm?:              number         // fallback legacy
   tjmFacture?:       number         // freelance : tarif facturé
   tjmCible?:         number         // objectif commercial (analysable par IA)
+  gradeId?:          string | null  // grille par grade (0005)
+  gradeLabel?:       string | null
   tjmCoutReel?:      number         // calculé par la vue SQL (lecture seule)
   // Employee — base de calcul du coût réel
   salaireAnnuelBrut?: number        // ex : 55000

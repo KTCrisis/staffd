@@ -50,6 +50,8 @@ interface Consultant {
   availableFrom: string | null
   tjmCoutReel:   number | null
   tjmCible:      number | null
+  gradeId:       string | null
+  gradeLabel:    string | null
   user_id:       string | null
   countryCode:   string | null
 }
@@ -126,6 +128,11 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <Badge variant={c.status as ConsultantStatus} />
                   <ContractBadge type={c.contractType} founder={c.isFounder} />
+                  {c.gradeLabel && (
+                    <span className="badge" style={{ color: 'var(--gold)', borderColor: 'color-mix(in srgb, var(--gold) 30%, transparent)' }}>
+                      {c.gradeLabel}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

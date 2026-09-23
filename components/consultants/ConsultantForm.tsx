@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslations }              from 'next-intl'
-import { createConsultant, updateConsultant, useCompanySettings } from '@/lib/data'
+import { createConsultant, updateConsultant, useCompanySettings, useGrades } from '@/lib/data'
 import type { Consultant }              from '@/types'
 import type { ContractType }            from '@/lib/data'
 
@@ -38,12 +38,16 @@ function calcTjmCoutReel(
   joursTravailles:   number,
   tjmFacture:        number | null,
   tjmFallback:       number | null,
+  gradeCost:         number | null,
 ): number | null {
-  if (contractType === 'employee' && salaireAnnuelBrut) {
-    return Math.round(salaireAnnuelBrut * (1 + chargesPct / 100) / joursTravailles)
-  }
   if (contractType === 'freelance') {
     return tjmFacture ?? tjmFallback ?? null
+  }
+  if (salaireAnnuelBrut) {
+    return Math.round(salaireAnnuelBrut * (1 + chargesPct / 100) / joursTravailles)
+  }
+  if (gradeCost) {
+    return Math.round(gradeCost / joursTravailles)
   }
   return tjmFallback ?? null
 }
@@ -51,6 +55,7 @@ function calcTjmCoutReel(
 export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('consultantForm')
   const { data: companyData } = useCompanySettings()
+  const { data: grades }      = useGrades()
   const companyCountry = companyData?.hr_settings?.country_code ?? 'FR'
 
   const isEdit = !!consultant
@@ -75,6 +80,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     tjm:                 '',
     tjm_cible:           '',
     leave_days_total:    '25',
+    grade_id:            '',
   })
 
   useEffect(() => {
@@ -96,6 +102,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         tjm:                 consultant.tjm?.toString() ?? '',
         tjm_cible:           consultant.tjmCible?.toString() ?? '',
         leave_days_total:    consultant.leaveDaysTotal?.toString() ?? '25',
+        grade_id:            consultant.gradeId ?? '',
       })
     }
   }, [consultant])
@@ -110,6 +117,11 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     setForm(f => ({ ...f, name: v, initials }))
   }
 
+  const grade = useMemo(
+    () => grades?.find(g => g.id === form.grade_id) ?? null,
+    [grades, form.grade_id],
+  )
+
   const tjmCoutReel = useMemo(() => calcTjmCoutReel(
     form.contract_type,
     form.salaire_annuel_brut ? parseFloat(form.salaire_annuel_brut) : null,
@@ -117,7 +129,8 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     parseInt(form.jours_travailles) || 218,
     form.tjm_facture ? parseFloat(form.tjm_facture) : null,
     form.tjm ? parseFloat(form.tjm) : null,
-  ), [form.contract_type, form.salaire_annuel_brut, form.charges_pct, form.jours_travailles, form.tjm_facture, form.tjm])
+    grade?.cout_annuel_charge ?? null,
+  ), [form.contract_type, form.salaire_annuel_brut, form.charges_pct, form.jours_travailles, form.tjm_facture, form.tjm, grade])
 
   const margeCible = useMemo(() => {
     if (!form.tjm_cible || !tjmCoutReel) return null
@@ -150,6 +163,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         tjm_cible:           form.tjm_cible ? parseFloat(form.tjm_cible) : undefined,
         leave_days_total:    parseInt(form.leave_days_total) || 25,
         country_code:        countryCode ?? undefined,
+        grade_id:            form.grade_id || null,
       }
 
       if (isEdit) {
@@ -282,10 +296,21 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
             </div>
           </Field>
 
+          {(grades?.length ?? 0) > 0 && (
+            <Field label={t('fields.grade')}>
+              <select className="search-input" style={{ width: '100%' }}
+                value={form.grade_id} onChange={e => set('grade_id', e.target.value)}>
+                <option value="">{t('fields.gradeNone')}</option>
+                {grades!.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+              </select>
+            </Field>
+          )}
+
           {isEmployee && (
             <>
               <Field label={t('fields.salaire')}>
-                <input className="search-input" style={{ width: '100%' }} placeholder="55 000" type="number"
+                <input className="search-input" style={{ width: '100%' }}
+                  placeholder={grade?.cout_annuel_charge ? t('fields.salaireGradeHint') : '55 000'} type="number"
                   value={form.salaire_annuel_brut} onChange={e => set('salaire_annuel_brut', e.target.value)} />
               </Field>
 
@@ -328,7 +353,7 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
           <SectionLabel>{t('sections.objective')}</SectionLabel>
 
           <Field label={t('fields.tjmCible')}>
-            <input className="search-input" style={{ width: '100%' }} placeholder="750" type="number"
+            <input className="search-input" style={{ width: '100%' }} placeholder={grade?.tjm_cible?.toString() ?? '750'} type="number"
               value={form.tjm_cible} onChange={e => set('tjm_cible', e.target.value)} />
           </Field>
 

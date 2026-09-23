@@ -715,10 +715,15 @@
     "intro": "Saisis le TJM vendu et ta marge cible pour obtenir le salaire ou le tarif maximum que tu peux proposer.",
     "inputs": {
       "title": "Entrées",
+      "grade": "Grade",
+      "gradeHint": "Reprend le TJM et l'occupation cibles du grade",
+      "gradeNone": "— Saisie libre —",
       "tjmVendu": "TJM vendu (€/j)",
       "tjmVenduHint": "Ce que le client paie par jour",
       "margeCible": "Marge cible (%)",
       "margeCibleHint": "Marge brute que tu veux conserver",
+      "occupation": "Occupation (%)",
+      "occupationHint": "Part des jours travaillés qui est facturée",
       "chargesPct": "Charges patronales (%)",
       "chargesPctHint": "Standard FR ≈ 42 %",
       "joursTravailles": "Jours travaillés / an",
@@ -743,10 +748,23 @@
     },
     "formula": {
       "title": "Comment c'est calculé",
-      "line1": "Coût/jour max = TJM vendu × (1 − marge)",
-      "line2": "Brut annuel max = coût/jour max × jours travaillés ÷ (1 + charges)"
+      "line1": "Coût/jour max = TJM vendu × (1 − marge) × occupation",
+      "line2": "Brut annuel max = coût/jour max × jours travaillés ÷ (1 + charges)",
+      "line3": "TJM freelance max = TJM vendu × (1 − marge) : un freelance n'est payé que les jours facturés"
     },
-    "invalid": "Saisis un TJM vendu et une marge inférieure à 100 % pour démarrer."
+    "invalid": "Saisis un TJM vendu et une marge inférieure à 100 % pour démarrer.",
+    "bench": {
+      "title": "Profil contre la grille",
+      "intro": "Un même coût annuel chargé, rangé dans chaque grade : le TJM et l'occupation du grade donnent le CA, la contribution en découle. Calcul sur {jours} jours travaillés.",
+      "cost": "Coût annuel chargé testé (€)",
+      "grade": "Grade",
+      "tjmOcc": "TJM · occ.",
+      "ca": "CA / an",
+      "gridCost": "Coût du grade",
+      "gridContribution": "Contribution grille",
+      "profilContribution": "Contribution du profil",
+      "profilBreakEven": "Point mort TJM du profil"
+    }
   },
   "consultantForm": {
     "titleCreate": "// nouveau consultant",
@@ -767,7 +785,10 @@
       "stack": "Stack (virgule-séparée)",
       "status": "Statut",
       "contractType": "Type de contrat",
+      "grade": "Grade",
+      "gradeNone": "— Aucun —",
       "salaire": "Salaire brut annuel (€)",
+      "salaireGradeHint": "Vide : coût du grade",
       "chargesPct": "Charges patronales (%)",
       "joursTravailles": "Jours travaillés / an",
       "tjmFacture": "TJM facturé (€/j)",
@@ -958,6 +979,7 @@
       "company": "Entreprise",
       "team": "Équipes",
       "hr": "RH",
+      "grades": "Grille",
       "billing": "Facturation",
       "ai": "IA & MCP",
       "superadmin": "Super Admin"
@@ -1156,6 +1178,27 @@
         "cancel": "Annuler",
         "removing": "Retrait…",
         "confirm": "Retirer"
+      }
+    },
+    "grades": {
+      "section": "GRILLE_PAR_GRADE",
+      "note": "Hypothèses du plan d'affaires par grade. CA et points morts calculés sur {jours} jours travaillés par an (réglages RH). Le salaire saisi sur une fiche consultant déroge au coût du grade.",
+      "empty": "Aucune grille pour ce tenant.",
+      "seed": "Charger la grille du plan d'affaires",
+      "add": "+ Ajouter un grade",
+      "remove": "Supprimer",
+      "up": "Monter",
+      "down": "Descendre",
+      "labelRequired": "Chaque grade doit avoir un libellé.",
+      "cols": {
+        "label": "Grade",
+        "tjm": "TJM cible",
+        "occ": "Occ. %",
+        "cost": "Coût chargé / an",
+        "ca": "CA / an",
+        "contribution": "Contribution / an",
+        "pmTjm": "Point mort TJM",
+        "pmOcc": "Point mort occ."
       }
     }
   },

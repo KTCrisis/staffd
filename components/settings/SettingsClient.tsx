@@ -6,22 +6,24 @@ import { useTranslations } from 'next-intl'
 import { CompanyTab }      from '@/components/settings/CompanyTab'
 import { TeamTab }         from '@/components/settings/TeamTab'
 import { HRTab }           from '@/components/settings/HRTab'
+import { GradesTab }       from '@/components/settings/GradesTab'
 import { BillingTab }      from '@/components/settings/BillingTab'
 import { AITab }           from '@/components/settings/AITab'
 import { SuperAdminTab }   from '@/components/settings/SuperAdminTab'
 
-type Tab = 'company' | 'team' | 'hr' | 'billing' | 'ai' | 'superadmin'
+type Tab = 'company' | 'team' | 'hr' | 'grades' | 'billing' | 'ai' | 'superadmin'
 
 const TAB_ICONS: Record<Tab, string> = {
   company:    '🏢',
   team:       '◈',
   hr:         '📅',
+  grades:     '▤',
   billing:    '🧾',
   ai:         '🤖',
   superadmin: '⬡',
 }
 
-const TAB_IDS: Tab[] = ['company', 'team', 'hr', 'billing', 'ai', 'superadmin']
+const TAB_IDS: Tab[] = ['company', 'team', 'hr', 'grades', 'billing', 'ai', 'superadmin']
 
 interface Props {
   userRole?:    string
@@ -54,6 +56,7 @@ export function SettingsClient({ companyId, isSuperAdmin }: Props) {
       {activeTab === 'company'    && <CompanyTab />}
       {activeTab === 'team'       && <TeamTab companyId={companyId} />}
       {activeTab === 'hr'         && <HRTab />}
+      {activeTab === 'grades'     && <GradesTab />}
       {activeTab === 'billing'    && <BillingTab />}
       {activeTab === 'ai'         && <AITab />}
       {activeTab === 'superadmin' && isSuperAdmin && <SuperAdminTab />}

@@ -336,6 +336,7 @@ export type Database = {
           country_code: string | null
           created_at: string | null
           email: string | null
+          grade_id: string | null
           id: string
           initials: string | null
           is_founder: boolean
@@ -365,6 +366,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email?: string | null
+          grade_id?: string | null
           id?: string
           initials?: string | null
           is_founder?: boolean
@@ -394,6 +396,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string | null
           email?: string | null
+          grade_id?: string | null
           id?: string
           initials?: string | null
           is_founder?: boolean
@@ -422,6 +425,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultants_grade_fk"
+            columns: ["company_id", "grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["company_id", "id"]
           },
           {
             foreignKeyName: "consultants_team_id_fkey"
@@ -558,6 +568,47 @@ export type Database = {
           },
           {
             foreignKeyName: "framework_agreements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grades: {
+        Row: {
+          company_id: string
+          cout_annuel_charge: number | null
+          created_at: string | null
+          id: string
+          label: string
+          occupation_cible: number | null
+          position: number
+          tjm_cible: number | null
+        }
+        Insert: {
+          company_id: string
+          cout_annuel_charge?: number | null
+          created_at?: string | null
+          id?: string
+          label: string
+          occupation_cible?: number | null
+          position?: number
+          tjm_cible?: number | null
+        }
+        Update: {
+          company_id?: string
+          cout_annuel_charge?: number | null
+          created_at?: string | null
+          id?: string
+          label?: string
+          occupation_cible?: number | null
+          position?: number
+          tjm_cible?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1462,6 +1513,8 @@ export type Database = {
           company_id: string | null
           contract_type: string | null
           email: string | null
+          grade_id: string | null
+          grade_label: string | null
           id: string | null
           initials: string | null
           is_founder: boolean | null
@@ -1495,6 +1548,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consultants_grade_fk"
+            columns: ["company_id", "grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["company_id", "id"]
+          },
+          {
             foreignKeyName: "consultants_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -1518,6 +1578,8 @@ export type Database = {
           consultant_id: string | null
           contract_type: string | null
           cout_consultant: number | null
+          grade_id: string | null
+          grade_label: string | null
           initials: string | null
           jours_generes: number | null
           marge_brute: number | null
@@ -1537,6 +1599,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultants_grade_fk"
+            columns: ["company_id", "grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["company_id", "id"]
           },
         ]
       }
@@ -1890,6 +1959,19 @@ export type Database = {
       }
     }
     Functions: {
+      consultant_day_cost: {
+        Args: {
+          p_charges_pct: number
+          p_contract_type: string
+          p_grade_cost: number
+          p_jours: number
+          p_override?: number
+          p_salaire: number
+          p_tjm: number
+          p_tjm_facture: number
+        }
+        Returns: number
+      }
       increment_leave_taken: {
         Args: { p_consultant_id: string; p_days: number }
         Returns: undefined

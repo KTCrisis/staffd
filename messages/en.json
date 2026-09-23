@@ -715,10 +715,15 @@
     "intro": "Enter the daily rate sold and your target margin to get the maximum salary or rate you can offer.",
     "inputs": {
       "title": "Inputs",
+      "grade": "Grade",
+      "gradeHint": "Uses the grade target rate and occupancy",
+      "gradeNone": "— Free input —",
       "tjmVendu": "Daily rate sold (€/d)",
       "tjmVenduHint": "What the client pays per day",
       "margeCible": "Target margin (%)",
       "margeCibleHint": "Gross margin you want to keep",
+      "occupation": "Occupancy (%)",
+      "occupationHint": "Share of working days that is billed",
       "chargesPct": "Employer charges (%)",
       "chargesPctHint": "FR standard ≈ 42%",
       "joursTravailles": "Working days / year",
@@ -743,10 +748,23 @@
     },
     "formula": {
       "title": "How it's computed",
-      "line1": "Max daily cost = rate sold × (1 − margin)",
-      "line2": "Max gross / year = max daily cost × working days ÷ (1 + charges)"
+      "line1": "Max day cost = sold rate × (1 − margin) × occupancy",
+      "line2": "Max gross salary = max day cost × working days ÷ (1 + charges)",
+      "line3": "Max freelance rate = sold rate × (1 − margin): a freelancer is paid on billed days only"
     },
-    "invalid": "Enter a daily rate sold and a margin below 100% to start."
+    "invalid": "Enter a daily rate sold and a margin below 100% to start.",
+    "bench": {
+      "title": "Profile against the grid",
+      "intro": "One loaded annual cost, placed in each grade: the grade rate and occupancy give revenue, contribution follows. Computed on {jours} working days.",
+      "cost": "Loaded annual cost tested (€)",
+      "grade": "Grade",
+      "tjmOcc": "Rate · occ.",
+      "ca": "Revenue / yr",
+      "gridCost": "Grade cost",
+      "gridContribution": "Grid contribution",
+      "profilContribution": "Profile contribution",
+      "profilBreakEven": "Profile break-even rate"
+    }
   },
   "consultantForm": {
     "titleCreate": "// new consultant",
@@ -767,7 +785,10 @@
       "stack": "Stack (comma-separated)",
       "status": "Status",
       "contractType": "Contract type",
+      "grade": "Grade",
+      "gradeNone": "— None —",
       "salaire": "Annual gross salary (€)",
+      "salaireGradeHint": "Empty: grade cost",
       "chargesPct": "Employer charges (%)",
       "joursTravailles": "Working days / year",
       "tjmFacture": "Billed daily rate (€/d)",
@@ -958,6 +979,7 @@
       "company": "Company",
       "team": "Team",
       "hr": "HR",
+      "grades": "Grades",
       "billing": "Billing",
       "ai": "AI & MCP",
       "superadmin": "Super Admin"
@@ -1156,6 +1178,27 @@
         "cancel": "Cancel",
         "removing": "Removing…",
         "confirm": "Remove"
+      }
+    },
+    "grades": {
+      "section": "GRADE_GRID",
+      "note": "Business plan assumptions per grade. Revenue and break-even computed on {jours} working days per year (HR settings). A salary entered on a consultant record overrides the grade cost.",
+      "empty": "No grade grid for this tenant.",
+      "seed": "Load the business plan grid",
+      "add": "+ Add a grade",
+      "remove": "Remove",
+      "up": "Move up",
+      "down": "Move down",
+      "labelRequired": "Every grade needs a label.",
+      "cols": {
+        "label": "Grade",
+        "tjm": "Target rate",
+        "occ": "Occ. %",
+        "cost": "Loaded cost / yr",
+        "ca": "Revenue / yr",
+        "contribution": "Contribution / yr",
+        "pmTjm": "Break-even rate",
+        "pmOcc": "Break-even occ."
       }
     }
   },

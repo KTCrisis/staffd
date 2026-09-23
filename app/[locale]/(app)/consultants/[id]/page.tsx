@@ -72,6 +72,8 @@ export default async function ConsultantDetailPage({ params, searchParams }: Pro
     availableFrom:   c.available_from ?? null,
     tjmCoutReel:     c.tjm_cout_reel ?? null,
     tjmCible:        c.tjm_cible ?? null,
+    gradeId:         c.grade_id ?? null,
+    gradeLabel:      c.grade_label ?? null,
     user_id:         c.user_id ?? null,
     countryCode:     c.country_code ?? null,
   }

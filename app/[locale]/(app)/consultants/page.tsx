@@ -70,6 +70,8 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     rttLeft:          r.rtt_left         ?? 0,
     tjm:              r.tjm              ?? null,
     tjmCible:         r.tjm_cible        ?? null,
+    gradeId:          r.grade_id         ?? null,
+    gradeLabel:       r.grade_label      ?? null,
     tjmCoutReel:      r.tjm_cout_reel    ?? null,
     tjmFacture:       r.tjm_facture      ?? null,
     salaireAnnuelBrut: r.salaire_annuel_brut ?? null,

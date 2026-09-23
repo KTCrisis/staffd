@@ -16,4 +16,5 @@ export * from './dashboard'
 export * from './teams'
 export * from './settings'
 export * from './crm'
+export * from './grades'
 // core (useSupabase) est intentionnellement privé — pas re-exporté

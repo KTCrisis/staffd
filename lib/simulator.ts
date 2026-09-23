@@ -5,6 +5,11 @@
  * Inversion de la vue `consultant_profitability` : à partir du TJM vendu et
  * d'une marge cible, on déduit le coût/jour max, puis le brut annuel max d'un
  * salarié et le TJM max d'un freelance.
+ *
+ * Occupation : un salarié coûte tous ses jours travaillés mais ne facture que
+ * la part occupée ; son coût/jour max est donc TJM × (1 − marge) × occupation.
+ * Un freelance n'est payé que les jours facturés : l'occupation ne le touche pas.
+ * Sans occupation fournie, on suppose 100 % (comportement historique).
  */
 
 export interface ProposableSalaryInput {
@@ -16,10 +21,12 @@ export interface ProposableSalaryInput {
   charges: number
   /** Jours travaillés dans l'année */
   jours: number
+  /** Occupation en % (0 < occupation <= 100), 100 par défaut */
+  occupation?: number
 }
 
 export interface ProposableSalaryResult {
-  /** Coût/jour maximum supportable = TJM vendu × (1 − marge) */
+  /** Coût par jour travaillé maximum = TJM vendu × (1 − marge) × occupation */
   coutJourMax: number
   /** Brut annuel max d'un salarié */
   brutAnnuel: number
@@ -36,18 +43,20 @@ export interface ProposableSalaryResult {
 export function computeProposableSalary(
   input: ProposableSalaryInput,
 ): ProposableSalaryResult | null {
-  const { tjmVendu, marge, charges, jours } = input
+  const { tjmVendu, marge, charges, jours, occupation = 100 } = input
   const valid =
-    tjmVendu > 0 && marge >= 0 && marge < 100 && jours > 0 && charges >= 0
+    tjmVendu > 0 && marge >= 0 && marge < 100 && jours > 0 && charges >= 0 &&
+    occupation > 0 && occupation <= 100
   if (!valid) return null
 
-  const coutJourMax = tjmVendu * (1 - marge / 100)
+  const coutJourFactureMax = tjmVendu * (1 - marge / 100)
+  const coutJourMax = coutJourFactureMax * (occupation / 100)
   const brutAnnuel = (coutJourMax * jours) / (1 + charges / 100)
 
   return {
     coutJourMax,
     brutAnnuel,
     brutMensuel: brutAnnuel / 12,
-    tjmFreelance: coutJourMax,
+    tjmFreelance: coutJourFactureMax,
   }
 }

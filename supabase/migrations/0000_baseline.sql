@@ -18,6 +18,8 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  grille par grade : table grades, consultants.grade_id, consultant_day_cost(),
+--               vues de coût réécrites sur la fonction (0005_grade_grid.sql).
 --   2026.09.23  projects.billing_mode, project_financials étendue (0004_mission_model.sql).
 --   2026.09.23  win_opportunity() : affaire gagnée → projet (0003_win_opportunity.sql).
 --   2026.09.23  consultants.is_founder + consultant_occupancy (0002_founder.sql).
@@ -58,9 +60,11 @@ drop table if exists team_members           cascade;
 drop table if exists teams                  cascade;
 drop table if exists projects               cascade;
 drop table if exists consultants            cascade;
+drop table if exists grades                 cascade;
 drop table if exists clients                cascade;
 drop table if exists companies              cascade;
 
+drop function if exists consultant_day_cost(text, numeric, numeric, int, numeric, numeric, numeric, numeric) cascade;
 drop function if exists is_super_admin()                              cascade;
 drop function if exists my_company_id()                               cascade;
 drop function if exists my_role()                                     cascade;
@@ -119,6 +123,25 @@ create table if not exists clients (
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
 
+-- Grille par grade (0005) : hypothèses du plan d'affaires par grade
+create table if not exists grades (
+  id                 uuid primary key default gen_random_uuid(),
+  company_id         uuid not null references companies(id) on delete cascade,
+  label              text not null,
+  position           int  not null default 0,
+  tjm_cible          numeric(10,2) check (tjm_cible >= 0),
+  occupation_cible   numeric(5,2)  check (occupation_cible between 0 and 100),  -- en %
+  cout_annuel_charge numeric(12,2) check (cout_annuel_charge >= 0),
+  created_at         timestamptz default now(),
+  unique (company_id, label),
+  unique (company_id, id)
+);
+create index if not exists grades_company_idx on grades(company_id);
+
+comment on table grades is
+  'Tenant grade grid: target day rate, target occupancy (%), loaded annual cost. Read by simulator and profitability.';
+
+
 create table if not exists consultants (
   id uuid primary key default gen_random_uuid(),
   company_id uuid references companies(id) on delete cascade,
@@ -148,6 +171,10 @@ create table if not exists consultants (
   occupancy_rate int default 0,
   -- Associé fondateur : affichage seulement, les coûts suivent contract_type
   is_founder boolean not null default false,
+  -- Grade (0005) : même tenant garanti par la clé composite
+  grade_id uuid,
+  constraint consultants_grade_fk foreign key (company_id, grade_id)
+    references grades(company_id, id) on delete set null (grade_id),
   team_id uuid,   -- FK ajoutée après création de la table teams (voir ALTER plus bas)
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
@@ -733,6 +760,32 @@ create trigger trg_sync_consultant_team_id
   after insert or update or delete on team_members
   for each row execute function sync_consultant_team_id();
 
+-- ── Coût journalier d'un consultant (pure, sans accès aux tables) ──────────
+create or replace function consultant_day_cost(
+  p_contract_type text,
+  p_salaire       numeric,
+  p_charges_pct   numeric,
+  p_jours         int,
+  p_tjm_facture   numeric,
+  p_tjm           numeric,
+  p_grade_cost    numeric,
+  p_override      numeric default null
+) returns numeric
+language sql immutable
+set search_path = public
+as $$
+  select case
+    when p_contract_type = 'freelance'
+      then coalesce(p_override, p_tjm_facture, p_tjm)
+    when p_salaire is not null
+      then round(p_salaire * (1 + coalesce(p_charges_pct, 0) / 100.0) / nullif(p_jours, 0), 2)
+    when p_grade_cost is not null
+      then round(p_grade_cost / nullif(p_jours, 0), 2)
+    else p_tjm
+  end
+$$;
+
+
 -- ============================================================
 -- 4. VUES (security_invoker = true — OBLIGATOIRE isolation RLS)
 -- ============================================================
@@ -752,14 +805,8 @@ select
   -- Contrat & coût
   c.contract_type, c.tjm, c.tjm_facture, c.tjm_cible,
   c.salaire_annuel_brut, c.charges_pct, c.jours_travailles,
-  -- tjm_cout_reel calculé selon le type de contrat
-  case
-    when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-    then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-    when c.contract_type = 'freelance'
-    then coalesce(c.tjm_facture, c.tjm)
-    else c.tjm
-  end as tjm_cout_reel,
+  consultant_day_cost(c.contract_type, c.salaire_annuel_brut, c.charges_pct,
+    c.jours_travailles, c.tjm_facture, c.tjm, g.cout_annuel_charge) as tjm_cout_reel,
   -- Congés
   c.leave_days_total, c.leave_days_taken,
   c.leave_days_total - c.leave_days_taken              as leave_days_left,
@@ -767,17 +814,17 @@ select
   coalesce(c.rtt_total, 0) - coalesce(c.rtt_taken, 0) as rtt_left,
   coalesce(sum(a.allocation), 0)                       as occupancy_rate,
   array_agg(p.name) filter (where p.name is not null)  as project_names,
-  c.is_founder
+  c.is_founder,
+  -- 0005 : grade
+  c.grade_id,
+  g.label                                              as grade_label
 from consultants c
+left join grades g      on g.id = c.grade_id
 left join assignments a on a.consultant_id = c.id
   and (a.end_date is null or a.end_date >= current_date)
   and (a.start_date is null or a.start_date <= current_date)
 left join projects p on p.id = a.project_id
-group by c.id, c.company_id, c.user_id, c.name, c.initials, c.email, c.role,
-  c.avatar_color, c.stack, c.status, c.team_id,
-  c.contract_type, c.tjm, c.tjm_facture, c.tjm_cible,
-  c.salaire_annuel_brut, c.charges_pct, c.jours_travailles,
-  c.leave_days_total, c.leave_days_taken, c.rtt_total, c.rtt_taken, c.is_founder;
+group by c.id, g.id;
 
 create view consultants_with_leave with (security_invoker = true) as
 select c.*,
@@ -786,158 +833,49 @@ select c.*,
 from consultants c;
 
 create view project_financials with (security_invoker = true) as
+with rows as (
+  select
+    p.id, p.company_id, p.name, p.client_name, p.tjm_vendu, p.jours_vendus,
+    p.billing_mode, p.budget_total,
+    a.consultant_id,
+    -- Poids : jours calendaires × allocation
+    greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
+      * coalesce(a.allocation, 0) / 100.0 as w,
+    coalesce(consultant_day_cost(c.contract_type, c.salaire_annuel_brut, c.charges_pct,
+      c.jours_travailles, c.tjm_facture, c.tjm, g.cout_annuel_charge,
+      a.tjm_facture_override), 0) as day_cost
+  from projects p
+  left join assignments a on a.project_id = p.id
+  left join consultants c on c.id = a.consultant_id
+  left join grades g      on g.id = c.grade_id
+  where (is_super_admin() or p.company_id = my_company_id())
+    and p.status in ('active', 'on_hold')
+    and coalesce(p.is_activity_type, false) = false  -- exclut les activity types
+)
 select
-  p.id,
-  p.company_id,
-  p.name,
-  coalesce(p.client_name, 'Interne') as client,
-  p.tjm_vendu,
-  p.jours_vendus,
+  id,
+  company_id,
+  name,
+  coalesce(client_name, 'Interne') as client,
+  tjm_vendu,
+  jours_vendus,
+  -- tjm_reel : coût journalier moyen de l'équipe, pondéré par (jours × allocation)
+  case when sum(w) > 0 then round(sum(day_cost * w) / sum(w), 2) end as tjm_reel,
+  case when tjm_vendu is not null and sum(w) > 0
+       then round(tjm_vendu - sum(day_cost * w) / sum(w), 2) end      as marge_par_jour,
+  case when tjm_vendu is not null and jours_vendus is not null and sum(w) > 0
+       then round((tjm_vendu - sum(day_cost * w) / sum(w)) * jours_vendus, 0) end
+                                                                      as marge_brute_totale,
+  case when tjm_vendu is not null and tjm_vendu > 0 and sum(w) > 0
+       then round((1 - sum(day_cost * w) / sum(w) / tjm_vendu) * 100, 1) end
+                                                                      as marge_pct,
+  count(distinct consultant_id) as team_size,
+  billing_mode,
+  budget_total
+from rows
+group by id, company_id, name, client_name, tjm_vendu, jours_vendus,
+  billing_mode, budget_total;
 
-  -- ── tjm_reel : moyenne pondérée par (jours × allocation) ──────────────
-  -- Pour chaque consultant : tjm_cout_reel × (durée_calendaire × allocation%)
-  -- Divisé par la somme des poids → TJM moyen équipe pondéré
-  case
-    when sum(
-      greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-      * coalesce(a.allocation, 0) / 100.0
-    ) > 0
-    then round(
-      sum(
-        -- tjm_cout_reel par consultant (même logique que consultant_occupancy)
-        case
-          when c.contract_type = 'freelance'
-          then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm, 0)
-          when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-          then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-          else coalesce(c.tjm, 0)
-        end
-        *
-        -- Poids : jours calendaires × allocation
-        (greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-         * coalesce(a.allocation, 0) / 100.0)
-      )
-      /
-      sum(
-        greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-        * coalesce(a.allocation, 0) / 100.0
-      )
-    , 2)
-    else null
-  end as tjm_reel,
-
-  -- ── marge_par_jour ────────────────────────────────────────────────────
-  case
-    when p.tjm_vendu is not null
-      and sum(
-        greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-        * coalesce(a.allocation, 0) / 100.0
-      ) > 0
-    then round(
-      p.tjm_vendu - (
-        sum(
-          case
-            when c.contract_type = 'freelance'
-            then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm, 0)
-            when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-            then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-            else coalesce(c.tjm, 0)
-          end
-          * (greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-             * coalesce(a.allocation, 0) / 100.0)
-        )
-        /
-        sum(
-          greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-          * coalesce(a.allocation, 0) / 100.0
-        )
-      )
-    , 2)
-    else null
-  end as marge_par_jour,
-
-  -- ── marge_brute_totale = marge_par_jour × jours_vendus ───────────────
-  case
-    when p.tjm_vendu is not null and p.jours_vendus is not null
-      and sum(
-        greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-        * coalesce(a.allocation, 0) / 100.0
-      ) > 0
-    then round(
-      (
-        p.tjm_vendu - (
-          sum(
-            case
-              when c.contract_type = 'freelance'
-              then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm, 0)
-              when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-              then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-              else coalesce(c.tjm, 0)
-            end
-            * (greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-               * coalesce(a.allocation, 0) / 100.0)
-          )
-          /
-          sum(
-            greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-            * coalesce(a.allocation, 0) / 100.0
-          )
-        )
-      ) * p.jours_vendus
-    , 0)
-    else null
-  end as marge_brute_totale,
-
-  -- ── marge_pct ─────────────────────────────────────────────────────────
-  case
-    when p.tjm_vendu is not null and p.tjm_vendu > 0
-      and sum(
-        greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-        * coalesce(a.allocation, 0) / 100.0
-      ) > 0
-    then round(
-      (
-        1 - (
-          sum(
-            case
-              when c.contract_type = 'freelance'
-              then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm, 0)
-              when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-              then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-              else coalesce(c.tjm, 0)
-            end
-            * (greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-               * coalesce(a.allocation, 0) / 100.0)
-          )
-          /
-          sum(
-            greatest(coalesce(a.end_date, current_date) - coalesce(a.start_date, current_date), 0)
-            * coalesce(a.allocation, 0) / 100.0
-          )
-          /
-          p.tjm_vendu
-        )
-      ) * 100
-    , 1)
-    else null
-  end as marge_pct,
-
-  count(distinct a.consultant_id) as team_size,
-
-  -- 0004 : mode de facturation (CA d'un forfait = budget_total, pas TJM × jours)
-  p.billing_mode,
-  p.budget_total
-
-from projects p
-left join assignments a on a.project_id = p.id
-left join consultants c on c.id = a.consultant_id
-where (is_super_admin() or p.company_id = my_company_id())
-  and p.status in ('active', 'on_hold')
-  and coalesce(p.is_activity_type, false) = false  -- exclut les activity types
-group by
-  p.id, p.company_id, p.name, p.client_name, p.tjm_vendu, p.jours_vendus,
-  p.billing_mode, p.budget_total;
-  -- ── timesheet_summary ─────────────────────────────────────────────────────────
 create view timesheet_summary with (security_invoker = true) as
 select
   t.company_id, t.consultant_id, c.name as consultant_name,
@@ -953,120 +891,78 @@ join projects    p on p.id = t.project_id
 group by t.company_id, t.consultant_id, c.name, t.project_id, p.name, week_start;
   -- ── profitability ─────────────────────────────────────────────────────────
 create view consultant_profitability with (security_invoker = true) as
+with rows as (
+  select
+    c.*,
+    g.label as grade_label,
+    a.id    as assignment_id,
+    p.tjm_vendu, p.jours_vendus,
+    a.allocation::float / 100 as alloc,
+    consultant_day_cost(c.contract_type, c.salaire_annuel_brut, c.charges_pct,
+      c.jours_travailles, c.tjm_facture, c.tjm, g.cout_annuel_charge) as day_cost,
+    consultant_day_cost(c.contract_type, c.salaire_annuel_brut, c.charges_pct,
+      c.jours_travailles, c.tjm_facture, c.tjm, g.cout_annuel_charge,
+      a.tjm_facture_override) as day_cost_assignment
+  from consultants c
+  left join grades g      on g.id = c.grade_id
+  left join assignments a on a.consultant_id = c.id
+  left join projects p    on p.id = a.project_id
+                         and p.status in ('active', 'on_hold')
+                         and p.tjm_vendu is not null
+  where (is_super_admin() or c.company_id = my_company_id())
+)
 select
-  c.id                  as consultant_id,
-  c.company_id, 
-  c.name,
-  c.role,
-  c.initials,
-  c.avatar_color,
-  c.contract_type,
-  c.tjm_cible,
-  c.occupancy_rate,
-  c.status,
-  -- tjm_cout_reel : calculé selon le type de contrat
-  -- employee avec salaire → salaire × (1 + charges%) / jours
-  -- freelance             → tjm_facture (ou tjm en fallback)
-  case
-    when c.contract_type = 'employee' and c.salaire_annuel_brut is not null
-    then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-    when c.contract_type = 'freelance'
-    then coalesce(c.tjm_facture, c.tjm)
-    else c.tjm
-  end                   as tjm_cout,
-  count(distinct a.id)  as nb_assignments,
+  id                    as consultant_id,
+  company_id,
+  name,
+  role,
+  initials,
+  avatar_color,
+  contract_type,
+  tjm_cible,
+  occupancy_rate,
+  status,
+  day_cost              as tjm_cout,
+  count(distinct assignment_id) as nb_assignments,
   -- Jours générés pondérés par allocation
   round(coalesce(sum(
-    case
-      when p.jours_vendus is not null and a.allocation is not null
-      then p.jours_vendus * (a.allocation::float / 100)
-      else 0
-    end
+    case when jours_vendus is not null and alloc is not null
+         then jours_vendus * alloc else 0 end
   ), 0)::numeric, 1)    as jours_generes,
   -- CA généré = tjm_vendu projet × jours × allocation
   round(coalesce(sum(
-    case
-      when p.tjm_vendu is not null and p.jours_vendus is not null and a.allocation is not null
-      then p.tjm_vendu * p.jours_vendus * (a.allocation::float / 100)
-      else 0
-    end
+    case when tjm_vendu is not null and jours_vendus is not null and alloc is not null
+         then tjm_vendu * jours_vendus * alloc else 0 end
   ), 0)::numeric, 0)    as ca_genere,
-  -- Coût consultant réel (utilise tjm_facture_override sur l'assignment si dispo)
+  -- Coût consultant (tjm_facture_override de l'affectation si présent)
   round(coalesce(sum(
-    case
-      when p.jours_vendus is not null and a.allocation is not null
-      then (
-        case
-          when c.contract_type = 'freelance'
-          then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm)
-          when c.salaire_annuel_brut is not null
-          then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-          else c.tjm
-        end
-      ) * p.jours_vendus * (a.allocation::float / 100)
-      else 0
-    end
+    case when jours_vendus is not null and alloc is not null
+         then day_cost_assignment * jours_vendus * alloc else 0 end
   ), 0)::numeric, 0)    as cout_consultant,
   -- Marge brute = CA - coût
   round(coalesce(sum(
-    case
-      when p.tjm_vendu is not null and p.jours_vendus is not null and a.allocation is not null
-      then (
-        p.tjm_vendu - (
-          case
-            when c.contract_type = 'freelance'
-            then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm)
-            when c.salaire_annuel_brut is not null
-            then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-            else c.tjm
-          end
-        )
-      ) * p.jours_vendus * (a.allocation::float / 100)
-      else 0
-    end
+    case when tjm_vendu is not null and jours_vendus is not null and alloc is not null
+         then (tjm_vendu - day_cost_assignment) * jours_vendus * alloc else 0 end
   ), 0)::numeric, 0)    as marge_brute,
   -- Marge %
   case
-    when sum(
-      case when p.tjm_vendu is not null and p.jours_vendus is not null and a.allocation is not null
-      then p.tjm_vendu * p.jours_vendus * (a.allocation::float / 100) else 0 end
-    ) > 0
+    when sum(case when tjm_vendu is not null and jours_vendus is not null and alloc is not null
+                  then tjm_vendu * jours_vendus * alloc else 0 end) > 0
     then round((
-      sum(case
-        when p.tjm_vendu is not null and p.jours_vendus is not null and a.allocation is not null
-        then (
-          p.tjm_vendu - (
-            case
-              when c.contract_type = 'freelance'
-              then coalesce(a.tjm_facture_override, c.tjm_facture, c.tjm)
-              when c.salaire_annuel_brut is not null
-              then round(c.salaire_annuel_brut * (1 + c.charges_pct / 100.0) / c.jours_travailles, 2)
-              else c.tjm
-            end
-          )
-        ) * p.jours_vendus * (a.allocation::float / 100)
-        else 0
-      end) /
-      sum(case
-        when p.tjm_vendu is not null and p.jours_vendus is not null and a.allocation is not null
-        then p.tjm_vendu * p.jours_vendus * (a.allocation::float / 100) else 0
-      end) * 100
+      sum(case when tjm_vendu is not null and jours_vendus is not null and alloc is not null
+               then (tjm_vendu - day_cost_assignment) * jours_vendus * alloc else 0 end)
+      /
+      sum(case when tjm_vendu is not null and jours_vendus is not null and alloc is not null
+               then tjm_vendu * jours_vendus * alloc else 0 end) * 100
     )::numeric, 1)
     else 0
-  end                   as marge_pct
-
-from consultants c
-left join assignments a on a.consultant_id = c.id
-left join projects p    on p.id = a.project_id
-                       and p.status in ('active', 'on_hold')
-                       and p.tjm_vendu is not null
-where (is_super_admin() or c.company_id = my_company_id())
-group by
-  c.id, c.company_id, c.name, c.role, c.initials, c.avatar_color,
-  c.contract_type, c.tjm_cible, c.tjm, c.tjm_facture,
-  c.salaire_annuel_brut, c.charges_pct, c.jours_travailles,
-  c.occupancy_rate, c.status;
-
+  end                   as marge_pct,
+  -- 0005 : grade
+  grade_id,
+  grade_label
+from rows
+group by id, company_id, name, role, initials, avatar_color, contract_type,
+  tjm_cible, occupancy_rate, status, day_cost, grade_id, grade_label;
 
 create or replace view invoice_list
 with (security_invoker = true) as
@@ -1458,6 +1354,7 @@ alter table contacts             enable row level security;
 alter table framework_agreements enable row level security;
 alter table opportunities        enable row level security;
 alter table interactions         enable row level security;
+alter table grades               enable row level security;
 
 -- contacts
 drop policy if exists "contacts_select" on contacts;
@@ -1498,6 +1395,18 @@ create policy "interactions_select" on interactions for select using (is_super_a
 create policy "interactions_insert" on interactions for insert with check (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')));
 create policy "interactions_update" on interactions for update using (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')));
 create policy "interactions_delete" on interactions for delete using (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'));
+
+-- grades (0005) : lecture admin/manager (coûts), écriture admin
+drop policy if exists "grades_select" on grades;
+drop policy if exists "grades_insert" on grades;
+drop policy if exists "grades_update" on grades;
+drop policy if exists "grades_delete" on grades;
+create policy "grades_select" on grades for select using (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')));
+create policy "grades_insert" on grades for insert with check (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'));
+create policy "grades_update" on grades for update using (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'))
+                                          with check (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'));
+create policy "grades_delete" on grades for delete using (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'));
+
 
 -- ============================================================
 -- 6. REALTIME

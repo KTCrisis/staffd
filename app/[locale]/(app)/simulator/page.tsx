@@ -13,7 +13,7 @@ interface Props {
 export default async function SimulatorPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('simulator')
-  const { role, isSA, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, companyId, companyName, supabase } = await getPageAuth(tenant)
 
   if (role !== 'admin' && !isSA) redirect('/dashboard')
 
@@ -24,10 +24,19 @@ export default async function SimulatorPage({ searchParams }: Props) {
   const hr = (data?.hr_settings ?? {}) as { working_days_per_year?: number }
   const workingDays = hr.working_days_per_year ?? 218
 
+  // Grille par grade (0005) : alimente le choix de grade et le banc profil/grille
+  let gq = supabase
+    .from('grades')
+    .select('id, label, tjm_cible, occupation_cible, cout_annuel_charge')
+    .order('position')
+  const gradesCompany = tenant ?? companyId
+  if (gradesCompany) gq = gq.eq('company_id', gradesCompany)
+  const { data: grades } = await gq
+
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
-      <SimulatorClient defaultWorkingDays={workingDays} />
+      <SimulatorClient defaultWorkingDays={workingDays} grades={grades ?? []} />
     </>
   )
 }
