@@ -8,9 +8,16 @@
 --   supabase/seed.*.local.sql           tenants réels, ignorés par git (dépôt public)
 -- En local : `npx supabase db reset` applique ce fichier puis les seeds (config.toml).
 -- En prod  : base NEUVE seulement — SQL Editor, ce fichier PUIS le seed voulu.
---            Base existante : appliquer les migrations 0001+ manquantes, JAMAIS ce
---            fichier : il commence par un drop-all qui efface toutes les données
---            métier (auth.users préservés).
+--            Base existante : appliquer les migrations 0008+ absentes de sa table
+--            schema_migrations, JAMAIS ce fichier : il commence par un drop-all qui
+--            efface toutes les données métier (auth.users préservés).
+--
+-- Migrations : fichiers numérotés à la suite de ce baseline (prochain : 0008).
+-- Chacune est idempotente, reportée ici en parallèle, et se termine par
+--   insert into schema_migrations (version) values ('00NN_nom') on conflict do nothing;
+-- `select * from schema_migrations order by version` dit où en est une base.
+-- 0001 à 0007 ont été fusionnés dans ce fichier le 2026.09.23 (toutes les bases
+-- étaient à 0007) ; leur texte reste dans l'historique git.
 --
 -- Sections : 0. drops · 1. extensions · 2. tables (PSA) · 2b. facturation
 --            2c. CRM avant-vente · 3. fonctions/triggers/RPC · 4. vues
@@ -18,6 +25,7 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  fusion de 0001-0007 dans ce fichier ; table schema_migrations.
 --   2026.09.23  is_super_admin() rend false au lieu de NULL (0007_super_admin_boolean.sql).
 --   2026.09.23  CRA fiables : déclencheur timesheets_guard (plafond 1 j/jour, congés,
 --               transitions, verrou des validés) + reopen_timesheets() (0006_cra_integrity.sql).
@@ -66,6 +74,7 @@ drop table if exists consultants            cascade;
 drop table if exists grades                 cascade;
 drop table if exists clients                cascade;
 drop table if exists companies              cascade;
+drop table if exists schema_migrations      cascade;
 
 drop function if exists timesheets_guard()                            cascade;
 drop function if exists reopen_timesheets(uuid, date, date)           cascade;
@@ -94,6 +103,15 @@ create extension if not exists "uuid-ossp";
 -- ============================================================
 -- 2. TABLES
 -- ============================================================
+
+-- Registre des migrations appliquées à cette base (cf. en-tête). RLS sans
+-- politique : lisible par la clé service et le SQL Editor, pas par l'API.
+create table if not exists schema_migrations (
+  version    text primary key,
+  applied_at timestamptz not null default now()
+);
+alter table schema_migrations enable row level security;
+insert into schema_migrations (version) values ('0007_squashed_into_baseline') on conflict do nothing;
 
 create table if not exists companies (
   id               uuid primary key default gen_random_uuid(),
