@@ -25,6 +25,8 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  confidentialité : consultants_select restreint, consultant_directory,
+--               marges réservées admin/manager (0011_confidentiality.sql).
 --   2026.09.23  factures : numéro à l'émission (issue_invoice), verrou des émises,
 --               clients.billing_address/siren/tva_number (0010_invoicing.sql).
 --   2026.09.23  consultants.fonction (dirigeant, commercial, support non facturables) ;
@@ -56,6 +58,7 @@
 drop view if exists timesheet_summary      cascade;
 drop view if exists project_financials     cascade;
 drop view if exists consultants_with_leave cascade;
+drop view if exists consultant_directory   cascade;
 drop view if exists consultant_occupancy   cascade;
 drop view if exists consultant_profitability cascade;
 drop view if exists team_details            cascade;
@@ -122,7 +125,7 @@ create table if not exists schema_migrations (
   applied_at timestamptz not null default now()
 );
 alter table schema_migrations enable row level security;
-insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda'), ('0009_staff_function'), ('0010_invoicing') on conflict do nothing;
+insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda'), ('0009_staff_function'), ('0010_invoicing'), ('0011_confidentiality') on conflict do nothing;
 
 create table if not exists companies (
   id               uuid primary key default gen_random_uuid(),
@@ -1337,6 +1340,16 @@ left join assignments a on a.consultant_id = c.id
 left join projects p on p.id = a.project_id
 group by c.id, g.id;
 
+-- Annuaire sans montant (0011), droits du propriétaire : filtre de tenant dans la vue
+create view consultant_directory as
+select c.id, c.company_id, c.user_id, c.name, c.initials, c.role, c.avatar_color,
+       c.status, c.stack, c.team_id, c.contract_type, c.is_founder, c.fonction
+  from consultants c
+ where is_super_admin() or c.company_id = my_company_id();
+
+comment on view consultant_directory is
+  'Colleague directory without any compensation field. Owner-rights view: tenant filter inside.';
+
 create view consultants_with_leave with (security_invoker = true) as
 select c.*,
   c.leave_days_total - c.leave_days_taken              as leave_days_left,
@@ -1359,7 +1372,7 @@ with rows as (
   left join assignments a on a.project_id = p.id
   left join consultants c on c.id = a.consultant_id
   left join grades g      on g.id = c.grade_id
-  where (is_super_admin() or p.company_id = my_company_id())
+  where (is_super_admin() or (p.company_id = my_company_id() and my_role() in ('admin','manager')))
     and p.status in ('active', 'on_hold')
     and coalesce(p.is_activity_type, false) = false  -- exclut les activity types
 )
@@ -1420,7 +1433,7 @@ with rows as (
   left join projects p    on p.id = a.project_id
                          and p.status in ('active', 'on_hold')
                          and p.tjm_vendu is not null
-  where (is_super_admin() or c.company_id = my_company_id())
+  where (is_super_admin() or (c.company_id = my_company_id() and my_role() in ('admin','manager')))
 )
 select
   id                    as consultant_id,
@@ -1702,7 +1715,8 @@ drop policy if exists "consultants_update" on consultants;
 drop policy if exists "consultants_delete" on consultants;
 drop policy if exists "consultants_read"   on consultants;
 drop policy if exists "consultants_write"  on consultants;
-create policy "consultants_select" on consultants for select using (is_super_admin() or company_id = my_company_id() or user_id = auth.uid());
+-- 0011 : un consultant/freelance ne voit que SA fiche (salaire, tarifs) ; collègues via consultant_directory
+create policy "consultants_select" on consultants for select using (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')) or user_id = auth.uid());
 create policy "consultants_insert" on consultants for insert with check (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')));
 create policy "consultants_update" on consultants for update using (is_super_admin() or (company_id = my_company_id() and my_role() in ('admin','manager')));
 create policy "consultants_delete" on consultants for delete using (is_super_admin() or (company_id = my_company_id() and my_role() = 'admin'));
@@ -1951,4 +1965,9 @@ grant all on all routines  in schema public to anon, authenticated, service_role
 alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 alter default privileges in schema public grant all on routines  to anon, authenticated, service_role;
+
+-- Annuaire (0011) : pas d'accès anonyme ; lecture seule pour les connectés
+revoke all on consultant_directory from anon;
+revoke all on consultant_directory from authenticated;
+grant select on consultant_directory to authenticated, service_role;
 --   solo         : flux7art+marc@gmail.com      (Marc Dupont, mode solo)

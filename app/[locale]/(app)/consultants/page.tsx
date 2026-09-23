@@ -86,11 +86,42 @@ export default async function ConsultantsPage({ searchParams }: Props) {
     teamId:           r.team_id          ?? null,
   }))
 
+  // Consultant / freelance : la RLS ne lui rend que SA fiche (0011). Les
+  // collègues viennent de l'annuaire, sans aucun montant ni solde de congés.
+  let rows = consultants as Consultant[]
+  if (role === 'consultant' || role === 'freelance') {
+    let dq = supabase.from('consultant_directory').select('*').order('name')
+    if (tenant) dq = dq.eq('company_id', tenant)
+    const { data: dir } = await dq
+    type DirRow = Pick<Tables<'consultant_directory'>,
+      'id' | 'company_id' | 'user_id' | 'name' | 'initials' | 'role' | 'avatar_color'
+      | 'status' | 'stack' | 'team_id' | 'contract_type' | 'is_founder' | 'fonction'>
+    const own = new Map(rows.map(c => [c.id, c]))
+    rows = ((dir ?? []) as DirRow[]).map(d => own.get(d.id ?? '') ?? ({
+      id:            d.id ?? '',
+      companyId:     d.company_id ?? '',
+      name:          d.name ?? '',
+      initials:      d.initials ?? '',
+      role:          d.role ?? '',
+      avatarColor:   (d.avatar_color ?? 'green') as Consultant['avatarColor'],
+      stack:         d.stack ?? [],
+      status:        (d.status ?? 'available') as Consultant['status'],
+      contractType:  (d.contract_type ?? 'employee') as Consultant['contractType'],
+      isFounder:     d.is_founder ?? false,
+      fonction:      (d.fonction ?? 'consultant') as Consultant['fonction'],
+      // Masqués pour un collègue : affichés « — »
+      occupancyRate: undefined as unknown as number,
+      leaveDaysLeft: undefined as unknown as number,
+      user_id:       d.user_id ?? null,
+      teamId:        d.team_id ?? undefined,
+    } as Consultant))
+  }
+
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <ConsultantsClient
-        consultants={consultants as Consultant[]}
+        consultants={rows}
         userRole={role}
         companyId={companyId}
       />

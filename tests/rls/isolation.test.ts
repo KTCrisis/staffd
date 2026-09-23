@@ -493,3 +493,37 @@ describe('Factures justes', () => {
     expect(code((await c.rpc('issue_invoice', { p_invoice_id: empty!.id })).error)).toContain('INVOICE_FORBIDDEN')
   })
 })
+
+describe('Confidentialité des rémunérations et des marges', () => {
+  beforeAll(async () => {
+    await admin.from('consultants').update({ salaire_annuel_brut: 70000, honoraires_mensuels: null }).eq('id', consultantRowId).throwOnError()
+    await admin.from('consultants').insert({ company_id: COMPANY_A, name: 'Collègue payé', contract_type: 'employee', salaire_annuel_brut: 99000 }).throwOnError()
+  })
+
+  it('un consultant ne lit que SA fiche, salaire compris', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const { data } = await c.from('consultants').select('id, salaire_annuel_brut')
+    expect((data ?? []).map(r => r.id)).toEqual([consultantRowId])
+    const { data: occ } = await c.from('consultant_occupancy').select('id, tjm_cout_reel')
+    expect((occ ?? []).map(r => r.id)).toEqual([consultantRowId])
+  })
+
+  it('un consultant ne lit aucune marge', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    expect((await c.from('consultant_profitability').select('consultant_id')).data ?? []).toHaveLength(0)
+    expect((await c.from('project_financials').select('id')).data ?? []).toHaveLength(0)
+  })
+
+  it("l'annuaire montre les collègues sans montant ; B ne voit pas A ; l'admin garde tout", async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const { data: dir } = await c.from('consultant_directory').select('*')
+    expect((dir ?? []).some(r => r.name === 'Collègue payé')).toBe(true)
+    expect(Object.keys(dir![0])).not.toContain('salaire_annuel_brut')
+    const b = await authClient(EMAILS.adminB, PWD)
+    const { data: dirB } = await b.from('consultant_directory').select('name')
+    expect((dirB ?? []).some(r => r.name === 'Collègue payé')).toBe(false)
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data: all } = await a.from('consultants').select('name, salaire_annuel_brut').eq('name', 'Collègue payé')
+    expect(Number(all![0].salaire_annuel_brut)).toBe(99000)
+  })
+})

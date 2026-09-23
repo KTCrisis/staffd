@@ -62,17 +62,19 @@ export function ConsultantTable({ consultants, onSelect }: ConsultantTableProps)
 
                 {/* CP restants — masqué pour freelance */}
                 <td style={{ color: 'var(--text2)' }}>
-                  {isFreelance
+                  {isFreelance || c.leaveDaysLeft == null
                     ? <span style={{ opacity: 0.35, fontSize: 10 }}>—</span>
                     : `${c.leaveDaysLeft}j`
                   }
                 </td>
 
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontWeight: 700, minWidth: 36, fontSize: 11 }}>{c.occupancyRate}%</span>
-                    <ProgressBar value={c.occupancyRate} style={{ flex: 1, minWidth: 80 }} />
-                  </div>
+                  {c.occupancyRate == null ? <span style={{ opacity: 0.35, fontSize: 10 }}>—</span> : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontWeight: 700, minWidth: 36, fontSize: 11 }}>{c.occupancyRate}%</span>
+                      <ProgressBar value={c.occupancyRate} style={{ flex: 1, minWidth: 80 }} />
+                    </div>
+                  )}
                 </td>
 
               </tr>
