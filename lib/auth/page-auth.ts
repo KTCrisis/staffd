@@ -3,6 +3,7 @@
 
 import { cookies }            from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import { serverCookies }      from '@/lib/supabase-cookies'
 import type { User }          from '@supabase/supabase-js'
 import type { Database }      from '@/types/supabase'
 import type { UserRole }      from './roles'
@@ -23,7 +24,7 @@ export async function getPageAuth(_tenant?: string): Promise<PageAuth> {
   const anonClient = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
+    { cookies: serverCookies(cookieStore) }
   )
 
   const { data: { user } } = await anonClient.auth.getUser()
@@ -38,7 +39,7 @@ export async function getPageAuth(_tenant?: string): Promise<PageAuth> {
     ? createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        { cookies: { getAll: () => cookieStore.getAll() } }
+        { cookies: serverCookies(cookieStore) }
       )
     : anonClient
 

@@ -24,8 +24,17 @@ export async function middleware(request: NextRequest) {
 
   if (isPublic) return intlMiddleware(request)
 
-  // ── 3. Supabase SSR — pattern officiel ────────────────────
-  let supabaseResponse = NextResponse.next({ request })
+  // ── 3. Supabase SSR ───────────────────────────────────────
+  // La réponse vient de next-intl (next, rewrite ou redirect de locale).
+  // Si getUser() rafraîchit la session, les nouveaux jetons partent :
+  //   · vers le navigateur (Set-Cookie sur la réponse) ;
+  //   · vers les composants serveur de CETTE requête (en-tête cookie
+  //     réécrit, cf. forwardRequestCookies). Sans ce second envoi, les
+  //     pages relisaient l'ancien jeton et le rafraîchissaient une
+  //     seconde fois : jeton « Already Used », retour au login.
+  // ⚠️ Les options (secure, httpOnly, sameSite, path) sont conservées :
+  //    sans elles iOS Safari rejette les cookies → boucle de redirection.
+  const response = intlMiddleware(request)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,11 +43,10 @@ export async function middleware(request: NextRequest) {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
@@ -69,20 +77,33 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── 6. Session valide → intl + transfert complet des cookies
-  // ⚠️ Sans les options (secure, httpOnly, sameSite, path),
-  //    iOS Safari rejette les cookies → redirect loop mobile
-  const intlResponse = intlMiddleware(request)
+  // ── 6. Session valide → jetons à jour transmis aux pages ──
+  forwardRequestCookies(request, response)
+  return response
+}
 
-  supabaseResponse.cookies.getAll().forEach(cookie => {
-    intlResponse.cookies.set({
-      name:  cookie.name,
-      value: cookie.value,
-      ...supabaseResponse.cookies.get(cookie.name),
-    })
+/**
+ * Transmet aux composants serveur l'en-tête cookie à jour, sur la réponse
+ * next-intl existante. On laisse NextResponse.next({ request: { headers } })
+ * calculer les en-têtes de surcharge (x-middleware-override-headers doit
+ * lister TOUS les en-têtes de la requête : Next supprime ceux qui manquent),
+ * puis on les fusionne avec ceux que next-intl a posés, qui gardent la main
+ * sauf pour le cookie.
+ */
+function forwardRequestCookies(request: NextRequest, response: NextResponse) {
+  const PREFIX   = 'x-middleware-request-'
+  const override = NextResponse.next({ request: { headers: request.headers } }).headers
+  const split    = (v: string | null) => (v ?? '').split(',').map(h => h.trim()).filter(Boolean)
+
+  const intlNames = new Set(split(response.headers.get('x-middleware-override-headers')))
+  const names     = new Set([...intlNames, ...split(override.get('x-middleware-override-headers'))])
+
+  override.forEach((value, key) => {
+    if (!key.startsWith(PREFIX)) return
+    const name = key.slice(PREFIX.length)
+    if (name === 'cookie' || !intlNames.has(name)) response.headers.set(key, value)
   })
-
-  return intlResponse
+  response.headers.set('x-middleware-override-headers', [...names].join(','))
 }
 
 export const config = {

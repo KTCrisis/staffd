@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cookies }      from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import { serverCookies }      from '@/lib/supabase-cookies'
 import { grantableRoles }     from '@/lib/auth/roles'
 
 // 1. Force la route en mode dynamique pour éviter le scan au build
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
+    { cookies: serverCookies(cookieStore) }
   )
   
   const { data: { user } } = await supabase.auth.getUser()
