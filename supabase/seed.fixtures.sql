@@ -33,7 +33,7 @@ insert into companies (id, name, slug, mode, billing_settings) values (
     "bank_bic": "BNPAFRPPXXX",
     "bank_name": "BNP Paribas",
     "legal_mention": "SAS au capital de 10 000€ — RCS Paris 123 456 789",
-    "invoice_prefix": "NOR-2026-",
+    "invoice_prefix": "NOR-{YYYY}-",
     "invoice_counter": 0
   }'::jsonb
 ) on conflict (id) do update set billing_settings = excluded.billing_settings;
@@ -217,7 +217,7 @@ insert into companies (id, name, slug, mode, billing_settings) values (
     "bank_bic": "CEPAFRPP",
     "bank_name": "Caisse d Epargne",
     "legal_mention": "SARL au capital de 5 000€ — RCS Paris 554 433 300",
-    "invoice_prefix": "AC-2026-",
+    "invoice_prefix": "AC-{YYYY}-",
     "invoice_counter": 0
   }'::jsonb
 ) on conflict (id) do nothing;
@@ -570,7 +570,7 @@ insert into companies (id, name, slug, mode, billing_settings) values (
     "bank_bic": "AGRIFRPPXXX",
     "bank_name": "Crédit Agricole",
     "legal_mention": "Auto-entrepreneur — dispensé d immatriculation au RCS",
-    "invoice_prefix": "MD-2026-",
+    "invoice_prefix": "MD-{YYYY}-",
     "invoice_counter": 0
   }'::jsonb
 ) on conflict (id) do nothing;

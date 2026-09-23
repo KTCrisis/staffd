@@ -336,7 +336,10 @@
       "clientNotFound": "Client absent de la liste ?",
       "createClient": "Le créer ici",
       "clientType": "Type de client",
-      "clientTypeHint": "Intermédiaire : ESN ou société par laquelle passe la facture"
+      "clientTypeHint": "Intermédiaire : ESN ou société par laquelle passe la facture",
+      "billingAddress": "Adresse de facturation",
+      "siren": "SIREN",
+      "tvaNumber": "N° TVA intracom."
     },
     "activeCount": "{count} actif(s)",
     "clientType": {
@@ -1113,7 +1116,7 @@
       "bankNameLabel": "Nom de la banque",
       "invoiceSection": "PARAMÈTRES FACTURES",
       "prefixLabel": "Préfixe facture",
-      "prefixHint": "ex. NOR-2026-",
+      "prefixHint": "{YYYY} = année d'émission ; la séquence repart à 1 chaque année",
       "counterLabel": "Compteur factures",
       "counterHint": "Lecture seule — auto-incrémenté",
       "paymentTermsLabel": "Délai de paiement (jours)",
@@ -1121,7 +1124,15 @@
       "tvaLabel": "Taux TVA (%)",
       "tvaHint": "Mettre 0 pour auto-entrepreneur (non assujetti)",
       "legalLabel": "Mention légale",
-      "legalHint": "Apparaît en bas de chaque facture"
+      "legalHint": "Apparaît en bas de chaque facture",
+      "identitySection": "IDENTITÉ_ÉMETTEUR",
+      "legalNameLabel": "Raison sociale",
+      "legalFormLabel": "Forme juridique",
+      "shareCapitalLabel": "Capital (€)",
+      "addressLabel": "Adresse du siège",
+      "siretLabel": "SIRET",
+      "rcsLabel": "RCS (ville du greffe)",
+      "tvaNumberLabel": "N° TVA intracommunautaire"
     },
     "company": {
       "identitySection": "IDENTITÉ SOCIÉTÉ",
@@ -1314,12 +1325,15 @@
         "allConsultants": "Tous les consultants",
         "import": "↓ importer",
         "loading": "···",
-        "noData": "Aucune entrée approuvée trouvée pour cette période."
+        "noData": "Aucune entrée approuvée trouvée pour cette période.",
+        "allProjects": "— Tous les projets en régie —"
       },
       "projectImport": {
         "label": "Projet",
         "placeholder": "Sélectionner un projet…",
-        "load": "↓ charger"
+        "load": "↓ charger",
+        "forfaitLine": "Forfait — {name}",
+        "forfaitDetail": "Budget {budget} € HT · déjà facturé {invoiced} € HT"
       },
       "fields": {
         "client": "Client",
@@ -1343,7 +1357,8 @@
         "units": {
           "day": "jour",
           "hour": "heure",
-          "unit": "unité"
+          "unit": "unité",
+          "fixed": "Forfait"
         }
       },
       "totals": {
@@ -1353,7 +1368,7 @@
       },
       "actions": {
         "saveDraft": "enregistrer le brouillon",
-        "send": "→ enregistrer & marquer comme envoyé",
+        "send": "→ enregistrer & émettre (numéro définitif)",
         "saving": "···"
       },
       "months": [
@@ -1411,7 +1426,8 @@
         "pdf": "PDF ↓",
         "markPaid": "✓ encaissé"
       },
-      "empty": "Aucune facture ne correspond à ce filtre."
+      "empty": "Aucune facture ne correspond à ce filtre.",
+      "draftNumber": "Brouillon"
     },
     "preview": {
       "title": "FACTURE",
@@ -1435,7 +1451,50 @@
       "subtotal": "Sous-total HT",
       "vat": "TVA {rate}%",
       "grandTotal": "TOTAL TTC",
-      "paymentDetails": "Coordonnées bancaires"
+      "paymentDetails": "Coordonnées bancaires",
+      "draft": "BROUILLON — numéro attribué à l'émission",
+      "formCapital": "{form} au capital de {capital} €",
+      "vatNumber": "TVA intracom.",
+      "units": {
+        "day": "jour",
+        "hour": "heure",
+        "unit": "unité",
+        "fixed": "forfait"
+      },
+      "legal": {
+        "penalties": "Pénalités de retard : trois fois le taux d'intérêt légal, exigibles dès le lendemain de l'échéance (art. L441-10 C. com.).",
+        "indemnity": "Indemnité forfaitaire pour frais de recouvrement en cas de retard : 40 € (art. D441-5 C. com.).",
+        "discount": "Pas d'escompte pour paiement anticipé."
+      }
+    },
+    "detail": {
+      "breadcrumb": "// facture",
+      "draftTitle": "Facture — brouillon",
+      "back": "Factures",
+      "issue": "Émettre",
+      "delete": "Supprimer le brouillon",
+      "markPaid": "Marquer payée",
+      "unpay": "Repasser en envoyée",
+      "cancel": "Annuler la facture",
+      "print": "Imprimer / PDF",
+      "draftNote": "Brouillon : pas encore de numéro. L'émission attribue le numéro suivant de la séquence, date la facture du jour et la fige.",
+      "confirmIssue": "Émettre la facture ? Elle recevra un numéro définitif et ne pourra plus être modifiée.",
+      "confirmDelete": "Supprimer ce brouillon ?",
+      "confirmCancel": "Annuler cette facture ? Elle reste numérotée ; un avoir sera à établir hors outil.",
+      "status": {
+        "draft": "Brouillon",
+        "sent": "Émise",
+        "paid": "Payée",
+        "overdue": "En retard",
+        "cancelled": "Annulée"
+      },
+      "errors": {
+        "INVOICE_LOCKED": "Facture émise : elle ne peut plus être modifiée ni supprimée.",
+        "INVOICE_NOT_DRAFT": "Cette facture est déjà émise.",
+        "INVOICE_EMPTY": "Impossible d'émettre une facture sans ligne.",
+        "INVOICE_FORBIDDEN": "Seuls un admin ou un manager peuvent émettre une facture.",
+        "INVOICE_ISSUE_REQUIRED": "Une facture ne passe « émise » que par le bouton Émettre."
+      }
     }
   },
   "orgSwitcher": {

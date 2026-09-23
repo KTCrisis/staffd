@@ -22,6 +22,9 @@ export interface ClientInput {
   contact_email?: string
   contact_phone?: string
   notes?:         string
+  billing_address?: string | null
+  siren?:           string | null
+  tva_number?:      string | null
   company_id:     string
 }
 
@@ -41,6 +44,9 @@ function toClient(row: Record<string, unknown>): Client {
     contactEmail:   row.contact_email as string | undefined,
     contactPhone:   row.contact_phone as string | undefined,
     notes:          row.notes as string | undefined,
+    billingAddress: row.billing_address as string | undefined,
+    siren:          row.siren as string | undefined,
+    tvaNumber:      row.tva_number as string | undefined,
     activeProjects: row.active_projects as number | undefined,
     totalProjects:  row.total_projects as number | undefined,
   }

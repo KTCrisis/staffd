@@ -249,11 +249,11 @@ export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[];
           </thead>
           <tbody>
             {filtered.map(inv => (
-              <tr key={inv.id}>
+              <tr key={inv.id} onClick={() => router.push(`/invoices/${inv.id}`)}>
 
                 <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <span className="td-primary">{inv.invoice_number}</span>
+                    <span className="td-primary">{inv.invoice_number || t('draftNumber')}</span>
                     <span style={{ fontSize: 9, color: 'var(--text2)' }}>
                       {SOURCE_ICON[inv.source_type] ?? '—'} {inv.source_type}
                       {inv.source_period_start && (' · ' + fmtDate(inv.source_period_start))}
@@ -316,7 +316,7 @@ export function InvoiceList({ invoices: rows, error }: { invoices: InvoiceRow[];
                   <div style={{ display: 'flex', gap: 6 }}>
                     {canMarkPaid(inv) && (
                       <button
-                        onClick={() => handleMarkPaid(inv)}
+                        onClick={e => { e.stopPropagation(); handleMarkPaid(inv) }}
                         disabled={marking === inv.id}
                         style={{
                           background: 'color-mix(in srgb, var(--green) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--green) 30%, transparent)',

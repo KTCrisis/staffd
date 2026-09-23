@@ -430,3 +430,66 @@ describe('Fonction dans l\'entreprise', () => {
     expect((prof ?? []).map(r => r.consultant_id)).not.toContain(freelanceConsultantId)
   })
 })
+
+describe('Factures justes', () => {
+  let clientBillId = ''
+  const code = (e: { message?: string } | null) => e?.message ?? ''
+
+  beforeAll(async () => {
+    await admin.from('companies').update({ billing_settings: { invoice_prefix: 'RLS-{YYYY}-', payment_terms: 45 } }).eq('id', COMPANY_A).throwOnError()
+    const { data } = await admin.from('clients').update({ billing_address: '1 rue du Test, Paris', siren: '123456789', tva_number: 'FR00123456789' })
+      .eq('id', clientAId).select('id').single().throwOnError()
+    clientBillId = data!.id
+  })
+
+  const draft = async (a: Awaited<ReturnType<typeof authClient>>, amount = 1000) => {
+    const { data: inv, error } = await a.from('invoices').insert({ company_id: COMPANY_A, client_id: clientBillId, status: 'draft', tva_rate: 20, payment_terms: 30 })
+      .select('id').single()
+    expect(error).toBeNull()
+    await a.from('invoice_lines').insert({ invoice_id: inv!.id, company_id: COMPANY_A, description: 'Prestation', quantity: 2, unit: 'day', unit_price: amount / 2 }).throwOnError()
+    return inv!.id as string
+  }
+
+  it('un brouillon n\'a pas de numéro ; l\'émission numérote en suite continue et fige tout', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const year = new Date().getFullYear()
+    const d1 = await draft(a); const d2 = await draft(a, 500)
+    const n1 = await a.rpc('issue_invoice', { p_invoice_id: d1 })
+    const n2 = await a.rpc('issue_invoice', { p_invoice_id: d2 })
+    expect(n1.error).toBeNull()
+    expect(n1.data).toBe(`RLS-${year}-0001`)
+    expect(n2.data).toBe(`RLS-${year}-0002`)
+    const { data: inv } = await a.from('invoices').select('status, subtotal, tva_amount, total_ttc, invoice_date, due_date, client_snapshot').eq('id', d1).single()
+    expect(inv).toMatchObject({ status: 'sent', subtotal: 1000, tva_amount: 200, total_ttc: 1200 })
+    expect((inv!.client_snapshot as Record<string, string>).siren).toBe('123456789')
+    expect(new Date(inv!.due_date!).getTime() - new Date(inv!.invoice_date).getTime()).toBe(30 * 86400000)
+  })
+
+  it('une facture émise est verrouillée : montants, lignes, suppression ; transitions de statut seules', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const id = await draft(a)
+    await a.rpc('issue_invoice', { p_invoice_id: id }).throwOnError()
+    expect(code((await a.from('invoices').update({ subtotal: 1 }).eq('id', id)).error)).toContain('INVOICE_LOCKED')
+    expect(code((await a.from('invoice_lines').update({ unit_price: 1 }).eq('invoice_id', id)).error)).toContain('INVOICE_LOCKED')
+    expect(code((await a.from('invoices').delete().eq('id', id)).error)).toContain('INVOICE_LOCKED')
+    expect(code((await a.rpc('issue_invoice', { p_invoice_id: id })).error)).toContain('INVOICE_NOT_DRAFT')
+    expect((await a.from('invoices').update({ status: 'paid', paid_at: '2026-10-01' }).eq('id', id)).error).toBeNull()
+  })
+
+  it('on ne crée ni ne passe une facture en « envoyée » sans émission ; un brouillon se supprime', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const direct = await a.from('invoices').insert({ company_id: COMPANY_A, status: 'sent', invoice_number: 'X-1', tva_rate: 20 })
+    expect(code(direct.error)).toContain('INVOICE_ISSUE_REQUIRED')
+    const id = await draft(a)
+    expect(code((await a.from('invoices').update({ status: 'sent' }).eq('id', id)).error)).toContain('INVOICE_ISSUE_REQUIRED')
+    expect((await a.from('invoices').delete().eq('id', id)).error).toBeNull()
+  })
+
+  it('émission réservée admin/manager, et refusée sans ligne', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    const { data: empty } = await a.from('invoices').insert({ company_id: COMPANY_A, status: 'draft', tva_rate: 20 }).select('id').single()
+    expect(code((await a.rpc('issue_invoice', { p_invoice_id: empty!.id })).error)).toContain('INVOICE_EMPTY')
+    const c = await authClient(EMAILS.consultantA, PWD)
+    expect(code((await c.rpc('issue_invoice', { p_invoice_id: empty!.id })).error)).toContain('INVOICE_FORBIDDEN')
+  })
+})

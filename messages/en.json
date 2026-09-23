@@ -336,7 +336,10 @@
       "notes": "Notes",
       "notesPlaceholder": "Context, history, specific notes about this client...",
       "clientType": "Client type",
-      "clientTypeHint": "Intermediary: the firm the invoice goes through"
+      "clientTypeHint": "Intermediary: the firm the invoice goes through",
+      "billingAddress": "Billing address",
+      "siren": "SIREN",
+      "tvaNumber": "EU VAT number"
     },
     "activeCount": "{count} active",
     "clientType": {
@@ -1113,7 +1116,7 @@
       "bankNameLabel": "Bank name",
       "invoiceSection": "INVOICE_SETTINGS",
       "prefixLabel": "Invoice prefix",
-      "prefixHint": "e.g. NOR-2026-",
+      "prefixHint": "{YYYY} = issue year; the sequence restarts at 1 each year",
       "counterLabel": "Invoice counter",
       "counterHint": "Read-only — auto-incremented",
       "paymentTermsLabel": "Payment terms (days)",
@@ -1121,7 +1124,15 @@
       "tvaLabel": "TVA rate (%)",
       "tvaHint": "Set to 0 for auto-entrepreneur (non assujetti)",
       "legalLabel": "Legal mention",
-      "legalHint": "Appears at the bottom of every invoice"
+      "legalHint": "Appears at the bottom of every invoice",
+      "identitySection": "ISSUER_IDENTITY",
+      "legalNameLabel": "Legal name",
+      "legalFormLabel": "Legal form",
+      "shareCapitalLabel": "Share capital (€)",
+      "addressLabel": "Registered address",
+      "siretLabel": "SIRET",
+      "rcsLabel": "Trade register (city)",
+      "tvaNumberLabel": "EU VAT number"
     },
     "company": {
       "identitySection": "COMPANY_IDENTITY",
@@ -1314,12 +1325,15 @@
         "allConsultants": "All consultants",
         "import": "↓ import",
         "loading": "···",
-        "noData": "No approved timesheet entries found for this period."
+        "noData": "No approved timesheet entries found for this period.",
+        "allProjects": "— All time & materials projects —"
       },
       "projectImport": {
         "label": "Project",
         "placeholder": "Select a project…",
-        "load": "↓ load"
+        "load": "↓ load",
+        "forfaitLine": "Fixed price — {name}",
+        "forfaitDetail": "Budget €{budget} excl. VAT · already invoiced €{invoiced}"
       },
       "fields": {
         "client": "Client",
@@ -1343,7 +1357,8 @@
         "units": {
           "day": "day",
           "hour": "hour",
-          "unit": "unit"
+          "unit": "unit",
+          "fixed": "Fixed price"
         }
       },
       "totals": {
@@ -1353,7 +1368,7 @@
       },
       "actions": {
         "saveDraft": "save draft",
-        "send": "→ save & mark as sent",
+        "send": "→ save & issue (final number)",
         "saving": "···"
       },
       "months": [
@@ -1411,7 +1426,8 @@
         "pdf": "PDF ↓",
         "markPaid": "✓ paid"
       },
-      "empty": "No invoices matching this filter."
+      "empty": "No invoices matching this filter.",
+      "draftNumber": "Draft"
     },
     "preview": {
       "title": "INVOICE",
@@ -1435,7 +1451,50 @@
       "subtotal": "Subtotal (excl. VAT)",
       "vat": "VAT {rate}%",
       "grandTotal": "TOTAL (incl. VAT)",
-      "paymentDetails": "Payment details"
+      "paymentDetails": "Payment details",
+      "draft": "DRAFT — number assigned on issue",
+      "formCapital": "{form} with a share capital of €{capital}",
+      "vatNumber": "VAT no.",
+      "units": {
+        "day": "day",
+        "hour": "hour",
+        "unit": "unit",
+        "fixed": "fixed price"
+      },
+      "legal": {
+        "penalties": "Late payment penalties: three times the French legal interest rate, due from the day after the due date (art. L441-10 French Commercial Code).",
+        "indemnity": "Fixed recovery fee in case of late payment: €40 (art. D441-5).",
+        "discount": "No discount for early payment."
+      }
+    },
+    "detail": {
+      "breadcrumb": "// invoice",
+      "draftTitle": "Invoice — draft",
+      "back": "Invoices",
+      "issue": "Issue",
+      "delete": "Delete draft",
+      "markPaid": "Mark as paid",
+      "unpay": "Back to sent",
+      "cancel": "Cancel invoice",
+      "print": "Print / PDF",
+      "draftNote": "Draft: no number yet. Issuing assigns the next number in the sequence, dates the invoice today and locks it.",
+      "confirmIssue": "Issue this invoice? It gets a final number and can no longer be edited.",
+      "confirmDelete": "Delete this draft?",
+      "confirmCancel": "Cancel this invoice? It keeps its number; issue a credit note outside the tool.",
+      "status": {
+        "draft": "Draft",
+        "sent": "Issued",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "cancelled": "Cancelled"
+      },
+      "errors": {
+        "INVOICE_LOCKED": "Issued invoice: it can no longer be edited or deleted.",
+        "INVOICE_NOT_DRAFT": "This invoice is already issued.",
+        "INVOICE_EMPTY": "Cannot issue an invoice without lines.",
+        "INVOICE_FORBIDDEN": "Only an admin or a manager can issue an invoice.",
+        "INVOICE_ISSUE_REQUIRED": "An invoice becomes issued only through the Issue button."
+      }
     }
   },
   "orgSwitcher": {

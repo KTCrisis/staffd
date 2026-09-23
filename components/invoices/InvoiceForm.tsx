@@ -12,9 +12,12 @@ import type { Json }       from '@/types/supabase'
 
 // ── Local types ───────────────────────────────────────────────────────────────
 
-interface Client     { id: string; name: string }
-interface Project    { id: string; name: string; client_id: string | null; tjm_vendu?: number | null }
-interface Consultant { id: string; name: string; tjm_cout_reel?: number | null }
+interface Client     { id: string; name: string; billing_address: string | null; siren: string | null; tva_number: string | null }
+interface Project    {
+  id: string; name: string; client_id: string | null; tjm_vendu: number | null
+  billing_mode: string; budget_total: number | null; jours_vendus: number | null
+}
+interface Consultant { id: string; name: string }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -144,11 +147,13 @@ export function InvoiceForm() {
     let cancelled = false
     const tid = activeTenantId
 
-    let clQ = supabase.from('clients').select('id,name').order('name')
-    let prQ = supabase.from('projects').select('id,name,client_id,tjm_vendu').eq('status', 'active')
-    // tjm_cout_reel est une colonne calculée de la VUE consultant_occupancy,
-    // pas de la table consultants (révélé par le typage <Database>).
-    let coQ = supabase.from('consultant_occupancy').select('id,name,tjm_cout_reel').order('name')
+    let clQ = supabase.from('clients').select('id,name,billing_address,siren,tva_number').order('name')
+    // Projets facturables : clients, hors projets internes et types d'activité
+    let prQ = supabase.from('projects')
+      .select('id,name,client_id,tjm_vendu,billing_mode,budget_total,jours_vendus')
+      .in('status', ['active', 'on_hold', 'completed'])
+      .eq('is_internal', false)
+    let coQ = supabase.from('consultant_occupancy').select('id,name').order('name')
     const cpQ = supabase.from('companies').select('billing_settings').single()
 
     if (tid) {
@@ -164,9 +169,15 @@ export function InvoiceForm() {
       // La vue consultant_occupancy a ses colonnes typées nullables ; on coerce
       // (un consultant sans id n'a pas de sens pour le sélecteur).
       if (co.data)   setConsultants(
-        co.data.filter(c => c.id != null).map(c => ({ id: c.id!, name: c.name ?? '', tjm_cout_reel: c.tjm_cout_reel })),
+        co.data.filter(c => c.id != null).map(c => ({ id: c.id!, name: c.name ?? '' })),
       )
-      if (comp.data?.billing_settings) setBilling(comp.data.billing_settings as unknown as BillingSettings)
+      if (comp.data?.billing_settings) {
+        const b = comp.data.billing_settings as unknown as BillingSettings
+        setBilling(b)
+        // TVA et délai par défaut : réglages de facturation du tenant
+        if (b.tva_rate != null)      setTvaRate(Number(b.tva_rate))
+        if (b.payment_terms != null) setPaymentTerms(Number(b.payment_terms))
+      }
     })
 
     return () => { cancelled = true }
@@ -184,29 +195,32 @@ export function InvoiceForm() {
 
       let q = supabase
         .from('timesheets')
-        .select('date,value,consultant_id,project_id,projects(name),consultants(name,tjm_cout_reel)')
+        .select('date,value,consultant_id,project_id,projects(name,tjm_vendu,billing_mode,is_internal,is_activity_type),consultants(name)')
         .gte('date', from).lte('date', to)
         .eq('status', 'approved')
 
       if (consultantId) q = q.eq('consultant_id', consultantId)
       if (projectId)    q = q.eq('project_id', projectId)
 
-      const { data } = await q
+      const { data: raw } = await q
+      // Facture client : régie sur projet client seulement (ni interne, ni forfait)
+      const data = (raw ?? []).filter(e => {
+        const p = e.projects as { billing_mode?: string; is_internal?: boolean; is_activity_type?: boolean } | null
+        return p && p.billing_mode === 'regie' && !p.is_internal && !p.is_activity_type
+      })
 
       if (!data?.length) {
         alert(t('timesheetImport.noData'))
         return
       }
 
-      // tjm_cout_reel n'existe pas sur la table consultants dans les types générés
-      // (c'est une colonne de la vue) ; on type le payload imbriqué explicitement.
       type TimesheetEntry = {
         date: string | null
         value: number | null
         consultant_id: string | null
         project_id: string | null
-        projects: { name: string | null } | null
-        consultants: { name: string | null; tjm_cout_reel: number | null } | null
+        projects: { name: string | null; tjm_vendu: number | null } | null
+        consultants: { name: string | null } | null
       }
 
       // Group by consultant + project
@@ -214,7 +228,8 @@ export function InvoiceForm() {
       ;(data as unknown as TimesheetEntry[]).forEach((entry) => {
         const cName  = entry.consultants?.name ?? 'Consultant'
         const pName  = entry.projects?.name    ?? projectName ?? 'Project'
-        const rate   = entry.consultants?.tjm_cout_reel ?? 0
+        // Prix de VENTE du projet (et non le coût du consultant)
+        const rate   = entry.projects?.tjm_vendu ?? 0
         const key    = cName + '__' + pName
         if (!groups.has(key)) groups.set(key, { desc: cName + ' — ' + pName, days: 0, rate })
         groups.get(key)!.days += entry.value ?? 0
@@ -237,9 +252,25 @@ export function InvoiceForm() {
 
   // ── Import depuis projet ─────────────────────────────────────────────────
 
-  const importFromProject = () => {
+  // Forfait : propose le reste à facturer (budget − factures émises du projet)
+  const importFromProject = async () => {
     const proj = projects.find(p => p.id === projectId)
     if (!proj) return
+    if (proj.billing_mode === 'forfait' && proj.budget_total) {
+      const { data: prev } = await supabase.from('invoices')
+        .select('subtotal').eq('project_id', proj.id).in('status', ['sent', 'paid'])
+      const invoiced  = (prev ?? []).reduce((s, i) => s + Number(i.subtotal ?? 0), 0)
+      const remaining = Math.max(0, Number(proj.budget_total) - invoiced)
+      setLines([{
+        id:          uid(),
+        description: t('projectImport.forfaitLine', { name: proj.name }),
+        detail:      t('projectImport.forfaitDetail', { budget: fmt(Number(proj.budget_total)), invoiced: fmt(invoiced) }),
+        quantity:    1,
+        unit:        'fixed',
+        unit_price:  remaining,
+      }])
+      return
+    }
     setLines([{
       id:          uid(),
       description: proj.name,
@@ -248,6 +279,15 @@ export function InvoiceForm() {
       unit:        'day',
       unit_price:  proj.tjm_vendu ?? 0,
     }])
+  }
+
+  // Choisir un projet renseigne le client qui paie (fiche client)
+  const pickProject = (v: string) => {
+    setProjectId(v)
+    const p = projects.find(x => x.id === v)
+    setProjectName(p?.name ?? '')
+    const c = clients.find(x => x.id === p?.client_id)
+    if (c) { setClientId(c.id); setClientName(c.name); setClientAddress(c.billing_address ?? '') }
   }
 
   // ── Lines ────────────────────────────────────────────────────────────────
@@ -263,11 +303,10 @@ export function InvoiceForm() {
   const handleSave = async (asDraft: boolean) => {
     setSaving(true)
     try {
-      const { data: company } = await supabase.from('companies').select('id').single()
+      let cq = supabase.from('companies').select('id')
+      if (activeTenantId) cq = cq.eq('id', activeTenantId)
+      const { data: company } = await cq.single()
       if (!company) return
-
-      const { data: invoiceNumber } = await supabase
-        .rpc('next_invoice_number', { p_company_id: company.id })
 
       const month   = String(importMonth + 1).padStart(2, '0')
       const lastDay = new Date(importYear, importMonth + 1, 0).getDate()
@@ -277,10 +316,10 @@ export function InvoiceForm() {
         client_id:           clientId     || null,
         project_id:          projectId    || null,
         consultant_id:       consultantId || null,
-        invoice_number:      invoiceNumber ?? ('INV-' + Date.now()),
+        // Brouillon sans numéro : le numéro est attribué à l'émission (issue_invoice)
         invoice_date:        invoiceDate,
         due_date:            dueDate || null,
-        status:              asDraft ? 'draft' : 'sent',
+        status:              'draft',
         subtotal,
         tva_rate:            tvaRate,
         tva_amount:          tvaAmount,
@@ -310,7 +349,11 @@ export function InvoiceForm() {
       )
       if (linesErr) throw linesErr
 
-      router.push('/invoices')
+      if (!asDraft) {
+        const { error: issueErr } = await supabase.rpc('issue_invoice', { p_invoice_id: inv.id })
+        if (issueErr) throw issueErr
+      }
+      router.push(`/invoices/${inv.id}`)
     } catch (e) {
       alert((e as Error)?.message || 'Failed to save invoice')
     } finally {
@@ -350,6 +393,11 @@ export function InvoiceForm() {
             <div style={{ padding: '16px', background: 'var(--bg2)',
               border: '1px solid var(--border)', borderRadius: 4, marginBottom: 20 }}>
               <FieldLabel>{t('timesheetImport.label')}</FieldLabel>
+              <Select value={projectId} onChange={pickProject}>
+                <option value="">{t('timesheetImport.allProjects')}</option>
+                {projects.filter(p => p.billing_mode === 'regie').map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+              <div style={{ height: 8 }} />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8 }}>
                 <Select value={String(importMonth)} onChange={v => setImportMonth(Number(v))}>
                   {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
@@ -377,11 +425,7 @@ export function InvoiceForm() {
               border: '1px solid var(--border)', borderRadius: 4, marginBottom: 20 }}>
               <FieldLabel>{t('projectImport.label')}</FieldLabel>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
-                <Select value={projectId} onChange={v => {
-                  setProjectId(v)
-                  const p = projects.find(x => x.id === v)
-                  if (p) setProjectName(p.name)
-                }}>
+                <Select value={projectId} onChange={pickProject}>
                   <option value="">{t('projectImport.placeholder')}</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </Select>
@@ -403,7 +447,9 @@ export function InvoiceForm() {
               <FieldLabel>{t('fields.client')}</FieldLabel>
               <Select value={clientId} onChange={v => {
                 setClientId(v)
-                setClientName(clients.find(c => c.id === v)?.name ?? '')
+                const c = clients.find(x => x.id === v)
+                setClientName(c?.name ?? '')
+                setClientAddress(c?.billing_address ?? '')
               }}>
                 <option value="">{t('fields.clientSelect')}</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -474,6 +520,7 @@ export function InvoiceForm() {
                   <option value="day">{t('lines.units.day')}</option>
                   <option value="hour">{t('lines.units.hour')}</option>
                   <option value="unit">{t('lines.units.unit')}</option>
+                  <option value="fixed">{t('lines.units.fixed')}</option>
                 </Select>
                 <Input type="number" value={line.unit_price}
                   onChange={v => updateLine(line.id, 'unit_price', parseFloat(v) || 0)}
@@ -567,13 +614,17 @@ export function InvoiceForm() {
             {t('livePreview')}
           </div>
           <InvoicePreview
-            invoiceNumber={(billing.invoice_prefix ?? 'INV-2026-') + '0001'}
+            invoiceNumber={null}
             invoiceDate={invoiceDate}
             dueDate={dueDate}
             lines={lines}
             tvaRate={tvaRate}
-            clientName={clientName}
-            clientAddress={clientAddress}
+            client={{
+              name:       clientName,
+              address:    clientAddress,
+              siren:      clients.find(c => c.id === clientId)?.siren,
+              tva_number: clients.find(c => c.id === clientId)?.tva_number,
+            }}
             projectName={projectName}
             billing={billing}
             notes={notes}

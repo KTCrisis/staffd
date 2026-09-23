@@ -223,6 +223,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          billing_address: string | null
           client_type: string
           company_id: string
           contact_email: string | null
@@ -233,10 +234,13 @@ export type Database = {
           name: string
           notes: string | null
           sector: string | null
+          siren: string | null
+          tva_number: string | null
           updated_at: string | null
           website: string | null
         }
         Insert: {
+          billing_address?: string | null
           client_type?: string
           company_id: string
           contact_email?: string | null
@@ -247,10 +251,13 @@ export type Database = {
           name: string
           notes?: string | null
           sector?: string | null
+          siren?: string | null
+          tva_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
         Update: {
+          billing_address?: string | null
           client_type?: string
           company_id?: string
           contact_email?: string | null
@@ -261,6 +268,8 @@ export type Database = {
           name?: string
           notes?: string | null
           sector?: string | null
+          siren?: string | null
+          tva_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -815,7 +824,8 @@ export type Database = {
           emitter_snapshot: Json | null
           id: string
           invoice_date: string
-          invoice_number: string
+          invoice_number: string | null
+          issued_at: string | null
           notes: string | null
           paid_at: string | null
           payment_terms: number | null
@@ -840,7 +850,8 @@ export type Database = {
           emitter_snapshot?: Json | null
           id?: string
           invoice_date?: string
-          invoice_number: string
+          invoice_number?: string | null
+          issued_at?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_terms?: number | null
@@ -865,7 +876,8 @@ export type Database = {
           emitter_snapshot?: Json | null
           id?: string
           invoice_date?: string
-          invoice_number?: string
+          invoice_number?: string | null
+          issued_at?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_terms?: number | null
@@ -2089,6 +2101,7 @@ export type Database = {
         Returns: undefined
       }
       is_super_admin: { Args: never; Returns: boolean }
+      issue_invoice: { Args: { p_invoice_id: string }; Returns: string }
       merge_ai_settings: {
         Args: { p_company_id: string; p_patch: Json }
         Returns: undefined
@@ -2108,7 +2121,6 @@ export type Database = {
       my_company_id: { Args: never; Returns: string }
       my_role: { Args: never; Returns: string }
       my_team_consultant_ids: { Args: never; Returns: string[] }
-      next_invoice_number: { Args: { p_company_id: string }; Returns: string }
       reopen_timesheets: {
         Args: { p_consultant_id: string; p_end: string; p_start: string }
         Returns: number

@@ -26,6 +26,15 @@ export function BillingTab() {
   const [paymentTerms,  setPaymentTerms]  = useState('')
   const [legalMention,  setLegalMention]  = useState('')
   const [tvaRate,       setTvaRate]       = useState('')
+  // Identité de l'émetteur : un seul objet, champs texte libres
+  const IDENTITY_KEYS = ['legal_name', 'legal_form', 'share_capital', 'address', 'siret', 'rcs_city', 'tva_number'] as const
+  type IdentityKey = typeof IDENTITY_KEYS[number]
+  const [identity, setIdentity] = useState<Record<IdentityKey, string>>(
+    Object.fromEntries(IDENTITY_KEYS.map(k => [k, ''])) as Record<IdentityKey, string>,
+  )
+  const identityFrom = (bs: Record<string, unknown>) =>
+    Object.fromEntries(IDENTITY_KEYS.map(k => [k, String(bs[k] ?? '')])) as Record<IdentityKey, string>
+  const setId = (k: IdentityKey) => (v: string) => setIdentity(s => ({ ...s, [k]: v }))
 
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState<string | null>(null)
@@ -40,6 +49,8 @@ export function BillingTab() {
     setPaymentTerms(String(b.payment_terms ?? 30))
     setLegalMention(b.legal_mention ?? '')
     setTvaRate(String(b.tva_rate ?? 20))
+    setIdentity(identityFrom(b as Record<string, unknown>))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyData])
 
   const b = companyData?.billing_settings ?? {}
@@ -50,7 +61,8 @@ export function BillingTab() {
     invoicePrefix !== (b.invoice_prefix ?? '') ||
     paymentTerms  !== String(b.payment_terms ?? 30) ||
     legalMention  !== (b.legal_mention  ?? '') ||
-    tvaRate       !== String(b.tva_rate ?? 20)
+    tvaRate       !== String(b.tva_rate ?? 20) ||
+    JSON.stringify(identity) !== JSON.stringify(identityFrom(b as Record<string, unknown>))
   )
 
   const handleSave = async () => {
@@ -61,6 +73,7 @@ export function BillingTab() {
           bank_iban: iban, bank_bic: bic, bank_name: bankName,
           invoice_prefix: invoicePrefix, payment_terms: Number(paymentTerms),
           legal_mention: legalMention, tva_rate: Number(tvaRate),
+          ...identity,
         },
         companyId: activeTenantId ?? undefined,
       })
@@ -82,11 +95,52 @@ export function BillingTab() {
     setPaymentTerms(String(bs.payment_terms ?? 30))
     setLegalMention(bs.legal_mention ?? '')
     setTvaRate(String(bs.tva_rate ?? 20))
+    setIdentity(identityFrom(bs as Record<string, unknown>))
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       <ErrorBanner message={error} />
+
+      {/* ── Identité de l'émetteur (mentions obligatoires) ── */}
+      <section>
+        <SectionLabel label={t('identitySection')} />
+        <div style={{
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 4, padding: '20px 24px',
+          display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
+          {loading ? <Skeleton h={160} /> : (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 16 }}>
+                <SettingsField label={t('legalNameLabel')}>
+                  <SettingsInput value={identity.legal_name} onChange={setId('legal_name')} placeholder="ACME Conseil" />
+                </SettingsField>
+                <SettingsField label={t('legalFormLabel')}>
+                  <SettingsInput value={identity.legal_form} onChange={setId('legal_form')} placeholder="SAS" />
+                </SettingsField>
+                <SettingsField label={t('shareCapitalLabel')}>
+                  <SettingsInput value={identity.share_capital} onChange={setId('share_capital')} placeholder="10 000" />
+                </SettingsField>
+              </div>
+              <SettingsField label={t('addressLabel')}>
+                <SettingsTextarea value={identity.address} onChange={setId('address')} placeholder={'12 rue de la Paix\n75002 Paris'} rows={2} />
+              </SettingsField>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                <SettingsField label={t('siretLabel')}>
+                  <SettingsInput value={identity.siret} onChange={setId('siret')} placeholder="123 456 789 00012" />
+                </SettingsField>
+                <SettingsField label={t('rcsLabel')}>
+                  <SettingsInput value={identity.rcs_city} onChange={setId('rcs_city')} placeholder="Paris" />
+                </SettingsField>
+                <SettingsField label={t('tvaNumberLabel')}>
+                  <SettingsInput value={identity.tva_number} onChange={setId('tva_number')} placeholder="FR12 123456789" />
+                </SettingsField>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
 
       {/* ── Coordonnées bancaires ── */}
       <section>
@@ -130,7 +184,7 @@ export function BillingTab() {
               <SettingsField label={t('prefixLabel')} hint={t('prefixHint')}>
                 <SettingsInput
                   value={invoicePrefix} onChange={setInvoicePrefix}
-                  placeholder="NOR-2026-"
+                  placeholder="ACME-{YYYY}-"
                 />
               </SettingsField>
               <SettingsField label={t('counterLabel')} hint={t('counterHint')}>

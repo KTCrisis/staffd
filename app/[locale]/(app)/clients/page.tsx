@@ -46,6 +46,9 @@ export default async function ClientsPage({ searchParams }: Props) {
     contactPhone:   row.contact_phone ?? null,
     companyId:      row.company_id,
     notes:          row.notes         ?? null,
+    billingAddress: row.billing_address ?? null,
+    siren:          row.siren         ?? null,
+    tvaNumber:      row.tva_number    ?? null,
     activeProjects: row.projects.filter((p) => p.status === 'active').length,
     totalProjects:  row.projects.length,
   }))

@@ -1074,3 +1074,10 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
   95% { opacity: 0.4; transform: translate(-2px, 0); }
   96% { opacity: 0; }
 }
+/* Impression d'une facture : seule la feuille .invoice-sheet sort (InvoicePreview) */
+@media print {
+  body * { visibility: hidden; }
+  .invoice-sheet, .invoice-sheet * { visibility: visible; }
+  .invoice-sheet { position: absolute; inset: 0 auto auto 0; width: 100%; box-shadow: none !important; border-radius: 0 !important; }
+  @page { size: A4; margin: 14mm; }
+}

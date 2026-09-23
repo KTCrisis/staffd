@@ -50,6 +50,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     contactEmail: raw.contact_email ?? null,
     contactPhone: raw.contact_phone ?? null,
     notes:        raw.notes         ?? null,
+    billingAddress: raw.billing_address ?? null,
+    siren:        raw.siren         ?? null,
+    tvaNumber:    raw.tva_number    ?? null,
   }
 
   type ProjectRow = {

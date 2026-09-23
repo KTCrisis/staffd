@@ -14,6 +14,11 @@ import type { Json }       from '@/types/supabase'
 // ──────────────────────────────────────────────────────────────
 
 export interface BillingSettings {
+  // Identité de l'émetteur (mentions obligatoires d'une facture)
+  legal_name?:      string
+  legal_form?:      string
+  share_capital?:   string
+  rcs_city?:        string
   address?:         string
   siret?:           string
   tva_number?:      string

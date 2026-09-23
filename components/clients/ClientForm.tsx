@@ -34,6 +34,9 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
   const [contactEmail, setContactEmail] = useState(client?.contactEmail ?? '')
   const [contactPhone, setContactPhone] = useState(client?.contactPhone ?? '')
   const [notes,        setNotes]        = useState(client?.notes        ?? '')
+  const [billingAddr,  setBillingAddr]  = useState(client?.billingAddress ?? '')
+  const [siren,        setSiren]        = useState(client?.siren        ?? '')
+  const [tvaNumber,    setTvaNumber]    = useState(client?.tvaNumber    ?? '')
   const [saving,       setSaving]       = useState(false)
   const [error,        setError]        = useState<string | null>(null)
 
@@ -46,6 +49,9 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
     setContactEmail(client?.contactEmail ?? '')
     setContactPhone(client?.contactPhone ?? '')
     setNotes(client?.notes ?? '')
+    setBillingAddr(client?.billingAddress ?? '')
+    setSiren(client?.siren ?? '')
+    setTvaNumber(client?.tvaNumber ?? '')
     setError(null)
   }, [client])
 
@@ -65,6 +71,10 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
         contact_email: contactEmail.trim() || undefined,
         contact_phone: contactPhone.trim() || undefined,
         notes:         notes.trim() || undefined,
+        // null (et non undefined) pour pouvoir effacer ces champs
+        billing_address: billingAddr.trim() || null,
+        siren:           siren.replace(/\s/g, '') || null,
+        tva_number:      tvaNumber.replace(/\s/g, '').toUpperCase() || null,
         company_id:    companyId,
       }
 
@@ -122,6 +132,23 @@ export function ClientForm({ client, companyId, onClose, onSaved }: ClientFormPr
           {CLIENT_TYPES.map(ct => <option key={ct} value={ct}>{t(`clientType.${ct}`)}</option>)}
         </select>
         <div style={{ marginTop: 5, fontSize: 10, color: 'var(--text2)' }}>{t('form.clientTypeHint')}</div>
+      </div>
+
+      {/* Facturation (mentions de la facture) */}
+      <div className="form-field">
+        <label>{t('form.billingAddress')}</label>
+        <textarea className="input" value={billingAddr} onChange={e => setBillingAddr(e.target.value)}
+          placeholder={'1 place Samuel de Champlain\n92400 Courbevoie'} rows={2} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="form-field">
+          <label>{t('form.siren')}</label>
+          <input className="input" value={siren} onChange={e => setSiren(e.target.value)} placeholder="542 107 651" />
+        </div>
+        <div className="form-field">
+          <label>{t('form.tvaNumber')}</label>
+          <input className="input" value={tvaNumber} onChange={e => setTvaNumber(e.target.value)} placeholder="FR03 542107651" />
+        </div>
       </div>
 
       <div className="form-field">

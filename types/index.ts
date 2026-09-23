@@ -90,6 +90,9 @@ export interface Client {
   contactEmail?:   string
   contactPhone?:   string
   notes?:          string
+  billingAddress?: string          // mentions de facture (0010)
+  siren?:          string
+  tvaNumber?:      string
   activeProjects?: number
   totalProjects?:  number
 }

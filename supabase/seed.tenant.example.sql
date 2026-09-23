@@ -17,7 +17,7 @@
 insert into companies (id, name, slug, mode, entity_type, billing_settings, crm_settings) values (
   '11110000-4444-0000-0000-000000000001', '<NOM DU CABINET>', '<slug>', 'team', 'company',
   '{
-    "invoice_prefix": "<PREFIXE>-2026-",
+    "invoice_prefix": "<PREFIXE>-{YYYY}-",
     "invoice_counter": 0,
     "tva_rate": 20,
     "payment_terms": 30

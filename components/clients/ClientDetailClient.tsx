@@ -30,6 +30,9 @@ interface Client {
   contactEmail: string | null
   contactPhone: string | null
   notes:        string | null
+  billingAddress: string | null
+  siren:        string | null
+  tvaNumber:    string | null
 }
 
 interface Props {
