@@ -2,11 +2,16 @@
 //   staging    → Worker "staffd-staging", built from `main`, Supabase preprod + fixtures
 //   cabinet    → Worker "staffd-cabinet", built from `release/cabinet`, its own Supabase
 //
-// NEXT_PUBLIC_* values are inlined by `next build`, never set here. Deploy with
-// `npm run cf:deploy:<env>` (scripts/cf-deploy.sh): it builds with that env's
-// Supabase (.env.local = staging, .env.cabinet.local = cabinet) and refuses to
-// deploy a bundle that carries the other one. A bare `opennextjs-cloudflare
-// build` reads .env.local and would point the cabinet at staging. Secrets
+// Deployment = git push. Cloudflare Workers Builds is connected to the repo:
+//   push `main`            → builds and deploys staffd-staging
+//   push `release/cabinet` → builds and deploys staffd-cabinet
+// Each build uses that Worker's BUILD variables (dashboard > Settings > Build),
+// where NEXT_PUBLIC_* live (inlined by `next build`, never set here).
+// Do not deploy from a workstation: a local build reads .env.local (staging)
+// and would point the cabinet at the staging database. For an exceptional
+// manual deploy only, `npm run cf:deploy:<env>` (scripts/cf-deploy.sh) builds
+// with the right env file and refuses a bundle carrying the other database.
+// Secrets
 // (SUPABASE_SERVICE_ROLE_KEY, OLLAMA_API_KEY) go in `wrangler secret put --env <env>`.
 // Bindings and vars are NOT inherited by environments: redeclare them in each.
 {

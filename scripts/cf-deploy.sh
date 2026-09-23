@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # scripts/cf-deploy.sh <staging|cabinet>
 #
+# EXCEPTIONNEL : le déploiement normal est le push git (Workers Builds :
+# main → staffd-staging, release/cabinet → staffd-cabinet, variables de build
+# du tableau de bord). Ce script ne sert qu'à déployer depuis un poste.
+#
 # Build + déploiement d'un Worker avec la BONNE base Supabase.
 # NEXT_PUBLIC_* est figé dans le bundle au build : un `next build` lit
 # .env.local (préprod) par défaut, donc un cabinet construit sans précaution
