@@ -73,4 +73,4 @@ export const ROUTE_GUARDS: Array<{
 ]
 
 /** Segments publics (pas d'auth requise) */
-export const PUBLIC_SEGMENTS = ['login', 'docs'] as const
+export const PUBLIC_SEGMENTS = ['login', 'docs', 'activate'] as const

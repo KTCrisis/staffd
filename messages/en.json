@@ -165,7 +165,7 @@
       "linked": "Account linked",
       "none": "No account",
       "emailMissing": "Missing email",
-      "invite": "✉ Send invitation",
+      "invite": "Generate activation link",
       "inviting": "⏳ Sending...",
       "sent": "✓ Invitation sent to {email}",
       "already": "⚠ Existing account — role updated",
@@ -176,7 +176,11 @@
         "manager": "Manager",
         "consultant": "Consultant",
         "freelance": "Freelance"
-      }
+      },
+      "copy": "Copy",
+      "copied": "Copied ✓",
+      "newLink": "New sign-in link",
+      "linkNote": "Personal single-use link: send it through a private channel. It expires (1 h by default, Supabase \"Email OTP expiration\"). Cloudflare Access: the address must be in the Access policy."
     },
     "deleteConfirm": {
       "message": "Delete {name} permanently?",
@@ -185,8 +189,8 @@
     },
     "deleteBtn": "✕ Delete",
     "costLabels": {
-      "charged": "Loaded cost / day",
-      "billed": "Freelance rate / day"
+      "charged": "Loaded cost",
+      "billed": "Freelance rate"
     },
     "fonction": {
       "consultant": "Consultant",
@@ -1669,6 +1673,22 @@
       "lateDeals": "Past close date",
       "noLateDeals": "// no overdue deals",
       "closeWas": "expected close {date}"
+    }
+  },
+  "activate": {
+    "taglineInvite": "// welcome: choose your password",
+    "taglineRecovery": "// new password",
+    "password": "Password",
+    "confirm": "Confirm password",
+    "show": "[ show ]",
+    "hide": "[ hide ]",
+    "submit": "→ Activate my account",
+    "footer": "Personal, single-use link",
+    "errors": {
+      "missing": "Incomplete link: ask your administrator for a new one.",
+      "link": "Link expired or already used: ask your administrator for a new one.",
+      "short": "At least {min} characters.",
+      "mismatch": "The two passwords differ."
     }
   }
 }

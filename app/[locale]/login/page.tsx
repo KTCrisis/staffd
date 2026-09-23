@@ -19,6 +19,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
+      // Retour à la page demandée (middleware : ?redirectTo=), chemins internes
+      // seulement : « //hôte » ou une URL absolue ouvriraient une redirection.
+      const target = new URLSearchParams(window.location.search).get('redirectTo')
+      if (target && target.startsWith('/') && !target.startsWith('//') && !target.includes('/login')) {
+        window.location.assign(target)
+        return
+      }
       router.push('/dashboard' as never)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connection error')

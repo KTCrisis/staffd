@@ -80,11 +80,12 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Consultant belongs to another company' }, { status: 403 })
   }
 
-  // 2. Vérifier si un user Auth existe déjà avec cet email
+  // 2. Compte existant ou nouveau. Aucun e-mail n'est envoyé : l'API rend un
+  // lien d'activation que l'admin transmet lui-même (canal privé). Le lien
+  // porte un jeton à usage unique, vérifié seulement quand la personne valide
+  // son mot de passe sur /activate (un aperçu de lien ne le consomme pas).
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
   const existingUser = existingUsers?.users?.find(u => u.email === email)
-
-  let userId: string
 
   if (existingUser) {
     // Ne pas détourner un compte déjà rattaché à une AUTRE company.
@@ -92,38 +93,30 @@ export async function POST(req: Request) {
     if (existingCompany && existingCompany !== targetCompanyId) {
       return Response.json({ error: 'This email already belongs to another company' }, { status: 409 })
     }
-    // Compte de la même company (ou non rattaché) : le rôle existant est gardé,
-    // sauf si l'appelant en demande explicitement un (borné plus haut).
-    userId = existingUser.id
-    const { error: metaErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      app_metadata: {
-        ...existingUser.app_metadata,
-        user_role: requestedRole ?? existingUser.app_metadata?.user_role ?? 'consultant',
-        company_id: targetCompanyId,
-      }
-    })
-    if (metaErr) return Response.json({ error: metaErr.message }, { status: 500 })
-  } else {
-    // 3. Envoyer l'invitation email
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email)
-    if (error) {
-      console.error('Invite error:', error)
-      return Response.json({ error: error.message }, { status: 500 })
-    }
-    userId = data.user.id
-
-    // Role and tenant go to app_metadata, the only place the RLS and the app
-    // read them. The invite `data` option writes user_metadata instead, which
-    // the user can edit and nothing reads: the invitee arrived with no role.
-    const { error: metaErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      app_metadata: {
-        ...data.user.app_metadata,
-        user_role: requestedRole ?? 'consultant',
-        company_id: targetCompanyId,
-      }
-    })
-    if (metaErr) return Response.json({ error: metaErr.message }, { status: 500 })
   }
+
+  // invite : crée le compte ; recovery : compte existant, nouveau mot de passe
+  const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+    type: existingUser ? 'recovery' : 'invite',
+    email,
+  })
+  if (linkErr || !link?.user) {
+    console.error('generateLink error:', linkErr)
+    return Response.json({ error: linkErr?.message ?? 'Link generation failed' }, { status: 500 })
+  }
+  const userId = link.user.id
+
+  // 3. Rôle et tenant dans app_metadata, seul endroit que lisent la RLS et
+  // l'application (user_metadata est modifiable par l'utilisateur). Compte
+  // existant : son rôle est gardé sauf demande explicite (bornée plus haut).
+  const { error: metaErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...link.user.app_metadata,
+      user_role: requestedRole ?? existingUser?.app_metadata?.user_role ?? 'consultant',
+      company_id: targetCompanyId,
+    }
+  })
+  if (metaErr) return Response.json({ error: metaErr.message }, { status: 500 })
 
   // 4. Lier le user_id au consultant (appartenance déjà validée ci-dessus)
   const { error: updateError } = await supabaseAdmin
@@ -133,5 +126,9 @@ export async function POST(req: Request) {
 
   if (updateError) return Response.json({ error: updateError.message }, { status: 500 })
 
-  return Response.json({ ok: true, userId, alreadyExisted: !!existingUser })
+  const origin = new URL(req.url).origin
+  const activationUrl = `${origin}/fr/activate?token_hash=${encodeURIComponent(link.properties.hashed_token)}`
+    + `&type=${link.properties.verification_type}`
+
+  return Response.json({ ok: true, userId, alreadyExisted: !!existingUser, activationUrl })
 }

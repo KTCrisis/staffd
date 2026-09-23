@@ -29,7 +29,24 @@ import type { ConsultantStatus, Consultant } from '@/types'
 
 type InviteStatus = 'idle' | 'sent' | 'already' | 'error'
 
-function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles, inviteRole, onRoleChange }: {
+// Lien d'activation affiché à l'admin, qui le transmet lui-même (pas d'e-mail)
+function ActivationLink({ url }: { url: string }) {
+  const t = useTranslations('consultants')
+  const [copied, setCopied] = useState(false)
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input className="form-input" readOnly value={url} style={{ flex: 1, fontSize: 10 }} onFocus={e => e.target.select()} />
+        <button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard.writeText(url).then(() => setCopied(true)) }}>
+          {copied ? t('account.copied') : t('account.copy')}
+        </button>
+      </div>
+      <p className="cons-invite-msg" style={{ color: 'var(--text2)' }}>{t('account.linkNote')}</p>
+    </div>
+  )
+}
+
+function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles, inviteRole, onRoleChange, activationUrl }: {
   selected:      Consultant
   onInvite:      () => void
   inviteLoading: boolean
@@ -37,12 +54,14 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles
   roles:         UserRole[]
   inviteRole:    UserRole
   onRoleChange:  (r: UserRole) => void
+  activationUrl: string | null
 }) {
   const t = useTranslations('consultants')
   return (
     <div className="cons-section">
       <div className="label-meta" style={{ marginBottom: 12 }}>{t('account.label')}</div>
       {selected.user_id ? (
+        <>
         <div className="cons-account-linked">
           <span className="cons-account-dot cons-account-dot--linked">●</span>
           <div>
@@ -50,6 +69,12 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles
             <div className="cons-account-email">{selected.email}</div>
           </div>
         </div>
+        {/* Mot de passe perdu ou lien expiré : nouveau lien (réinitialisation) */}
+        <button className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={onInvite} disabled={inviteLoading}>
+          {inviteLoading ? t('account.inviting') : t('account.newLink')}
+        </button>
+        {activationUrl && <ActivationLink url={activationUrl} />}
+        </>
       ) : (
         <>
           <div className="cons-account-linked" style={{ marginBottom: 12 }}>
@@ -82,7 +107,7 @@ function AccountSection({ selected, onInvite, inviteLoading, inviteStatus, roles
           >
             {inviteLoading ? t('account.inviting') : t('account.invite')}
           </button>
-          {inviteStatus === 'sent'    && <p className="cons-invite-msg cons-invite-msg--sent">{t('account.sent', { email: selected.email ?? '' })}</p>}
+          {activationUrl && <ActivationLink url={activationUrl} />}
           {inviteStatus === 'already' && <p className="cons-invite-msg cons-invite-msg--already">{t('account.already')}</p>}
           {inviteStatus === 'error'   && <p className="cons-invite-msg cons-invite-msg--error">{t('account.error')}</p>}
         </>
@@ -140,6 +165,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
   const [deleting,      setDeleting]      = useState(false)
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteStatus,  setInviteStatus]  = useState<InviteStatus>('idle')
+  const [activationUrl, setActivationUrl] = useState<string | null>(null)
   const inviteRoles = grantableRoles(userRole)
   const [inviteRole,    setInviteRole]    = useState<UserRole>('consultant')
 
@@ -167,7 +193,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
 
   const countLabel = `${visible.length} ${visible.length > 1 ? tCommon('consultants') : tCommon('consultant')}`
 
-  const closeDrawer = () => { setSelected(null); setConfirmDelete(false); setInviteStatus('idle') }
+  const closeDrawer = () => { setSelected(null); setConfirmDelete(false); setInviteStatus('idle'); setActivationUrl(null) }
 
   const handleDelete = async () => {
     if (!selected) return
@@ -184,6 +210,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
     if (!selected?.email) return
     setInviteLoading(true)
     setInviteStatus('idle')
+    setActivationUrl(null)
     try {
       const res  = await fetch('/api/invite', {
         method:  'POST',
@@ -193,6 +220,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
       const json = await res.json()
       if (!res.ok) throw new Error(json.error)
       setInviteStatus(json.alreadyExisted ? 'already' : 'sent')
+      setActivationUrl(json.activationUrl ?? null)
       router.refresh()
     } catch { setInviteStatus('error') }
     finally  { setInviteLoading(false) }
@@ -257,7 +285,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
           <ConsultantTable
             consultants={visible}
             onSelect={c => {
-              setSelected(c as Consultant); setInviteStatus('idle')
+              setSelected(c as Consultant); setInviteStatus('idle'); setActivationUrl(null)
               // Un associé facturé via sa société n'est pas un freelance côté rôle applicatif
               setInviteRole((c as Consultant).contractType === 'freelance' && !(c as Consultant).isFounder ? 'freelance' : 'consultant')
             }}
@@ -318,6 +346,7 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
               <AccountSection
                 selected={selected}
                 onInvite={handleInvite}
+                activationUrl={activationUrl}
                 inviteLoading={inviteLoading}
                 inviteStatus={inviteStatus}
                 roles={inviteRoles}

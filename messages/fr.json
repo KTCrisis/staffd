@@ -165,7 +165,7 @@
       "linked": "Compte lié",
       "none": "Aucun compte",
       "emailMissing": "Email manquant",
-      "invite": "✉ Envoyer une invitation",
+      "invite": "Générer le lien d'activation",
       "inviting": "⏳ Envoi...",
       "sent": "✓ Invitation envoyée à {email}",
       "already": "⚠ Compte existant — rôle mis à jour",
@@ -176,7 +176,11 @@
         "manager": "Manager",
         "consultant": "Consultant",
         "freelance": "Freelance"
-      }
+      },
+      "copy": "Copier",
+      "copied": "Copié ✓",
+      "newLink": "Nouveau lien de connexion",
+      "linkNote": "Lien personnel à usage unique : envoie-le par un canal privé. Il expire (1 h par défaut, réglage Supabase « Email OTP expiration »). Accès Cloudflare : l'adresse doit figurer dans la politique Access."
     },
     "deleteConfirm": {
       "message": "Supprimer {name} définitivement ?",
@@ -185,8 +189,8 @@
     },
     "deleteBtn": "✕ Supprimer",
     "costLabels": {
-      "charged": "Coût chargé / jour",
-      "billed": "Tarif freelance / jour"
+      "charged": "Coût chargé",
+      "billed": "Tarif freelance"
     },
     "fonction": {
       "consultant": "Consultant",
@@ -1669,6 +1673,22 @@
       "lateDeals": "Clôtures dépassées",
       "noLateDeals": "// aucune affaire en retard",
       "closeWas": "clôture prévue le {date}"
+    }
+  },
+  "activate": {
+    "taglineInvite": "// bienvenue : choisis ton mot de passe",
+    "taglineRecovery": "// nouveau mot de passe",
+    "password": "Mot de passe",
+    "confirm": "Confirmer le mot de passe",
+    "show": "[ afficher ]",
+    "hide": "[ masquer ]",
+    "submit": "→ Activer mon compte",
+    "footer": "Lien personnel, à usage unique",
+    "errors": {
+      "missing": "Lien incomplet : demande un nouveau lien à ton administrateur.",
+      "link": "Lien expiré ou déjà utilisé : demande un nouveau lien à ton administrateur.",
+      "short": "{min} caractères minimum.",
+      "mismatch": "Les deux mots de passe diffèrent."
     }
   }
 }
