@@ -16,6 +16,8 @@ import {
   upsertTimesheet,
   submitTimesheets,
   approveTimesheets,
+  reopenTimesheets,
+  craErrorCode,
 } from '@/lib/data'
 import type { Timesheet, LeaveOverlay } from '@/lib/data'
 import { isAdmin, canEdit } from '@/lib/auth'
@@ -139,7 +141,12 @@ function CellEditor({ entry, projects, canEditEntry, x, y, t, onSave, onClose }:
     return (
       <div className="ts-popup" style={{ top: safeY, left: safeX }}>
         <Pill status={entry?.status ?? 'draft'} />
-        <div className="ts-popup-readonly-id">{entry?.projectId ?? '—'}</div>
+        <div className="ts-popup-readonly-id">
+          {projects.find(p => p.id === entry?.projectId)?.name ?? entry?.projectId ?? '—'}
+        </div>
+        {entry?.status === 'approved' && (
+          <div style={{ fontSize: 10, color: 'var(--text2)', marginTop: 4 }}>{t('cell.locked')}</div>
+        )}
         <button className="ts-popup-close" onClick={onClose}>{t('popup.close')}</button>
       </div>
     )
@@ -312,7 +319,16 @@ export function TimesheetsClient({
     return consultantsSafe
   }, [consultantsLoaded, consultantsSafe, role, currentUserId, managerTeamId])
 
+  // Erreurs d'écriture : codes stables de la base (0006) traduits, sinon message brut
+  const [actionError, setActionError] = useState<string | null>(null)
+  const report = useCallback((e: unknown) => {
+    const msg  = (e as Error)?.message ?? String(e)
+    const code = craErrorCode(msg)
+    setActionError(code ? t(`errors.${code}`) : msg)
+  }, [t])
+
   const handleSave = useCallback(async (consultantId: string, date: string, value: number, projectId: string) => {
+    setActionError(null)
     const key = `${consultantId}__${date}`
     setLocalEntries(prev => ({
       ...prev,
@@ -322,17 +338,18 @@ export function TimesheetsClient({
       const saved = await upsertTimesheet({ consultantId, date, value, projectId })
       setLocalEntries(prev => ({ ...prev, [key]: saved }))
     } catch (e) {
-      console.error('upsertTimesheet error:', e)
+      report(e)
       setLocalEntries(prev => { const n = { ...prev }; delete n[key]; return n })
     }
-  }, [])
+  }, [report])
 
   const handleSubmitAll = useCallback(async (consultantId: string) => {
     const draftIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'draft')
       .map(ts => ts.id).filter(id => !id.startsWith('local-'))
     if (!draftIds.length) return
-    await submitTimesheets(draftIds)
+    setActionError(null)
+    try { await submitTimesheets(draftIds) } catch (e) { report(e); return }
     setLocalEntries(prev => {
       const updated = { ...prev }
       for (const ts of Object.values(lookup))
@@ -340,14 +357,15 @@ export function TimesheetsClient({
           updated[`${ts.consultantId}__${ts.date}`] = { ...ts, status: 'submitted' }
       return updated
     })
-  }, [lookup])
+  }, [lookup, report])
 
   const handleApproveAll = useCallback(async (consultantId: string) => {
     const submittedIds = Object.values(lookup)
       .filter(ts => ts.consultantId === consultantId && ts.status === 'submitted')
       .map(ts => ts.id).filter(id => !id.startsWith('local-'))
     if (!submittedIds.length) return
-    await approveTimesheets(submittedIds)
+    setActionError(null)
+    try { await approveTimesheets(submittedIds) } catch (e) { report(e); return }
     setLocalEntries(prev => {
       const updated = { ...prev }
       for (const ts of Object.values(lookup))
@@ -355,7 +373,20 @@ export function TimesheetsClient({
           updated[`${ts.consultantId}__${ts.date}`] = { ...ts, status: 'approved' }
       return updated
     })
-  }, [lookup])
+  }, [lookup, report])
+
+  // Réouverture de la semaine affichée (admin) : validé → soumis
+  const handleReopen = useCallback(async (consultantId: string) => {
+    setActionError(null)
+    try { await reopenTimesheets(consultantId, weekStart, weekEnd) } catch (e) { report(e); return }
+    setLocalEntries(prev => {
+      const updated = { ...prev }
+      for (const ts of Object.values(lookup))
+        if (ts.consultantId === consultantId && ts.status === 'approved')
+          updated[`${ts.consultantId}__${ts.date}`] = { ...ts, status: 'submitted' }
+      return updated
+    })
+  }, [lookup, report, weekStart, weekEnd])
 
   const internalTypesLoaded  = internalTypes != null
   const consultantDataReady  = !loading && consultantsLoaded && projectsLoaded && internalTypesLoaded
@@ -380,6 +411,12 @@ export function TimesheetsClient({
 
       {loading && <p className="ts-status-msg">{t('loading')}</p>}
       {error   && <p className="ts-status-msg ts-status-msg--error">{error}</p>}
+      {actionError && (
+        <p className="ts-status-msg ts-status-msg--error" role="alert"
+          onClick={() => setActionError(null)} style={{ cursor: 'pointer' }}>
+          {actionError}
+        </p>
+      )}
 
       <TimesheetLegend t={t} />
 
@@ -445,7 +482,8 @@ export function TimesheetsClient({
                         const entryIsDraft = !entry || entry.status === 'draft'
                         const adminCanEdit = isAdmin(role)
                         const cellLocked   = (leaveOverlay || holiday) && !adminCanEdit
-                        const canEditCell  = !cellLocked && (canEdit(role) || (isSelf && entryIsDraft))
+                        const isApproved   = entry?.status === 'approved'   // verrouillé en base (0006)
+                        const canEditCell  = !cellLocked && !isApproved && (canEdit(role) || (isSelf && entryIsDraft))
                         const disabled     = (isConsultant && !isSelf) || !!cellLocked
 
                         const cellBg = holiday ? 'color-mix(in srgb, var(--gold) 8%, transparent)' : leaveOverlay ? 'color-mix(in srgb, var(--cyan) 6%, transparent)' : undefined
@@ -485,7 +523,7 @@ export function TimesheetsClient({
                                 className={`ts-cell ${entry ? 'ts-cell--filled' : 'ts-cell--empty'}`}
                                 style={{ color: valueColor(entry?.value), opacity: disabled ? 0.4 : 1 }}
                                 onClick={e => { if (disabled) return; openPopup(e) }}
-                                title={entry?.status ?? t('cell.noEntry')}
+                                title={isApproved ? t('cell.locked') : entry?.status ?? t('cell.noEntry')}
                                 disabled={disabled}
                               >
                                 {entry ? (entry.value === 1 ? '1' : entry.value === 0.5 ? '½' : '—') : '+'}
@@ -532,6 +570,14 @@ export function TimesheetsClient({
                               style={{ color: 'var(--green)', whiteSpace: 'nowrap' }}
                               onClick={() => handleApproveAll(c.id)}>
                               {t('actions.approve')}
+                            </button>
+                          )}
+                          {rowEntries.some(ts => ts.status === 'approved') && isAdmin(role) && (
+                            <button className="btn btn-ghost btn-sm"
+                              style={{ color: 'var(--gold)', whiteSpace: 'nowrap' }}
+                              title={t('actions.reopenTitle')}
+                              onClick={() => handleReopen(c.id)}>
+                              {t('actions.reopen')}
                             </button>
                           )}
                         </div>

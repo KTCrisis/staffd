@@ -116,6 +116,19 @@ export async function upsertTimesheet(params: {
 
   const companyId = user?.app_metadata?.company_id ?? consultantRow?.company_id ?? null
 
+  // La grille porte une saisie par consultant et par jour : changer de projet
+  // remplace la saisie du jour au lieu d'en ajouter une seconde (le plafond
+  // de 1 jour/jour est garanti en base, cf. migration 0006).
+  let others = supabase
+    .from('timesheets')
+    .delete()
+    .eq('consultant_id', consultantId)
+    .eq('date', date)
+    .neq('status', 'approved')
+  others = projectId ? others.neq('project_id', projectId) : others.not('project_id', 'is', null)
+  const { error: delError } = await others
+  if (delError) throw new Error(delError.message)
+
   const { data, error } = await supabase
     .from('timesheets')
     .upsert(
@@ -144,6 +157,30 @@ export async function submitTimesheets(ids: string[]): Promise<void> {
     .in('id', ids)
     .eq('status', 'draft')
   if (error) throw new Error(error.message)
+}
+
+/**
+ * Rouvre (validé → soumis) les CRA d'un consultant sur une période.
+ * Admin seulement ; refusé si une facture issue des CRA couvre la période.
+ * Retourne le nombre de lignes rouvertes.
+ */
+export async function reopenTimesheets(consultantId: string, start: string, end: string): Promise<number> {
+  const { data, error } = await supabase.rpc('reopen_timesheets', {
+    p_consultant_id: consultantId, p_start: start, p_end: end,
+  })
+  if (error) throw new Error(error.message)
+  return (data as number | null) ?? 0
+}
+
+/** Codes d'erreur stables levés par la base (migration 0006). */
+export const CRA_ERROR_CODES = [
+  'CRA_DAY_CAP', 'CRA_ON_LEAVE', 'CRA_STATUS_FORBIDDEN', 'CRA_LOCKED', 'CRA_INVOICED', 'CRA_FORBIDDEN',
+] as const
+export type CraErrorCode = typeof CRA_ERROR_CODES[number]
+
+/** Extrait le code CRA d'un message d'erreur, ou null. */
+export function craErrorCode(message: string): CraErrorCode | null {
+  return CRA_ERROR_CODES.find(c => message.includes(c)) ?? null
 }
 
 export async function approveTimesheets(ids: string[]): Promise<void> {

@@ -2001,6 +2001,10 @@ export type Database = {
       my_role: { Args: never; Returns: string }
       my_team_consultant_ids: { Args: never; Returns: string[] }
       next_invoice_number: { Args: { p_company_id: string }; Returns: string }
+      reopen_timesheets: {
+        Args: { p_consultant_id: string; p_end: string; p_start: string }
+        Returns: number
+      }
       win_opportunity: { Args: { p_opportunity_id: string }; Returns: string }
     }
     Enums: {

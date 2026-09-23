@@ -361,7 +361,9 @@
       "submit": "Submit",
       "submitTitle": "Submit all draft entries for this week",
       "approve": "Approve",
-      "approveTitle": "Approve all submitted entries for this consultant"
+      "approveTitle": "Approve all submitted entries for this consultant",
+      "reopen": "Reopen",
+      "reopenTitle": "Set this week's approved entries back to submitted (refused if an invoice covers the period)"
     },
     "legend": {
       "empty": "No entry",
@@ -384,12 +386,21 @@
       "badge": "◈ holiday"
     },
     "cell": {
-      "noEntry": "No entry"
+      "noEntry": "No entry",
+      "locked": "Approved: locked. An admin can reopen the week."
     },
     "popup": {
       "save": "Save",
       "cancel": "Cancel",
       "close": "Close"
+    },
+    "errors": {
+      "CRA_DAY_CAP": "More than one day logged on this date across projects.",
+      "CRA_ON_LEAVE": "This day is covered by an approved leave.",
+      "CRA_STATUS_FORBIDDEN": "Only an admin or a manager can approve a timesheet.",
+      "CRA_LOCKED": "This timesheet is approved and locked. An admin must reopen the period first.",
+      "CRA_INVOICED": "Cannot reopen: an invoice built from timesheets already covers this period.",
+      "CRA_FORBIDDEN": "Only an admin can reopen an approved period."
     }
   },
   "projects": {

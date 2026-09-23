@@ -361,7 +361,9 @@
       "submit": "Soumettre",
       "submitTitle": "Soumettre toutes les saisies de la semaine",
       "approve": "Approuver",
-      "approveTitle": "Approuver toutes les saisies soumises pour ce consultant"
+      "approveTitle": "Approuver toutes les saisies soumises pour ce consultant",
+      "reopen": "Rouvrir",
+      "reopenTitle": "Repasser en « soumis » les saisies validées de la semaine (refusé si une facture couvre la période)"
     },
     "legend": {
       "empty": "Non saisi",
@@ -384,12 +386,21 @@
       "badge": "◈ férié"
     },
     "cell": {
-      "noEntry": "Aucune saisie"
+      "noEntry": "Aucune saisie",
+      "locked": "Validé : verrouillé. Un admin peut rouvrir la semaine."
     },
     "popup": {
       "save": "Enregistrer",
       "cancel": "Annuler",
       "close": "Fermer"
+    },
+    "errors": {
+      "CRA_DAY_CAP": "Plus d'un jour déclaré sur cette date, tous projets confondus.",
+      "CRA_ON_LEAVE": "Ce jour est couvert par un congé approuvé.",
+      "CRA_STATUS_FORBIDDEN": "Seuls un admin ou un manager peuvent valider un CRA.",
+      "CRA_LOCKED": "Ce CRA est validé et verrouillé. Un admin doit d'abord rouvrir la période.",
+      "CRA_INVOICED": "Réouverture impossible : une facture issue des CRA couvre déjà cette période.",
+      "CRA_FORBIDDEN": "Seul un admin peut rouvrir une période validée."
     }
   },
   "projects": {

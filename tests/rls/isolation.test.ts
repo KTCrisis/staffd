@@ -264,3 +264,77 @@ describe('Grille par grade', () => {
     expect(error).not.toBeNull()
   })
 })
+
+describe('CRA fiables', () => {
+  let projAId = ''
+  let projBId = ''
+  const code = (e: { message?: string } | null) => e?.message ?? ''
+
+  beforeAll(async () => {
+    const { data: pa } = await admin.from('projects').insert({ company_id: COMPANY_A, name: 'CRA projet 1', client_name: 'Client A', status: 'active' }).select('id').single().throwOnError()
+    const { data: pb } = await admin.from('projects').insert({ company_id: COMPANY_A, name: 'CRA projet 2', is_internal: true, status: 'active' }).select('id').single().throwOnError()
+    projAId = pa!.id; projBId = pb!.id
+  })
+
+  it('plafonne la journée à 1 jour, tous projets confondus', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const base = { company_id: COMPANY_A, consultant_id: consultantRowId, date: '2026-10-05' }
+    expect((await c.from('timesheets').insert({ ...base, project_id: projAId, value: 0.5 })).error).toBeNull()
+    expect((await c.from('timesheets').insert({ ...base, project_id: projBId, value: 0.5 })).error).toBeNull()
+    const over = await c.from('timesheets').update({ value: 1 }).eq('project_id', projBId).eq('date', base.date)
+    expect(code(over.error)).toContain('CRA_DAY_CAP')
+  })
+
+  it('refuse un CRA sur un jour de congé approuvé', async () => {
+    await admin.from('leave_requests').insert({
+      company_id: COMPANY_A, consultant_id: consultantRowId, type: 'CP',
+      start_date: '2026-10-12', end_date: '2026-10-13', days: 2, status: 'approved',
+    }).throwOnError()
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const r = await c.from('timesheets').insert({ company_id: COMPANY_A, consultant_id: consultantRowId, project_id: projAId, date: '2026-10-12', value: 1 })
+    expect(code(r.error)).toContain('CRA_ON_LEAVE')
+  })
+
+  it('un consultant soumet mais ne valide pas son CRA, ni à la création ni en modification', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const ins = await c.from('timesheets').insert({ company_id: COMPANY_A, consultant_id: consultantRowId, project_id: projAId, date: '2026-10-06', value: 1, status: 'approved' })
+    expect(code(ins.error)).toContain('CRA_STATUS_FORBIDDEN')
+
+    await c.from('timesheets').insert({ company_id: COMPANY_A, consultant_id: consultantRowId, project_id: projAId, date: '2026-10-06', value: 1 }).throwOnError()
+    const self = await c.from('timesheets').update({ status: 'approved' }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId)
+    expect(code(self.error)).toContain('CRA_STATUS_FORBIDDEN')
+    const sub = await c.from('timesheets').update({ status: 'submitted' }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId)
+    expect(sub.error).toBeNull()
+  })
+
+  it('une ligne validée est verrouillée, même pour un admin ; la réouverture la libère', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    await a.from('timesheets').update({ status: 'approved' }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId).throwOnError()
+
+    const edit = await a.from('timesheets').update({ value: 0.5 }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId)
+    expect(code(edit.error)).toContain('CRA_LOCKED')
+    const del = await a.from('timesheets').delete().eq('date', '2026-10-06').eq('consultant_id', consultantRowId)
+    expect(code(del.error)).toContain('CRA_LOCKED')
+
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const denied = await c.rpc('reopen_timesheets', { p_consultant_id: consultantRowId, p_start: '2026-10-01', p_end: '2026-10-31' })
+    expect(code(denied.error)).toContain('CRA_FORBIDDEN')
+
+    const ok = await a.rpc('reopen_timesheets', { p_consultant_id: consultantRowId, p_start: '2026-10-01', p_end: '2026-10-31' })
+    expect(ok.error).toBeNull()
+    expect(ok.data).toBe(1)
+    expect((await a.from('timesheets').update({ value: 0.5 }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId)).error).toBeNull()
+  })
+
+  it('la réouverture est refusée si une facture issue des CRA couvre la période', async () => {
+    const a = await authClient(EMAILS.adminA, PWD)
+    await a.from('timesheets').update({ status: 'approved' }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId).throwOnError()
+    await admin.from('invoices').insert({
+      company_id: COMPANY_A, project_id: projAId, invoice_number: 'RLS-CRA-001', status: 'sent',
+      source_type: 'timesheet', source_period_start: '2026-10-01', source_period_end: '2026-10-31',
+      subtotal: 1000, tva_rate: 20, tva_amount: 200, total_ttc: 1200,
+    }).throwOnError()
+    const r = await a.rpc('reopen_timesheets', { p_consultant_id: consultantRowId, p_start: '2026-10-01', p_end: '2026-10-31' })
+    expect(code(r.error)).toContain('CRA_INVOICED')
+  })
+})
