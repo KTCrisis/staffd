@@ -82,7 +82,7 @@ export async function saveGrades(drafts: GradeDraft[], removedIds: string[], com
   }
 }
 
-/** Crée la grille de référence du plan d'affaires (tenant sans grille). */
+/** Crée la grille type (tenant sans grille), à ajuster ensuite. */
 export async function seedDefaultGrades(companyId?: string) {
   const company_id = await resolveCompanyId(companyId)
   const { error } = await supabase

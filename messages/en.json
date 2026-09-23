@@ -1193,9 +1193,9 @@
     },
     "grades": {
       "section": "GRADE_GRID",
-      "note": "Business plan assumptions per grade. Revenue and break-even computed on {jours} working days per year (HR settings). A salary entered on a consultant record overrides the grade cost.",
+      "note": "Assumptions per grade (rate, occupancy, loaded cost). Revenue and break-even computed on {jours} working days per year (HR settings). A salary entered on a consultant record overrides the grade cost.",
       "empty": "No grade grid for this tenant.",
-      "seed": "Load the business plan grid",
+      "seed": "Load a sample grid",
       "add": "+ Add a grade",
       "remove": "Remove",
       "up": "Move up",

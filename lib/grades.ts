@@ -36,12 +36,15 @@ export interface GradeEconomics {
   pointMortOccupation:  number | null
 }
 
-/** Grille de référence : plan d'affaires v3.0 (onglet Hypothèses, année 1). */
+/**
+ * Grille type, point de départ d'un tenant : ordres de grandeur génériques
+ * d'un cabinet de conseil IT, à remplacer par les hypothèses du tenant.
+ */
 export const DEFAULT_GRADES = [
-  { label: 'Très senior', position: 0, tjm_cible: 1500, occupation_cible: 60, cout_annuel_charge: 160000 },
-  { label: 'Senior',      position: 1, tjm_cible: 1100, occupation_cible: 70, cout_annuel_charge: 135000 },
-  { label: 'Confirmé',    position: 2, tjm_cible:  950, occupation_cible: 75, cout_annuel_charge:  95000 },
-  { label: 'Junior',      position: 3, tjm_cible:  720, occupation_cible: 85, cout_annuel_charge:  65000 },
+  { label: 'Expert',   position: 0, tjm_cible: 1200, occupation_cible: 70, cout_annuel_charge: 130000 },
+  { label: 'Senior',   position: 1, tjm_cible:  900, occupation_cible: 75, cout_annuel_charge: 100000 },
+  { label: 'Confirmé', position: 2, tjm_cible:  750, occupation_cible: 80, cout_annuel_charge:  75000 },
+  { label: 'Junior',   position: 3, tjm_cible:  550, occupation_cible: 85, cout_annuel_charge:  55000 },
 ] as const
 
 /**

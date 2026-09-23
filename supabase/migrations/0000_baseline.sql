@@ -18,6 +18,7 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.23  is_super_admin() rend false au lieu de NULL (0007_super_admin_boolean.sql).
 --   2026.09.23  CRA fiables : déclencheur timesheets_guard (plafond 1 j/jour, congés,
 --               transitions, verrou des validés) + reopen_timesheets() (0006_cra_integrity.sql).
 --   2026.09.23  grille par grade : table grades, consultants.grade_id, consultant_day_cost(),
@@ -559,7 +560,8 @@ create or replace function my_role() returns text as $$
 $$ language sql stable;
 
 create or replace function is_super_admin() returns boolean as $$
-  select (auth.jwt() -> 'app_metadata' ->> 'user_role') = 'super_admin';
+  -- coalesce : jamais NULL, sinon une négation neutralise le refus (0007)
+  select coalesce((auth.jwt() -> 'app_metadata' ->> 'user_role') = 'super_admin', false);
 $$ language sql stable;
 
 create or replace function increment_leave_taken(p_consultant_id uuid, p_days int)

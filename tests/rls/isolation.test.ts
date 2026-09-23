@@ -15,6 +15,7 @@ const EMAILS = {
   consultantA: 'rls-consultant-a@test.local',
   freelanceA:  'rls-freelance-a@test.local',
   adminB:      'rls-admin-b@test.local',
+  noRoleA:     'rls-norole-a@test.local',
 }
 
 let clientAId = ''
@@ -324,6 +325,18 @@ describe('CRA fiables', () => {
     expect(ok.error).toBeNull()
     expect(ok.data).toBe(1)
     expect((await a.from('timesheets').update({ value: 0.5 }).eq('date', '2026-10-06').eq('consultant_id', consultantRowId)).error).toBeNull()
+  })
+
+  it('un compte sans rôle ne valide ni ne rouvre (is_super_admin() jamais NULL)', async () => {
+    const u = await createUser(EMAILS.noRoleA, PWD, { company_id: COMPANY_A })
+    const { data: row } = await admin.from('consultants').insert({
+      company_id: COMPANY_A, user_id: u.id, name: 'Sans rôle A', contract_type: 'employee',
+    }).select('id').single().throwOnError()
+    const n = await authClient(EMAILS.noRoleA, PWD)
+    const ins = await n.from('timesheets').insert({ company_id: COMPANY_A, consultant_id: row!.id, project_id: projAId, date: '2026-10-07', value: 1, status: 'approved' })
+    expect(code(ins.error)).toContain('CRA_STATUS_FORBIDDEN')
+    const r = await n.rpc('reopen_timesheets', { p_consultant_id: row!.id, p_start: '2026-10-01', p_end: '2026-10-31' })
+    expect(code(r.error)).toContain('CRA_FORBIDDEN')
   })
 
   it('la réouverture est refusée si une facture issue des CRA couvre la période', async () => {
