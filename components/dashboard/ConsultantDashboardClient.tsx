@@ -8,6 +8,7 @@ import { Panel }           from '@/components/ui/Panel'
 import { KpiCard }         from '@/components/ui/KpiCard'
 import { Avatar }          from '@/components/ui/Avatar'
 import { EmptyState }      from '@/components/ui/EmptyState'
+import { ContractBadge }   from '@/components/consultants/ContractBadge'
 import { toISO }           from '@/lib/utils'
 import type { AvatarColor } from '@/types'
 import type { Database }   from '@/types/supabase'
@@ -109,7 +110,7 @@ export function ConsultantDashboardClient({
           <div className="cons-profile-name">{me.name}</div>
           <div className="cons-profile-role">
             {me.role}
-            {isFreelance && <span className="cons-freelance-badge">FREELANCE</span>}
+            {me.contract_type && <ContractBadge type={me.contract_type} founder={me.is_founder ?? false} fonction={me.fonction} compact />}
           </div>
         </div>
         <StatusPill status={me.status ?? 'available'} t={t} />

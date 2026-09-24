@@ -241,7 +241,7 @@
       "title": "// nouvelle demande de congé",
       "close": "✕ Fermer",
       "loadingProfile": "// chargement profil...",
-      "freelanceBadge": "🔗 Freelance — CP et RTT non disponibles",
+      "freelanceBadge": "CP et RTT non disponibles pour ce contrat",
       "typeLabel": "Type",
       "motifLabel": "Motif *",
       "motifPlaceholder": "— Sélectionner un motif —",

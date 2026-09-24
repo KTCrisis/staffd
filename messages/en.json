@@ -241,7 +241,7 @@
       "title": "// new time-off request",
       "close": "✕ Close",
       "loadingProfile": "// loading profile...",
-      "freelanceBadge": "🔗 Freelance — Paid leave & flex days not available",
+      "freelanceBadge": "Paid leave and flex days are not available for this contract",
       "typeLabel": "Type",
       "motifLabel": "Reason *",
       "motifPlaceholder": "— Select a reason —",
