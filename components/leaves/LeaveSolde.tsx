@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import type { Consultant } from '@/types'
 import { Avatar }          from '@/components/ui'
+import { ContractBadge }   from '@/components/consultants/ContractBadge'
 
 interface LeaveSoldeProps {
   consultants:    Consultant[]
@@ -69,16 +70,7 @@ export function LeaveSolde({ consultants, currentUserId, isConsultant }: LeaveSo
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div className="c-name">{c.name}</div>
-                  {isFreelance && (
-                    <span style={{
-                      fontSize: 8, fontWeight: 700, letterSpacing: 1,
-                      padding: '1px 5px', borderRadius: 2, textTransform: 'uppercase',
-                      background: 'color-mix(in srgb, var(--cyan) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--cyan) 30%, transparent)',
-                      color: 'var(--cyan)',
-                    }}>
-                      Freelance
-                    </span>
-                  )}
+                  {c.contractType && <ContractBadge type={c.contractType} founder={c.isFounder} fonction={c.fonction} compact />}
                 </div>
                 <div className="c-role">{c.role}</div>
               </div>

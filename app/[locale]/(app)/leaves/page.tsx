@@ -33,7 +33,7 @@ export default async function LeavesPage({ searchParams }: Props) {
 
   let consultantsQ = supabase
     .from('consultant_occupancy')
-    .select('id, name, initials, avatar_color, role, contract_type, leave_days_left, leave_days_total, rtt_left, rtt_total, user_id')
+    .select('id, name, initials, avatar_color, role, contract_type, is_founder, fonction, leave_days_left, leave_days_total, rtt_left, rtt_total, user_id')
     .order('name')
 
   if (tenant) {
@@ -74,7 +74,7 @@ export default async function LeavesPage({ searchParams }: Props) {
   // LeaveSolde lit le modèle Consultant (camelCase) : les lignes brutes de la
   // vue laissaient les soldes vides (« j / 25j », barres pleines).
   type SoldeRow = Pick<Tables<'consultant_occupancy'>,
-    'id' | 'name' | 'initials' | 'avatar_color' | 'role' | 'contract_type'
+    'id' | 'name' | 'initials' | 'avatar_color' | 'role' | 'contract_type' | 'is_founder' | 'fonction'
     | 'leave_days_left' | 'leave_days_total' | 'rtt_left' | 'rtt_total' | 'user_id'>
   const consultants = ((consultantsRes.data ?? []) as SoldeRow[]).map(c => ({
     id:             c.id ?? '',
@@ -84,6 +84,8 @@ export default async function LeavesPage({ searchParams }: Props) {
     avatarColor:    (c.avatar_color ?? 'green') as Consultant['avatarColor'],
     status:         'available' as Consultant['status'],
     contractType:   (c.contract_type ?? 'employee') as Consultant['contractType'],
+    isFounder:      c.is_founder ?? false,
+    fonction:       (c.fonction ?? 'consultant') as Consultant['fonction'],
     leaveDaysLeft:  c.leave_days_left ?? 0,
     leaveDaysTotal: c.leave_days_total ?? 25,
     rttLeft:        c.rtt_left ?? 0,
