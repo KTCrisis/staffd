@@ -118,7 +118,10 @@
       "leaveDays": "CP restants",
       "occupancy": "Taux occup.",
       "client": "Client",
-      "country": "Pays"
+      "country": "Pays",
+      "allocation": "Alloc.",
+      "start": "Début",
+      "end": "Fin"
     },
     "export": "↓ Exporter",
     "noResults": "// aucun résultat",
@@ -140,7 +143,8 @@
       "tjmCible": "TJM cible",
       "salaire": "Salaire annuel",
       "tjmCoutValue": "{value} €/j · {label}",
-      "tjmCibleValue": "{value} €/j cible"
+      "tjmCibleValue": "{value} €/j cible",
+      "fullProfile": "Fiche complète →"
     },
     "statuses": {
       "assigned": "En mission",
@@ -190,7 +194,7 @@
     "deleteBtn": "✕ Supprimer",
     "costLabels": {
       "charged": "Coût chargé",
-      "billed": "Tarif freelance"
+      "billed": "tarif freelance"
     },
     "fonction": {
       "consultant": "Consultant",
@@ -201,7 +205,11 @@
     "soldes": {
       "title": "Soldes de congés"
     },
-    "noAssignments": "Aucune mission"
+    "noAssignments": "Aucune mission",
+    "detail": {
+      "revenue": "CA généré",
+      "grossMargin": "Marge brute"
+    }
   },
   "conges": {
     "title": "Congés",
@@ -395,9 +403,9 @@
       "leave": "Congé approuvé",
       "holiday": "Jour férié"
     },
-    "loading": "// loading…",
-    "loadingProfile": "// loading your profile & assignments…",
-    "noConsultants": "// no consultants",
+    "loading": "// chargement…",
+    "loadingProfile": "// chargement du profil et des affectations…",
+    "noConsultants": "// aucun consultant",
     "leave": {
       "badge": "congé",
       "title": "Congé {type} approuvé"
@@ -421,6 +429,10 @@
       "CRA_LOCKED": "Ce CRA est validé et verrouillé. Un admin doit d'abord rouvrir la période.",
       "CRA_INVOICED": "Réouverture impossible : une facture issue des CRA couvre déjà cette période.",
       "CRA_FORBIDDEN": "Seul un admin peut rouvrir une période validée."
+    },
+    "leaveShort": {
+      "sansSolde": "SLD",
+      "absence": "ABS"
     }
   },
   "projects": {
@@ -484,7 +496,8 @@
       "jours": "Jours vendus",
       "budget": "Budget total",
       "billingMode": "Mode de vente",
-      "revenue": "CA du projet"
+      "revenue": "CA du projet",
+      "progress": "Avancement"
     },
     "form": {
       "titleCreate": "Nouveau projet",
@@ -691,9 +704,9 @@
       "consultants": "consultants"
     },
     "legend": {
-      "good": "Marge ≥ 20% — Bonne",
-      "watch": "Marge 10–20% — À surveiller",
-      "low": "Marge < 10% — Faible"
+      "good": "Marge ≥ 25 % : excellente",
+      "watch": "Marge 15 à 25 % : correcte",
+      "low": "Marge < 15 % : à surveiller"
     },
     "ebitda": {
       "title": "EBITDA courant",
@@ -780,7 +793,7 @@
       "margeGross": "Marge brute",
       "margePct": "Marge %",
       "charged": "chargé",
-      "billed": "facturé",
+      "billed": "coût freelance",
       "noData": "// aucune donnée — renseignez les coûts consultants et projets actifs",
       "errorLoading": "// erreur chargement — {error}",
       "noDataSub": "Renseignez les TJM consultants et projets actifs",
@@ -1401,7 +1414,10 @@
         "Octobre",
         "Novembre",
         "Décembre"
-      ]
+      ],
+      "errors": {
+        "noCompany": "Aucune société active : impossible d'enregistrer la facture."
+      }
     },
     "list": {
       "title": "Factures",
@@ -1440,7 +1456,7 @@
       "paidBadge": "✓ payée le {date}",
       "actions": {
         "preview": "aperçu",
-        "pdf": "PDF ↓",
+        "pdf": "PDF →",
         "markPaid": "✓ encaissé"
       },
       "empty": "Aucune facture ne correspond à ce filtre.",
@@ -1510,7 +1526,8 @@
         "INVOICE_NOT_DRAFT": "Cette facture est déjà émise.",
         "INVOICE_EMPTY": "Impossible d'émettre une facture sans ligne.",
         "INVOICE_FORBIDDEN": "Seuls un admin ou un manager peuvent émettre une facture.",
-        "INVOICE_ISSUE_REQUIRED": "Une facture ne passe « émise » que par le bouton Émettre."
+        "INVOICE_ISSUE_REQUIRED": "Une facture ne passe « émise » que par le bouton Émettre.",
+        "INVOICE_NOT_FOUND": "Facture introuvable"
       }
     }
   },
@@ -1696,5 +1713,16 @@
       "short": "{min} caractères minimum.",
       "mismatch": "Les deux mots de passe diffèrent."
     }
+  },
+  "login": {
+    "authRequired": "Authentification requise",
+    "email": "Email",
+    "password": "Mot de passe",
+    "show": "[ afficher ]",
+    "hide": "[ masquer ]",
+    "connecting": "connexion...",
+    "submit": "→ Se connecter",
+    "inviteOnly": "Accès sur invitation uniquement",
+    "connectionError": "Erreur de connexion"
   }
 }

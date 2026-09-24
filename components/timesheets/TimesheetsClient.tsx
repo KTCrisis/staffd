@@ -62,12 +62,14 @@ function dotColor(s: TSStatus) {
 }
 
 function Pill({ status }: { status: TSStatus }) {
-  return <span className={`ts-pill ts-pill--${status}`}>{status}</span>
+  const t = useTranslations('timesheets')
+  return <span className={`ts-pill ts-pill--${status}`}>{t(`legend.${status}`)}</span>
 }
 
 function LeaveBadge({ type, t }: { type: string; t: TFunc }) {
   const short: Record<string, string> = {
-    'CP': 'CP', 'RTT': 'RTT', 'Sans solde': 'SLD', 'Absence autorisée': 'ABS',
+    'CP': 'CP', 'RTT': 'RTT',
+    'Sans solde': t('leaveShort.sansSolde'), 'Absence autorisée': t('leaveShort.absence'),
   }
   return (
     <div className="ts-badge-wrap">

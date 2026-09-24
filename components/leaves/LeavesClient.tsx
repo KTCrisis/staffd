@@ -35,6 +35,8 @@ interface Props {
   userRole?:    string
   userId?:      string
   companyId?:   string
+  /** ?new=1 : ouvre directement le formulaire de demande */
+  openForm?:    boolean
 }
 
 export function LeavesClient({
@@ -42,13 +44,14 @@ export function LeavesClient({
   consultants = [],
   userRole,
   userId,
+  openForm = false,
 }: Props) {
   const t           = useTranslations('conges')
   const router      = useRouter()
   const editAccess  = canEdit(userRole)
 
   const [filter,   setFilter]   = useState<LeaveStatus | 'all'>(editAccess ? 'pending' : 'all')
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(openForm)
 
   const FILTERS: { label: string; value: LeaveStatus | 'all' }[] = [
     { label: t('filters.all'),      value: 'all'      },

@@ -7,6 +7,7 @@
 
 import { useState }          from 'react'
 import { useRouter }         from 'next/navigation'
+import { Link }              from '@/lib/navigation'
 import { useTranslations }   from 'next-intl'
 import { isAdmin, canEdit, canViewFinancials, grantableRoles } from '@/lib/auth'
 import type { UserRole }      from '@/lib/auth'
@@ -303,7 +304,10 @@ export function ConsultantsClient({ consultants = [], userRole, companyId }: Pro
 
             <div className="cons-drawer-header drawer-head">
               <span className="label-meta">{t('drawer.label')}</span>
-              <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>{t('drawer.close')}</button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <Link href={`/consultants/${selected.id}`} className="btn btn-ghost btn-sm">{t('drawer.fullProfile')}</Link>
+                <button className="btn btn-ghost btn-sm" onClick={closeDrawer}>{t('drawer.close')}</button>
+              </div>
             </div>
 
             <div className="cons-drawer-profile">

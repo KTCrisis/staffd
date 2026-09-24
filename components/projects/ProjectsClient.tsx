@@ -162,11 +162,12 @@ interface Props {
   projects?: Project[]
   error?:    string | null
   userRole?: string                                                                      // ← AJOUT
+  initialOpenId?: string
 }
 
 // ── Composant principal ───────────────────────────────────────
 
-export function ProjectsClient({ projects = [], error, userRole }: Props) {               // ← userRole
+export function ProjectsClient({ projects = [], error, userRole, initialOpenId }: Props) {               // ← userRole
   const t      = useTranslations('projects')
   const router = useRouter()
 
@@ -175,7 +176,10 @@ export function ProjectsClient({ projects = [], error, userRole }: Props) {     
   const [assignmentRefresh, setAssignmentRefresh] = useState(0)
   const [filter,            setFilter]            = useState<FilterValue>('all')
   const [showInternal,      setShowInternal]      = useState(false)
-  const [selected,          setSelected]          = useState<Project | null>(null)
+  // ?id=<projet> : ouvre directement le tiroir de ce projet (liens depuis clients, CRM, dashboard)
+  const [selected,          setSelected]          = useState<Project | null>(
+    () => (initialOpenId ? projects.find(p => p.id === initialOpenId) ?? null : null),
+  )
   const [formOpen,          setFormOpen]          = useState(false)
   const [editProject,       setEditProject]       = useState<Project | null>(null)
   const [assignOpen,        setAssignOpen]        = useState(false)

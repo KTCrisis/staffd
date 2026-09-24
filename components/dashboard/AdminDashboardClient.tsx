@@ -83,7 +83,8 @@ export function AdminDashboardClient({
             <EmptyState message={t('noActiveProjects')} />
           ) : (
             activeProjects.map(proj => (
-              <ProjectRow key={proj.id} project={proj} consultants={consultants} />
+              <ProjectRow key={proj.id} project={proj} consultants={consultants}
+                onClick={() => router.push(`/projects?id=${proj.id}` as never)} />
             ))
           )}
         </div>
@@ -97,12 +98,13 @@ export function AdminDashboardClient({
         >
           {consultants.length === 0
             ? <EmptyState message="// no consultants" />
-            : consultants.map(c => <ConsultantItem key={c.id} consultant={c} />)
+            : consultants.map(c => <ConsultantItem key={c.id} consultant={c}
+                onClick={() => router.push(`/consultants/${c.id}` as never)} />)
           }
         </Panel>
 
         <div className="dashboard-side">
-          <Panel title={t('activity')} action={{ label: t('seeAll'), onClick: () => {} }}>
+          <Panel title={t('activity')}>
             <ActivityFeed items={activity} />
           </Panel>
           <Panel title={t('calendar')}>

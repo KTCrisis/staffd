@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
+import { useTranslations }      from 'next-intl'
 import { useRouter }            from '@/lib/navigation'
 import { signIn }               from '@/lib/auth'
 import Link                     from 'next/link'
 
 export default function LoginPage() {
   const router   = useRouter()
+  const t        = useTranslations('login')
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState<string | null>(null)
@@ -28,7 +30,7 @@ export default function LoginPage() {
       }
       router.push('/dashboard' as never)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connection error')
+      setError(err instanceof Error ? err.message : t('connectionError'))
     } finally {
       setLoading(false)
     }
@@ -55,13 +57,13 @@ export default function LoginPage() {
         </div>
 
         {/* Auth required */}
-        <div className="login-auth-tag">Authentication required</div>
+        <div className="login-auth-tag">{t('authRequired')}</div>
 
         {/* Champs — vraie balise <form> pour password managers + autocomplétion */}
         <form className="login-fields" onSubmit={handleSubmit} noValidate>
 
           <div>
-            <label className="login-label" htmlFor="login-email">Email</label>
+            <label className="login-label" htmlFor="login-email">{t('email')}</label>
             <input
               id="login-email"
               type="email"
@@ -75,13 +77,13 @@ export default function LoginPage() {
 
           <div>
             <div className="login-pwd-header">
-              <label className="login-label" htmlFor="login-password">Password</label>
+              <label className="login-label" htmlFor="login-password">{t('password')}</label>
               <button
                 type="button"
                 className="login-toggle-pwd"
                 onClick={() => setShowPwd(v => !v)}
               >
-                {showPwd ? '[ hide ]' : '[ show ]'}
+                {showPwd ? t('hide') : t('show')}
               </button>
             </div>
             <input
@@ -109,16 +111,16 @@ export default function LoginPage() {
           >
             {loading ? (
               <span className="login-connecting">
-                <span className="spinner" /> connecting...
+                <span className="spinner" /> {t('connecting')}
               </span>
-            ) : '→ Sign in'}
+            ) : t('submit')}
           </button>
 
         </form>
 
         {/* Footer */}
         <div className="login-footer">
-          <span className="login-footer-text">Access by invitation only</span>
+          <span className="login-footer-text">{t('inviteOnly')}</span>
           <Link href="/docs" className="login-docs-link">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>

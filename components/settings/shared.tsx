@@ -137,6 +137,7 @@ export function Skeleton({ h = 60 }: { h?: number }) {
 }
 
 export function RoleBadge({ role }: { role: string }) {
+  const t = useTranslations('consultants')
   const colors: Record<string, { bg: string; color: string; border: string }> = {
     manager:    { bg: 'color-mix(in srgb, var(--gold) 10%, transparent)', color: 'var(--gold)', border: 'color-mix(in srgb, var(--gold) 30%, transparent)' },
     admin:      { bg: 'color-mix(in srgb, var(--pink) 10%, transparent)',  color: 'var(--pink)', border: 'color-mix(in srgb, var(--pink) 30%, transparent)' },
@@ -144,13 +145,16 @@ export function RoleBadge({ role }: { role: string }) {
     freelance:  { bg: 'color-mix(in srgb, var(--cyan) 8%, transparent)',  color: 'var(--cyan)',  border: 'color-mix(in srgb, var(--cyan) 25%, transparent)' },
   }
   const s = colors[role] ?? colors.consultant
+  const label = ['admin', 'manager', 'consultant', 'freelance'].includes(role)
+    ? t(`account.roles.${role}`)
+    : role === 'employee' ? t('contractType.employee') : role
   return (
     <span style={{
       fontSize: 8, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
       padding: '2px 6px', borderRadius: 2,
       background: s.bg, color: s.color, border: `1px solid ${s.border}`,
     }}>
-      {role}
+      {label}
     </span>
   )
 }

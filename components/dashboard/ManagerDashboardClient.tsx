@@ -44,6 +44,7 @@ export function ManagerDashboardClient({
   calendarEvents = []
 }: Props) {
   const t      = useTranslations('dashboardManager')
+  const tLeave = useTranslations('conges.types')
   const router = useRouter()
   return (
     <div className="app-content">
@@ -76,7 +77,8 @@ export function ManagerDashboardClient({
         >
           {consultants.length === 0
             ? <EmptyState message="// no consultants" />
-            : consultants.map(c => <ConsultantItem key={c.id} consultant={c} />)
+            : consultants.map(c => <ConsultantItem key={c.id} consultant={c}
+                onClick={() => router.push(`/consultants/${c.id}` as never)} />)
           }
         </Panel>
 
@@ -115,7 +117,7 @@ export function ManagerDashboardClient({
                   <div key={l.id} className="manager-leave-row">
                     <div>
                       <span className="manager-leave-name">{l.consultantName}</span>
-                      <span className="manager-leave-type">{l.type}</span>
+                      <span className="manager-leave-type">{tLeave.has(l.type) ? tLeave(l.type) : l.type}</span>
                     </div>
                     <span className="manager-leave-dates">{l.startDate} → {l.endDate}</span>
                   </div>

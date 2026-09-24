@@ -16,7 +16,7 @@ import { InvoicePreview }     from './InvoicePreview'
 import type { BillingSettings, InvoiceClient, InvoiceLineItem } from './InvoicePreview'
 import type { InvoiceStyle } from '@/lib/branding'
 
-const CODES = ['INVOICE_LOCKED', 'INVOICE_NOT_DRAFT', 'INVOICE_EMPTY', 'INVOICE_FORBIDDEN', 'INVOICE_ISSUE_REQUIRED'] as const
+const CODES = ['INVOICE_LOCKED', 'INVOICE_NOT_DRAFT', 'INVOICE_EMPTY', 'INVOICE_FORBIDDEN', 'INVOICE_ISSUE_REQUIRED', 'INVOICE_NOT_FOUND'] as const
 
 interface Props {
   invoice: {

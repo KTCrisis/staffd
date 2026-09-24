@@ -118,7 +118,10 @@
       "leaveDays": "Days left",
       "occupancy": "Occupancy",
       "client": "Client",
-      "country": "Country"
+      "country": "Country",
+      "allocation": "Alloc.",
+      "start": "Start",
+      "end": "End"
     },
     "export": "↓ Export",
     "noResults": "// no results",
@@ -140,7 +143,8 @@
       "tjmCible": "Target rate",
       "salaire": "Annual salary",
       "tjmCoutValue": "{value} €/d · {label}",
-      "tjmCibleValue": "{value} €/d target"
+      "tjmCibleValue": "{value} €/d target",
+      "fullProfile": "Full profile →"
     },
     "statuses": {
       "assigned": "On assignment",
@@ -190,7 +194,7 @@
     "deleteBtn": "✕ Delete",
     "costLabels": {
       "charged": "Loaded cost",
-      "billed": "Freelance rate"
+      "billed": "freelance rate"
     },
     "fonction": {
       "consultant": "Consultant",
@@ -201,7 +205,11 @@
     "soldes": {
       "title": "Leave balance"
     },
-    "noAssignments": "No assignments"
+    "noAssignments": "No assignments",
+    "detail": {
+      "revenue": "Revenue generated",
+      "grossMargin": "Gross margin"
+    }
   },
   "conges": {
     "title": "Time Off",
@@ -421,6 +429,10 @@
       "CRA_LOCKED": "This timesheet is approved and locked. An admin must reopen the period first.",
       "CRA_INVOICED": "Cannot reopen: an invoice built from timesheets already covers this period.",
       "CRA_FORBIDDEN": "Only an admin can reopen an approved period."
+    },
+    "leaveShort": {
+      "sansSolde": "UNP",
+      "absence": "AUTH"
     }
   },
   "projects": {
@@ -484,7 +496,8 @@
       "jours": "Days sold",
       "budget": "Total budget",
       "billingMode": "Pricing",
-      "revenue": "Project revenue"
+      "revenue": "Project revenue",
+      "progress": "Progress"
     },
     "form": {
       "titleCreate": "New project",
@@ -691,9 +704,9 @@
       "consultants": "consultants"
     },
     "legend": {
-      "good": "Margin ≥ 20% — Good",
-      "watch": "Margin 10–20% — Watch",
-      "low": "Margin < 10% — Low"
+      "good": "Margin ≥ 25%: excellent",
+      "watch": "Margin 15 to 25%: fair",
+      "low": "Margin < 15%: watch"
     },
     "ebitda": {
       "title": "Current EBITDA",
@@ -780,7 +793,7 @@
       "margeGross": "Gross margin",
       "margePct": "Margin %",
       "charged": "charged",
-      "billed": "billed",
+      "billed": "freelance cost",
       "noData": "// no data — set consultant costs and active projects",
       "errorLoading": "// loading error — {error}",
       "noDataSub": "Set consultant costs and active projects",
@@ -1379,9 +1392,9 @@
         }
       },
       "totals": {
-        "subtotal": "Subtotal HT",
+        "subtotal": "Subtotal excl. VAT",
         "vat": "VAT {rate}%",
-        "total": "Total TTC"
+        "total": "Total incl. VAT"
       },
       "actions": {
         "saveDraft": "save draft",
@@ -1401,7 +1414,10 @@
         "October",
         "November",
         "December"
-      ]
+      ],
+      "errors": {
+        "noCompany": "No active company: the invoice cannot be saved."
+      }
     },
     "list": {
       "title": "Invoices",
@@ -1431,16 +1447,16 @@
         "project": "Project",
         "date": "Date",
         "due": "Due",
-        "subtotal": "Subtotal HT",
+        "subtotal": "Subtotal excl. VAT",
         "vat": "VAT",
-        "total": "Total TTC",
+        "total": "Total incl. VAT",
         "status": "Status"
       },
       "overdueBadge": "⚠ {days}d late",
       "paidBadge": "✓ paid {date}",
       "actions": {
         "preview": "preview",
-        "pdf": "PDF ↓",
+        "pdf": "PDF →",
         "markPaid": "✓ paid"
       },
       "empty": "No invoices matching this filter.",
@@ -1510,7 +1526,8 @@
         "INVOICE_NOT_DRAFT": "This invoice is already issued.",
         "INVOICE_EMPTY": "Cannot issue an invoice without lines.",
         "INVOICE_FORBIDDEN": "Only an admin or a manager can issue an invoice.",
-        "INVOICE_ISSUE_REQUIRED": "An invoice becomes issued only through the Issue button."
+        "INVOICE_ISSUE_REQUIRED": "An invoice becomes issued only through the Issue button.",
+        "INVOICE_NOT_FOUND": "Invoice not found"
       }
     }
   },
@@ -1696,5 +1713,16 @@
       "short": "At least {min} characters.",
       "mismatch": "The two passwords differ."
     }
+  },
+  "login": {
+    "authRequired": "Authentication required",
+    "email": "Email",
+    "password": "Password",
+    "show": "[ show ]",
+    "hide": "[ hide ]",
+    "connecting": "connecting...",
+    "submit": "→ Sign in",
+    "inviteOnly": "Access by invitation only",
+    "connectionError": "Connection error"
   }
 }

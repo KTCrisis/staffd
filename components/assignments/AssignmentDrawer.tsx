@@ -39,6 +39,7 @@ interface Props {
 export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, onSaved }: Props) {
   const t    = useTranslations('assignments')
   const tS   = useTranslations('staffing')
+  const tSt  = useTranslations('statuses')
 
   const { data: projects } = useProjects()
 
@@ -160,7 +161,7 @@ export function AssignmentDrawer({ consultant, defaultDate, companyId, onClose, 
                 marginTop: 6, fontSize: 10, color: 'var(--cyan)',
                 letterSpacing: 1,
               }}>
-                {'// '}{selectedProject.status}
+                {'// '}{tSt.has(selectedProject.status) ? tSt(selectedProject.status) : selectedProject.status}
                 {selectedProject.endDate && ` · ${tS('drawer.projectEnd')} ${new Date(selectedProject.endDate).toLocaleDateString()}`}
               </div>
             )}

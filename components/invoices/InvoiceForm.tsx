@@ -44,16 +44,17 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Input({ value, onChange, placeholder, type = 'text', style = {} }: {
+function Input({ value, onChange, placeholder, type = 'text', style = {}, readOnly = false }: {
   value: string | number
   onChange: (v: string) => void
+  readOnly?: boolean
   placeholder?: string
   type?: string
   style?: React.CSSProperties
 }) {
   return (
     <input
-      type={type} value={value} placeholder={placeholder}
+      type={type} value={value} placeholder={placeholder} readOnly={readOnly}
       onChange={e => onChange(e.target.value)}
       style={{
         width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)',
@@ -311,7 +312,7 @@ export function InvoiceForm() {
       let cq = supabase.from('companies').select('id')
       if (activeTenantId) cq = cq.eq('id', activeTenantId)
       const { data: company } = await cq.single()
-      if (!company) return
+      if (!company) throw new Error(t('errors.noCompany'))
 
       const month   = String(importMonth + 1).padStart(2, '0')
       const lastDay = new Date(importYear, importMonth + 1, 0).getDate()
@@ -492,7 +493,7 @@ export function InvoiceForm() {
             </div>
             <div>
               <FieldLabel>{t('fields.dueDate')}</FieldLabel>
-              <Input value={dueDate} onChange={() => {}} style={{ opacity: 0.5 }} />
+              <Input value={dueDate} onChange={() => {}} readOnly style={{ opacity: 0.5 }} />
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: 12, marginBottom: 20 }}>

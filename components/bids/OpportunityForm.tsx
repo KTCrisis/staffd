@@ -127,7 +127,7 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
           {mode === 'edit' ? t('form.titleEdit') : t('form.titleCreate')}
           {o && o.status !== 'open' && <span style={{ marginLeft: 8, color: 'var(--gold)' }}>· {t(`status.${o.status}`)}</span>}
           {o?.project_id && (
-            <Link href="/projects" style={{ marginLeft: 10, color: 'var(--cyan)', textTransform: 'none', letterSpacing: 0 }}>{t('form.projectLink')}</Link>
+            <Link href={`/projects?id=${o.project_id}`} style={{ marginLeft: 10, color: 'var(--cyan)', textTransform: 'none', letterSpacing: 0 }}>{t('form.projectLink')}</Link>
           )}
         </span>
         <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>

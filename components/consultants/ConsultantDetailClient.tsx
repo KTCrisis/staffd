@@ -264,7 +264,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                 {profitability?.ca_genere != null && (
                   <div style={{ padding: '16px 20px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 4 }}>
                     <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>
-                      CA généré
+                      {t('detail.revenue')}
                     </div>
                     <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--cyan)' }}>{fmt(profitability.ca_genere)}</div>
                   </div>
@@ -273,7 +273,7 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
               {profitability?.marge_pct != null && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span className="label-meta">Marge brute</span>
+                    <span className="label-meta">{t('detail.grossMargin')}</span>
                     <span style={{ fontWeight: 700, color: mColor }}>{profitability.marge_pct}%</span>
                   </div>
                   <MargeBar pct={profitability.marge_pct} />
@@ -296,9 +296,9 @@ export function ConsultantDetailClient({ consultant: c, assignments = [], profit
                       <th>{t('table.project') ?? 'Projet'}</th>
                       <th>{t('table.client')}</th>
                       <th>{t('table.status') ?? 'Statut'}</th>
-                      <th style={{ textAlign: 'right' }}>Alloc.</th>
-                      <th>Début</th>
-                      <th>Fin</th>
+                      <th style={{ textAlign: 'right' }}>{t('table.allocation')}</th>
+                      <th>{t('table.start')}</th>
+                      <th>{t('table.end')}</th>
                     </tr>
                   </thead>
                   <tbody>

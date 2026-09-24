@@ -126,7 +126,7 @@ export function ClientDetailClient({ client, projects = [], crm }: Props) {
               projects.map(p => (
                 <div
                   key={p.id}
-                  onClick={() => router.push('/projects' as never)}
+                  onClick={() => router.push(`/projects?id=${p.id}` as never)}
                   style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '12px 18px', borderBottom: '1px solid var(--border)',

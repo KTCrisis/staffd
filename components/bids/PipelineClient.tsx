@@ -202,7 +202,7 @@ export function PipelineClient({ opportunities, clients, owners, stages, interac
                 <td style={{ color: 'var(--text2)', fontSize: 11 }}>
                   {tab === 'won'
                     ? (o.project_id
-                        ? <Link href="/projects" onClick={e => e.stopPropagation()} style={{ color: 'var(--cyan)' }}>{t('table.openProject')}</Link>
+                        ? <Link href={`/projects?id=${o.project_id}`} onClick={e => e.stopPropagation()} style={{ color: 'var(--cyan)' }}>{t('table.openProject')}</Link>
                         : '—')
                     : (o.lost_reason ?? t(`status.${o.status}`))}
                 </td>

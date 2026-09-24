@@ -7,11 +7,11 @@ import { ProjectsClient }  from '@/components/projects/ProjectsClient'
 import type { Tables }     from '@/types/supabase'
 
 interface Props {
-  searchParams: Promise<{ tenant?: string }>
+  searchParams: Promise<{ tenant?: string; id?: string }>
 }
 
 export default async function ProjectsPage({ searchParams }: Props) {
-  const { tenant } = await searchParams
+  const { tenant, id: openId } = await searchParams
   const t          = await getTranslations('projects')
   const { role, isSA, userId, companyName, supabase } = await getPageAuth(tenant)
 
@@ -109,7 +109,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   return (
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
-      <ProjectsClient projects={projects as React.ComponentProps<typeof ProjectsClient>['projects']} error={error?.message ?? null} userRole={role} />
+      <ProjectsClient projects={projects as React.ComponentProps<typeof ProjectsClient>['projects']} error={error?.message ?? null} userRole={role} initialOpenId={openId} />
     </>
   )
 }

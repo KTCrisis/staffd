@@ -222,7 +222,7 @@ export function ConsultantDashboardClient({
             <button
               className="btn btn-ghost btn-sm"
               style={{ color: 'var(--green)', fontSize: 10 }}
-              onClick={() => router.push('/leaves' as never)}
+              onClick={() => router.push('/leaves?new=1' as never)}
             >
               {t('leaves.request')}
             </button>

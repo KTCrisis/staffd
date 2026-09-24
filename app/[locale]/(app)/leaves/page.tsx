@@ -8,11 +8,11 @@ import type { Consultant } from '@/types'
 import type { Tables }     from '@/types/supabase'
 
 interface Props {
-  searchParams: Promise<{ tenant?: string }>
+  searchParams: Promise<{ tenant?: string; new?: string }>
 }
 
 export default async function LeavesPage({ searchParams }: Props) {
-  const { tenant } = await searchParams
+  const { tenant, new: openNew } = await searchParams
   const t          = await getTranslations('conges')
   const { role, isSA, userId, companyId, companyName, supabase } = await getPageAuth(tenant)
 
@@ -98,6 +98,7 @@ export default async function LeavesPage({ searchParams }: Props) {
     <>
       <Topbar title={t('title')} breadcrumb={t('breadcrumb')} isSuperAdmin={isSA} companyName={companyName} />
       <LeavesClient
+        openForm={openNew === '1'}
         requests={requests as React.ComponentProps<typeof LeavesClient>['requests']}
         consultants={consultants}
         userRole={role}
