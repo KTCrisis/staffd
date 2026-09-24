@@ -60,6 +60,11 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
   const { data: companyData } = useCompanySettings()
   const { data: grades }      = useGrades()
   const companyCountry = companyData?.hr_settings?.country_code ?? 'FR'
+  // Réglages RH du tenant (Paramètres > RH) : valeurs par défaut d'un nouveau consultant
+  const hr          = companyData?.hr_settings as { default_cp?: number; default_rtt?: number; working_days_per_year?: number } | undefined
+  const defaultCp   = hr?.default_cp ?? 25
+  const defaultRtt  = hr?.default_rtt ?? 0
+  const defaultDays = hr?.working_days_per_year ?? 218
 
   const isEdit = !!consultant
 
@@ -118,6 +123,17 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
     }
   }, [consultant])
 
+  // Création : dès que les réglages RH arrivent, ils remplacent les valeurs
+  // génériques (25 CP, 218 jours), sauf si l'utilisateur les a déjà modifiées.
+  useEffect(() => {
+    if (consultant || !companyData) return
+    setForm(f => ({
+      ...f,
+      leave_days_total: f.leave_days_total === '25'  ? String(defaultCp)   : f.leave_days_total,
+      jours_travailles: f.jours_travailles === '218' ? String(defaultDays) : f.jours_travailles,
+    }))
+  }, [consultant, companyData, defaultCp, defaultDays])
+
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const handleName = (v: string) => {
@@ -168,11 +184,11 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
         contract_type:       form.contract_type,
         salaire_annuel_brut: isEmployee && form.salaire_annuel_brut ? parseFloat(form.salaire_annuel_brut) : undefined,
         charges_pct:         isEmployee ? parseFloat(form.charges_pct) || 42 : undefined,
-        jours_travailles:    isEmployee ? parseInt(form.jours_travailles) || 218 : undefined,
+        jours_travailles:    isEmployee ? parseInt(form.jours_travailles) || defaultDays : undefined,
         tjm_facture:         isFreelance && form.tjm_facture ? parseFloat(form.tjm_facture) : undefined,
         tjm:                 form.tjm ? parseFloat(form.tjm) : undefined,
         tjm_cible:           form.tjm_cible ? parseFloat(form.tjm_cible) : undefined,
-        leave_days_total:    parseInt(form.leave_days_total) || 25,
+        leave_days_total:    parseInt(form.leave_days_total) || defaultCp,
         country_code:        countryCode ?? undefined,
         grade_id:            form.grade_id || null,
         date_entree:         form.date_entree || null,
@@ -184,7 +200,8 @@ export function ConsultantForm({ consultant, companyId, onClose, onSaved }: Prop
       if (isEdit) {
         await updateConsultant(consultant!.id, payload)
       } else {
-        await createConsultant({ ...payload, company_id: companyId })
+        // RTT par défaut du tenant pour un salarié ; un freelance n'en a pas
+        await createConsultant({ ...payload, company_id: companyId, rtt_total: isEmployee ? defaultRtt : 0 })
       }
 
       onSaved()

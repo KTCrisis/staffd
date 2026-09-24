@@ -199,7 +199,7 @@ export async function queryAgent(
   try {
     ollamaRes = await fetch(`${host}/api/chat`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}) },
       body:    JSON.stringify({ model, messages: ollamaMessages, stream: true }),
     })
   } catch (e) {

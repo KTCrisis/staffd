@@ -567,14 +567,14 @@ export function TimesheetsClient({
                               {t('actions.submit')}
                             </button>
                           )}
-                          {hasSubmitted && isAdmin(role) && (
+                          {hasSubmitted && canEdit(role) && (
                             <button className="btn btn-ghost btn-sm"
                               style={{ color: 'var(--green)', whiteSpace: 'nowrap' }}
                               onClick={() => handleApproveAll(c.id)}>
                               {t('actions.approve')}
                             </button>
                           )}
-                          {rowEntries.some(ts => ts.status === 'approved') && isAdmin(role) && (
+                          {rowEntries.some(ts => ts.status === 'approved') && canEdit(role) && (
                             <button className="btn btn-ghost btn-sm"
                               style={{ color: 'var(--gold)', whiteSpace: 'nowrap' }}
                               title={t('actions.reopenTitle')}

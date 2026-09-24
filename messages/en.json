@@ -1104,7 +1104,7 @@
       "modelLabel": "Model",
       "modelHint": "Model used by the /cmd AI console",
       "agentsLabel": "Agents",
-      "agentsHint": "Enable autonomous agents in /cmd (predictive staffing, alerts, etc.)",
+      "agentsHint": "Lets the console propose and run actions (leave, assignments…), always after confirmation. Off: it only answers questions.",
       "mcpSection": "MCP_TOOLS",
       "mcpSubtitle": "Available MCP connectors — manage tools accessible by the AI",
       "mcpPlanned": "PLANNED",

@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { queryAgent }              from './query-agent'
 import { actionAgent, executeAction } from './action-agent'
+import { resolveAiSettings, isOllamaCloud, type StoredAiSettings, type ResolvedAiSettings } from '@/lib/ai-settings'
 
 // Mots-clés qui suggèrent une intention d'action (pré-filtre cheap)
 // Le vrai tool calling kimi confirme ou infirme ensuite.
@@ -34,12 +35,29 @@ async function verifyUser(token: string): Promise<{
   }
 }
 
+// ── Réglages IA du tenant (Paramètres > IA), lus avec le jeton de l'utilisateur ──
+async function loadAiSettings(token: string, companyId: string | null): Promise<ResolvedAiSettings> {
+  let stored: StoredAiSettings | null = null
+  if (companyId) {
+    try {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { global: { headers: { Authorization: `Bearer ${token}` } } }
+      )
+      const { data } = await supabase.from('companies').select('ai_settings').eq('id', companyId).maybeSingle()
+      stored = (data?.ai_settings as StoredAiSettings | null) ?? null
+    } catch { /* réglages par défaut */ }
+  }
+  return resolveAiSettings(stored, {
+    OLLAMA_HOST:    process.env.OLLAMA_HOST,
+    OLLAMA_MODEL:   process.env.OLLAMA_MODEL,
+    OLLAMA_API_KEY: process.env.OLLAMA_API_KEY,
+  })
+}
+
 // ── POST /api/ai — questions et analyses ─────────────────────
 export async function POST(req: Request): Promise<Response> {
-  const apiKey = process.env.OLLAMA_API_KEY
-  const model  = process.env.OLLAMA_MODEL ?? 'gpt-oss:120b'
-  const host   = (process.env.OLLAMA_HOST ?? 'https://ollama.com').replace(/\/$/, '')
-
   const enc     = new TextEncoder()
   const sse     = (text: string) => enc.encode(`data: ${JSON.stringify({ text })}\n\n`)
   const done    = enc.encode('data: [DONE]\n\n')
@@ -48,12 +66,6 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   // ── Guards ───────────────────────────────────────────────────
-  if (!apiKey) {
-    return new Response(new ReadableStream({ start(c) {
-      c.enqueue(sse('⚠ OLLAMA_API_KEY not configured.')); c.enqueue(done); c.close()
-    }}), { headers })
-  }
-
   const authHeader = req.headers.get('Authorization') ?? ''
   const userToken  = authHeader.replace('Bearer ', '').trim()
 
@@ -63,10 +75,18 @@ export async function POST(req: Request): Promise<Response> {
     }}), { headers })
   }
 
-  const { role } = await verifyUser(userToken)
+  const { role, companyId } = await verifyUser(userToken)
   if (role !== 'admin' && role !== 'super_admin') {
     return new Response(new ReadableStream({ start(c) {
       c.enqueue(sse('⚠ Accès refusé — console réservée aux administrateurs.')); c.enqueue(done); c.close()
+    }}), { headers })
+  }
+
+  const { host, model, apiKey, agentsEnabled } = await loadAiSettings(userToken, companyId)
+  // Clé requise seulement pour ollama.com ; un endpoint propre (local) s'en passe
+  if (!apiKey && isOllamaCloud(host)) {
+    return new Response(new ReadableStream({ start(c) {
+      c.enqueue(sse('⚠ OLLAMA_API_KEY not configured.')); c.enqueue(done); c.close()
     }}), { headers })
   }
 
@@ -78,6 +98,11 @@ export async function POST(req: Request): Promise<Response> {
   const lastMsg = body.messages.findLast(m => m.role === 'user')?.content ?? ''
 
   if (ACTION_KEYWORDS.test(lastMsg)) {
+    if (!agentsEnabled) {
+      return new Response(new ReadableStream({ start(c) {
+        c.enqueue(sse('⚠ Actions désactivées : activez « Agents » dans Paramètres > IA.')); c.enqueue(done); c.close()
+      }}), { headers })
+    }
     // → ActionAgent : tool calling kimi, pas de stream texte
     //   Retourne { action, params } pour confirmation UI
     return actionAgent(body, apiKey, model, host)
@@ -107,6 +132,14 @@ export async function PUT(req: Request): Promise<Response> {
   // Un super_admin doit avoir un contexte de company actif pour agir.
   if (!companyId) {
     return new Response(JSON.stringify({ success: false, message: 'No active company context — select a company before running actions.' }), {
+      status: 403, headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  // Réglage « Agents » du tenant : sans lui, aucune action n'est exécutée
+  const { agentsEnabled } = await loadAiSettings(userToken, companyId)
+  if (!agentsEnabled) {
+    return new Response(JSON.stringify({ success: false, message: 'Actions disabled: enable Agents in Settings > AI.' }), {
       status: 403, headers: { 'Content-Type': 'application/json' }
     })
   }

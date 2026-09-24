@@ -34,6 +34,7 @@ export interface ConsultantInput {
   tjm?:                 number
   tjm_cible?:           number
   leave_days_total?:    number
+  rtt_total?:           number
   grade_id?:            string | null
   date_entree?:         string | null
   date_sortie?:         string | null

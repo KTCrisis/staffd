@@ -1104,7 +1104,7 @@
       "modelLabel": "Modèle",
       "modelHint": "Modèle utilisé par la console /cmd",
       "agentsLabel": "Agents",
-      "agentsHint": "Active les agents autonomes dans le /cmd (staffing prédictif, alertes, etc.)",
+      "agentsHint": "Autorise la console à proposer et exécuter des actions (congés, affectations…), toujours après confirmation. Désactivé : elle répond seulement aux questions.",
       "mcpSection": "MCP_TOOLS",
       "mcpSubtitle": "Connecteurs MCP disponibles — gèrent les outils accessibles par l'IA",
       "mcpPlanned": "PLANNED",
