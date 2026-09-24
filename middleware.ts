@@ -77,6 +77,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ── 5b. /dashboard → tableau de bord du rôle, sans rendre la page ──
+  // La page /dashboard ne faisait que rediriger, après avoir refait toute la
+  // vérification de session : autant rediriger ici, où le rôle est connu.
+  if (pathWithoutLocale === '/dashboard') {
+    const target = dashboardForRole(role)
+    if (target) {
+      const localePrefix = pathname.startsWith('/fr') ? '/fr' : ''
+      const redirect = NextResponse.redirect(new URL(`${localePrefix}${target}`, request.url))
+      // Jetons éventuellement rafraîchis par getUser() : ils doivent suivre
+      response.cookies.getAll().forEach(c => redirect.cookies.set(c))
+      return redirect
+    }
+  }
+
   // ── 6. Session valide → jetons à jour transmis aux pages ──
   forwardRequestCookies(request, response)
   return response
@@ -108,4 +122,12 @@ function forwardRequestCookies(request: NextRequest, response: NextResponse) {
 
 export const config = {
   matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+}
+
+/** Tableau de bord propre au rôle (même règle que la page /dashboard). */
+function dashboardForRole(role?: string): string | null {
+  if (role === 'consultant' || role === 'freelance') return '/dashboard/consultant'
+  if (role === 'manager')                            return '/dashboard/manager'
+  if (role === 'admin' || role === 'super_admin')    return '/dashboard/admin'
+  return null
 }

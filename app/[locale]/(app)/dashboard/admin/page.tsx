@@ -7,22 +7,16 @@ import { Topbar }               from '@/components/layout/Topbar'
 import { AdminDashboardClient } from '@/components/dashboard/AdminDashboardClient'
 import type { CalendarEvent }   from '@/components/dashboard/MiniCalendar'
 import type { Tables }          from '@/types/supabase'
+import { fetchPublicHolidays, countryFromHrSettings } from '@/lib/holidays'
 
 interface Props {
   searchParams: Promise<{ tenant?: string }>
 }
 
-// Réponse de l'API publique date.nager.at (externe, non typée par le SDK Supabase)
-interface NagerHoliday {
-  date:      string
-  localName: string
-  name:      string
-}
-
 export default async function AdminDashboardPage({ searchParams }: Props) {
   const { tenant } = await searchParams
   const t          = await getTranslations('dashboard')
-  const { role, isSA, companyId: authCompanyId, companyName, supabase } = await getPageAuth(tenant)
+  const { role, isSA, companyId: authCompanyId, companyName, hrSettings, supabase } = await getPageAuth(tenant)
 
   // Guard serveur — réservé admin/super_admin (le middleware ne couvre pas /dashboard/*)
   if (role !== 'admin' && !isSA) redirect('/dashboard')
@@ -40,9 +34,35 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
     activityQ    = activityQ.eq('company_id', tenant)
   }
 
-  const [consultantsRes, projectsRes, leavesRes, activityRes] = await Promise.all([
-    consultantsQ, projectsQ, leavesQ, activityQ,
+  // ── Calendrier : dates du mois, jours fériés, congés approuvés ──
+  // Lancés en même temps que les requêtes principales (ils n'en dépendent pas).
+  const now        = new Date()
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const monthEnd   = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`
+
+  const companyForCal = tenant ?? authCompanyId
+  const holidaysP: Promise<CalendarEvent[]> = (async () => {
+    if (!companyForCal) return []
+    let hr = hrSettings
+    if (tenant) {
+      const { data: comp } = await supabase.from('companies').select('hr_settings').eq('id', tenant).maybeSingle()
+      hr = comp?.hr_settings ?? null
+    }
+    return fetchPublicHolidays(now.getFullYear(), countryFromHrSettings(hr))
+  })()
+
+  let leaveEventsQ = supabase
+    .from('leave_requests')
+    .select('start_date, end_date, type, consultants(name)')
+    .eq('status', 'approved')
+    .lte('start_date', monthEnd)
+    .gte('end_date', monthStart)
+  if (tenant) leaveEventsQ = leaveEventsQ.eq('company_id', tenant)
+
+  const [consultantsRes, projectsRes, leavesRes, activityRes, leaveEventsRes, holidays] = await Promise.all([
+    consultantsQ, projectsQ, leavesQ, activityQ, leaveEventsQ, holidaysP,
   ])
+  const leaveEventsData = leaveEventsRes.data
 
   if (consultantsRes.error) console.error('Admin dashboard consultants:', consultantsRes.error.message)
   if (projectsRes.error)    console.error('Admin dashboard projects:', projectsRes.error.message)
@@ -74,50 +94,6 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
     pendingLeaves,
     occupancyRate:     avgOccupancy,
   }
-
-  // ── Événements calendrier ──────────────────────────────────
-
-  const now        = new Date()
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const monthEnd   = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`
-
-  // Jours fériés
-  let holidays: CalendarEvent[] = []
-  const companyForCal = tenant ?? authCompanyId
-  if (companyForCal) {
-    const { data: comp } = await supabase
-      .from('companies')
-      .select('hr_settings')
-      .eq('id', companyForCal)
-      .maybeSingle()
-
-    const countryCode = (comp?.hr_settings as { country_code?: string } | null)?.country_code ?? 'FR'
-    const calYear     = now.getFullYear()
-
-    try {
-      const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${calYear}/${countryCode}`)
-      if (res.ok) {
-        const data = await res.json() as NagerHoliday[] | null
-        holidays = (data ?? []).map((h) => ({
-          date:  h.date,
-          type:  'holiday' as const,
-          label: h.localName ?? h.name,
-        }))
-      }
-    } catch { /* silent */ }
-  }
-
-  // Congés approuvés du mois
-  let leaveEventsQ = supabase
-    .from('leave_requests')
-    .select('start_date, end_date, type, consultants(name)')
-    .eq('status', 'approved')
-    .lte('start_date', monthEnd)
-    .gte('end_date', monthStart)
-
-  if (tenant) leaveEventsQ = leaveEventsQ.eq('company_id', tenant)
-
-  const { data: leaveEventsData } = await leaveEventsQ
 
   type LeaveCalRow = Pick<Tables<'leave_requests'>, 'start_date' | 'end_date' | 'type'> & {
     consultants: Pick<Tables<'consultants'>, 'name'> | null
