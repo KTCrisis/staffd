@@ -181,6 +181,7 @@ button { font-family: 'JetBrains Mono', monospace; }
 .nav-icon             { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
 .nav-badge            { margin-left: auto; font-size: 9px; background: var(--pink); color: #fff; padding: 1px 6px; border-radius: 10px; font-weight: 700; flex-shrink: 0; }
 .sidebar-footer       { padding: 16px 20px; border-top: 1px solid var(--border); }
+.app-version          { margin-top: 10px; font-size: 9px; letter-spacing: 1px; color: var(--text2); opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 
 /* ══════════════════════════════════════════════════════════════

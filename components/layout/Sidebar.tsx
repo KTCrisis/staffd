@@ -305,6 +305,14 @@ export function Sidebar({ userRole, userEmail, companyMode, brandName, brandTagl
             </>
           )}
         </div>
+        {!collapsed && (
+          <div
+            className="app-version"
+            title={`${process.env.NEXT_PUBLIC_APP_COMMIT} · build ${process.env.NEXT_PUBLIC_BUILD_DATE}`}
+          >
+            v{process.env.NEXT_PUBLIC_APP_VERSION} · {process.env.NEXT_PUBLIC_APP_COMMIT} · {process.env.NEXT_PUBLIC_BUILD_DATE}
+          </div>
+        )}
       </div>
 
       <style>{`
