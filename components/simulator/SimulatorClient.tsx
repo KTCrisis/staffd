@@ -43,6 +43,8 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
   const [profilCost, setProfilCost] = useState<number>(
     grades.find(g => g.cout_annuel_charge)?.cout_annuel_charge ?? 100000,
   )
+  // Occupation réelle du profil : vide = celle du grade
+  const [profilOcc, setProfilOcc] = useState<number | null>(null)
 
   const pickGrade = (id: string) => {
     setGradeId(id)
@@ -59,8 +61,8 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
   const bench = useMemo(() => grades.map(g => ({
     g,
     grid:   gradeEconomics({ tjm: Number(g.tjm_cible ?? 0), occupation: Number(g.occupation_cible ?? 0), cost: Number(g.cout_annuel_charge ?? 0), jours }),
-    profil: gradeEconomics({ tjm: Number(g.tjm_cible ?? 0), occupation: Number(g.occupation_cible ?? 0), cost: profilCost, jours }),
-  })), [grades, profilCost, jours])
+    profil: gradeEconomics({ tjm: Number(g.tjm_cible ?? 0), occupation: profilOcc ?? Number(g.occupation_cible ?? 0), cost: profilCost, jours }),
+  })), [grades, profilCost, profilOcc, jours])
 
   const margeColor = getMargeColor(marge)
 
@@ -141,10 +143,21 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
           {grades.length > 0 && (
             <Panel title={t('bench.title')}>
               <p className="label-meta" style={{ marginBottom: 12 }}>{t('bench.intro', { jours })}</p>
-              <Field label={t('bench.cost')} style={{ maxWidth: 220, marginBottom: 12 }}>
-                <input className="search-input" style={{ width: '100%' }} type="number" min={0} step={1000}
-                  value={profilCost} onChange={e => setProfilCost(Number(e.target.value))} />
-              </Field>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                <Field label={t('bench.cost')} style={{ maxWidth: 220 }}>
+                  <input className="search-input" style={{ width: '100%' }} type="number" min={0} step={1000}
+                    value={profilCost} onChange={e => setProfilCost(Number(e.target.value))} />
+                </Field>
+                <Field label={t('bench.occupation')} hint={t('bench.occupationHint')} style={{ maxWidth: 220 }}>
+                  <input className="search-input" style={{ width: '100%' }} type="number" min={1} max={100} step={1}
+                    placeholder={t('bench.occupationPlaceholder')}
+                    value={profilOcc ?? ''}
+                    onChange={e => {
+                      const v = e.target.value === '' ? null : Number(e.target.value)
+                      setProfilOcc(v != null && v > 0 && v <= 100 ? v : null)
+                    }} />
+                </Field>
+              </div>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
@@ -154,7 +167,9 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
                       <th style={{ textAlign: 'right' }}>{t('bench.ca')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.gridCost')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.gridContribution')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('bench.gridShare')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.profilContribution')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('bench.profilShare')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.profilBreakEven')}</th>
                     </tr>
                   </thead>
@@ -168,9 +183,11 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
                         <td style={{ textAlign: 'right' }}>{grid ? fmt(grid.caAnnuel) : '—'}</td>
                         <td style={{ textAlign: 'right', color: 'var(--text2)' }}>{g.cout_annuel_charge ? fmt(Number(g.cout_annuel_charge)) : '—'}</td>
                         <td style={{ textAlign: 'right' }}>{grid ? fmt(grid.contribution) : '—'}</td>
+                        <td style={{ textAlign: 'right', color: 'var(--text2)' }}>{fmtPct(grid?.margePct)}</td>
                         <td style={{ textAlign: 'right', fontWeight: 600, color: profil && profil.contribution < 0 ? 'var(--pink)' : 'var(--green)' }}>
                           {profil ? fmt(profil.contribution) : '—'}
                         </td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtPct(profil?.margePct)}</td>
                         <td style={{ textAlign: 'right' }}>{profil?.pointMortTjm != null ? fmtTjm(profil.pointMortTjm) : '—'}</td>
                       </tr>
                     ))}
@@ -183,6 +200,11 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
       </div>
     </div>
   )
+}
+
+// Part du CA laissée au cabinet (contribution / CA)
+function fmtPct(v: number | null | undefined): string {
+  return v == null ? '—' : `${Math.round(v)} %`
 }
 
 // ── Champ local (même forme que ConsultantForm, + un hint) ─────

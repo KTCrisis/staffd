@@ -850,7 +850,12 @@
       "gridCost": "Grade cost",
       "gridContribution": "Grid contribution",
       "profilContribution": "Profile contribution",
-      "profilBreakEven": "Profile break-even rate"
+      "profilBreakEven": "Profile break-even rate",
+      "occupation": "Actual profile occupancy (%)",
+      "occupationHint": "Empty: the grade's occupancy. Set: the same for every grade.",
+      "occupationPlaceholder": "grade's",
+      "gridShare": "Share kept (grid)",
+      "profilShare": "Share kept (profile)"
     }
   },
   "consultantForm": {

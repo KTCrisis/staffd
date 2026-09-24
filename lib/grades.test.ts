@@ -17,6 +17,16 @@ describe('gradeEconomics', () => {
     expect(gradeEconomics({ ...base, tjm: pm })!.contribution).toBeCloseTo(0, 6)
   })
 
+  it('part laissée : même grade, occupation réelle au lieu de celle du grade', () => {
+    // Coût et TJM de la ligne senior du plan ; seule l'occupation change.
+    const grille = gradeEconomics({ tjm: 1100, occupation: 70, cost: 135000, jours: 218 })!
+    const reel   = gradeEconomics({ tjm: 1100, occupation: 96, cost: 135000, jours: 218 })!
+    expect(grille.margePct!).toBeCloseTo(19.6, 1)
+    expect(reel.margePct!).toBeCloseTo(41.4, 1)
+    // La contribution est presque triplée quand l'occupation passe de 70 à 96 %
+    expect(reel.contribution / grille.contribution).toBeGreaterThan(2.8)
+  })
+
   it('occupation nulle : pas de point mort en TJM, marge nulle', () => {
     const r = gradeEconomics({ tjm: 1000, occupation: 0, cost: 50000, jours: 218 })!
     expect(r.pointMortTjm).toBeNull()

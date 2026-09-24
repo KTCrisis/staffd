@@ -850,7 +850,12 @@
       "gridCost": "Coût du grade",
       "gridContribution": "Contribution grille",
       "profilContribution": "Contribution du profil",
-      "profilBreakEven": "Point mort TJM du profil"
+      "profilBreakEven": "Point mort TJM du profil",
+      "occupation": "Occupation réelle du profil (%)",
+      "occupationHint": "Vide : l'occupation du grade. Rempli : la même pour tous les grades.",
+      "occupationPlaceholder": "celle du grade",
+      "gridShare": "Part laissée (grille)",
+      "profilShare": "Part laissée (profil)"
     }
   },
   "consultantForm": {
