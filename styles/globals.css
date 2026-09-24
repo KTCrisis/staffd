@@ -443,9 +443,10 @@ select option            { background: var(--bg2); color: var(--text); }
 }
 .form-input:focus { border-color: var(--green); }
 
-input[type='number'].input::-webkit-inner-spin-button,
-input[type='number'].input::-webkit-outer-spin-button { appearance: none; -webkit-appearance: none; }
-input[type='number'].input { appearance: none; -moz-appearance: textfield; }
+/* Native spinners hidden on every number field: typing and arrow keys still work */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { appearance: none; -webkit-appearance: none; margin: 0; }
+input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
 
 
 /* ══════════════════════════════════════════════════════════════
