@@ -846,7 +846,7 @@
       "cost": "Coût annuel chargé testé (€)",
       "grade": "Grade",
       "tjmOcc": "TJM · occ.",
-      "ca": "CA / an",
+      "ca": "CA grille / an",
       "gridCost": "Coût du grade",
       "gridContribution": "Contribution grille",
       "profilContribution": "Contribution du profil",
@@ -855,7 +855,8 @@
       "occupationHint": "Vide : l'occupation du grade. Rempli : la même pour tous les grades.",
       "occupationPlaceholder": "celle du grade",
       "gridShare": "Part laissée (grille)",
-      "profilShare": "Part laissée (profil)"
+      "profilShare": "Part laissée (profil)",
+      "profilCa": "CA du profil / an"
     }
   },
   "consultantForm": {

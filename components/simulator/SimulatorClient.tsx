@@ -168,6 +168,7 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
                       <th style={{ textAlign: 'right' }}>{t('bench.gridCost')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.gridContribution')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.gridShare')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('bench.profilCa')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.profilContribution')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.profilShare')}</th>
                       <th style={{ textAlign: 'right' }}>{t('bench.profilBreakEven')}</th>
@@ -184,6 +185,7 @@ export function SimulatorClient({ defaultWorkingDays = 218, grades = [] }: Props
                         <td style={{ textAlign: 'right', color: 'var(--text2)' }}>{g.cout_annuel_charge ? fmt(Number(g.cout_annuel_charge)) : '—'}</td>
                         <td style={{ textAlign: 'right' }}>{grid ? fmt(grid.contribution) : '—'}</td>
                         <td style={{ textAlign: 'right', color: 'var(--text2)' }}>{fmtPct(grid?.margePct)}</td>
+                        <td style={{ textAlign: 'right' }}>{profil ? fmt(profil.caAnnuel) : '—'}</td>
                         <td style={{ textAlign: 'right', fontWeight: 600, color: profil && profil.contribution < 0 ? 'var(--pink)' : 'var(--green)' }}>
                           {profil ? fmt(profil.contribution) : '—'}
                         </td>

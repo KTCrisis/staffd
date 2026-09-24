@@ -846,7 +846,7 @@
       "cost": "Loaded annual cost tested (€)",
       "grade": "Grade",
       "tjmOcc": "Rate · occ.",
-      "ca": "Revenue / yr",
+      "ca": "Grid revenue / yr",
       "gridCost": "Grade cost",
       "gridContribution": "Grid contribution",
       "profilContribution": "Profile contribution",
@@ -855,7 +855,8 @@
       "occupationHint": "Empty: the grade's occupancy. Set: the same for every grade.",
       "occupationPlaceholder": "grade's",
       "gridShare": "Share kept (grid)",
-      "profilShare": "Share kept (profile)"
+      "profilShare": "Share kept (profile)",
+      "profilCa": "Profile revenue / yr"
     }
   },
   "consultantForm": {
