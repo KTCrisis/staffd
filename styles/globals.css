@@ -131,6 +131,7 @@
 [data-theme='dark'] {
   --text1: var(--text);
   --text3: var(--text2);
+  --section: var(--green);   /* section headers in drawers and forms */
 }
 
 
@@ -452,8 +453,8 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
 ══════════════════════════════════════════════════════════════ */
 .form-section-label {
   font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
-  color: var(--text2); margin-bottom: 14px; margin-top: 24px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  font-weight: 700; color: var(--section); margin-bottom: 14px; margin-top: 24px;
+  padding-bottom: 6px; border-bottom: 1px solid color-mix(in srgb, var(--section) 35%, transparent);
 }
 
 .form-field       { margin-bottom: 14px; }
@@ -665,7 +666,7 @@ input[type='number'].input { appearance: none; -moz-appearance: textfield; }
 .cons-status--partial   { color: var(--purple); }
 .cons-unlinked          { font-size: 10px; color: var(--text2); opacity: 0.6; }
 
-.panel-section-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); padding: 10px 18px 6px; border-bottom: 1px solid var(--border); }
+.panel-section-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--section); padding: 10px 18px 6px; border-bottom: 1px solid color-mix(in srgb, var(--section) 35%, transparent); }
 
 .mission-list     { display: flex; flex-direction: column; }
 .mission-item     { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--border); }

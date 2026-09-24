@@ -312,7 +312,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
 function SectionLabel({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14, ...style }}>
+    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--section)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 14, ...style }}>
       {children}
     </div>
   )

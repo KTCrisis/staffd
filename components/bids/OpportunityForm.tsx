@@ -294,7 +294,7 @@ export function OpportunityForm({ opportunity: o, stages, clients: initialClient
 
 function Section({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 10, color: 'var(--text2)', letterSpacing: 2, textTransform: 'uppercase', margin: '18px 0 12px' }}>
+    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--section)', letterSpacing: 2, textTransform: 'uppercase', margin: '18px 0 12px' }}>
       {children}
     </div>
   )

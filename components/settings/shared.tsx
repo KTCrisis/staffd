@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl'
 export function SectionLabel({ label }: { label: string }) {
   return (
     <div style={{
-      fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
+      fontSize: 9, fontWeight: 700, color: 'var(--section)', letterSpacing: 3,
       textTransform: 'uppercase', marginBottom: 16,
     }}>
       {'// '}{label}

@@ -462,8 +462,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
       fontSize: 9, fontWeight: 700, letterSpacing: 3,
-      textTransform: 'uppercase', color: 'var(--text3)',
-      borderBottom: '1px solid var(--border)', paddingBottom: 6, marginTop: 4,
+      textTransform: 'uppercase', color: 'var(--section)',
+      borderBottom: '1px solid color-mix(in srgb, var(--section) 35%, transparent)', paddingBottom: 6, marginTop: 4,
     }}>
       {children}
     </div>

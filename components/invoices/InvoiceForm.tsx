@@ -89,8 +89,8 @@ function Select({ value, onChange, children, style = {} }: {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
-      textTransform: 'uppercase', borderBottom: '1px solid var(--border)',
+      fontSize: 9, fontWeight: 700, color: 'var(--section)', letterSpacing: 3,
+      textTransform: 'uppercase', borderBottom: '1px solid color-mix(in srgb, var(--section) 35%, transparent)',
       paddingBottom: 8, marginBottom: 16, marginTop: 28,
     }}>
       {'// ' + children}

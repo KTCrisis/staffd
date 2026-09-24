@@ -78,9 +78,9 @@ interface Props {
 
 function SectionTitle({ label }: { label: string }) {
   return (
-    <div style={{ fontSize: 9, color: 'var(--text2)', letterSpacing: 3,
+    <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--section)', letterSpacing: 3,
       textTransform: 'uppercase', marginBottom: 14, paddingBottom: 8,
-      borderBottom: '1px solid var(--border)' }}>
+      borderBottom: '1px solid color-mix(in srgb, var(--section) 35%, transparent)' }}>
       {label}
     </div>
   )
