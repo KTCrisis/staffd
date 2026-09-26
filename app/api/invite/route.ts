@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies }      from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { serverCookies }      from '@/lib/supabase-cookies'
-import { grantableRoles }     from '@/lib/auth/roles'
+import { grantableRoles, canIssueLinkFor } from '@/lib/auth/roles'
 
 // 1. Force la route en mode dynamique pour éviter le scan au build
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,20 @@ const getSupabaseAdmin = () => {
   }
   
   return createClient(url, key);
+}
+
+/**
+ * Exact, case-insensitive lookup across every page of users. The default
+ * listUsers() returns the first 50 only, and a strict `===` missed
+ * `Victim@b.com`: both let an existing account slip past the checks.
+ */
+async function findUserByEmail(admin: ReturnType<typeof getSupabaseAdmin>, email: string) {
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
+    if (error) throw error
+    const hit = data.users.find(u => u.email?.toLowerCase() === email)
+    if (hit || data.users.length < 1000) return hit
+  }
 }
 
 export async function POST(req: Request) {
@@ -84,21 +98,23 @@ export async function POST(req: Request) {
   // lien d'activation que l'admin transmet lui-même (canal privé). Le lien
   // porte un jeton à usage unique, vérifié seulement quand la personne valide
   // son mot de passe sur /activate (un aperçu de lien ne le consomme pas).
-  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-  const existingUser = existingUsers?.users?.find(u => u.email === email)
+  const normalizedEmail = String(email).trim().toLowerCase()
+  const existingUser = await findUserByEmail(supabaseAdmin, normalizedEmail)
 
-  if (existingUser) {
-    // Ne pas détourner un compte déjà rattaché à une AUTRE company.
-    const existingCompany = existingUser.app_metadata?.company_id ?? null
-    if (existingCompany && existingCompany !== targetCompanyId) {
-      return Response.json({ error: 'This email already belongs to another company' }, { status: 409 })
-    }
+  // The link comes back to the caller, not to the account owner: issuing one
+  // for an existing account is taking it over. Only accounts of this tenant,
+  // strictly below the caller, never a super_admin (lib/auth/roles.ts).
+  if (existingUser && !canIssueLinkFor(role, {
+    role:      existingUser.app_metadata?.user_role ?? null,
+    companyId: existingUser.app_metadata?.company_id ?? null,
+  }, targetCompanyId)) {
+    return Response.json({ error: 'Not allowed for this account' }, { status: 403 })
   }
 
   // invite : crée le compte ; recovery : compte existant, nouveau mot de passe
   const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
     type: existingUser ? 'recovery' : 'invite',
-    email,
+    email: normalizedEmail,
   })
   if (linkErr || !link?.user) {
     console.error('generateLink error:', linkErr)

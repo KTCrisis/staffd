@@ -44,6 +44,36 @@ export function grantableRoles(caller?: UserRole | string): UserRole[] {
   return []
 }
 
+const RANK: Record<string, number> = {
+  super_admin: 4, admin: 3, manager: 2, consultant: 1, freelance: 1, viewer: 0,
+}
+
+/**
+ * May the caller mint an activation or reset link for an EXISTING account?
+ * The link goes back to the caller, not to the account owner: minting it is
+ * taking the account. So the target must be in the caller's tenant (or a
+ * pending account with no tenant and no role yet), never a super_admin, and
+ * strictly below the caller (an admin cannot reset another admin, a manager
+ * only consultants and freelances). A new account (target null) is always
+ * fine: nobody owns it yet.
+ */
+export function canIssueLinkFor(
+  caller: UserRole | string | undefined,
+  target: { role?: string | null; companyId?: string | null } | null,
+  targetCompanyId: string,
+): boolean {
+  if (!target) return true
+  const role = target.role ?? null
+  if (role === 'super_admin') return false
+  if (target.companyId) {
+    if (target.companyId !== targetCompanyId) return false
+  } else if (role) {
+    return false // tenant-less account holding a role: not a pending invite
+  }
+  if (!role) return true
+  return (RANK[role] ?? 0) < (RANK[caller ?? ''] ?? 0)
+}
+
 // ──────────────────────────────────────────────────────────────
 // GUARDS DE ROUTES (source de vérité partagée avec le middleware)
 // ──────────────────────────────────────────────────────────────
