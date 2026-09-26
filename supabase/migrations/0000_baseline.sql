@@ -8,7 +8,7 @@
 --   supabase/seed.*.local.sql           tenants réels, ignorés par git (dépôt public)
 -- En local : `npx supabase db reset` applique ce fichier puis les seeds (config.toml).
 -- En prod  : base NEUVE seulement — SQL Editor, ce fichier PUIS le seed voulu.
---            Base existante : appliquer les migrations 0008+ absentes de sa table
+--            Base existante : appliquer les migrations 0013+ absentes de sa table
 --            schema_migrations, JAMAIS ce fichier : il commence par un drop-all qui
 --            efface toutes les données métier (auth.users préservés).
 --
@@ -16,8 +16,13 @@
 -- Chacune est idempotente, reportée ici en parallèle, et se termine par
 --   insert into schema_migrations (version) values ('00NN_nom') on conflict do nothing;
 -- `select * from schema_migrations order by version` dit où en est une base.
--- 0001 à 0007 ont été fusionnés dans ce fichier le 2026.09.23 (toutes les bases
--- étaient à 0007) ; leur texte reste dans l'historique git.
+-- 0001 à 0007 ont été fusionnés dans ce fichier le 2026.09.23, 0008 à 0012 le
+-- 2026.09.26 (toutes les bases, préprod et cabinet, étaient à 0012) ; leur texte
+-- reste dans l'historique git. La table schema_migrations d'une base neuve reçoit
+-- les mêmes versions qu'une base migrée, jusqu'à 0012_leave_guard.
+-- Écart connu et sans effet : sur une base créée avant 0008, la vue
+-- consultants_with_leave (select c.*) est figée sans date_entree, date_sortie,
+-- honoraires_mensuels et fonction ; une base neuve les a. Aucun code ne la lit.
 --
 -- Sections : 0. drops · 1. extensions · 2. tables (PSA) · 2b. facturation
 --            2c. CRM avant-vente · 3. fonctions/triggers/RPC · 4. vues
@@ -25,6 +30,8 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.26  fusion de 0008-0012 dans ce fichier (schéma vérifié identique à une
+--               base migrée, à l'ordre des colonnes et à consultants_with_leave près).
 --   2026.09.26  congés : leave_requests_guard (statut pending hors admin/manager,
 --               leave_auto_approve), leave_requests_balance (soldes tenus par la base),
 --               increment_*_taken supprimées, index des clés étrangères (0012_leave_guard.sql).

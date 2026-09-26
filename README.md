@@ -68,8 +68,9 @@ cp .env.example .env.local
 # Remote: run 0000_baseline.sql in the SQL Editor, then the seed for that
 #   environment. The baseline starts with a drop-all of business data
 #   (auth.users is preserved): NEW databases only.
-# Existing database: apply the numbered migrations (0008+) missing from its
-#   schema_migrations table; each migration records itself there.
+# Existing database: apply the numbered migrations (0013+) missing from its
+#   schema_migrations table; each migration records itself there. 0001-0012
+#   are folded into the baseline (history in git).
 
 # 4. Run
 npm run dev
@@ -94,8 +95,7 @@ lib/
   data/           # Supabase hooks and mutations (per-domain modules)
   navigation.ts   # Typed router wrapper
 supabase/
-  migrations/     # 0000_baseline.sql (versioned schema, no data) + numbered migrations 0008+
-  ops/            # one-off SQL for existing databases (schema_migrations bootstrap)
+  migrations/     # 0000_baseline.sql (versioned schema, no data) + numbered migrations 0013+
   seed.fixtures.sql        # test tenants: ESN team, agency, solo freelancer
   seed.tenant.example.sql  # template for a real tenant
   seed.*.local.sql         # real tenants — git-ignored (public repo)
