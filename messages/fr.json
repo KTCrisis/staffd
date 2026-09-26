@@ -26,7 +26,8 @@
     "logout": "Déconnexion",
     "expand": "Développer",
     "collapse": "Réduire",
-    "askAgent": "Demander à l'agent..."
+    "askAgent": "Demander à l'agent...",
+    "guide": "Guide"
   },
   "topbar": {
     "search": "Rechercher...",
@@ -1724,5 +1725,9 @@
     "submit": "→ Se connecter",
     "inviteOnly": "Accès sur invitation uniquement",
     "connectionError": "Erreur de connexion"
+  },
+  "guide": {
+    "title": "Guide",
+    "breadcrumb": "// ce que fait chaque page, et ce qu'elle ne fait pas encore"
   }
 }

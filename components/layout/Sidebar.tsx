@@ -305,6 +305,15 @@ export function Sidebar({ userRole, userEmail, companyMode, brandName, brandTagl
             </>
           )}
         </div>
+        <Link
+          href={p('/guide')}
+          className={`nav-item ${pathname.includes('/guide') ? 'active' : ''}`}
+          title={collapsed ? t('guide') : undefined}
+          style={{ marginTop: 6 }}
+        >
+          <span className="nav-icon">?</span>
+          {!collapsed && <span>{t('guide')}</span>}
+        </Link>
         {!collapsed && (
           <div
             className="app-version"

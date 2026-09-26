@@ -26,7 +26,8 @@
     "logout": "Log out",
     "expand": "Expand",
     "collapse": "Collapse",
-    "askAgent": "Ask agent..."
+    "askAgent": "Ask agent...",
+    "guide": "Guide"
   },
   "topbar": {
     "search": "Search...",
@@ -1724,5 +1725,9 @@
     "submit": "→ Sign in",
     "inviteOnly": "Access by invitation only",
     "connectionError": "Connection error"
+  },
+  "guide": {
+    "title": "Guide",
+    "breadcrumb": "// what each page does, and what it does not do yet"
   }
 }
