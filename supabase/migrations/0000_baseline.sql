@@ -1,6 +1,6 @@
 -- ============================================================
 -- STAFFD — Schéma de référence (init Supabase)
--- Version : 2026.09.23
+-- Version : 2026.09.26
 -- ============================================================
 -- Schéma SEUL. Les données vivent dans des seeds séparés :
 --   supabase/seed.fixtures.sql          jeux d'essai (ESN, agence, solo) — préprod et local
@@ -12,7 +12,7 @@
 --            schema_migrations, JAMAIS ce fichier : il commence par un drop-all qui
 --            efface toutes les données métier (auth.users préservés).
 --
--- Migrations : fichiers numérotés à la suite de ce baseline (prochain : 0008).
+-- Migrations : fichiers numérotés à la suite de ce baseline (prochain : 0013).
 -- Chacune est idempotente, reportée ici en parallèle, et se termine par
 --   insert into schema_migrations (version) values ('00NN_nom') on conflict do nothing;
 -- `select * from schema_migrations order by version` dit où en est une base.
@@ -25,6 +25,9 @@
 -- security_invoker = true sur toutes les vues (isolation RLS)
 --
 -- Journal
+--   2026.09.26  congés : leave_requests_guard (statut pending hors admin/manager,
+--               leave_auto_approve), leave_requests_balance (soldes tenus par la base),
+--               increment_*_taken supprimées, index des clés étrangères (0012_leave_guard.sql).
 --   2026.09.23  confidentialité : consultants_select restreint, consultant_directory,
 --               marges réservées admin/manager (0011_confidentiality.sql).
 --   2026.09.23  factures : numéro à l'émission (issue_invoice), verrou des émises,
@@ -97,6 +100,8 @@ drop function if exists my_role()                                     cascade;
 drop function if exists set_updated_at()                              cascade;
 drop function if exists increment_leave_taken(uuid, int)              cascade;
 drop function if exists increment_rtt_taken(uuid, int)                cascade;
+drop function if exists leave_requests_guard()                        cascade;
+drop function if exists leave_requests_balance()                      cascade;
 drop function if exists auto_link_solo_consultant()                   cascade;
 drop function if exists my_team_consultant_ids()                      cascade;
 drop function if exists sync_consultant_team_id()                     cascade;
@@ -125,7 +130,7 @@ create table if not exists schema_migrations (
   applied_at timestamptz not null default now()
 );
 alter table schema_migrations enable row level security;
-insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda'), ('0009_staff_function'), ('0010_invoicing'), ('0011_confidentiality') on conflict do nothing;
+insert into schema_migrations (version) values ('0007_squashed_into_baseline'), ('0008_ebitda'), ('0009_staff_function'), ('0010_invoicing'), ('0011_confidentiality'), ('0012_leave_guard') on conflict do nothing;
 
 create table if not exists companies (
   id               uuid primary key default gen_random_uuid(),
@@ -564,6 +569,47 @@ create index if not exists idx_interactions_company    on interactions(company_i
 create index if not exists idx_interactions_opp        on interactions(opportunity_id);
 create index if not exists idx_interactions_followup   on interactions(company_id, next_step_due) where next_step_done = false;
 
+-- ── Index des clés étrangères (jointures, cascades, filtres RLS) ────────────
+create index if not exists idx_companies_parent_company_id        on companies (parent_company_id);
+create index if not exists idx_clients_company_id                 on clients (company_id);
+create index if not exists idx_consultants_company_id             on consultants (company_id);
+create index if not exists idx_consultants_team_id                on consultants (team_id);
+create index if not exists idx_consultants_user_id                on consultants (user_id);
+create index if not exists idx_teams_company_id                   on teams (company_id);
+create index if not exists idx_teams_manager_id                   on teams (manager_id);
+create index if not exists idx_team_members_team_id               on team_members (team_id);
+create index if not exists idx_projects_company_id                on projects (company_id);
+create index if not exists idx_projects_client_id                 on projects (client_id);
+create index if not exists idx_projects_created_by                on projects (created_by);
+create index if not exists idx_projects_end_client_id             on projects (end_client_id);
+create index if not exists idx_projects_framework_agreement_id    on projects (framework_agreement_id);
+create index if not exists idx_projects_opportunity_id            on projects (opportunity_id);
+create index if not exists idx_assignments_company_id             on assignments (company_id);
+create index if not exists idx_assignments_consultant_id          on assignments (consultant_id);
+create index if not exists idx_assignments_project_id             on assignments (project_id);
+create index if not exists idx_leave_requests_company_id          on leave_requests (company_id);
+create index if not exists idx_leave_requests_consultant_id       on leave_requests (consultant_id);
+create index if not exists idx_availability_overrides_company_id  on availability_overrides (company_id);
+create index if not exists idx_availability_overrides_consultant_id on availability_overrides (consultant_id);
+create index if not exists idx_activity_feed_company_id           on activity_feed (company_id);
+create index if not exists idx_timesheets_company_id              on timesheets (company_id);
+create index if not exists idx_timesheets_project_id              on timesheets (project_id);
+create index if not exists idx_invoices_client_id                 on invoices (client_id);
+create index if not exists idx_invoices_consultant_id             on invoices (consultant_id);
+create index if not exists idx_invoices_project_id                on invoices (project_id);
+create index if not exists idx_invoice_lines_company_id           on invoice_lines (company_id);
+create index if not exists idx_invoice_lines_invoice_id           on invoice_lines (invoice_id);
+create index if not exists idx_opportunities_client_id            on opportunities (client_id);
+create index if not exists idx_opportunities_contact_id           on opportunities (contact_id);
+create index if not exists idx_opportunities_end_client_id        on opportunities (end_client_id);
+create index if not exists idx_opportunities_framework_agreement_id on opportunities (framework_agreement_id);
+create index if not exists idx_opportunities_owner_id             on opportunities (owner_id);
+create index if not exists idx_opportunities_project_id           on opportunities (project_id);
+create index if not exists idx_interactions_client_id             on interactions (client_id);
+create index if not exists idx_interactions_consultant_id         on interactions (consultant_id);
+create index if not exists idx_interactions_contact_id            on interactions (contact_id);
+
+
 -- ============================================================
 -- 3. FONCTIONS + TRIGGERS + RPC
 -- ============================================================
@@ -763,16 +809,6 @@ create or replace function is_super_admin() returns boolean as $$
   -- coalesce : jamais NULL, sinon une négation neutralise le refus (0007)
   select coalesce((auth.jwt() -> 'app_metadata' ->> 'user_role') = 'super_admin', false);
 $$ language sql stable;
-
-create or replace function increment_leave_taken(p_consultant_id uuid, p_days int)
-returns void as $$
-  update consultants set leave_days_taken = leave_days_taken + p_days where id = p_consultant_id;
-$$ language sql;
-
-create or replace function increment_rtt_taken(p_consultant_id uuid, p_days int)
-returns void as $$
-  update consultants set rtt_taken = rtt_taken + p_days where id = p_consultant_id;
-$$ language sql;
 
 -- ── Merge partiel de billing_settings ───────────────────────────────────────
 -- Fusionne p_patch dans billing_settings sans écraser invoice_counter
@@ -1046,6 +1082,94 @@ drop trigger if exists timesheets_guard on timesheets;
 create trigger timesheets_guard
   before insert or update or delete on timesheets
   for each row execute function timesheets_guard();
+
+-- ── Congés (0012) : statut à la création, soldes tenus par la base ─────────
+-- ── Statut à la création ────────────────────────────────────────────────────
+create or replace function leave_requests_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_backend boolean := coalesce(auth.jwt() ->> 'role', '') not in ('authenticated', 'anon');
+  v_manager boolean := is_super_admin() or coalesce(my_role(), '') in ('admin', 'manager');
+  v_auto    boolean;
+  v_left    numeric;
+begin
+  if v_backend or v_manager then
+    return new;
+  end if;
+
+  if new.end_date < new.start_date or coalesce(new.days, 0) <= 0 then
+    raise exception 'LEAVE_INVALID_PERIOD' using errcode = 'P0001';
+  end if;
+
+  new.status      := 'pending';
+  new.reviewed_at := null;
+
+  select coalesce((hr_settings ->> 'leave_auto_approve')::boolean, false)
+    into v_auto
+    from companies where id = new.company_id;
+
+  if v_auto and new.type in ('CP', 'RTT') then
+    -- Verrou de la fiche : deux demandes simultanées ne consomment pas le même solde
+    select case when new.type = 'CP'
+                then coalesce(leave_days_total, 0) - coalesce(leave_days_taken, 0)
+                else coalesce(rtt_total, 0) - coalesce(rtt_taken, 0) end
+      into v_left
+      from consultants where id = new.consultant_id
+       for update;
+
+    if v_left >= new.days then
+      new.status      := 'approved';
+      new.reviewed_at := now();
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists leave_requests_guard on leave_requests;
+create trigger leave_requests_guard
+  before insert on leave_requests
+  for each row execute function leave_requests_guard();
+
+-- ── Soldes : suivent l'état « approved », quel que soit le chemin ──────────
+create or replace function leave_requests_balance()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Retirer l'ancienne contribution
+  if tg_op in ('UPDATE', 'DELETE') and old.status = 'approved' then
+    update consultants
+       set leave_days_taken = leave_days_taken - case when old.type = 'CP'  then old.days else 0 end,
+           rtt_taken        = rtt_taken        - case when old.type = 'RTT' then old.days else 0 end
+     where id = old.consultant_id
+       and old.type in ('CP', 'RTT');
+  end if;
+
+  -- Ajouter la nouvelle
+  if tg_op in ('INSERT', 'UPDATE') and new.status = 'approved' then
+    update consultants
+       set leave_days_taken = leave_days_taken + case when new.type = 'CP'  then new.days else 0 end,
+           rtt_taken        = rtt_taken        + case when new.type = 'RTT' then new.days else 0 end
+     where id = new.consultant_id
+       and new.type in ('CP', 'RTT');
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists leave_requests_balance on leave_requests;
+create trigger leave_requests_balance
+  after insert or update or delete on leave_requests
+  for each row execute function leave_requests_balance();
 
 -- ── Réouverture d'une période validée (admin) ──────────────────────────────
 -- Repasse en 'submitted' les lignes validées du consultant sur [début, fin].

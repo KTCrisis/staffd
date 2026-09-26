@@ -69,32 +69,12 @@ export async function createLeaveRequest(data: {
 }
 
 export async function approveLeave(id: string) {
-  const { data: req, error: fetchErr } = await supabase
-    .from('leave_requests')
-    .select('consultant_id, days, type')
-    .eq('id', id)
-    .single()
-  if (fetchErr) throw new Error(fetchErr.message)
-
+  // Le solde (CP, RTT) est ajusté par le déclencheur leave_requests_balance (0012)
   const { error } = await supabase
     .from('leave_requests')
     .update({ status: 'approved', reviewed_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw new Error(error.message)
-
-  if (req?.consultant_id) {
-    if (req.type === 'CP') {
-      await supabase.rpc('increment_leave_taken', {
-        p_consultant_id: req.consultant_id,
-        p_days:          req.days,
-      })
-    } else if (req.type === 'RTT') {
-      await supabase.rpc('increment_rtt_taken', {
-        p_consultant_id: req.consultant_id,
-        p_days:          req.days,
-      })
-    }
-  }
 }
 
 export async function refuseLeave(id: string) {

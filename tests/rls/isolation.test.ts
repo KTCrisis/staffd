@@ -352,6 +352,80 @@ describe('CRA fiables', () => {
   })
 })
 
+describe('Congés — statut et soldes tenus par la base', () => {
+  const code = (e: { message?: string } | null) => e?.message ?? ''
+  const taken = async () => {
+    const { data } = await admin.from('consultants').select('leave_days_taken, rtt_taken').eq('id', consultantRowId).single().throwOnError()
+    return data!
+  }
+  const leave = (over: Record<string, unknown> = {}) => ({
+    company_id: COMPANY_A, consultant_id: consultantRowId, type: 'CP',
+    start_date: '2026-11-02', end_date: '2026-11-04', days: 3, ...over,
+  })
+
+  it("un consultant ne crée pas de congé déjà approuvé par l'API", async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const before = await taken()
+    const { data } = await c.from('leave_requests')
+      .insert(leave({ status: 'approved', reviewed_at: new Date().toISOString() }))
+      .select('status, reviewed_at').single().throwOnError()
+    expect(data!.status).toBe('pending')
+    expect(data!.reviewed_at).toBeNull()
+    expect((await taken()).leave_days_taken).toBe(before.leave_days_taken)
+  })
+
+  it('une période vide ou inversée est refusée', async () => {
+    const c = await authClient(EMAILS.consultantA, PWD)
+    const r = await c.from('leave_requests').insert(leave({ start_date: '2026-11-10', end_date: '2026-11-09' }))
+    expect(code(r.error)).toContain('LEAVE_INVALID_PERIOD')
+  })
+
+  it("le solde suit l'approbation, le refus après coup et la suppression", async () => {
+    const { data: row } = await admin.from('leave_requests').insert(leave({ type: 'RTT', days: 2 })).select('id').single().throwOnError()
+    const a = await authClient(EMAILS.adminA, PWD)
+    const t0 = await taken()
+
+    await a.from('leave_requests').update({ status: 'approved' }).eq('id', row!.id).throwOnError()
+    expect((await taken()).rtt_taken).toBe(t0.rtt_taken + 2)
+
+    await a.from('leave_requests').update({ status: 'approved' }).eq('id', row!.id).throwOnError()
+    expect((await taken()).rtt_taken).toBe(t0.rtt_taken + 2)
+
+    await a.from('leave_requests').update({ status: 'refused' }).eq('id', row!.id).throwOnError()
+    expect((await taken()).rtt_taken).toBe(t0.rtt_taken)
+
+    await a.from('leave_requests').update({ status: 'approved' }).eq('id', row!.id).throwOnError()
+    await a.from('leave_requests').delete().eq('id', row!.id).throwOnError()
+    expect((await taken()).rtt_taken).toBe(t0.rtt_taken)
+  })
+
+  it("l'approbation par le backend (agent IA, service_role) décompte aussi", async () => {
+    const { data: row } = await admin.from('leave_requests').insert(leave({ days: 1, start_date: '2026-11-16', end_date: '2026-11-16' })).select('id').single().throwOnError()
+    const t0 = await taken()
+    await admin.from('leave_requests').update({ status: 'approved' }).eq('id', row!.id).throwOnError()
+    expect((await taken()).leave_days_taken).toBe(t0.leave_days_taken + 1)
+  })
+
+  it("leave_auto_approve : approuvé si le solde couvre, en attente sinon", async () => {
+    await admin.from('companies').update({ hr_settings: { leave_auto_approve: true } }).eq('id', COMPANY_A).throwOnError()
+    try {
+      const c = await authClient(EMAILS.consultantA, PWD)
+      const t0 = await taken()
+      const ok = await c.from('leave_requests').insert(leave({ days: 1, start_date: '2026-11-23', end_date: '2026-11-23' })).select('status').single().throwOnError()
+      expect(ok.data!.status).toBe('approved')
+      expect((await taken()).leave_days_taken).toBe(t0.leave_days_taken + 1)
+
+      const big = await c.from('leave_requests').insert(leave({ days: 400, start_date: '2027-01-04', end_date: '2028-06-30' })).select('status').single().throwOnError()
+      expect(big.data!.status).toBe('pending')
+
+      const other = await c.from('leave_requests').insert(leave({ type: 'Sans solde', days: 1, start_date: '2026-11-24', end_date: '2026-11-24' })).select('status').single().throwOnError()
+      expect(other.data!.status).toBe('pending')
+    } finally {
+      await admin.from('companies').update({ hr_settings: {} }).eq('id', COMPANY_A).throwOnError()
+    }
+  })
+})
+
 describe('EBITDA courant', () => {
   // Scénario chiffré à la main, février 2026 (1er = dimanche ; 20 jours ouvrés).
   //   E salarié 60 k × 1,5 = 90 k/an → 7 500/mois, entré le 01/01
