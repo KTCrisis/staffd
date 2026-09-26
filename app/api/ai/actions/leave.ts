@@ -13,11 +13,16 @@ const headers = {
   'Content-Type':  'application/json',
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // ── Helper — trouve la leave request pending d'un consultant ─
 // companyId (non-null, garanti par l'appelant) scope toutes les requêtes au
 // tenant de l'appelant. Service_role contourne la RLS : ce filtre EST la barrière.
 async function findPendingLeave(consultantName: string, companyId: string, leaveId?: string) {
-  // Si on a l'ID direct, on l'utilise (scoped via le company_id du consultant)
+  // Si on a l'ID direct, on l'utilise (scoped via le company_id du consultant).
+  // It comes from the client's PUT body and lands in a PostgREST query string:
+  // anything but a UUID could add filters of its own.
+  if (leaveId && !UUID.test(leaveId)) return null
   if (leaveId) {
     const res = await fetch(
       `${supabaseUrl}/rest/v1/leave_requests?id=eq.${leaveId}&status=eq.pending&select=id,consultant_id,type,start_date,end_date,days,consultants!inner(company_id)&consultants.company_id=eq.${companyId}`,
